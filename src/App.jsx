@@ -41,9 +41,21 @@ export default function App() {
     return ['home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard'].includes(hash) ? hash : 'home';
   });
 
+  // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
+  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 3: doctorAdamImg };
+
   const [doctors, setDoctors] = useState(() => {
-    // Force clear stale cache to show updated doctor credentials and images
-    localStorage.removeItem("simmy_doctors");
+    const data = localStorage.getItem("simmy_doctors");
+    if (data) {
+      const parsed = JSON.parse(data);
+      // Re-apply bundled images for seed doctors unless they have a user-uploaded base64 image
+      return parsed.map(doc => {
+        if (BUNDLED_IMAGES[doc.id] && (!doc.image || !doc.image.startsWith('data:'))) {
+          return { ...doc, image: BUNDLED_IMAGES[doc.id] };
+        }
+        return doc;
+      });
+    }
     return INITIAL_DOCTORS;
   });
 
@@ -125,8 +137,11 @@ export default function App() {
 
   // Admin and Doctor Workspace States
   const [adminNavView, setAdminNavView] = useState('appointments');
-  const [newDoctorData, setNewDoctorData] = useState({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '' });
+  const [newDoctorData, setNewDoctorData] = useState({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
   const [editingDoctorId, setEditingDoctorId] = useState(null);
+  const [doctorNavView, setDoctorNavView] = useState('backlog'); // 'backlog' | 'profile'
+  const [isEditingDocSelf, setIsEditingDocSelf] = useState(false);
+  const [docSelfData, setDocSelfData] = useState({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
   const [editingPatientId, setEditingPatientId] = useState(null);
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
   const [adminSelectedApt, setAdminSelectedApt] = useState(null);
@@ -136,6 +151,7 @@ export default function App() {
   const [consultationNotes, setConsultationNotes] = useState({ notes: '', prescription: '' });
   const [editingApt, setEditingApt] = useState(null);
   const [editAptData, setEditAptData] = useState({ doctorId: '', doctorName: '', date: '', time: '', symptoms: '', status: '' });
+  const [showPasswords, setShowPasswords] = useState({ patient: false, doctor: false, admin: false, doctorForm: false, patientForm: false });
 
   // Sync to local storage
   useEffect(() => {
@@ -160,6 +176,16 @@ export default function App() {
     sessionStorage.setItem("simmy_auth_patient", loggedInPatient ? JSON.stringify(loggedInPatient) : '');
     sessionStorage.setItem("simmy_auth_doctor", loggedInDoctor ? JSON.stringify(loggedInDoctor) : '');
   }, [authRole, loggedInPatient, loggedInDoctor]);
+
+  // Keep loggedInDoctor synchronized with doctors registry updates
+  useEffect(() => {
+    if (loggedInDoctor) {
+      const currentDoc = doctors.find(d => d.id === loggedInDoctor.id);
+      if (currentDoc && JSON.stringify(currentDoc) !== JSON.stringify(loggedInDoctor)) {
+        setLoggedInDoctor(currentDoc);
+      }
+    }
+  }, [doctors, loggedInDoctor]);
 
   // Router Hash Changes
   useEffect(() => {
@@ -421,13 +447,14 @@ export default function App() {
             experience: newDoctorData.experience,
             regNo: newDoctorData.regNo,
             email: newDoctorData.email,
-            password: newDoctorData.password
+            password: newDoctorData.password,
+            image: newDoctorData.image
           };
         }
         return d;
       }));
       setEditingDoctorId(null);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '' });
+      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
       alert("Doctor profile updated successfully!");
     } else {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
@@ -439,10 +466,11 @@ export default function App() {
         experience: newDoctorData.experience || "5 Years",
         regNo: newDoctorData.regNo || "MDCN/" + Math.floor(1000 + Math.random() * 9000),
         email: newDoctorData.email || `doc${newId}@simmycare.com`,
-        password: newDoctorData.password || "password123"
+        password: newDoctorData.password || "password123",
+        image: newDoctorData.image || ''
       };
       setDoctors([...doctors, newDoc]);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '' });
+      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
       alert("Doctor profile added successfully!");
     }
   };
@@ -457,7 +485,8 @@ export default function App() {
       experience: doc.experience,
       regNo: doc.regNo,
       email: doc.email || '',
-      password: doc.password || ''
+      password: doc.password || '',
+      image: doc.image || ''
     });
   };
 
@@ -466,9 +495,28 @@ export default function App() {
       setDoctors(doctors.filter(d => d.id !== id));
       if (editingDoctorId === id) {
         setEditingDoctorId(null);
-        setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '' });
+        setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
       }
     }
+  };
+
+  const handleSaveDocSelf = (e) => {
+    e.preventDefault();
+    const updatedDoc = {
+      ...loggedInDoctor,
+      name: docSelfData.name.startsWith("Dr. ") ? docSelfData.name : `Dr. ${docSelfData.name}`,
+      specialty: docSelfData.specialty,
+      schedule: docSelfData.schedule,
+      experience: docSelfData.experience,
+      regNo: docSelfData.regNo,
+      email: docSelfData.email,
+      password: docSelfData.password,
+      image: docSelfData.image
+    };
+    setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
+    setLoggedInDoctor(updatedDoc);
+    setIsEditingDocSelf(false);
+    alert("Your profile has been updated successfully!");
   };
 
   const handleAddPatient = (e) => {
@@ -1075,13 +1123,18 @@ export default function App() {
                     </div>
                     <div className="form-group">
                       <label>Password</label>
-                      <input 
-                        type="password" 
-                        required 
-                        placeholder="••••••••"
-                        value={patientLoginForm.password}
-                        onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
-                      />
+                      <div className="password-input-wrapper">
+                        <input 
+                          type={showPasswords.patient ? 'text' : 'password'} 
+                          required 
+                          placeholder="••••••••"
+                          value={patientLoginForm.password}
+                          onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
+                        />
+                        <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
+                          <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        </button>
+                      </div>
                     </div>
                     {isPatientRegistering && (
                       <>
@@ -1177,13 +1230,18 @@ export default function App() {
                     </div>
                     <div className="form-group">
                       <label>Password</label>
-                      <input 
-                        type="password" 
-                        required 
-                        placeholder="••••••••"
-                        value={doctorLoginForm.password}
-                        onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, password: e.target.value })}
-                      />
+                      <div className="password-input-wrapper">
+                        <input 
+                          type={showPasswords.doctor ? 'text' : 'password'} 
+                          required 
+                          placeholder="••••••••"
+                          value={doctorLoginForm.password}
+                          onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, password: e.target.value })}
+                        />
+                        <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, doctor: !p.doctor }))} tabIndex={-1}>
+                          <i className={`fa-solid ${showPasswords.doctor ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        </button>
+                      </div>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
                       Demo Account: fatima@simmycare.com / password123
@@ -1207,13 +1265,18 @@ export default function App() {
                     </div>
                     <div className="form-group">
                       <label>Password</label>
-                      <input 
-                        type="password" 
-                        required 
-                        placeholder="•••••"
-                        value={adminLoginForm.password}
-                        onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
-                      />
+                      <div className="password-input-wrapper">
+                        <input 
+                          type={showPasswords.admin ? 'text' : 'password'} 
+                          required 
+                          placeholder="•••••"
+                          value={adminLoginForm.password}
+                          onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
+                        />
+                        <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, admin: !p.admin }))} tabIndex={-1}>
+                          <i className={`fa-solid ${showPasswords.admin ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        </button>
+                      </div>
                     </div>
                     <button type="submit" className="btn btn-primary btn-block">Login</button>
                   </form>
@@ -1394,9 +1457,18 @@ export default function App() {
             {authRole === 'doctor' && loggedInDoctor && (
               <div>
                 <div className="dashboard-header glassmorphic">
-                  <div>
-                    <h2>{loggedInDoctor.name}</h2>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Clinical Focus: {loggedInDoctor.specialty} | MDCN ID: {loggedInDoctor.regNo}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {loggedInDoctor.image ? (
+                      <img src={loggedInDoctor.image} alt={loggedInDoctor.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }} />
+                    ) : (
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', color: '#fff', fontWeight: 'bold' }}>
+                        {loggedInDoctor.name.charAt(loggedInDoctor.name.indexOf(' ') + 1) || loggedInDoctor.name.charAt(0)}
+                      </div>
+                    )}
+                    <div>
+                      <h2>{loggedInDoctor.name}</h2>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Clinical Focus: {loggedInDoctor.specialty} | MDCN ID: {loggedInDoctor.regNo}</p>
+                    </div>
                   </div>
                   <div>
                     <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
@@ -1421,70 +1493,293 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="dashboard-workspace glassmorphic">
-                  <h3>My Consultation Backlog ({myDoctorAppointments.length})</h3>
-                  {myDoctorAppointments.length > 0 ? (
-                    <div className="table-responsive">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Ticket ID</th>
-                            <th>Patient Name</th>
-                            <th>Date / Time</th>
-                            <th>Symptoms Statement</th>
-                            <th>Consultation Status</th>
-                            <th>Prescriptions & Feedback</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {myDoctorAppointments.map(apt => (
-                            <tr key={apt.id}>
-                              <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
-                              <td>
-                                <strong>{apt.patientName}</strong>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
-                              </td>
-                              <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
-                              <td style={{ maxWidth: '240px', wordBreak: 'break-word' }}>{apt.symptoms}</td>
-                              <td>
-                                <span className={`status-badge status-${apt.status.toLowerCase()}`}>
-                                  {apt.status}
+                <div className="dashboard-layout">
+                  {/* Sidebar Navigation */}
+                  <div className="dashboard-sidebar glassmorphic">
+                    <button 
+                      className={`sidebar-nav-btn ${doctorNavView === 'backlog' ? 'active' : ''}`}
+                      onClick={() => setDoctorNavView('backlog')}
+                    >
+                      <i className="fa-solid fa-list-check"></i> Consultation Backlog
+                    </button>
+                    <button 
+                      className={`sidebar-nav-btn ${doctorNavView === 'profile' ? 'active' : ''}`}
+                      onClick={() => {
+                        setDoctorNavView('profile');
+                        const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
+                        setDocSelfData({
+                          name: cleanName,
+                          specialty: loggedInDoctor.specialty,
+                          schedule: loggedInDoctor.schedule || '',
+                          experience: loggedInDoctor.experience || '',
+                          regNo: loggedInDoctor.regNo || '',
+                          email: loggedInDoctor.email || '',
+                          password: loggedInDoctor.password || '',
+                          image: loggedInDoctor.image || ''
+                        });
+                        setIsEditingDocSelf(false);
+                      }}
+                    >
+                      <i className="fa-solid fa-user-doctor"></i> My Profile Settings
+                    </button>
+                  </div>
+
+                  {/* Console Workspace */}
+                  <div className="dashboard-workspace glassmorphic">
+                    {doctorNavView === 'backlog' && (
+                      <div>
+                        <h3>My Consultation Backlog ({myDoctorAppointments.length})</h3>
+                        {myDoctorAppointments.length > 0 ? (
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Ticket ID</th>
+                                  <th>Patient Name</th>
+                                  <th>Date / Time</th>
+                                  <th>Symptoms Statement</th>
+                                  <th>Consultation Status</th>
+                                  <th>Prescriptions & Feedback</th>
+                                  <th>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {myDoctorAppointments.map(apt => (
+                                  <tr key={apt.id}>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
+                                    <td>
+                                      <strong>{apt.patientName}</strong>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
+                                    </td>
+                                    <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
+                                    <td style={{ maxWidth: '240px', wordBreak: 'break-word' }}>{apt.symptoms}</td>
+                                    <td>
+                                      <span className={`status-badge status-${apt.status.toLowerCase()}`}>
+                                        {apt.status}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      {apt.notes || apt.prescription ? (
+                                        <div className="patient-prescription-box">
+                                          {apt.notes && <p><strong>Notes:</strong> {apt.notes}</p>}
+                                          {apt.prescription && <p><strong>Rx:</strong> <span className="rx-label">{apt.prescription}</span></p>}
+                                        </div>
+                                      ) : (
+                                        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending medical report...</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Ticket Details">
+                                          <i className="fa-solid fa-eye"></i> View
+                                        </button>
+                                        <button className="btn btn-primary btn-sm" onClick={() => openConsultationNotesModal(apt)}>
+                                          <i className="fa-solid fa-file-signature"></i> Add Rx/Notes
+                                        </button>
+                                        <button className="btn btn-outline btn-sm" onClick={() => startEditApt(apt)} title="Modify / Reschedule Ticket">
+                                          <i className="fa-solid fa-pen-to-square"></i> Reschedule
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="empty-state">
+                            <p>You have no scheduled virtual patient consultation requests at this time.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {doctorNavView === 'profile' && (
+                      <div>
+                        {!isEditingDocSelf ? (
+                          <div className="doctor-profile-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
+                              {loggedInDoctor.image ? (
+                                <img src={loggedInDoctor.image} alt={loggedInDoctor.name} style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent)' }} />
+                              ) : (
+                                <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#fff', fontWeight: 'bold' }}>
+                                  {loggedInDoctor.name.charAt(loggedInDoctor.name.indexOf(' ') + 1) || loggedInDoctor.name.charAt(0)}
+                                </div>
+                              )}
+                              <div>
+                                <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{loggedInDoctor.name}</h3>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '1rem', marginTop: '0.25rem' }}>{loggedInDoctor.specialty} Department</div>
+                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>{loggedInDoctor.experience} of Clinical Experience</div>
+                              </div>
+                            </div>
+
+                            <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>MDCN Registration Number</strong>
+                                <span style={{ fontSize: '1rem', fontWeight: 'bold', fontFamily: 'monospace' }}>{loggedInDoctor.regNo || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Weekly Schedule</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.schedule || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Portal Login Email</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.email || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Account Password</strong>
+                                <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span>{showPasswords.doctor ? loggedInDoctor.password : '••••••••'}</span>
+                                  <button onClick={() => setShowPasswords(p => ({ ...p, doctor: !p.doctor }))} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <i className={`fa-solid ${showPasswords.doctor ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                  </button>
                                 </span>
-                              </td>
-                              <td>
-                                {apt.notes || apt.prescription ? (
-                                  <div className="patient-prescription-box">
-                                    {apt.notes && <p><strong>Notes:</strong> {apt.notes}</p>}
-                                    {apt.prescription && <p><strong>Rx:</strong> <span className="rx-label">{apt.prescription}</span></p>}
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending medical report...</span>
-                                )}
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                  <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Ticket Details">
-                                    <i className="fa-solid fa-eye"></i> View
-                                  </button>
-                                  <button className="btn btn-primary btn-sm" onClick={() => openConsultationNotesModal(apt)}>
-                                    <i className="fa-solid fa-file-signature"></i> Add Rx/Notes
-                                  </button>
-                                  <button className="btn btn-outline btn-sm" onClick={() => startEditApt(apt)} title="Modify / Reschedule Ticket">
-                                    <i className="fa-solid fa-pen-to-square"></i> Reschedule
+                              </div>
+                            </div>
+
+                            <div style={{ marginTop: '1rem' }}>
+                              <button className="btn btn-primary" onClick={() => {
+                                const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
+                                setDocSelfData({
+                                  name: cleanName,
+                                  specialty: loggedInDoctor.specialty,
+                                  schedule: loggedInDoctor.schedule || '',
+                                  experience: loggedInDoctor.experience || '',
+                                  regNo: loggedInDoctor.regNo || '',
+                                  email: loggedInDoctor.email || '',
+                                  password: loggedInDoctor.password || '',
+                                  image: loggedInDoctor.image || ''
+                                });
+                                setIsEditingDocSelf(true);
+                              }}>
+                                <i className="fa-solid fa-pen-to-square" style={{ marginRight: '0.5rem' }}></i>Edit Profile Settings
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <form onSubmit={handleSaveDocSelf} className="add-doctor-form glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px' }}>
+                            <h4 style={{ marginTop: 0, marginBottom: '1.5rem' }}>Modify Professional Profile</h4>
+                            
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Doctor Name (Exclude "Dr.")</label>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  value={docSelfData.name}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, name: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Specialty Department</label>
+                                <select 
+                                  value={docSelfData.specialty}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, specialty: e.target.value })}
+                                >
+                                  <option value="Pediatrics">Pediatrics</option>
+                                  <option value="General Medicine">General Medicine</option>
+                                  <option value="Gynaecology">Gynaecology</option>
+                                  <option value="Laboratory">Laboratory</option>
+                                  <option value="Pharmacy">Pharmacy</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Weekly Schedule Hours</label>
+                                <input 
+                                  type="text" 
+                                  required
+                                  value={docSelfData.schedule}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, schedule: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Clinical Experience (Years)</label>
+                                <input 
+                                  type="text" 
+                                  required
+                                  value={docSelfData.experience}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, experience: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>MDCN Register Code</label>
+                                <input 
+                                  type="text" 
+                                  required
+                                  value={docSelfData.regNo}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, regNo: e.target.value })}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Email Address</label>
+                                <input 
+                                  type="email" 
+                                  required 
+                                  value={docSelfData.email}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, email: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Password</label>
+                                <div className="password-input-wrapper">
+                                  <input 
+                                    type={showPasswords.doctorForm ? 'text' : 'password'} 
+                                    required 
+                                    value={docSelfData.password}
+                                    onChange={(e) => setDocSelfData({ ...docSelfData, password: e.target.value })}
+                                  />
+                                  <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, doctorForm: !p.doctorForm }))} tabIndex={-1}>
+                                    <i className={`fa-solid ${showPasswords.doctorForm ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                   </button>
                                 </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <p>You have no scheduled virtual patient consultation requests at this time.</p>
-                    </div>
-                  )}
+                              </div>
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Profile Image (File Upload)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                  <input 
+                                    type="file" 
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          setDocSelfData({ ...docSelfData, image: reader.result });
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                    style={{ flexGrow: 1 }}
+                                  />
+                                  {docSelfData.image && (
+                                    <img 
+                                      src={docSelfData.image} 
+                                      alt="Preview" 
+                                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }} 
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                              <button type="submit" className="btn btn-primary">Save Changes</button>
+                              <button type="button" className="btn btn-outline" onClick={() => setIsEditingDocSelf(false)}>Cancel</button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1704,17 +1999,52 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Password</label>
-                              <input 
-                                type="password" 
-                                required 
-                                placeholder="••••••••"
-                                value={newDoctorData.password}
-                                onChange={(e) => setNewDoctorData({ ...newDoctorData, password: e.target.value })}
-                              />
+                              <div className="password-input-wrapper">
+                                <input 
+                                  type={showPasswords.doctorForm ? 'text' : 'password'} 
+                                  required 
+                                  placeholder="••••••••"
+                                  value={newDoctorData.password}
+                                  onChange={(e) => setNewDoctorData({ ...newDoctorData, password: e.target.value })}
+                                />
+                                <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, doctorForm: !p.doctorForm }))} tabIndex={-1}>
+                                  <i className={`fa-solid ${showPasswords.doctorForm ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                </button>
+                              </div>
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '1rem' }}>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Profile Image (File Upload)</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <input 
+                                  type="file" 
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setNewDoctorData({ ...newDoctorData, image: reader.result });
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  style={{ flexGrow: 1 }}
+                                />
+                                {newDoctorData.image && (
+                                  <img 
+                                    src={newDoctorData.image} 
+                                    alt="Preview" 
+                                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }} 
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                             <button type="submit" className="btn btn-primary">{editingDoctorId ? "Update Profile" : "Save Profile to Board"}</button>
                             {editingDoctorId && (
                               <button 
@@ -1722,7 +2052,7 @@ export default function App() {
                                 className="btn btn-outline" 
                                 onClick={() => {
                                   setEditingDoctorId(null);
-                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '' });
+                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
                                 }}
                               >
                                 Cancel Edit
@@ -1736,11 +2066,20 @@ export default function App() {
                           <div className="admin-doctors-list-grid">
                             {doctors.map(d => (
                               <div className="admin-doctor-card glassmorphic" key={d.id}>
-                                <div className="admin-doc-info">
-                                  <strong>{d.name}</strong>
-                                  <span>{d.specialty} — {d.experience}</span>
-                                  <small>{d.schedule} | {d.regNo}</small>
-                                  <small style={{ display: 'block', color: 'var(--color-accent)', marginTop: '0.25rem', fontWeight: '500' }}>Login: {d.email || 'N/A'} / {d.password || 'N/A'}</small>
+                                <div className="admin-doc-info" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', alignItems: 'center' }}>
+                                  {d.image ? (
+                                    <img src={d.image} alt={d.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)', flexShrink: 0 }} />
+                                  ) : (
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
+                                      {d.name.charAt(d.name.indexOf(' ') + 1) || d.name.charAt(0)}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <strong>{d.name}</strong>
+                                    <span>{d.specialty} — {d.experience}</span>
+                                    <small>{d.schedule} | {d.regNo}</small>
+                                    <small style={{ display: 'block', color: 'var(--color-accent)', marginTop: '0.25rem', fontWeight: '500' }}>Login: {d.email || 'N/A'} / {d.password || 'N/A'}</small>
+                                  </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                   <button className="delete-doctor-btn" onClick={() => setAdminSelectedDoctor(d)} title="View Profile" style={{ backgroundColor: 'rgba(28, 43, 73, 0.1)', color: 'var(--color-indigo)' }}>
@@ -1804,13 +2143,18 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Password</label>
-                              <input 
-                                type="password" 
-                                required 
-                                placeholder="••••••••"
-                                value={newPatientData.password}
-                                onChange={(e) => setNewPatientData({ ...newPatientData, password: e.target.value })}
-                              />
+                              <div className="password-input-wrapper">
+                                <input 
+                                  type={showPasswords.patientForm ? 'text' : 'password'} 
+                                  required 
+                                  placeholder="••••••••"
+                                  value={newPatientData.password}
+                                  onChange={(e) => setNewPatientData({ ...newPatientData, password: e.target.value })}
+                                />
+                                <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patientForm: !p.patientForm }))} tabIndex={-1}>
+                                  <i className={`fa-solid ${showPasswords.patientForm ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                </button>
+                              </div>
                             </div>
                           </div>
 
@@ -2165,7 +2509,7 @@ export default function App() {
             </div>
 
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button className="btn btn-outline btn-sm" onClick={() => { startEditDoctor(adminSelectedDoctor); setAdminSelectedDoctor(null); }}>
+              <button className="btn btn-outline btn-sm" onClick={() => { startEditDoctor(adminSelectedDoctor); setAdminNavView('doctors'); setAdminSelectedDoctor(null); }}>
                 <i className="fa-solid fa-pen-to-square" style={{ marginRight: '0.35rem' }}></i>Edit Profile
               </button>
               <button className="btn btn-primary" onClick={() => setAdminSelectedDoctor(null)}>Close</button>
