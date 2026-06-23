@@ -6,15 +6,69 @@ import logoSvg from './assets/logo.svg';
 
 // --- Seed Data ---
 const INITIAL_DOCTORS = [
-  { id: 1, name: "Dr. Fatima Yahaya Maiauduga", specialty: "Gynaecology", schedule: "Mon - Wed (9am - 2pm)", experience: "8 Years", regNo: "MDCN/8431", image: doctorFatimaImg, email: "fatima@simmycare.com", password: "password123" },
-  { id: 2, name: "Dr. Chioma Nwachukwu", specialty: "Pediatrics", schedule: "Tue - Thu (12pm - 5pm)", experience: "12 Years", regNo: "MDCN/9102", email: "chioma@simmycare.com", password: "password123" },
-  { id: 3, name: "Dr. Adam Zamzam", specialty: "General Medicine", schedule: "Mon - Fri (8am - 4pm)", experience: "10 Years", regNo: "MDCN/7123", image: doctorAdamImg, email: "adam@simmycare.com", password: "password123" },
-  { id: 4, name: "Dr. Favour Obi", specialty: "Pharmacy", schedule: "Wed - Fri (10am - 3pm)", experience: "6 Years", regNo: "MDCN/7291", email: "favour@simmycare.com", password: "password123" }
+  { 
+    id: 1, 
+    name: "Dr. Fatima Yahaya Maiauduga", 
+    specialty: "Gynaecology", 
+    schedule: "Mon - Wed (9am - 2pm)", 
+    experience: "8 Years", 
+    regNo: "MDCN/8431", 
+    image: doctorFatimaImg, 
+    email: "fatima@simmycare.com", 
+    password: "password123",
+    phone: "08034567890",
+    bio: "Senior consultant gynaecologist specializing in maternal care, obstetrics, and female reproductive wellness.",
+    clinicRoom: "Room 102, West Wing",
+    license: ""
+  },
+  { 
+    id: 2, 
+    name: "Dr. Chioma Nwachukwu", 
+    specialty: "Pediatrics", 
+    schedule: "Tue - Thu (12pm - 5pm)", 
+    experience: "12 Years", 
+    regNo: "MDCN/9102", 
+    email: "chioma@simmycare.com", 
+    password: "password123",
+    phone: "08099887766",
+    bio: "Experienced pediatrician dedicated to comprehensive neonatal care, childhood development, and immunizations.",
+    clinicRoom: "Room 304, Pediatrics Annex",
+    license: ""
+  },
+  { 
+    id: 3, 
+    name: "Dr. Adam Zamzam", 
+    specialty: "General Medicine", 
+    schedule: "Mon - Fri (8am - 4pm)", 
+    experience: "10 Years", 
+    regNo: "MDCN/7123", 
+    image: doctorAdamImg, 
+    email: "adam@simmycare.com", 
+    password: "password123",
+    phone: "08051234567",
+    bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
+    clinicRoom: "Room 205, Main Block",
+    license: ""
+  },
+  { 
+    id: 4, 
+    name: "Dr. Favour Obi", 
+    specialty: "Pharmacy", 
+    schedule: "Wed - Fri (10am - 3pm)", 
+    experience: "6 Years", 
+    regNo: "MDCN/7291", 
+    email: "favour@simmycare.com", 
+    password: "password123",
+    phone: "08077665544",
+    bio: "Clinical pharmacist focusing on medication therapy management, pharmacotherapy safety, and drug interactions counsel.",
+    clinicRoom: "Dispensary Station B",
+    license: ""
+  }
 ];
 
 const INITIAL_APPOINTMENTS = [
-  { id: "APT-1048", patientName: "Zainab Abdulfatah", phone: "08012345678", email: "zainab@example.com", doctor: "Dr. Amina Yusuf", date: "2026-06-25", time: "10:00 AM", symptoms: "Routine checkup for child vaccines.", status: "Approved", notes: "Vaccinations completed. Child is in good health.", prescription: "Paracetamol Syrup 5ml as needed for fever." },
-  { id: "APT-1092", patientName: "David Okon", phone: "09087654321", email: "david.okon@gmail.com", doctor: "Dr. Babajide Alao", date: "2026-06-24", time: "02:30 PM", symptoms: "Experiencing persistent headaches and mild fever.", status: "Pending", notes: "", prescription: "" },
+  { id: "APT-1048", patientName: "Zainab Abdulfatah", phone: "08012345678", email: "zainab@example.com", doctor: "Dr. Fatima Yahaya Maiauduga", date: "2026-06-25", time: "10:00 AM", symptoms: "Routine checkup for child vaccines.", status: "Approved", notes: "Vaccinations completed. Child is in good health.", prescription: "Paracetamol Syrup 5ml as needed for fever." },
+  { id: "APT-1092", patientName: "David Okon", phone: "09087654321", email: "david.okon@gmail.com", doctor: "Dr. Adam Zamzam", date: "2026-06-24", time: "02:30 PM", symptoms: "Experiencing persistent headaches and mild fever.", status: "Pending", notes: "", prescription: "" },
   { id: "APT-1102", patientName: "Sarah Ahmed", phone: "07033445566", email: "sarah@example.com", doctor: "Dr. Favour Obi", date: "2026-06-26", time: "11:30 AM", symptoms: "Inquiry about prenatal consultations.", status: "Cancelled", notes: "", prescription: "" }
 ];
 
@@ -137,13 +191,51 @@ export default function App() {
 
   // Admin and Doctor Workspace States
   const [adminNavView, setAdminNavView] = useState('appointments');
-  const [newDoctorData, setNewDoctorData] = useState({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
+  const [adminCredentials, setAdminCredentials] = useState(() => {
+    const stored = localStorage.getItem("simmy_admin_credentials");
+    return stored ? JSON.parse(stored) : { username: 'admin', password: 'admin' };
+  });
+  const [adminSelfData, setAdminSelfData] = useState({ username: '', password: '' });
+  const [isEditingAdminSelf, setIsEditingAdminSelf] = useState(false);
+  const [newDoctorData, setNewDoctorData] = useState({ 
+    name: '', 
+    specialty: 'Pediatrics', 
+    schedule: '', 
+    experience: '', 
+    regNo: '', 
+    email: '', 
+    password: '', 
+    image: '',
+    phone: '',
+    bio: '',
+    clinicRoom: '',
+    license: ''
+  });
   const [editingDoctorId, setEditingDoctorId] = useState(null);
   const [doctorNavView, setDoctorNavView] = useState('backlog'); // 'backlog' | 'profile'
   const [isEditingDocSelf, setIsEditingDocSelf] = useState(false);
-  const [docSelfData, setDocSelfData] = useState({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
+  const [docSelfData, setDocSelfData] = useState({ 
+    name: '', 
+    specialty: 'Pediatrics', 
+    schedule: '', 
+    experience: '', 
+    regNo: '', 
+    email: '', 
+    password: '', 
+    image: '',
+    phone: '',
+    bio: '',
+    clinicRoom: '',
+    license: ''
+  });
   const [editingPatientId, setEditingPatientId] = useState(null);
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
+  
+  // Patient Profile & Navigation States
+  const [patientNavView, setPatientNavView] = useState('bookings'); // 'bookings' | 'profile'
+  const [isEditingPatSelf, setIsEditingPatSelf] = useState(false);
+  const [patSelfData, setPatSelfData] = useState({ name: '', email: '', phone: '', password: '' });
+
   const [adminSelectedApt, setAdminSelectedApt] = useState(null);
   const [adminSelectedInquiry, setAdminSelectedInquiry] = useState(null);
   const [adminSelectedDoctor, setAdminSelectedDoctor] = useState(null);
@@ -151,7 +243,7 @@ export default function App() {
   const [consultationNotes, setConsultationNotes] = useState({ notes: '', prescription: '' });
   const [editingApt, setEditingApt] = useState(null);
   const [editAptData, setEditAptData] = useState({ doctorId: '', doctorName: '', date: '', time: '', symptoms: '', status: '' });
-  const [showPasswords, setShowPasswords] = useState({ patient: false, doctor: false, admin: false, doctorForm: false, patientForm: false });
+  const [showPasswords, setShowPasswords] = useState({ patient: false, doctor: false, admin: false, doctorForm: false, patientForm: false, adminForm: false });
 
   // Sync to local storage
   useEffect(() => {
@@ -170,6 +262,29 @@ export default function App() {
     localStorage.setItem("simmy_patients", JSON.stringify(patients));
   }, [patients]);
 
+  useEffect(() => {
+    localStorage.setItem("simmy_admin_credentials", JSON.stringify(adminCredentials));
+  }, [adminCredentials]);
+
+  // Migrate older appointments containing non-existent doctors to seeded active doctors
+  useEffect(() => {
+    let changed = false;
+    const updatedApts = appointments.map(apt => {
+      if (apt.doctor === "Dr. Amina Yusuf") {
+        changed = true;
+        return { ...apt, doctor: "Dr. Fatima Yahaya Maiauduga" };
+      }
+      if (apt.doctor === "Dr. Babajide Alao") {
+        changed = true;
+        return { ...apt, doctor: "Dr. Adam Zamzam" };
+      }
+      return apt;
+    });
+    if (changed) {
+      setAppointments(updatedApts);
+    }
+  }, [appointments]);
+
   // Sync Auth State
   useEffect(() => {
     sessionStorage.setItem("simmy_auth_role", authRole || '');
@@ -186,6 +301,16 @@ export default function App() {
       }
     }
   }, [doctors, loggedInDoctor]);
+
+  // Keep loggedInPatient synchronized with patients registry updates
+  useEffect(() => {
+    if (loggedInPatient) {
+      const currentPat = patients.find(p => p.email.toLowerCase() === loggedInPatient.email.toLowerCase());
+      if (currentPat && JSON.stringify(currentPat) !== JSON.stringify(loggedInPatient)) {
+        setLoggedInPatient(currentPat);
+      }
+    }
+  }, [patients, loggedInPatient]);
 
   // Router Hash Changes
   useEffect(() => {
@@ -281,7 +406,7 @@ export default function App() {
 
   const handleAdminLoginSubmit = (e) => {
     e.preventDefault();
-    if (adminLoginForm.username === 'admin' && adminLoginForm.password === 'admin') {
+    if (adminLoginForm.username === adminCredentials.username && adminLoginForm.password === adminCredentials.password) {
       setAuthRole('admin');
       sessionStorage.setItem("simmy_auth_role", "admin");
       setAdminLoginForm({ username: '', password: '' });
@@ -434,27 +559,60 @@ export default function App() {
     }
   };
 
+  const handleSaveAdminSelf = (e) => {
+    e.preventDefault();
+    if (!adminSelfData.username.trim() || !adminSelfData.password.trim()) {
+      alert("Username and password cannot be empty!");
+      return;
+    }
+    const updated = {
+      username: adminSelfData.username.trim(),
+      password: adminSelfData.password.trim()
+    };
+    setAdminCredentials(updated);
+    setIsEditingAdminSelf(false);
+    alert("Admin login credentials updated successfully!");
+  };
+
   const handleAddDoctor = (e) => {
     e.preventDefault();
     if (editingDoctorId) {
+      const oldDoc = doctors.find(d => d.id === editingDoctorId);
+      const oldName = oldDoc ? oldDoc.name : '';
+      const newName = newDoctorData.name.startsWith("Dr. ") ? newDoctorData.name : `Dr. ${newDoctorData.name}`;
+
       setDoctors(doctors.map(d => {
         if (d.id === editingDoctorId) {
           return {
             ...d,
-            name: newDoctorData.name.startsWith("Dr. ") ? newDoctorData.name : `Dr. ${newDoctorData.name}`,
+            name: newName,
             specialty: newDoctorData.specialty,
             schedule: newDoctorData.schedule,
             experience: newDoctorData.experience,
             regNo: newDoctorData.regNo,
             email: newDoctorData.email,
             password: newDoctorData.password,
-            image: newDoctorData.image
+            image: newDoctorData.image,
+            phone: newDoctorData.phone,
+            bio: newDoctorData.bio,
+            clinicRoom: newDoctorData.clinicRoom,
+            license: newDoctorData.license
           };
         }
         return d;
       }));
+
+      if (oldName && oldName.toLowerCase() !== newName.toLowerCase()) {
+        setAppointments(appointments.map(apt => {
+          if (apt.doctor.toLowerCase() === oldName.toLowerCase()) {
+            return { ...apt, doctor: newName };
+          }
+          return apt;
+        }));
+      }
+
       setEditingDoctorId(null);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
+      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
       alert("Doctor profile updated successfully!");
     } else {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
@@ -467,10 +625,14 @@ export default function App() {
         regNo: newDoctorData.regNo || "MDCN/" + Math.floor(1000 + Math.random() * 9000),
         email: newDoctorData.email || `doc${newId}@simmycare.com`,
         password: newDoctorData.password || "password123",
-        image: newDoctorData.image || ''
+        image: newDoctorData.image || '',
+        phone: newDoctorData.phone || '',
+        bio: newDoctorData.bio || '',
+        clinicRoom: newDoctorData.clinicRoom || '',
+        license: newDoctorData.license || ''
       };
       setDoctors([...doctors, newDoc]);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
+      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
       alert("Doctor profile added successfully!");
     }
   };
@@ -486,7 +648,11 @@ export default function App() {
       regNo: doc.regNo,
       email: doc.email || '',
       password: doc.password || '',
-      image: doc.image || ''
+      image: doc.image || '',
+      phone: doc.phone || '',
+      bio: doc.bio || '',
+      clinicRoom: doc.clinicRoom || '',
+      license: doc.license || ''
     });
   };
 
@@ -495,45 +661,121 @@ export default function App() {
       setDoctors(doctors.filter(d => d.id !== id));
       if (editingDoctorId === id) {
         setEditingDoctorId(null);
-        setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
+        setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
       }
     }
   };
 
   const handleSaveDocSelf = (e) => {
-    e.preventDefault();
-    const updatedDoc = {
-      ...loggedInDoctor,
-      name: docSelfData.name.startsWith("Dr. ") ? docSelfData.name : `Dr. ${docSelfData.name}`,
-      specialty: docSelfData.specialty,
-      schedule: docSelfData.schedule,
-      experience: docSelfData.experience,
-      regNo: docSelfData.regNo,
-      email: docSelfData.email,
-      password: docSelfData.password,
-      image: docSelfData.image
+      e.preventDefault();
+      const oldName = loggedInDoctor.name;
+      const newName = docSelfData.name.startsWith("Dr. ") ? docSelfData.name : `Dr. ${docSelfData.name}`;
+  
+      const updatedDoc = {
+        ...loggedInDoctor,
+        name: newName,
+        specialty: docSelfData.specialty,
+        schedule: docSelfData.schedule,
+        experience: docSelfData.experience,
+        regNo: docSelfData.regNo,
+        email: docSelfData.email,
+        password: docSelfData.password,
+        image: docSelfData.image,
+        phone: docSelfData.phone,
+        bio: docSelfData.bio,
+        clinicRoom: docSelfData.clinicRoom,
+        license: docSelfData.license
+      };
+  
+      setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
+  
+      if (oldName.toLowerCase() !== newName.toLowerCase()) {
+        setAppointments(appointments.map(apt => {
+          if (apt.doctor.toLowerCase() === oldName.toLowerCase()) {
+            return { ...apt, doctor: newName };
+          }
+          return apt;
+        }));
+      }
+  
+      setLoggedInDoctor(updatedDoc);
+      setIsEditingDocSelf(false);
+      alert("Your profile has been updated successfully!");
     };
-    setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
-    setLoggedInDoctor(updatedDoc);
-    setIsEditingDocSelf(false);
+
+  const handleSavePatSelf = (e) => {
+    e.preventDefault();
+    const oldEmail = loggedInPatient.email;
+    const newEmail = patSelfData.email.toLowerCase();
+    const newName = patSelfData.name;
+    const newPhone = patSelfData.phone;
+
+    const emailExists = patients.some(p => p.email.toLowerCase() === newEmail && p.email.toLowerCase() !== oldEmail.toLowerCase());
+    if (emailExists) {
+      alert("This email address is already registered by another patient.");
+      return;
+    }
+
+    const updatedPat = {
+      ...loggedInPatient,
+      name: newName,
+      email: newEmail,
+      phone: newPhone,
+      password: patSelfData.password
+    };
+    
+    setPatients(patients.map(p => p.email.toLowerCase() === oldEmail.toLowerCase() ? updatedPat : p));
+    
+    setAppointments(appointments.map(apt => {
+      if (apt.email.toLowerCase() === oldEmail.toLowerCase()) {
+        return {
+          ...apt,
+          email: newEmail,
+          patientName: newName,
+          phone: newPhone
+        };
+      }
+      return apt;
+    }));
+
+    setLoggedInPatient(updatedPat);
+    setIsEditingPatSelf(false);
     alert("Your profile has been updated successfully!");
   };
 
   const handleAddPatient = (e) => {
     e.preventDefault();
     if (editingPatientId) {
+      const oldEmail = editingPatientId;
+      const newEmail = newPatientData.email.toLowerCase();
+      const newName = newPatientData.name;
+      const newPhone = newPatientData.phone;
+
       setPatients(patients.map(p => {
         if (p.email === editingPatientId) {
           return {
             ...p,
-            name: newPatientData.name,
-            email: newPatientData.email,
-            phone: newPatientData.phone,
+            name: newName,
+            email: newEmail,
+            phone: newPhone,
             password: newPatientData.password
           };
         }
         return p;
       }));
+
+      setAppointments(appointments.map(apt => {
+        if (apt.email.toLowerCase() === oldEmail.toLowerCase()) {
+          return {
+            ...apt,
+            email: newEmail,
+            patientName: newName,
+            phone: newPhone
+          };
+        }
+        return apt;
+      }));
+
       setEditingPatientId(null);
       setNewPatientData({ name: '', email: '', phone: '', password: '' });
       alert("Patient profile updated successfully!");
@@ -1328,126 +1570,271 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="dashboard-layout" style={{ gridTemplateColumns: '1.8fr 1.2fr' }}>
-                  {/* Left Column: My Bookings */}
-                  <div className="dashboard-workspace glassmorphic">
-                    <h3>My Appointment Tickets</h3>
-                    {myPatientAppointments.length > 0 ? (
-                      <div className="table-responsive">
-                        <table className="admin-table">
-                          <thead>
-                            <tr>
-                              <th>Ticket ID</th>
-                              <th>Doctor</th>
-                              <th>Date / Time</th>
-                              <th>Status</th>
-                              <th>Clinical Feedback / Prescriptions</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {myPatientAppointments.map(apt => (
-                              <tr key={apt.id}>
-                                <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
-                                <td>{apt.doctor}</td>
-                                <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
-                                <td>
-                                  <span className={`status-badge status-${apt.status.toLowerCase()}`}>
-                                    {apt.status}
-                                  </span>
-                                </td>
-                                <td>
-                                  {apt.status === 'Approved' && (apt.notes || apt.prescription) ? (
-                                    <div className="patient-prescription-box">
-                                      {apt.notes && <p><strong>Doctor Notes:</strong> {apt.notes}</p>}
-                                      {apt.prescription && <p><strong>Rx Prescriptions:</strong> <span className="rx-label">{apt.prescription}</span></p>}
-                                    </div>
-                                  ) : (
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                                      {apt.status === 'Pending' ? "Awaiting doctor's review..." : "No clinical feedback file."}
-                                    </span>
-                                  )}
-                                </td>
-                                <td>
-                                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Details">
-                                      <i className="fa-solid fa-eye"></i> View
-                                    </button>
-                                    {apt.status === 'Pending' && (
-                                      <>
-                                        <button className="action-btn" style={{ color: 'var(--color-accent)' }} onClick={() => startEditApt(apt)} title="Modify Booking Details">
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit
-                                        </button>
-                                        <button className="action-btn" style={{ color: '#EF4444' }} onClick={() => handleCancelAppointment(apt.id)} title="Cancel Booking">
-                                          <i className="fa-solid fa-xmark"></i> Cancel
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p>You haven't scheduled any consultation tickets yet.</p>
-                      </div>
-                    )}
+                <div className="dashboard-layout">
+                  {/* Sidebar Navigation */}
+                  <div className="dashboard-sidebar glassmorphic">
+                    <button 
+                      className={`sidebar-nav-btn ${patientNavView === 'bookings' ? 'active' : ''}`}
+                      onClick={() => setPatientNavView('bookings')}
+                    >
+                      <i className="fa-solid fa-calendar-check"></i> Bookings & Request
+                    </button>
+                    <button 
+                      className={`sidebar-nav-btn ${patientNavView === 'profile' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPatientNavView('profile');
+                        setPatSelfData({
+                          name: loggedInPatient.name,
+                          email: loggedInPatient.email,
+                          phone: loggedInPatient.phone || '',
+                          password: loggedInPatient.password
+                        });
+                        setIsEditingPatSelf(false);
+                      }}
+                    >
+                      <i className="fa-solid fa-user-pen"></i> My Profile Settings
+                    </button>
                   </div>
 
-                  {/* Right Column: Quick Booking */}
-                  <div className="booking-form-wrapper glassmorphic">
-                    <h4>Request New Consultation</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Schedule another virtual appointment instantly</p>
-                    <form onSubmit={handleBookingSubmit}>
-                      <input type="hidden" value={loggedInPatient.name} />
-                      <input type="hidden" value={loggedInPatient.email} />
-                      <input type="hidden" value={loggedInPatient.phone} />
-                      
-                      <div className="form-group">
-                        <label>Select Specialist</label>
-                        <select 
-                          required
-                          value={bookingFormData.doctorId}
-                          onChange={(e) => setBookingFormData({ 
-                            ...bookingFormData, 
-                            doctorId: e.target.value,
-                            patientName: loggedInPatient.name,
-                            email: loggedInPatient.email,
-                            phone: loggedInPatient.phone
-                          })}
-                        >
-                          <option value="">Choose Specialist...</option>
-                          {doctors.map(d => (
-                            <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
-                          ))}
-                        </select>
-                      </div>
+                  {/* Console Workspace */}
+                  <div className="dashboard-workspace glassmorphic" style={{ background: 'none', border: 'none', padding: 0, boxShadow: 'none' }}>
+                    {patientNavView === 'bookings' && (
+                      <div className="dashboard-layout" style={{ gridTemplateColumns: '1.8fr 1.2fr', padding: 0, gap: '1.5rem', background: 'none', border: 'none', boxShadow: 'none' }}>
+                        {/* Left Column: My Bookings */}
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0 }}>
+                          <h3>My Appointment Tickets</h3>
+                          {myPatientAppointments.length > 0 ? (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Doctor</th>
+                                    <th>Date / Time</th>
+                                    <th>Status</th>
+                                    <th>Clinical Feedback / Prescriptions</th>
+                                    <th>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {myPatientAppointments.map(apt => (
+                                    <tr key={apt.id}>
+                                      <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
+                                      <td>{apt.doctor}</td>
+                                      <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
+                                      <td>
+                                        <span className={`status-badge status-${apt.status.toLowerCase()}`}>
+                                          {apt.status}
+                                        </span>
+                                      </td>
+                                      <td>
+                                        {apt.status === 'Approved' && (apt.notes || apt.prescription) ? (
+                                          <div className="patient-prescription-box">
+                                            {apt.notes && <p><strong>Doctor Notes:</strong> {apt.notes}</p>}
+                                            {apt.prescription && <p><strong>Rx Prescriptions:</strong> <span className="rx-label">{apt.prescription}</span></p>}
+                                          </div>
+                                        ) : (
+                                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                            {apt.status === 'Pending' ? "Awaiting doctor's review..." : "No clinical feedback file."}
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                          <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Details">
+                                            <i className="fa-solid fa-eye"></i> View
+                                          </button>
+                                          {apt.status === 'Pending' && (
+                                            <>
+                                              <button className="action-btn" style={{ color: 'var(--color-accent)' }} onClick={() => startEditApt(apt)} title="Modify Booking Details">
+                                                <i className="fa-solid fa-pen-to-square"></i> Edit
+                                              </button>
+                                              <button className="action-btn" style={{ color: '#EF4444' }} onClick={() => handleCancelAppointment(apt.id)} title="Cancel Booking">
+                                                <i className="fa-solid fa-xmark"></i> Cancel
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="empty-state">
+                              <p>You haven't scheduled any consultation tickets yet.</p>
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="form-group">
-                        <label>Preferred Date</label>
-                        <input 
-                          type="date" 
-                          required
-                          value={bookingFormData.date}
-                          onChange={(e) => setBookingFormData({ ...bookingFormData, date: e.target.value })}
-                        />
-                      </div>
+                        {/* Right Column: Quick Booking */}
+                        <div className="booking-form-wrapper glassmorphic" style={{ margin: 0 }}>
+                          <h4>Request New Consultation</h4>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>Schedule another virtual appointment instantly</p>
+                          <form onSubmit={handleBookingSubmit}>
+                            <input type="hidden" value={loggedInPatient.name} />
+                            <input type="hidden" value={loggedInPatient.email} />
+                            <input type="hidden" value={loggedInPatient.phone} />
+                            
+                            <div className="form-group">
+                              <label>Select Specialist</label>
+                              <select 
+                                required
+                                value={bookingFormData.doctorId}
+                                onChange={(e) => setBookingFormData({ 
+                                  ...bookingFormData, 
+                                  doctorId: e.target.value,
+                                  patientName: loggedInPatient.name,
+                                  email: loggedInPatient.email,
+                                  phone: loggedInPatient.phone
+                                })}
+                              >
+                                <option value="">Choose Specialist...</option>
+                                {doctors.map(d => (
+                                  <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+                                ))}
+                              </select>
+                            </div>
 
-                      <div className="form-group">
-                        <label>Explain Symptoms</label>
-                        <textarea 
-                          rows="3" 
-                          placeholder="Brief diagnostic explanation..."
-                          value={bookingFormData.symptoms}
-                          onChange={(e) => setBookingFormData({ ...bookingFormData, symptoms: e.target.value })}
-                        />
-                      </div>
+                            <div className="form-group">
+                              <label>Preferred Date</label>
+                              <input 
+                                type="date" 
+                                required
+                                value={bookingFormData.date}
+                                onChange={(e) => setBookingFormData({ ...bookingFormData, date: e.target.value })}
+                              />
+                            </div>
 
-                      <button type="submit" className="btn btn-primary btn-block">Confirm Request Slot</button>
-                    </form>
+                            <div className="form-group">
+                              <label>Explain Symptoms</label>
+                              <textarea 
+                                rows="3" 
+                                placeholder="Brief diagnostic explanation..."
+                                value={bookingFormData.symptoms}
+                                onChange={(e) => setBookingFormData({ ...bookingFormData, symptoms: e.target.value })}
+                              />
+                            </div>
+
+                            <button type="submit" className="btn btn-primary btn-block">Confirm Request Slot</button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+
+                    {patientNavView === 'profile' && (
+                      <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.5rem' }}>
+                        {!isEditingPatSelf ? (
+                          <div className="doctor-profile-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
+                              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff', fontWeight: 'bold' }}>
+                                {loggedInPatient.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{loggedInPatient.name}</h3>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '1rem', marginTop: '0.25rem' }}>Patient Account</div>
+                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Active Member since 2026</div>
+                              </div>
+                            </div>
+
+                            <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Full Name</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInPatient.name || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInPatient.phone || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Registered Email</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInPatient.email || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Account Password</strong>
+                                <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span>{showPasswords.patient ? loggedInPatient.password : '••••••••'}</span>
+                                  <button onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                  </button>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div style={{ marginTop: '1.5rem' }}>
+                              <button className="btn btn-primary" onClick={() => {
+                                setPatSelfData({
+                                  name: loggedInPatient.name,
+                                  email: loggedInPatient.email,
+                                  phone: loggedInPatient.phone || '',
+                                  password: loggedInPatient.password
+                                });
+                                setIsEditingPatSelf(true);
+                              }}>
+                                <i className="fa-solid fa-user-pen" style={{ marginRight: '0.5rem' }}></i>Edit Profile settings
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <form onSubmit={handleSavePatSelf} className="add-doctor-form glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px' }}>
+                            <h4 style={{ marginTop: 0, marginBottom: '1.5rem' }}>Modify Account Settings</h4>
+                            
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Full Name</label>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  value={patSelfData.name}
+                                  onChange={(e) => setPatSelfData({ ...patSelfData, name: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Contact Phone Number</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="e.g. 08012345678"
+                                  value={patSelfData.phone}
+                                  onChange={(e) => setPatSelfData({ ...patSelfData, phone: e.target.value })}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Email Address</label>
+                                <input 
+                                  type="email" 
+                                  required 
+                                  value={patSelfData.email}
+                                  onChange={(e) => setPatSelfData({ ...patSelfData, email: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Account Password</label>
+                                <div className="password-input-wrapper">
+                                  <input 
+                                    type={showPasswords.patientForm ? 'text' : 'password'} 
+                                    required 
+                                    value={patSelfData.password}
+                                    onChange={(e) => setPatSelfData({ ...patSelfData, password: e.target.value })}
+                                  />
+                                  <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patientForm: !p.patientForm }))} tabIndex={-1}>
+                                    <i className={`fa-solid ${showPasswords.patientForm ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                              <button type="submit" className="btn btn-primary">Save Changes</button>
+                              <button type="button" className="btn btn-outline" onClick={() => setIsEditingPatSelf(false)}>Cancel</button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1515,7 +1902,11 @@ export default function App() {
                           regNo: loggedInDoctor.regNo || '',
                           email: loggedInDoctor.email || '',
                           password: loggedInDoctor.password || '',
-                          image: loggedInDoctor.image || ''
+                          image: loggedInDoctor.image || '',
+                          phone: loggedInDoctor.phone || '',
+                          bio: loggedInDoctor.bio || '',
+                          clinicRoom: loggedInDoctor.clinicRoom || '',
+                          license: loggedInDoctor.license || ''
                         });
                         setIsEditingDocSelf(false);
                       }}
@@ -1623,6 +2014,14 @@ export default function App() {
                                 <span style={{ fontSize: '1rem' }}>{loggedInDoctor.schedule || 'N/A'}</span>
                               </div>
                               <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Clinic Room / Office</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.clinicRoom || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.phone || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Portal Login Email</strong>
                                 <span style={{ fontSize: '1rem' }}>{loggedInDoctor.email || 'N/A'}</span>
                               </div>
@@ -1637,7 +2036,26 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div style={{ marginTop: '1rem' }}>
+                            {loggedInDoctor.bio && (
+                              <div style={{ marginTop: '1.25rem', padding: '1.25rem', background: 'rgba(28,43,73,0.04)', borderRadius: '8px' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Professional Biography Summary</strong>
+                                <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', fontStyle: 'italic' }}>"{loggedInDoctor.bio}"</p>
+                              </div>
+                            )}
+
+                            {loggedInDoctor.license && (
+                              <div style={{ marginTop: '1.25rem', padding: '1.25rem', background: 'rgba(28,43,73,0.04)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Medical License / Professional Credentials</strong>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Official credentials verify board registration and clinical practice rights.</span>
+                                </div>
+                                <a href={loggedInDoctor.license} download={`license_${loggedInDoctor.name.replace(/\s+/g, '_')}`} className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <i className="fa-solid fa-download"></i> Download License File
+                                </a>
+                              </div>
+                            )}
+
+                            <div style={{ marginTop: '1.5rem' }}>
                               <button className="btn btn-primary" onClick={() => {
                                 const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
                                 setDocSelfData({
@@ -1648,7 +2066,11 @@ export default function App() {
                                   regNo: loggedInDoctor.regNo || '',
                                   email: loggedInDoctor.email || '',
                                   password: loggedInDoctor.password || '',
-                                  image: loggedInDoctor.image || ''
+                                  image: loggedInDoctor.image || '',
+                                  phone: loggedInDoctor.phone || '',
+                                  bio: loggedInDoctor.bio || '',
+                                  clinicRoom: loggedInDoctor.clinicRoom || '',
+                                  license: loggedInDoctor.license || ''
                                 });
                                 setIsEditingDocSelf(true);
                               }}>
@@ -1743,6 +2165,37 @@ export default function App() {
 
                             <div className="form-row">
                               <div className="form-group">
+                                <label>Contact Phone Number</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="e.g. 08034567890"
+                                  value={docSelfData.phone || ''}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, phone: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Clinic Room / Location</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="e.g. Room 102, West Wing"
+                                  value={docSelfData.clinicRoom || ''}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, clinicRoom: e.target.value })}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="form-group">
+                              <label>Professional Biography / Clinical Summary</label>
+                              <textarea 
+                                rows="3"
+                                placeholder="Write a summary of your professional background, clinical interest areas, and care approach..."
+                                value={docSelfData.bio || ''}
+                                onChange={(e) => setDocSelfData({ ...docSelfData, bio: e.target.value })}
+                              />
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group">
                                 <label>Profile Image (File Upload)</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                   <input 
@@ -1769,9 +2222,43 @@ export default function App() {
                                   )}
                                 </div>
                               </div>
+
+                              <div className="form-group">
+                                <label>Upload Medical License / Credentials</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                  <input 
+                                    type="file" 
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          setDocSelfData({ ...docSelfData, license: reader.result });
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                    style={{ flexGrow: 1 }}
+                                  />
+                                  {docSelfData.license && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                      <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>✓ Uploaded</span>
+                                      <button 
+                                        type="button" 
+                                        onClick={() => setDocSelfData({ ...docSelfData, license: '' })} 
+                                        style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }}
+                                        title="Remove License"
+                                      >
+                                        &times;
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                               <button type="submit" className="btn btn-primary">Save Changes</button>
                               <button type="button" className="btn btn-outline" onClick={() => setIsEditingDocSelf(false)}>Cancel</button>
                             </div>
@@ -1845,6 +2332,19 @@ export default function App() {
                       onClick={() => setAdminNavView('inquiries')}
                     >
                       <i className="fa-solid fa-inbox"></i> Patient Inquiries
+                    </button>
+                    <button 
+                      className={`sidebar-nav-btn ${adminNavView === 'profile' ? 'active' : ''}`}
+                      onClick={() => {
+                        setAdminNavView('profile');
+                        setAdminSelfData({
+                          username: adminCredentials.username,
+                          password: adminCredentials.password
+                        });
+                        setIsEditingAdminSelf(false);
+                      }}
+                    >
+                      <i className="fa-solid fa-user-gear"></i> Admin Profile
                     </button>
                   </div>
 
@@ -2013,6 +2513,36 @@ export default function App() {
                               </div>
                             </div>
                           </div>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Phone Number</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g. 08034567890"
+                                value={newDoctorData.phone || ''}
+                                onChange={(e) => setNewDoctorData({ ...newDoctorData, phone: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Clinic Room / Location</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g. Room 102, West Wing"
+                                value={newDoctorData.clinicRoom || ''}
+                                onChange={(e) => setNewDoctorData({ ...newDoctorData, clinicRoom: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>Professional Biography / Clinical Summary</label>
+                            <textarea 
+                              rows="3"
+                              placeholder="Brief professional background, clinical specialties, and patient care philosophy..."
+                              value={newDoctorData.bio || ''}
+                              onChange={(e) => setNewDoctorData({ ...newDoctorData, bio: e.target.value })}
+                            />
+                          </div>
 
                           <div className="form-row">
                             <div className="form-group">
@@ -2042,9 +2572,43 @@ export default function App() {
                                 )}
                               </div>
                             </div>
+
+                            <div className="form-group">
+                              <label>Medical License / Credentials (PDF or Image)</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <input 
+                                  type="file" 
+                                  accept="image/*,application/pdf"
+                                  onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setNewDoctorData({ ...newDoctorData, license: reader.result });
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  style={{ flexGrow: 1 }}
+                                />
+                                {newDoctorData.license && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>✓ Uploaded</span>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setNewDoctorData({ ...newDoctorData, license: '' })} 
+                                      style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }}
+                                      title="Remove License"
+                                    >
+                                      &times;
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                             <button type="submit" className="btn btn-primary">{editingDoctorId ? "Update Profile" : "Save Profile to Board"}</button>
                             {editingDoctorId && (
                               <button 
@@ -2052,7 +2616,7 @@ export default function App() {
                                 className="btn btn-outline" 
                                 onClick={() => {
                                   setEditingDoctorId(null);
-                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '' });
+                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
                                 }}
                               >
                                 Cancel Edit
@@ -2066,7 +2630,7 @@ export default function App() {
                           <div className="admin-doctors-list-grid">
                             {doctors.map(d => (
                               <div className="admin-doctor-card glassmorphic" key={d.id}>
-                                <div className="admin-doc-info" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', alignItems: 'center' }}>
                                   {d.image ? (
                                     <img src={d.image} alt={d.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)', flexShrink: 0 }} />
                                   ) : (
@@ -2074,7 +2638,7 @@ export default function App() {
                                       {d.name.charAt(d.name.indexOf(' ') + 1) || d.name.charAt(0)}
                                     </div>
                                   )}
-                                  <div>
+                                  <div className="admin-doc-info">
                                     <strong>{d.name}</strong>
                                     <span>{d.specialty} — {d.experience}</span>
                                     <small>{d.schedule} | {d.regNo}</small>
@@ -2231,6 +2795,89 @@ export default function App() {
                           <div className="empty-state">
                             <p>Inbox is empty. No patient inquiries received.</p>
                           </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Workspace: Admin Profile Settings */}
+                    {adminNavView === 'profile' && (
+                      <div style={{ padding: '1.5rem' }}>
+                        {!isEditingAdminSelf ? (
+                          <div className="doctor-profile-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
+                              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-indigo), var(--color-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff', fontWeight: 'bold' }}>
+                                A
+                              </div>
+                              <div>
+                                <h3 style={{ margin: 0, fontSize: '1.4rem' }}>Administrator Settings</h3>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '1rem', marginTop: '0.25rem' }}>Role: Admin (Global Oversight)</div>
+                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Full management control over doctors, patients, and bookings.</div>
+                              </div>
+                            </div>
+
+                            <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Admin Username</strong>
+                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{adminCredentials.username}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Admin Password</strong>
+                                <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span>{showPasswords.admin ? adminCredentials.password : '••••••••'}</span>
+                                  <button onClick={() => setShowPasswords(p => ({ ...p, admin: !p.admin }))} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <i className={`fa-solid ${showPasswords.admin ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                  </button>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div style={{ marginTop: '1.5rem' }}>
+                              <button className="btn btn-primary" onClick={() => {
+                                setAdminSelfData({
+                                  username: adminCredentials.username,
+                                  password: adminCredentials.password
+                                });
+                                setIsEditingAdminSelf(true);
+                              }}>
+                                <i className="fa-solid fa-user-gear" style={{ marginRight: '0.5rem' }}></i>Edit Login Credentials
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <form onSubmit={handleSaveAdminSelf} className="add-doctor-form glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px' }}>
+                            <h4 style={{ marginTop: 0, marginBottom: '1.5rem' }}>Modify Administrator Credentials</h4>
+                            
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Admin Username</label>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  value={adminSelfData.username}
+                                  onChange={(e) => setAdminSelfData({ ...adminSelfData, username: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Admin Password</label>
+                                <div className="password-input-wrapper">
+                                  <input 
+                                    type={showPasswords.adminForm ? 'text' : 'password'} 
+                                    required 
+                                    value={adminSelfData.password}
+                                    onChange={(e) => setAdminSelfData({ ...adminSelfData, password: e.target.value })}
+                                  />
+                                  <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, adminForm: !p.adminForm }))} tabIndex={-1}>
+                                    <i className={`fa-solid ${showPasswords.adminForm ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                              <button type="submit" className="btn btn-primary">Save Changes</button>
+                              <button type="button" className="btn btn-outline" onClick={() => setIsEditingAdminSelf(false)}>Cancel</button>
+                            </div>
+                          </form>
                         )}
                       </div>
                     )}
@@ -2490,18 +3137,44 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div>
-                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>MDCN Registration No.</strong>
-                <div style={{ fontSize: '0.95rem', marginTop: '0.15rem', fontFamily: 'monospace', fontWeight: 'bold' }}>{adminSelectedDoctor.regNo || 'N/A'}</div>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>MDCN Registration</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontFamily: 'monospace', fontWeight: 'bold' }}>{adminSelectedDoctor.regNo || 'N/A'}</div>
+                </div>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Clinic Location</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.clinicRoom || 'N/A'}</div>
+                </div>
               </div>
-              <div>
-                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Weekly Schedule</strong>
-                <div style={{ fontSize: '0.95rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.schedule || 'N/A'}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Phone Number</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.phone || 'N/A'}</div>
+                </div>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Weekly Schedule</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.schedule || 'N/A'}</div>
+                </div>
               </div>
+              {adminSelectedDoctor.bio && (
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Professional Biography</strong>
+                  <div style={{ fontSize: '0.88rem', marginTop: '0.15rem', lineHeight: '1.4', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>"{adminSelectedDoctor.bio}"</div>
+                </div>
+              )}
+              {adminSelectedDoctor.license && (
+                <div style={{ marginTop: '0.25rem' }}>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Professional Credentials</strong>
+                  <a href={adminSelectedDoctor.license} download={`license_${adminSelectedDoctor.name.replace(/\s+/g, '_')}`} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                    <i className="fa-solid fa-download"></i> Download Medical License File
+                  </a>
+                </div>
+              )}
               <div>
                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Portal Login Credentials</strong>
-                <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', padding: '0.65rem 0.85rem', background: 'rgba(28,43,73,0.06)', borderRadius: '6px', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '0.88rem', marginTop: '0.15rem', padding: '0.65rem 0.85rem', background: 'rgba(28,43,73,0.06)', borderRadius: '6px', fontFamily: 'monospace' }}>
                   <div>Email: <strong>{adminSelectedDoctor.email || 'N/A'}</strong></div>
                   <div style={{ marginTop: '0.25rem' }}>Password: <strong>{adminSelectedDoctor.password || 'N/A'}</strong></div>
                 </div>
