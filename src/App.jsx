@@ -131,6 +131,7 @@ export default function App() {
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
   const [adminSelectedApt, setAdminSelectedApt] = useState(null);
   const [adminSelectedInquiry, setAdminSelectedInquiry] = useState(null);
+  const [adminSelectedDoctor, setAdminSelectedDoctor] = useState(null);
   const [activeConsultationApt, setActiveConsultationApt] = useState(null); // For doctor prescription modal
   const [consultationNotes, setConsultationNotes] = useState({ notes: '', prescription: '' });
   const [editingApt, setEditingApt] = useState(null);
@@ -1742,6 +1743,9 @@ export default function App() {
                                   <small style={{ display: 'block', color: 'var(--color-accent)', marginTop: '0.25rem', fontWeight: '500' }}>Login: {d.email || 'N/A'} / {d.password || 'N/A'}</small>
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                  <button className="delete-doctor-btn" onClick={() => setAdminSelectedDoctor(d)} title="View Profile" style={{ backgroundColor: 'rgba(28, 43, 73, 0.1)', color: 'var(--color-indigo)' }}>
+                                    <i className="fa-solid fa-eye"></i>
+                                  </button>
                                   <button className="delete-doctor-btn" onClick={() => startEditDoctor(d)} title="Edit Profile" style={{ backgroundColor: 'rgba(28, 43, 73, 0.1)', color: 'var(--color-indigo)' }}>
                                     <i className="fa-solid fa-pen-to-square"></i>
                                   </button>
@@ -2112,6 +2116,59 @@ export default function App() {
                 setAdminSelectedInquiry(null);
               }} style={{ borderColor: '#EF4444', color: '#EF4444' }}>Delete Inquiry</button>
               <button className="btn btn-primary" onClick={() => setAdminSelectedInquiry(null)}>Close Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- 6.7 Doctor Profile Details Modal --- */}
+      {adminSelectedDoctor && (
+        <div className="modal-backdrop" onClick={() => setAdminSelectedDoctor(null)}>
+          <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '500px', textAlign: 'left', alignItems: 'stretch' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0 }}>Doctor Profile</h3>
+              <button onClick={() => setAdminSelectedDoctor(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+            </div>
+
+            {/* Doctor Avatar / Image */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'rgba(28,43,73,0.05)', borderRadius: '8px' }}>
+              {adminSelectedDoctor.image ? (
+                <img src={adminSelectedDoctor.image} alt={adminSelectedDoctor.name} style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent)' }} />
+              ) : (
+                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
+                  {adminSelectedDoctor.name.charAt(adminSelectedDoctor.name.indexOf(' ') + 1) || adminSelectedDoctor.name.charAt(0)}
+                </div>
+              )}
+              <div>
+                <strong style={{ fontSize: '1.1rem' }}>{adminSelectedDoctor.name}</strong>
+                <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>{adminSelectedDoctor.specialty}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{adminSelectedDoctor.experience} Experience</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>MDCN Registration No.</strong>
+                <div style={{ fontSize: '0.95rem', marginTop: '0.15rem', fontFamily: 'monospace', fontWeight: 'bold' }}>{adminSelectedDoctor.regNo || 'N/A'}</div>
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Weekly Schedule</strong>
+                <div style={{ fontSize: '0.95rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.schedule || 'N/A'}</div>
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Portal Login Credentials</strong>
+                <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', padding: '0.65rem 0.85rem', background: 'rgba(28,43,73,0.06)', borderRadius: '6px', fontFamily: 'monospace' }}>
+                  <div>Email: <strong>{adminSelectedDoctor.email || 'N/A'}</strong></div>
+                  <div style={{ marginTop: '0.25rem' }}>Password: <strong>{adminSelectedDoctor.password || 'N/A'}</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button className="btn btn-outline btn-sm" onClick={() => { startEditDoctor(adminSelectedDoctor); setAdminSelectedDoctor(null); }}>
+                <i className="fa-solid fa-pen-to-square" style={{ marginRight: '0.35rem' }}></i>Edit Profile
+              </button>
+              <button className="btn btn-primary" onClick={() => setAdminSelectedDoctor(null)}>Close</button>
             </div>
           </div>
         </div>
