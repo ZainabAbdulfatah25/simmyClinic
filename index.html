@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="SimmyCare Online Clinic - Schedule digital health consultations, search expert doctor profiles, and request medical booking slots online. Highly responsive and modern virtual healthcare portal.">
+  <title>SimmyCare Consultation Portal - Virtual Health Scheduling</title>
+
+  <!-- Favicon / Visual Assets -->
+  <link rel="icon" type="image/png"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+
+  <!-- FontAwesome Icons for modern aesthetic -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+  <!-- Global Background Particles Backdrop (Static SVG animation wrapper) -->
+  <div class="global-particles-backdrop" aria-hidden="true">
+    <svg class="bg-orbit-svg orbit-top-left" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+      <g class="orbit-group-outer">
+        <circle cx="300" cy="300" r="220" fill="none" class="orbit-ring-outer" stroke-width="1" />
+        <circle cx="300" cy="80" r="5" class="orbit-node-glow node-color-1" />
+        <circle cx="300" cy="520" r="6" class="orbit-node-glow node-color-3" />
+      </g>
+      <g class="orbit-group-inner">
+        <circle cx="300" cy="300" r="150" fill="none" class="orbit-ring-inner" stroke-width="0.75" />
+        <circle cx="450" cy="300" r="4" class="orbit-node-glow node-color-2" />
+        <circle cx="150" cy="300" r="5" class="orbit-node-glow node-color-4" />
+      </g>
+    </svg>
+    <svg class="bg-orbit-svg orbit-bottom-right" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+      <g class="orbit-group-outer">
+        <circle cx="300" cy="300" r="220" fill="none" class="orbit-ring-outer" stroke-width="1" />
+        <circle cx="300" cy="80" r="6" class="orbit-node-glow node-color-2" />
+        <circle cx="300" cy="520" r="5" class="orbit-node-glow node-color-4" />
+      </g>
+      <g class="orbit-group-inner">
+        <circle cx="300" cy="300" r="150" fill="none" class="orbit-ring-inner" stroke-width="0.75" />
+        <circle cx="450" cy="300" r="4" class="orbit-node-glow node-color-1" />
+        <circle cx="150" cy="300" r="6" class="orbit-node-glow node-color-3" />
+      </g>
+    </svg>
+  </div>
+
+  <!-- React root mount element -->
+  <div id="root"></div>
+
+  <!-- Vite entry module -->
+  <script type="module" src="/src/main.jsx"></script>
+
+</body>
+
+</html>
