@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 // --- Seed Data ---
 const INITIAL_DOCTORS = [
-  { id: 1, name: "Dr. Amina Yusuf", specialty: "Pediatrics", schedule: "Mon - Wed (9am - 2pm)", experience: "8 Years", regNo: "MDCN/8431" },
-  { id: 2, name: "Dr. Chioma Nwachukwu", specialty: "Cardiology", schedule: "Tue - Thu (12pm - 5pm)", experience: "12 Years", regNo: "MDCN/9102" },
-  { id: 3, name: "Dr. Babajide Alao", specialty: "General Medicine", schedule: "Mon - Fri (8am - 4pm)", experience: "6 Years", regNo: "MDCN/6712" },
-  { id: 4, name: "Dr. Favour Obi", specialty: "Gynaecology", schedule: "Wed - Fri (10am - 3pm)", experience: "10 Years", regNo: "MDCN/7291" }
+  { id: 1, name: "Dr. Fatima Yahaya Maiauduga", specialty: "Gynaecology", schedule: "Mon - Wed (9am - 2pm)", experience: "8 Years", regNo: "MDCN/8431", image: "/doctor_fatima.jpg", email: "fatima@simmycare.com", password: "password123" },
+  { id: 2, name: "Dr. Chioma Nwachukwu", specialty: "Pediatrics", schedule: "Tue - Thu (12pm - 5pm)", experience: "12 Years", regNo: "MDCN/9102", email: "chioma@simmycare.com", password: "password123" },
+  { id: 3, name: "Dr. Adam Zamzam", specialty: "General Medicine", schedule: "Mon - Fri (8am - 4pm)", experience: "10 Years", regNo: "MDCN/7123", image: "/doctor_adam.jpg", email: "adam@simmycare.com", password: "password123" },
+  { id: 4, name: "Dr. Favour Obi", specialty: "Pharmacy", schedule: "Wed - Fri (10am - 3pm)", experience: "6 Years", regNo: "MDCN/7291", email: "favour@simmycare.com", password: "password123" }
 ];
 
 const INITIAL_APPOINTMENTS = [
@@ -38,8 +38,9 @@ export default function App() {
   });
 
   const [doctors, setDoctors] = useState(() => {
-    const data = localStorage.getItem("simmy_doctors");
-    return data ? JSON.parse(data) : INITIAL_DOCTORS;
+    // Force clear stale cache to show updated doctor credentials and images
+    localStorage.removeItem("simmy_doctors");
+    return INITIAL_DOCTORS;
   });
 
   const [appointments, setAppointments] = useState(() => {
@@ -50,6 +51,13 @@ export default function App() {
   const [inquiries, setInquiries] = useState(() => {
     const data = localStorage.getItem("simmy_inquiries");
     return data ? JSON.parse(data) : INITIAL_INQUIRIES;
+  });
+
+  const [patients, setPatients] = useState(() => {
+    const data = localStorage.getItem("simmy_patients");
+    return data ? JSON.parse(data) : [
+      { email: "zainab@example.com", name: "Zainab Abdulfatah", phone: "08012345678", password: "password123" }
+    ];
   });
 
   // --- Auth Role State ---
@@ -74,8 +82,8 @@ export default function App() {
   const [doctorFilter, setDoctorFilter] = useState('all');
   
   // Form inputs
-  const [patientLoginForm, setPatientLoginForm] = useState({ email: '', name: '', phone: '' });
-  const [doctorLoginForm, setDoctorLoginForm] = useState({ doctorId: '', regNo: '' });
+  const [patientLoginForm, setPatientLoginForm] = useState({ email: '', name: '', phone: '', password: '' });
+  const [doctorLoginForm, setDoctorLoginForm] = useState({ email: '', password: '' });
   const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
@@ -91,6 +99,25 @@ export default function App() {
 
   const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
   const [successModal, setSuccessModal] = useState(null); // { title: '', message: '', ticket: '' }
+  const [showTermsModal, setShowTermsModal] = useState(null); // null | 'view' | 'booking' | 'register'
+  const [hasReadTerms, setHasReadTerms] = useState(false);
+  const [bookingConsent, setBookingConsent] = useState(false);
+  const [registerConsent, setRegisterConsent] = useState(false);
+
+  // Reset read state when terms modal is toggled
+  useEffect(() => {
+    if (showTermsModal) {
+      setHasReadTerms(false);
+    }
+  }, [showTermsModal]);
+
+  const handleTermsScroll = (e) => {
+    const target = e.target;
+    // Check if scrolled to bottom with 10px tolerance
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
+      setHasReadTerms(true);
+    }
+  };
 
   // Admin and Doctor Workspace States
   const [adminNavView, setAdminNavView] = useState('appointments');
@@ -110,6 +137,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("simmy_inquiries", JSON.stringify(inquiries));
   }, [inquiries]);
+
+  useEffect(() => {
+    localStorage.setItem("simmy_patients", JSON.stringify(patients));
+  }, [patients]);
 
   // Sync Auth State
   useEffect(() => {
@@ -149,38 +180,54 @@ export default function App() {
   // --- Auth Handlers ---
   const handlePatientLoginSubmit = (e) => {
     e.preventDefault();
-    if (!patientLoginForm.email) return;
+    const email = patientLoginForm.email.toLowerCase().trim();
+    const password = patientLoginForm.password.trim();
 
-    // Check if patient email has existing appointments
-    const existing = appointments.find(a => a.email.toLowerCase() === patientLoginForm.email.toLowerCase());
-    
-    const patientObj = {
-      email: patientLoginForm.email.toLowerCase(),
-      name: isPatientRegistering ? (patientLoginForm.name || "Valued Patient") : (existing ? existing.patientName : "Valued Patient"),
-      phone: isPatientRegistering ? (patientLoginForm.phone || "") : (existing ? existing.phone : "")
-    };
-
-    setAuthRole('patient');
-    setLoggedInPatient(patientObj);
-    setPatientLoginForm({ email: '', name: '', phone: '' });
-    setIsPatientRegistering(false);
-    setLoginError('');
-    navigateTo('dashboard');
+    if (isPatientRegistering) {
+      const existing = patients.find(p => p.email.toLowerCase() === email);
+      if (existing) {
+        setLoginError("This email address is already registered.");
+        return;
+      }
+      const newPatient = {
+        email,
+        name: patientLoginForm.name || "Valued Patient",
+        phone: patientLoginForm.phone || "",
+        password: password
+      };
+      setPatients([...patients, newPatient]);
+      setAuthRole('patient');
+      setLoggedInPatient(newPatient);
+      setPatientLoginForm({ email: '', name: '', phone: '', password: '' });
+      setIsPatientRegistering(false);
+      setLoginError('');
+      navigateTo('dashboard');
+    } else {
+      const existing = patients.find(p => p.email.toLowerCase() === email);
+      if (existing && existing.password === password) {
+        setAuthRole('patient');
+        setLoggedInPatient(existing);
+        setPatientLoginForm({ email: '', name: '', phone: '', password: '' });
+        setLoginError('');
+        navigateTo('dashboard');
+      } else {
+        setLoginError("Invalid email address or password. Tip: Use zainab@example.com / password123");
+      }
+    }
   };
 
   const handleDoctorLoginSubmit = (e) => {
     e.preventDefault();
-    const docId = parseInt(doctorLoginForm.doctorId);
-    const doc = doctors.find(d => d.id === docId);
+    const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === doctorLoginForm.email.toLowerCase().trim());
 
-    if (doc && doc.regNo.toLowerCase() === doctorLoginForm.regNo.toLowerCase().trim()) {
+    if (doc && doc.password && doc.password === doctorLoginForm.password.trim()) {
       setAuthRole('doctor');
       setLoggedInDoctor(doc);
-      setDoctorLoginForm({ doctorId: '', regNo: '' });
+      setDoctorLoginForm({ email: '', password: '' });
       setLoginError('');
       navigateTo('dashboard');
     } else {
-      setLoginError('Invalid Doctor profile selection or Registration Code.');
+      setLoginError('Invalid doctor email address or password.');
     }
   };
 
@@ -358,9 +405,9 @@ export default function App() {
         <div className="header-container">
           <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
             <div className="logo-img-wrapper">
-              <img className="logo-img" src="/logo.png" alt="SimmyCare Logo" />
+              <img className="logo-img" src="/logo.svg" alt="SimmyCare Logo" />
             </div>
-            Simmy<span>Care</span>
+            <span className="logo-text">Simmy<span>Care</span></span>
           </a>
 
           <nav aria-label="Main Navigation">
@@ -403,16 +450,12 @@ export default function App() {
           <section id="home-view" className="view-section animate-fade">
             <div className="hero-container">
               <div className="hero-content">
-                <div className="badge-tag">
-                  <span className="badge-dot"></span>
-                  VIRTUAL MEDICAL ACCESS
-                </div>
                 <h1 className="hero-title">
                   Your virtual hospital. <br />
                   Consultations <span>simplified</span>
                 </h1>
                 <p className="hero-subtitle">
-                  Connect with certified medical specialists, review flexible availability hours, and submit doctor scheduling requests online. Streamlined local primary care starting from ₦5,000.
+                  SimmyCare is an online consultation clinic where you can contact any category of medical professional online without any stress. We also have physical doctors active in Abuja, Kaduna, Kano, Bauchi, and Gombe.
                 </p>
                 <div className="hero-ctas">
                   <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Consultation</button>
@@ -437,7 +480,7 @@ export default function App() {
 
                 <div className="hero-image-wrapper">
                   <div className="hero-shape-bg"></div>
-                  <img className="hero-main-img" src="/hero.png" alt="SimmyCare Online Medical Consultation" />
+                  <img className="hero-main-img" src="/hero.svg" alt="SimmyCare Online Medical Consultation" />
                   
                   {/* Floating badges */}
                   <div className="floating-badge badge-top-right glassmorphic">
@@ -490,29 +533,45 @@ export default function App() {
                 <h2>Our Premium Health Services</h2>
                 <p>High-end, digital-first healthcare consulting right from your home</p>
               </div>
-              <div className="services-grid">
+              <div className="services-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                 <div className="service-card glassmorphic">
-                  <div className="service-icon"><i className="fa-solid fa-video"></i></div>
-                  <h3>Virtual Consultations</h3>
-                  <p>Engage in face-to-face video or audio diagnostics with certified clinical specialists securely.</p>
+                  <div className="service-icon"><i className="fa-solid fa-laptop-medical"></i></div>
+                  <h3>Online Consultation</h3>
+                  <p>Contact and consult any category of medical professional online without stress from anywhere.</p>
                   <a href="#booking" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>
                     Book Appointment <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
                 <div className="service-card glassmorphic">
-                  <div className="service-icon"><i className="fa-solid fa-user-doctor"></i></div>
-                  <h3>Specialist Pediatricians</h3>
-                  <p>Dedicated medical supervision and scheduling for neonatal, child care, and adolescent development.</p>
-                  <a href="#doctors" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>
-                    Meet Specialists <i className="fa-solid fa-arrow-right-long"></i>
+                  <div className="service-icon"><i className="fa-solid fa-vials"></i></div>
+                  <h3>Mobile Laboratory</h3>
+                  <p>Professional clinical diagnostics and lab sample collections carried out directly in your home.</p>
+                  <a href="#booking" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>
+                    Request Lab Test <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
                 <div className="service-card glassmorphic">
-                  <div className="service-icon"><i className="fa-solid fa-file-prescription"></i></div>
-                  <h3>Digital Prescriptions</h3>
-                  <p>Instant authorized pharmaceutical logs delivered directly to your registered contact after consultations.</p>
+                  <div className="service-icon"><i className="fa-solid fa-prescription-bottle-medical"></i></div>
+                  <h3>Pharmacy Delivery</h3>
+                  <p>Order your prescribed medications online and get swift, reliable home delivery right to your door.</p>
                   <a href="#contact" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>
-                    Inquire Delivery <i className="fa-solid fa-arrow-right-long"></i>
+                    Order Medicine <i className="fa-solid fa-arrow-right-long"></i>
+                  </a>
+                </div>
+                <div className="service-card glassmorphic">
+                  <div className="service-icon"><i className="fa-solid fa-house-chimney-medical"></i></div>
+                  <h3>Home Services</h3>
+                  <p>Get personalized home care, nursing attention, and regular medical checkups at home.</p>
+                  <a href="#contact" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>
+                    Request Visit <i className="fa-solid fa-arrow-right-long"></i>
+                  </a>
+                </div>
+                <div className="service-card glassmorphic">
+                  <div className="service-icon"><i className="fa-solid fa-clinic-medical"></i></div>
+                  <h3>Physical Consultation</h3>
+                  <p>Book physical appointments with our medical team at a doctor's clinic/home contact in active cities.</p>
+                  <a href="#doctors" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>
+                    Find Clinic <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
               </div>
@@ -541,7 +600,7 @@ export default function App() {
               </div>
 
               <div className="specialty-filters">
-                {['all', 'Pediatrics', 'Cardiology', 'General Medicine', 'Gynaecology'].map(spec => (
+                {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Laboratory', 'Pharmacy'].map(spec => (
                   <button 
                     key={spec}
                     className={`filter-btn ${doctorFilter === spec ? 'active' : ''}`}
@@ -561,18 +620,22 @@ export default function App() {
                   return (
                     <div className="doctor-card glassmorphic" key={doc.id}>
                       <div className="doctor-image-container">
-                        <svg className="doctor-avatar-svg" width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                          <defs>
-                            <linearGradient id={`doctorGrad-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" style={{ stopColor: grad.from, stopOpacity: 1 }} />
-                              <stop offset="100%" style={{ stopColor: grad.to, stopOpacity: 1 }} />
-                            </linearGradient>
-                          </defs>
-                          <rect width="100%" height="100%" fill={`url(#doctorGrad-${idx})`} />
-                          <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontFamily="'Lora', serif" fontSize="28" fontWeight="600" fill="#FAF6EE">
-                            {doc.name.split(" ").map(n => n.charAt(0)).slice(1).join("").toUpperCase()}
-                          </text>
-                        </svg>
+                        {doc.image ? (
+                          <img className="doctor-avatar-img" src={doc.image} alt={doc.name} />
+                        ) : (
+                          <svg className="doctor-avatar-svg" width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <linearGradient id={`doctorGrad-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style={{ stopColor: grad.from, stopOpacity: 1 }} />
+                                <stop offset="100%" style={{ stopColor: grad.to, stopOpacity: 1 }} />
+                              </linearGradient>
+                            </defs>
+                            <rect width="100%" height="100%" fill={`url(#doctorGrad-${idx})`} />
+                            <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontFamily="'Lora', serif" fontSize="28" fontWeight="600" fill="#FAF6EE">
+                              {doc.name.split(" ").map(n => n.charAt(0)).slice(1).join("").toUpperCase()}
+                            </text>
+                          </svg>
+                        )}
                         <div className="doctor-badge">{doc.experience}</div>
                       </div>
                       
@@ -581,7 +644,6 @@ export default function App() {
                         <div className="doctor-specialty">{doc.specialty}</div>
                         <div className="doctor-details">
                           <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
-                          <span><i className="fa-solid fa-id-card"></i> {doc.regNo}</span>
                         </div>
                         <button className="btn btn-primary" onClick={() => {
                           setBookingFormData({ 
@@ -719,6 +781,25 @@ export default function App() {
                     />
                   </div>
 
+                  <div className="form-group consent-checkbox-group" style={{ marginBottom: '1.25rem' }}>
+                    <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                      <input 
+                        type="checkbox" 
+                        required 
+                        checked={bookingConsent}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setShowTermsModal('booking');
+                          } else {
+                            setBookingConsent(false);
+                          }
+                        }}
+                        style={{ width: 'auto', marginTop: '0.2rem' }}
+                      />
+                      <span>I consent to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('booking'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> and agree to share my clinical information.</span>
+                    </label>
+                  </div>
+
                   <button type="submit" className="btn btn-primary btn-block">Submit Booking Request</button>
                 </form>
               </div>
@@ -739,9 +820,9 @@ export default function App() {
                 <h3>SimmyCare HQ</h3>
                 <p>Need urgent assistance? Reach out via WhatsApp or call our administrative hotline directly.</p>
                 <div className="contact-details-box glassmorphic">
-                  <p><strong><i className="fa-solid fa-phone"></i> Call Center:</strong> +234 800 000 0000</p>
-                  <p><strong><i className="fa-solid fa-envelope"></i> Email Inquiries:</strong> admin@simmycare.com</p>
-                  <p><strong><i className="fa-solid fa-location-dot"></i> Location:</strong> Unit 4B, Health Plaza, Abuja, Nigeria</p>
+                  <p><strong><i className="fa-solid fa-phone"></i> Call Center:</strong> +234 901 432 4442</p>
+                  <p><strong><i className="fa-solid fa-envelope"></i> Email Inquiries:</strong> Simmyclinic@gmail.com</p>
+                  <p><strong><i className="fa-solid fa-location-dot"></i> Locations:</strong> Abuja, Kaduna, Kano, Bauchi, Gombe (P.M.B: 3511)</p>
                 </div>
               </div>
 
@@ -829,6 +910,16 @@ export default function App() {
                         onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
                       />
                     </div>
+                    <div className="form-group">
+                      <label>Password</label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="••••••••"
+                        value={patientLoginForm.password}
+                        onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
+                      />
+                    </div>
                     {isPatientRegistering && (
                       <>
                         <div className="form-group">
@@ -851,12 +942,30 @@ export default function App() {
                             onChange={(e) => setPatientLoginForm({ ...patientLoginForm, phone: e.target.value })}
                           />
                         </div>
+                        <div className="form-group consent-checkbox-group" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                          <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                            <input 
+                              type="checkbox" 
+                              required 
+                              checked={registerConsent}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setShowTermsModal('register');
+                                } else {
+                                  setRegisterConsent(false);
+                                }
+                              }}
+                              style={{ width: 'auto', marginTop: '0.2rem' }}
+                            />
+                            <span>I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('register'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> compliance guidelines.</span>
+                          </label>
+                        </div>
                       </>
                     )}
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
                       {isPatientRegistering 
                         ? "*All fields are required to establish your medical file."
-                        : "*Tip: To inspect seeded data, log in using zainab@example.com. New emails are registered instantly!"}
+                        : "*Tip: To inspect seeded data, log in using zainab@example.com and password password123."}
                     </p>
                     <button type="submit" className="btn btn-primary btn-block">
                       {isPatientRegistering ? "Create Profile & Access Portal" : "Access My Tickets"}
@@ -894,32 +1003,29 @@ export default function App() {
                 {loginTab === 'doctor' && (
                   <form onSubmit={handleDoctorLoginSubmit}>
                     <div className="form-group">
-                      <label>Select Doctor Profile</label>
-                      <select 
-                        required
-                        value={doctorLoginForm.doctorId}
-                        onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, doctorId: e.target.value })}
-                      >
-                        <option value="">Choose your profile...</option>
-                        {doctors.map(d => (
-                          <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
-                        ))}
-                      </select>
+                      <label>Doctor Email Address</label>
+                      <input 
+                        type="email" 
+                        required 
+                        placeholder="doctor@simmycare.com"
+                        value={doctorLoginForm.email}
+                        onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, email: e.target.value })}
+                      />
                     </div>
                     <div className="form-group">
-                      <label>MDCN Registration Code</label>
+                      <label>Access Password</label>
                       <input 
                         type="password" 
                         required 
-                        placeholder="e.g. MDCN/8431"
-                        value={doctorLoginForm.regNo}
-                        onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, regNo: e.target.value })}
+                        placeholder="••••••••"
+                        value={doctorLoginForm.password}
+                        onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, password: e.target.value })}
                       />
                     </div>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
-                      *Tip: Log in with <strong>Dr. Amina Yusuf</strong> and registration code <strong>MDCN/8431</strong>.
+                      *Tip: Log in with <strong>fatima@simmycare.com</strong> and password <strong>password123</strong>.
                     </p>
-                    <button type="submit" className="btn btn-primary btn-block">Verify Doctor Key</button>
+                    <button type="submit" className="btn btn-primary btn-block">Verify Doctor Credentials</button>
                   </form>
                 )}
 
@@ -1342,9 +1448,10 @@ export default function App() {
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, specialty: e.target.value })}
                               >
                                 <option value="Pediatrics">Pediatrics</option>
-                                <option value="Cardiology">Cardiology</option>
                                 <option value="General Medicine">General Medicine</option>
                                 <option value="Gynaecology">Gynaecology</option>
+                                <option value="Laboratory">Laboratory</option>
+                                <option value="Pharmacy">Pharmacy</option>
                               </select>
                             </div>
                           </div>
@@ -1450,11 +1557,11 @@ export default function App() {
           <div className="footer-brand">
             <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
               <div className="logo-img-wrapper">
-                <img className="logo-img" src="/logo.png" alt="SimmyCare Logo" />
+                <img className="logo-img" src="/logo.svg" alt="SimmyCare Logo" />
               </div>
-              Simmy<span>Care</span>
+              <span className="logo-text">Simmy<span>Care</span></span>
             </a>
-            <p>Providing seamless, structured remote healthcare consulting and digital appointment scheduling services for local patient wellness.</p>
+            <p>SimmyCare is an online clinic offering stress-free medical consultations, mobile laboratory diagnostics, pharmacy deliveries, and home services across Abuja, Kaduna, Kano, Bauchi, and Gombe.</p>
           </div>
 
           <div className="footer-links-col">
@@ -1467,12 +1574,20 @@ export default function App() {
             </ul>
           </div>
 
+          <div className="footer-links-col">
+            <h4>Legal & Compliance</h4>
+            <ul>
+              <li><a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('view'); }}>Terms & Conditions</a></li>
+              <li><a href="#privacy" onClick={(e) => { e.preventDefault(); setShowTermsModal('view'); }}>Privacy Policy</a></li>
+            </ul>
+          </div>
+
           <div className="footer-hours-col">
             <h4>Operational Hours</h4>
             <p>Monday – Friday: 8:00 AM – 5:00 PM</p>
             <p>Saturday: 9:00 AM – 2:00 PM</p>
             <p>Sunday: Emergency Consultations Only</p>
-            <p className="footer-contact-phone"><i className="fa-solid fa-phone"></i> +234 800 000 0000</p>
+            <p className="footer-contact-phone"><i className="fa-solid fa-phone"></i> +234 901 432 4442</p>
           </div>
         </div>
 
@@ -1542,7 +1657,7 @@ export default function App() {
 
       {/* --- 6. WhatsApp Floating Widget --- */}
       <a 
-        href="https://wa.me/2348000000000?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation." 
+        href="https://wa.me/2349014324442?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation." 
         className="whatsapp-widget" 
         target="_blank" 
         rel="noopener noreferrer"
@@ -1550,6 +1665,59 @@ export default function App() {
       >
         <i className="fa-brands fa-whatsapp"></i>
       </a>
+
+      {/* --- 7. Terms & Conditions & Privacy Policy Modal --- */}
+      {showTermsModal && (
+        <div className="modal-backdrop" style={{ zIndex: 1000 }}>
+          <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '600px', textAlign: 'left', alignItems: 'stretch', maxHeight: '90vh' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+              <h3 style={{ margin: 0 }}>Terms of Service & Privacy Policy</h3>
+              <button 
+                onClick={() => setShowTermsModal(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            
+            <div 
+              onScroll={handleTermsScroll}
+              style={{ fontSize: '0.9rem', lineHeight: '1.5', color: 'var(--color-text)', overflowY: 'auto', maxHeight: '320px', paddingRight: '0.5rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1rem' }}
+            >
+              <h4>1. Medical Assessment Consent</h4>
+              <p>By submitting an appointment request, you consent to receive remote clinical evaluations, diagnostic advice, and authorized prescriptions from certified professionals associated with SimmyCare.</p>
+              
+              <h4>2. Patient Data Security</h4>
+              <p>We implement role-based access control (RBAC). Only the medical practitioners directly assigned to your consultation and authorised clinic administrators have access to your clinical symptoms and patient files.</p>
+              
+              <h4>3. Communication & Service Setup</h4>
+              <p>Updates, bookings, and remote diagnostic reports will be communicated primarily through email (Simmyclinic@gmail.com) and WhatsApp (+234 901 432 4442).</p>
+              
+              <h4>4. Physical Branches & Jurisdictions</h4>
+              <p>While primary services are digital, physical consultation requests are routed to doctor-contact locations in Abuja, Kaduna, Kano, Bauchi, and Gombe.</p>
+
+              <p style={{ fontSize: '0.8rem', fontStyle: 'italic', marginTop: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>— End of Document —</p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button 
+                className="btn btn-primary" 
+                disabled={!hasReadTerms}
+                onClick={() => {
+                  if (showTermsModal === 'booking') {
+                    setBookingConsent(true);
+                  } else if (showTermsModal === 'register') {
+                    setRegisterConsent(true);
+                  }
+                  setShowTermsModal(null);
+                }}
+              >
+                I Understand & Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
