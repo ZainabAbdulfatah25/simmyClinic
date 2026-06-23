@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Soft Glows -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#E2ECF5" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#b6c3c9" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Clinic Gradients -->
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2C5D88" />
+      <stop offset="100%" stop-color="#182B49" />
+    </linearGradient>
+
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2ECF5" />
+      <stop offset="100%" stop-color="#2C5D88" />
+    </linearGradient>
+
+    <linearGradient id="metallic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#E2ECF5" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+
+    <!-- Glassmorphic Card fill -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.4" />
+    </linearGradient>
+
+    <!-- Drop Shadows and Glow Filters -->
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="2" dy="8" stdDeviation="6" flood-color="#182B49" flood-opacity="0.1" />
+    </filter>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 1. Ambient Background Glow -->
+  <circle cx="250" cy="250" r="220" fill="url(#bgGlow)" />
+
+  <!-- 2. Medical Tech Circular Rings -->
+  <circle cx="250" cy="250" r="180" fill="none" stroke="#2C5D88" stroke-width="1" stroke-opacity="0.15" stroke-dasharray="8 4" />
+  <circle cx="250" cy="250" r="140" fill="none" stroke="#182B49" stroke-width="1.5" stroke-opacity="0.1" />
+
+  <!-- 3. CENTRAL TABLET DEVICE (Dashboard View) -->
+  <g filter="url(#shadow)">
+    <!-- Device Body -->
+    <rect x="110" y="80" width="280" height="340" rx="20" fill="#FFFFFF" stroke="rgba(255,255,255,0.9)" stroke-width="2" />
+    <!-- Device Screen -->
+    <rect x="120" y="90" width="260" height="320" rx="12" fill="#F8FAFC" />
+    
+    <!-- Screen Header (Portal Interface) -->
+    <rect x="120" y="90" width="260" height="42" rx="12" fill="url(#primaryGrad)" />
+    <!-- Round Screen Notch Corner Cutoff Cover -->
+    <rect x="120" y="100" width="260" height="15" fill="url(#primaryGrad)" />
+    
+    <!-- Portal Header Content -->
+    <circle cx="140" cy="110" r="3.5" fill="#4ADE80" /> <!-- Status Green -->
+    <text x="150" y="114" fill="#E2ECF5" font-family="'Outfit', sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">SimmyCare Telehealth Console</text>
+    <rect x="330" y="102" width="38" height="16" rx="8" fill="rgba(255,255,255,0.15)" />
+    <text x="349" y="113" fill="#FFFFFF" font-family="'Inter', sans-serif" font-size="8" font-weight="600" text-anchor="middle">v2.1</text>
+
+    <!-- Main Diagnostic Section inside the screen -->
+    <!-- Heart Rate Vitals Graph Panel -->
+    <rect x="132" y="145" width="236" height="100" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+    <text x="144" y="162" fill="#182B49" font-family="'Outfit', sans-serif" font-size="10" font-weight="700">Patient Vitals Telemetry</text>
+    <text x="144" y="172" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500">Live ECG Diagnostics Stream</text>
+    
+    <!-- Gridlines in Vitals Panel -->
+    <line x1="140" y1="190" x2="350" y2="190" stroke="#F1F5F9" stroke-width="1" />
+    <line x1="140" y1="210" x2="350" y2="210" stroke="#F1F5F9" stroke-width="1" />
+    <line x1="140" y1="230" x2="350" y2="230" stroke="#F1F5F9" stroke-width="1" />
+    
+    <!-- Pulse Waveform -->
+    <path d="M 140 210 L 175 210 L 182 195 L 188 225 L 196 175 L 204 235 L 210 220 L 216 210 L 250 210 L 257 198 L 263 220 L 269 180 L 275 230 L 281 210 L 350 210" 
+          fill="none" stroke="url(#primaryGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+
+    <text x="325" y="166" fill="#2C5D88" font-family="'Outfit', sans-serif" font-size="18" font-weight="800" text-anchor="end">72</text>
+    <text x="328" y="166" fill="#64748B" font-family="'Inter', sans-serif" font-size="8" font-weight="600">BPM</text>
+
+    <!-- Consultation Schedule Cards List (No AI Faces, Clean UI components) -->
+    <rect x="132" y="255" width="236" height="42" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+    <!-- Status Icon/Dot indicator -->
+    <rect x="142" y="265" width="22" height="22" rx="6" fill="#E2ECF5" />
+    <!-- Heart Icon in UI -->
+    <path d="M 153 271 C 151 269, 149 269, 148 270 C 147 269, 145 269, 144 270 C 143 271, 143 273, 146 275 L 148 277 L 150 275 C 153 273, 153 271, 153 271 Z" 
+          fill="#2C5D88" transform="translate(0,0) scale(0.9)" />
+    <text x="172" y="274" fill="#182B49" font-family="'Outfit', sans-serif" font-size="9" font-weight="700">Dr. Amina Yusuf</text>
+    <text x="172" y="283" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500">Pediatrics • 10:00 AM Slot</text>
+    <rect x="315" y="267" width="45" height="16" rx="8" fill="#DCFCE7" />
+    <text x="337" y="278" fill="#15803D" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">Approved</text>
+
+    <rect x="132" y="305" width="236" height="42" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
+    <rect x="142" y="315" width="22" height="22" rx="6" fill="#F1F5F9" />
+    <path d="M 153 321 C 151 319, 149 319, 148 320 C 147 319, 145 319, 144 320 C 143 321, 143 323, 146 325 L 148 327 L 150 325 C 153 323, 153 321, 153 321 Z" 
+          fill="#4A5D6E" transform="translate(0,0) scale(0.9)" />
+    <text x="172" y="324" fill="#182B49" font-family="'Outfit', sans-serif" font-size="9" font-weight="700">Dr. Babajide Alao</text>
+    <text x="172" y="333" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500">General Medicine • 02:30 PM Slot</text>
+    <rect x="315" y="317" width="45" height="16" rx="8" fill="#FEF9C3" />
+    <text x="337" y="328" fill="#A16207" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">Pending</text>
+
+    <!-- Bottom Action Ribbon -->
+    <rect x="132" y="357" width="236" height="38" rx="8" fill="url(#accentGrad)" opacity="0.9" />
+    <text x="250" y="380" fill="#FFFFFF" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="0.5">LAUNCH DIGITAL CONSULTATION</text>
+  </g>
+
+  <!-- 4. REALISTIC STETHOSCOPE GRAPHIC (Gracefully curves behind/around tablet) -->
+  <!-- Ear Tips / Metal Tubes (Top-Left Backdrop) -->
+  <g stroke="#64748B" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6">
+    <path d="M 120 70 C 115 50, 140 40, 150 65 L 150 90" />
+    <path d="M 190 70 C 195 50, 170 40, 160 65 L 160 90" />
+    <rect x="148" y="58" width="4" height="6" rx="2" fill="#1E293B" stroke="none" />
+    <rect x="158" y="58" width="4" height="6" rx="2" fill="#1E293B" stroke="none" />
+  </g>
+
+  <!-- Flexible Black Stethoscope Cord (Bezier curves weaving around) -->
+  <path d="M 155 90 
+           C 155 140, 80 180, 80 280 
+           C 80 370, 200 450, 290 450 
+           C 390 450, 420 380, 420 320" 
+        fill="none" stroke="#1E293B" stroke-width="6.5" stroke-linecap="round" />
+  
+  <path d="M 155 90 
+           C 155 140, 80 180, 80 280 
+           C 80 370, 200 450, 290 450 
+           C 390 450, 420 380, 420 320" 
+        fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" opacity="0.4" />
+
+  <!-- Stethoscope Chestpiece (Resting beautifully on the right of the tablet) -->
+  <g filter="url(#shadow)" transform="translate(420, 320)">
+    <!-- Base Metal Ring -->
+    <circle cx="0" cy="0" r="32" fill="url(#metallic)" stroke="#64748B" stroke-width="1" />
+    <!-- Secondary Inner Ring -->
+    <circle cx="0" cy="0" r="26" fill="url(#primaryGrad)" />
+    <!-- Inner Metallic Core -->
+    <circle cx="0" cy="0" r="18" fill="url(#metallic)" opacity="0.9" />
+    <!-- Heart Telemetry Watermark inside Stethoscope diaphragm -->
+    <path d="M -8 0 L -2 0 L 1 -10 L 4 10 L 7 -5 L 10 3 L 14 0" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Plastic Cord Connector joint -->
+    <rect x="-6" y="-36" width="12" height="10" rx="2" fill="#1E293B" />
+  </g>
+
+
+
+  <!-- Subtle Medical Cross sparkles floating around -->
+  <g opacity="0.6">
+    <!-- Top Left cross -->
+    <path d="M 60 130 L 70 130 M 65 125 L 65 135" stroke="#2C5D88" stroke-width="2" stroke-linecap="round" />
+    <!-- Bottom Right cross -->
+    <path d="M 400 240 L 412 240 M 406 234 L 406 246" stroke="#2C5D88" stroke-width="2" stroke-linecap="round" />
+  </g>
+</svg>

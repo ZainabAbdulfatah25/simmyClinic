@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import doctorFatimaImg from './assets/doctor_fatima.jpg';
+import doctorAdamImg from './assets/doctor_adam.jpg';
+import heroSvg from './assets/hero.svg';
+import logoSvg from './assets/logo.svg';
 
 // --- Seed Data ---
 const INITIAL_DOCTORS = [
-  { id: 1, name: "Dr. Fatima Yahaya Maiauduga", specialty: "Gynaecology", schedule: "Mon - Wed (9am - 2pm)", experience: "8 Years", regNo: "MDCN/8431", image: "/doctor_fatima.jpg", email: "fatima@simmycare.com", password: "password123" },
+  { id: 1, name: "Dr. Fatima Yahaya Maiauduga", specialty: "Gynaecology", schedule: "Mon - Wed (9am - 2pm)", experience: "8 Years", regNo: "MDCN/8431", image: doctorFatimaImg, email: "fatima@simmycare.com", password: "password123" },
   { id: 2, name: "Dr. Chioma Nwachukwu", specialty: "Pediatrics", schedule: "Tue - Thu (12pm - 5pm)", experience: "12 Years", regNo: "MDCN/9102", email: "chioma@simmycare.com", password: "password123" },
-  { id: 3, name: "Dr. Adam Zamzam", specialty: "General Medicine", schedule: "Mon - Fri (8am - 4pm)", experience: "10 Years", regNo: "MDCN/7123", image: "/doctor_adam.jpg", email: "adam@simmycare.com", password: "password123" },
+  { id: 3, name: "Dr. Adam Zamzam", specialty: "General Medicine", schedule: "Mon - Fri (8am - 4pm)", experience: "10 Years", regNo: "MDCN/7123", image: doctorAdamImg, email: "adam@simmycare.com", password: "password123" },
   { id: 4, name: "Dr. Favour Obi", specialty: "Pharmacy", schedule: "Wed - Fri (10am - 3pm)", experience: "6 Years", regNo: "MDCN/7291", email: "favour@simmycare.com", password: "password123" }
 ];
 
@@ -129,6 +133,8 @@ export default function App() {
   const [adminSelectedInquiry, setAdminSelectedInquiry] = useState(null);
   const [activeConsultationApt, setActiveConsultationApt] = useState(null); // For doctor prescription modal
   const [consultationNotes, setConsultationNotes] = useState({ notes: '', prescription: '' });
+  const [editingApt, setEditingApt] = useState(null);
+  const [editAptData, setEditAptData] = useState({ doctorId: '', doctorName: '', date: '', time: '', symptoms: '', status: '' });
 
   // Sync to local storage
   useEffect(() => {
@@ -267,6 +273,50 @@ export default function App() {
     sessionStorage.removeItem("simmy_auth_patient");
     sessionStorage.removeItem("simmy_auth_doctor");
     navigateTo('home');
+  };
+
+  const startEditApt = (apt) => {
+    const docObj = doctors.find(d => d.name === apt.doctor || `Dr. ${d.name}` === apt.doctor);
+    setEditingApt(apt);
+    setEditAptData({
+      doctorId: docObj ? docObj.id : '',
+      doctorName: apt.doctor,
+      date: apt.date,
+      time: apt.time,
+      symptoms: apt.symptoms,
+      status: apt.status
+    });
+  };
+
+  const handleSaveEditApt = (e) => {
+    e.preventDefault();
+    if (!editingApt) return;
+
+    let docName = editAptData.doctorName;
+    if (editAptData.doctorId) {
+      const docObj = doctors.find(d => d.id === parseInt(editAptData.doctorId));
+      if (docObj) {
+        // Avoid double "Dr." prefix since names already include it
+        docName = docObj.name.startsWith('Dr. ') ? docObj.name : `Dr. ${docObj.name}`;
+      }
+    }
+
+    const updatedApts = appointments.map(apt => {
+      if (apt.id === editingApt.id) {
+        return {
+          ...apt,
+          doctor: docName,
+          date: editAptData.date,
+          time: editAptData.time,
+          symptoms: editAptData.symptoms,
+          status: editAptData.status
+        };
+      }
+      return apt;
+    });
+
+    setAppointments(updatedApts);
+    setEditingApt(null);
   };
 
   // --- Booking & Contact Handlers ---
@@ -519,7 +569,7 @@ export default function App() {
         <div className="header-container">
           <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
             <div className="logo-img-wrapper">
-              <img className="logo-img" src="/logo.svg" alt="SimmyCare Logo" />
+              <img className="logo-img" src={logoSvg} alt="SimmyCare Logo" />
             </div>
             <span className="logo-text">Simmy<span>Care</span></span>
           </a>
@@ -596,7 +646,7 @@ export default function App() {
 
                 <div className="hero-image-wrapper">
                   <div className="hero-shape-bg"></div>
-                  <img className="hero-main-img" src="/hero.svg" alt="SimmyCare Online Medical Consultation" />
+                  <img className="hero-main-img" src={heroSvg} alt="SimmyCare Online Medical Consultation" />
                   
                   {/* Floating badges */}
                   <div className="floating-badge badge-top-right glassmorphic">
@@ -1181,6 +1231,9 @@ export default function App() {
         {currentView === 'dashboard' && (
           <section id="dashboard-view" className="view-section animate-fade">
             
+            {/* Guard: redirect to login if no role */}
+            {!authRole && (() => { navigateTo('portal-login'); return null; })()}
+
             {/* 1. PATIENT DASHBOARD */}
             {authRole === 'patient' && loggedInPatient && (
               <div>
@@ -1225,6 +1278,7 @@ export default function App() {
                               <th>Date / Time</th>
                               <th>Status</th>
                               <th>Clinical Feedback / Prescriptions</th>
+                              <th>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1249,6 +1303,23 @@ export default function App() {
                                       {apt.status === 'Pending' ? "Awaiting doctor's review..." : "No clinical feedback file."}
                                     </span>
                                   )}
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Details">
+                                      <i className="fa-solid fa-eye"></i> View
+                                    </button>
+                                    {apt.status === 'Pending' && (
+                                      <>
+                                        <button className="action-btn" style={{ color: 'var(--color-accent)' }} onClick={() => startEditApt(apt)} title="Modify Booking Details">
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit
+                                        </button>
+                                        <button className="action-btn" style={{ color: '#EF4444' }} onClick={() => handleCancelAppointment(apt.id)} title="Cancel Booking">
+                                          <i className="fa-solid fa-xmark"></i> Cancel
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -1391,9 +1462,17 @@ export default function App() {
                                 )}
                               </td>
                               <td>
-                                <button className="btn btn-primary btn-sm" onClick={() => openConsultationNotesModal(apt)}>
-                                  <i className="fa-solid fa-file-signature"></i> Add Rx/Notes
-                                </button>
+                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                  <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Ticket Details">
+                                    <i className="fa-solid fa-eye"></i> View
+                                  </button>
+                                  <button className="btn btn-primary btn-sm" onClick={() => openConsultationNotesModal(apt)}>
+                                    <i className="fa-solid fa-file-signature"></i> Add Rx/Notes
+                                  </button>
+                                  <button className="btn btn-outline btn-sm" onClick={() => startEditApt(apt)} title="Modify / Reschedule Ticket">
+                                    <i className="fa-solid fa-pen-to-square"></i> Reschedule
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1527,6 +1606,9 @@ export default function App() {
                                         )}
                                         <button className="action-btn" style={{ color: 'var(--color-indigo)', marginRight: '0.5rem' }} onClick={() => setAdminSelectedApt(apt)} title="View Details">
                                           <i className="fa-solid fa-eye"></i> View
+                                        </button>
+                                        <button className="action-btn" style={{ color: 'var(--color-accent)', marginRight: '0.5rem' }} onClick={() => startEditApt(apt)} title="Modify Ticket">
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit
                                         </button>
                                         <button className="action-btn" style={{ color: '#EF4444' }} onClick={() => handleDeleteAppointment(apt.id)} title="Delete Record">
                                           <i className="fa-solid fa-trash"></i>
@@ -1821,7 +1903,7 @@ export default function App() {
           <div className="footer-brand">
             <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
               <div className="logo-img-wrapper">
-                <img className="logo-img" src="/logo.svg" alt="SimmyCare Logo" />
+                <img className="logo-img" src={logoSvg} alt="SimmyCare Logo" />
               </div>
               <span className="logo-text">Simmy<span>Care</span></span>
             </a>
@@ -2031,6 +2113,97 @@ export default function App() {
               }} style={{ borderColor: '#EF4444', color: '#EF4444' }}>Delete Inquiry</button>
               <button className="btn btn-primary" onClick={() => setAdminSelectedInquiry(null)}>Close Details</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- 6.6 Modify Ticket Modal (All Roles) --- */}
+      {editingApt && (
+        <div className="modal-backdrop" onClick={() => setEditingApt(null)}>
+          <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '500px', textAlign: 'left', alignItems: 'stretch' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0 }}>Modify Ticket: {editingApt.id}</h3>
+              <button onClick={() => setEditingApt(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleSaveEditApt} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Assigned Specialist</label>
+                <select 
+                  value={editAptData.doctorId}
+                  onChange={(e) => setEditAptData({ ...editAptData, doctorId: e.target.value })}
+                  required
+                >
+                  <option value="">Select Specialist...</option>
+                  {doctors.map(d => (
+                    <option key={d.id} value={d.id}>Dr. {d.name} ({d.specialty})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Scheduled Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={editAptData.date}
+                    onChange={(e) => setEditAptData({ ...editAptData, date: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Time Slot</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. 10:00 AM"
+                    value={editAptData.time}
+                    onChange={(e) => setEditAptData({ ...editAptData, time: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Reported Symptoms</label>
+                <textarea 
+                  rows="3" 
+                  required
+                  placeholder="Describe details of medical symptoms..."
+                  value={editAptData.symptoms}
+                  onChange={(e) => setEditAptData({ ...editAptData, symptoms: e.target.value })}
+                />
+              </div>
+
+              {/* Status editing is only visible to Admin role */}
+              {authRole === 'admin' ? (
+                <div className="form-group">
+                  <label>Ticket Status</label>
+                  <select 
+                    value={editAptData.status}
+                    onChange={(e) => setEditAptData({ ...editAptData, status: e.target.value })}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Ticket Status</label>
+                  <input 
+                    type="text" 
+                    disabled 
+                    value={editAptData.status} 
+                    style={{ backgroundColor: 'rgba(28, 43, 73, 0.05)', color: 'var(--color-text-muted)' }}
+                  />
+                </div>
+              )}
+
+              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '1rem' }}>
+                <button type="submit" className="btn btn-primary">Save Modifications</button>
+                <button type="button" className="btn btn-outline" onClick={() => setEditingApt(null)}>Cancel</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

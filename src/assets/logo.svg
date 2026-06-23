@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- Circle and Heart Outline Gradient -->
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8BB2D0" />
+      <stop offset="40%" stop-color="#4F81A5" />
+      <stop offset="100%" stop-color="#182B49" />
+    </linearGradient>
+
+    <!-- Left Lobe Gradient: Light at top-left, deep navy at bottom-right -->
+    <linearGradient id="leftLobeGrad" x1="0%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#7BB0D6" />
+      <stop offset="50%" stop-color="#2C5D88" />
+      <stop offset="100%" stop-color="#10223B" />
+    </linearGradient>
+
+    <!-- Right Lobe Gradient: Highlights along the S-curve, shading to the right -->
+    <linearGradient id="rightLobeGrad" x1="20%" y1="0%" x2="100%" y2="90%">
+      <stop offset="0%" stop-color="#9BC3E2" />
+      <stop offset="50%" stop-color="#2C5D88" />
+      <stop offset="100%" stop-color="#10223B" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Outer Circular Ring -->
+  <circle cx="50" cy="50" r="41" fill="none" stroke="url(#ringGrad)" stroke-width="5.5" />
+
+  <!-- 2. Thin Heart Outer Outline -->
+  <path d="M 50 26 
+           C 35 13, 16 25, 20 51 
+           C 23 71, 42 80, 50 85 
+           C 58 80, 77 71, 80 51 
+           C 84 25, 65 13, 50 26 Z" 
+        fill="none" 
+        stroke="url(#ringGrad)" 
+        stroke-width="2.5" 
+        stroke-linejoin="round" />
+
+  <!-- 3. Inner Left Lobe (Wider at the top, tapering at the bottom along the S-curve) -->
+  <path d="M 47 31 
+           C 53 43, 41 63, 47 77 
+           C 36 73, 27 61, 27 49 
+           C 27 37, 36 29, 47 31 Z" 
+        fill="url(#leftLobeGrad)" />
+
+  <!-- 4. Inner Right Lobe (Tapering at the top, wider at the bottom along the S-curve) -->
+  <path d="M 53 31 
+           C 59 43, 47 63, 53 77 
+           C 64 73, 73 61, 73 49 
+           C 73 37, 64 29, 53 31 Z" 
+        fill="url(#rightLobeGrad)" />
+</svg>
