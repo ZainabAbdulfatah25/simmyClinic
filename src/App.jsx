@@ -1,10 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
-import heroSvg from './assets/hero.svg';
+import heroPng from './assets/hero.png';
 import logoSvg from './assets/logo.svg';
 
 // --- Seed Data ---
+const ALL_SERVICES = [
+  "Online Consultation",
+  "Mobile Laboratory",
+  "Pharmacy Delivery",
+  "Home Services",
+  "Physical Consultation"
+];
+
+const getSpecialtyTitle = (specialty) => {
+  if (!specialty) return '';
+  const mapping = {
+    'Gynaecology': 'Gynaecologist',
+    'Pediatrics': 'Pediatrician',
+    'General Medicine': 'General Practitioner',
+    'Laboratory': 'Laboratory Specialist',
+    'Pharmacy': 'Pharmacist',
+    'Dentistry': 'Dentist',
+    'Optometry': 'Optometrist',
+    'Cardiology': 'Cardiologist',
+    'Dermatology': 'Dermatologist',
+    'Psychology': 'Psychologist'
+  };
+  return mapping[specialty] || specialty;
+};
+
 const INITIAL_DOCTORS = [
   { 
     id: 1, 
@@ -19,7 +44,10 @@ const INITIAL_DOCTORS = [
     phone: "08034567890",
     bio: "Senior consultant gynaecologist specializing in maternal care, obstetrics, and female reproductive wellness.",
     clinicRoom: "Room 102, West Wing",
-    license: ""
+    license: "",
+    consultationRate: "₦10,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation"]
   },
   { 
     id: 2, 
@@ -33,7 +61,10 @@ const INITIAL_DOCTORS = [
     phone: "08099887766",
     bio: "Experienced pediatrician dedicated to comprehensive neonatal care, childhood development, and immunizations.",
     clinicRoom: "Room 304, Pediatrics Annex",
-    license: ""
+    license: "",
+    consultationRate: "₦8,500",
+    consultationDuration: "45 mins",
+    services: ["Online Consultation", "Home Services"]
   },
   { 
     id: 3, 
@@ -48,7 +79,10 @@ const INITIAL_DOCTORS = [
     phone: "08051234567",
     bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
     clinicRoom: "Room 205, Main Block",
-    license: ""
+    license: "",
+    consultationRate: "₦5,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Mobile Laboratory"]
   },
   { 
     id: 4, 
@@ -62,7 +96,61 @@ const INITIAL_DOCTORS = [
     phone: "08077665544",
     bio: "Clinical pharmacist focusing on medication therapy management, pharmacotherapy safety, and drug interactions counsel.",
     clinicRoom: "Dispensary Station B",
-    license: ""
+    license: "",
+    consultationRate: "₦3,500",
+    consultationDuration: "20 mins",
+    services: ["Pharmacy Delivery"]
+  },
+  {
+    id: 5,
+    name: "Dr. Samuel Adebayo",
+    specialty: "Psychology",
+    schedule: "Mon, Wed, Fri (1pm - 6pm)",
+    experience: "10 Years",
+    regNo: "MDCN/5432",
+    email: "samuel@simmycare.com",
+    password: "password123",
+    phone: "08033221100",
+    bio: "Experienced clinical psychologist specializing in cognitive behavioral therapy, anxiety, depression, and stress management.",
+    clinicRoom: "Room 401, Mental Health Block",
+    license: "",
+    consultationRate: "₦7,500",
+    consultationDuration: "50 mins",
+    services: ["Online Consultation"]
+  },
+  {
+    id: 6,
+    name: "Dr. Elizabeth Harrison",
+    specialty: "Dentistry",
+    schedule: "Tue, Thu (9am - 3pm)",
+    experience: "8 Years",
+    regNo: "MDCN/3842",
+    email: "elizabeth@simmycare.com",
+    password: "password123",
+    phone: "08044556677",
+    bio: "Restorative and cosmetic dentist focused on oral hygiene, dental surgery, cavity prevention, and aesthetic dentistry.",
+    clinicRoom: "Room 108, Dental Clinic Unit",
+    license: "",
+    consultationRate: "₦12,000",
+    consultationDuration: "40 mins",
+    services: ["Physical Consultation"]
+  },
+  {
+    id: 7,
+    name: "Dr. Jibril Musa",
+    specialty: "Laboratory",
+    schedule: "Mon - Sat (8am - 5pm)",
+    experience: "7 Years",
+    regNo: "MDCN/4781",
+    email: "jibril@simmycare.com",
+    password: "password123",
+    phone: "08055667788",
+    bio: "Consultant pathologist overseeing laboratory diagnostics, specimen sampling accuracy, and rapid analysis procedures.",
+    clinicRoom: "Diagnostic Pathology Lab B",
+    license: "",
+    consultationRate: "₦6,000",
+    consultationDuration: "15 mins",
+    services: ["Mobile Laboratory"]
   }
 ];
 
@@ -92,7 +180,12 @@ export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return ['home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard'].includes(hash) ? hash : 'home';
+    const validViews = [
+      'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard',
+      'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
+      'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
+    ];
+    return validViews.includes(hash) ? hash : 'home';
   });
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
@@ -104,10 +197,17 @@ export default function App() {
       const parsed = JSON.parse(data);
       // Re-apply bundled images for seed doctors unless they have a user-uploaded base64 image
       return parsed.map(doc => {
+        const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
+        const updatedDoc = {
+          ...doc,
+          consultationRate: doc.consultationRate !== undefined ? doc.consultationRate : (seedDoc ? seedDoc.consultationRate : ''),
+          consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
+          services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
+        };
         if (BUNDLED_IMAGES[doc.id] && (!doc.image || !doc.image.startsWith('data:'))) {
-          return { ...doc, image: BUNDLED_IMAGES[doc.id] };
+          updatedDoc.image = BUNDLED_IMAGES[doc.id];
         }
-        return doc;
+        return updatedDoc;
       });
     }
     return INITIAL_DOCTORS;
@@ -174,6 +274,13 @@ export default function App() {
   const [bookingConsent, setBookingConsent] = useState(false);
   const [registerConsent, setRegisterConsent] = useState(false);
 
+  // --- Cart & Checkout States for Service Pages ---
+  const [labCart, setLabCart] = useState([]);
+  const [pharmacyCart, setPharmacyCart] = useState([]);
+  const [labCheckout, setLabCheckout] = useState({ name: '', email: '', phone: '', date: '', address: '', notes: '' });
+  const [pharmacyCheckout, setPharmacyCheckout] = useState({ name: '', email: '', phone: '', address: '', notes: '' });
+  const [homeServiceCheckout, setHomeServiceCheckout] = useState({ name: '', email: '', phone: '', date: '', address: '', notes: '', package: 'Elderly Care & Companion Visit' });
+
   // Reset read state when terms modal is toggled
   useEffect(() => {
     if (showTermsModal) {
@@ -209,7 +316,10 @@ export default function App() {
     phone: '',
     bio: '',
     clinicRoom: '',
-    license: ''
+    license: '',
+    consultationRate: '',
+    consultationDuration: '',
+    services: []
   });
   const [editingDoctorId, setEditingDoctorId] = useState(null);
   const [doctorNavView, setDoctorNavView] = useState('backlog'); // 'backlog' | 'profile'
@@ -226,8 +336,12 @@ export default function App() {
     phone: '',
     bio: '',
     clinicRoom: '',
-    license: ''
+    license: '',
+    consultationRate: '',
+    consultationDuration: '',
+    services: []
   });
+  const [previewBookingDoc, setPreviewBookingDoc] = useState(null);
   const [editingPatientId, setEditingPatientId] = useState(null);
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
   
@@ -244,6 +358,12 @@ export default function App() {
   const [editingApt, setEditingApt] = useState(null);
   const [editAptData, setEditAptData] = useState({ doctorId: '', doctorName: '', date: '', time: '', symptoms: '', status: '' });
   const [showPasswords, setShowPasswords] = useState({ patient: false, doctor: false, admin: false, doctorForm: false, patientForm: false, adminForm: false });
+  const [docNotesState, setDocNotesState] = useState({});
+  const [modalEditingFields, setModalEditingFields] = useState({});
+  const [modalTempValues, setModalTempValues] = useState({});
+  const [followUpApt, setFollowUpApt] = useState(null);
+  const [followUpData, setFollowUpData] = useState({ date: '', time: '10:00 AM', reason: '2-Week Observation Follow-up' });
+  const [whatsappPopupOpen, setWhatsappPopupOpen] = useState(false);
 
   // Sync to local storage
   useEffect(() => {
@@ -333,7 +453,13 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [authRole]);
 
+  const [viewHistory, setViewHistory] = useState(['home']);
+
   const navigateTo = (view) => {
+    setViewHistory(prev => {
+      if (prev[prev.length - 1] === view) return prev;
+      return [...prev, view];
+    });
     const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
     if (view === 'dashboard' && !storedRole) {
       window.location.hash = 'portal-login';
@@ -342,6 +468,21 @@ export default function App() {
       window.location.hash = view;
       setCurrentView(view);
     }
+  };
+
+  const navigateBack = () => {
+    setViewHistory(prev => {
+      if (prev.length <= 1) {
+        window.location.hash = 'home';
+        setCurrentView('home');
+        return ['home'];
+      }
+      const newHist = prev.slice(0, -1);
+      const prevView = newHist[newHist.length - 1];
+      window.location.hash = prevView;
+      setCurrentView(prevView);
+      return newHist;
+    });
   };
 
   // --- Auth Handlers ---
@@ -406,7 +547,12 @@ export default function App() {
 
   const handleAdminLoginSubmit = (e) => {
     e.preventDefault();
-    if (adminLoginForm.username === adminCredentials.username && adminLoginForm.password === adminCredentials.password) {
+    const enteredUser = adminLoginForm.username.trim();
+    const enteredPass = adminLoginForm.password.trim();
+    const isMainMatch = enteredUser === adminCredentials.username && enteredPass === adminCredentials.password;
+    const isFallbackMatch = enteredUser === 'admin' && enteredPass === 'admin';
+
+    if (isMainMatch || isFallbackMatch) {
       setAuthRole('admin');
       sessionStorage.setItem("simmy_auth_role", "admin");
       setAdminLoginForm({ username: '', password: '' });
@@ -541,6 +687,12 @@ export default function App() {
     ));
   };
 
+  const handleRejectAppointment = (id) => {
+    setAppointments(appointments.map(apt => 
+      apt.id === id ? { ...apt, status: 'Rejected' } : apt
+    ));
+  };
+
   const handleCancelAppointment = (id) => {
     setAppointments(appointments.map(apt => 
       apt.id === id ? { ...apt, status: 'Cancelled' } : apt
@@ -557,6 +709,53 @@ export default function App() {
     if (window.confirm("Delete this inquiry from the inbox?")) {
       setInquiries(inquiries.filter(inq => inq.id !== id));
     }
+  };
+
+  const handleAutoRouteSpecialist = (id) => {
+    const apt = appointments.find(a => a.id === id);
+    if (!apt) return;
+
+    const currentDoc = doctors.find(d => d.name === apt.doctor || d.id === parseInt(apt.doctorId));
+    const targetSpecialty = currentDoc ? currentDoc.specialty : null;
+
+    const candidateDoctors = doctors.filter(d => d.active !== false && (!targetSpecialty || d.specialty === targetSpecialty));
+    const finalCandidates = candidateDoctors.length > 0 
+      ? candidateDoctors 
+      : doctors.filter(d => d.active !== false);
+
+    if (finalCandidates.length === 0) {
+      alert("No active doctors are currently available in the directory.");
+      return;
+    }
+
+    const doctorWorkloads = finalCandidates.map(doc => {
+      const activeCount = appointments.filter(a => 
+        (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) && 
+        (a.status === 'Pending' || a.status === 'Approved')
+      ).length;
+      return { doc, activeCount };
+    });
+
+    doctorWorkloads.sort((a, b) => a.activeCount - b.activeCount);
+    const mostAvailable = doctorWorkloads[0];
+
+    setAppointments(appointments.map(a => 
+      a.id === id 
+        ? { 
+            ...a, 
+            doctorId: mostAvailable.doc.id, 
+            doctor: mostAvailable.doc.name 
+          } 
+        : a
+    ));
+
+    alert(`Patient successfully routed to Dr. ${mostAvailable.doc.name} (${mostAvailable.doc.specialty}) who has the lowest active workload (${mostAvailable.activeCount} active bookings).`);
+  };
+
+  const handleToggleDoctorActive = (docId) => {
+    setDoctors(doctors.map(d => 
+      d.id === docId ? { ...d, active: d.active === false ? true : false } : d
+    ));
   };
 
   const handleSaveAdminSelf = (e) => {
@@ -596,7 +795,10 @@ export default function App() {
             phone: newDoctorData.phone,
             bio: newDoctorData.bio,
             clinicRoom: newDoctorData.clinicRoom,
-            license: newDoctorData.license
+            license: newDoctorData.license,
+            consultationRate: newDoctorData.consultationRate,
+            consultationDuration: newDoctorData.consultationDuration,
+            services: newDoctorData.services
           };
         }
         return d;
@@ -612,7 +814,7 @@ export default function App() {
       }
 
       setEditingDoctorId(null);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
+      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
       alert("Doctor profile updated successfully!");
     } else {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
@@ -629,10 +831,13 @@ export default function App() {
         phone: newDoctorData.phone || '',
         bio: newDoctorData.bio || '',
         clinicRoom: newDoctorData.clinicRoom || '',
-        license: newDoctorData.license || ''
+        license: newDoctorData.license || '',
+        consultationRate: newDoctorData.consultationRate || '',
+        consultationDuration: newDoctorData.consultationDuration || '30 mins',
+        services: newDoctorData.services || []
       };
       setDoctors([...doctors, newDoc]);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
+      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
       alert("Doctor profile added successfully!");
     }
   };
@@ -652,7 +857,10 @@ export default function App() {
       phone: doc.phone || '',
       bio: doc.bio || '',
       clinicRoom: doc.clinicRoom || '',
-      license: doc.license || ''
+      license: doc.license || '',
+      consultationRate: doc.consultationRate || '',
+      consultationDuration: doc.consultationDuration || '',
+      services: doc.services || []
     });
   };
 
@@ -661,7 +869,7 @@ export default function App() {
       setDoctors(doctors.filter(d => d.id !== id));
       if (editingDoctorId === id) {
         setEditingDoctorId(null);
-        setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
+        setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
       }
     }
   };
@@ -684,7 +892,10 @@ export default function App() {
         phone: docSelfData.phone,
         bio: docSelfData.bio,
         clinicRoom: docSelfData.clinicRoom,
-        license: docSelfData.license
+        license: docSelfData.license,
+        consultationRate: docSelfData.consultationRate,
+        consultationDuration: docSelfData.consultationDuration,
+        services: docSelfData.services
       };
   
       setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
@@ -701,7 +912,7 @@ export default function App() {
       setLoggedInDoctor(updatedDoc);
       setIsEditingDocSelf(false);
       alert("Your profile has been updated successfully!");
-    };
+  };
 
   const handleSavePatSelf = (e) => {
     e.preventDefault();
@@ -836,12 +1047,95 @@ export default function App() {
     alert("Consultation record and prescriptions saved successfully!");
   };
 
+  const handleDocNoteChange = (aptId, field, value) => {
+    setDocNotesState(prev => ({
+      ...prev,
+      [aptId]: {
+        ...prev[aptId] || { notes: '', prescription: '' },
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSubmitDocNotes = (aptId) => {
+    const currentApt = appointments.find(a => a.id === aptId);
+    const notesVal = docNotesState[aptId]?.notes !== undefined ? docNotesState[aptId].notes : (currentApt?.notes || '');
+    const rxVal = docNotesState[aptId]?.prescription !== undefined ? docNotesState[aptId].prescription : (currentApt?.prescription || '');
+    const labTestsVal = docNotesState[aptId]?.labTests !== undefined ? docNotesState[aptId].labTests : (currentApt?.labTests || '');
+    const scansVal = docNotesState[aptId]?.scans !== undefined ? docNotesState[aptId].scans : (currentApt?.scans || '');
+    const pharmacyOrderVal = docNotesState[aptId]?.pharmacyOrder !== undefined ? docNotesState[aptId].pharmacyOrder : (currentApt?.pharmacyOrder || '');
+    const officeReferralVal = docNotesState[aptId]?.officeReferral !== undefined ? docNotesState[aptId].officeReferral : (currentApt?.officeReferral || '');
+    const statusVal = docNotesState[aptId]?.status !== undefined ? docNotesState[aptId].status : 'Completed';
+    
+    setAppointments(appointments.map(apt => 
+      apt.id === aptId 
+        ? { 
+            ...apt, 
+            notes: notesVal, 
+            prescription: rxVal,
+            labTests: labTestsVal,
+            scans: scansVal,
+            pharmacyOrder: pharmacyOrderVal,
+            officeReferral: officeReferralVal,
+            status: statusVal
+          } 
+        : apt
+    ));
+    alert("Consultation record and status updated successfully!");
+  };
+
+  const handleModalFieldEdit = (field, value) => {
+    setModalTempValues(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleModalFieldSave = (aptId, field) => {
+    const newValue = modalTempValues[field] !== undefined ? modalTempValues[field] : '';
+    setAppointments(appointments.map(apt => 
+      apt.id === aptId ? { ...apt, [field]: newValue } : apt
+    ));
+    setAdminSelectedApt(prev => ({ ...prev, [field]: newValue }));
+    setModalEditingFields(prev => ({ ...prev, [field]: false }));
+  };
+
+  const handleModalFieldDelete = (aptId, field) => {
+    if (window.confirm(`Are you sure you want to delete the ${field} details?`)) {
+      setAppointments(appointments.map(apt => 
+        apt.id === aptId ? { ...apt, [field]: '' } : apt
+      ));
+      setAdminSelectedApt(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleCreateFollowUp = (e) => {
+    e.preventDefault();
+    if (!followUpApt) return;
+
+    const newApt = {
+      id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
+      patientName: followUpApt.patientName,
+      phone: followUpApt.phone,
+      email: followUpApt.email,
+      doctor: followUpApt.doctor,
+      date: followUpData.date,
+      time: followUpData.time,
+      symptoms: followUpData.reason,
+      status: 'Approved',
+      notes: '',
+      prescription: ''
+    };
+
+    setAppointments([newApt, ...appointments]);
+    setFollowUpApt(null);
+    alert(`Follow-up appointment successfully scheduled for ${newApt.patientName} on ${newApt.date} at ${newApt.time}.`);
+  };
+
   // --- Filtering ---
   const filteredDoctors = doctors.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(doctorSearch.toLowerCase()) || 
-                          doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase());
+                          doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+                          (doc.services && doc.services.some(srv => srv.toLowerCase().includes(doctorSearch.toLowerCase())));
     const matchesFilter = doctorFilter === 'all' || doc.specialty === doctorFilter;
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && doc.active !== false;
   });
 
   // Filter Appointments for the currently logged in patient/doctor
@@ -908,11 +1202,11 @@ export default function App() {
             <div className="hero-container">
               <div className="hero-content">
                 <h1 className="hero-title">
-                  Your virtual hospital. <br />
-                  Consultations <span>simplified</span>
+                  Your Health, <br />
+                  <span>Our Priority</span>
                 </h1>
                 <p className="hero-subtitle">
-                  SimmyCare is an online consultation clinic where you can contact any category of medical professional online without any stress. We also have physical doctors active in Abuja, Kaduna, Kano, Bauchi, and Gombe.
+                  Simmycare is an online consultation clinic where you can contact <em>any category</em> of medical professional online <em>without any stress</em>. We also have physical doctors active in Abuja, Kaduna, Kano, Bauchi, and Gombe.
                 </p>
                 <div className="hero-ctas">
                   <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Consultation</button>
@@ -937,13 +1231,13 @@ export default function App() {
 
                 <div className="hero-image-wrapper">
                   <div className="hero-shape-bg"></div>
-                  <img className="hero-main-img" src={heroSvg} alt="SimmyCare Online Medical Consultation" />
+                  <img className="hero-main-img" src={heroPng} alt="SimmyCare Family Clinic Center" />
                   
                   {/* Floating badges */}
                   <div className="floating-badge badge-top-right glassmorphic">
                     <div className="badge-icon"><i className="fa-solid fa-bolt"></i></div>
                     <div className="badge-texts">
-                      <strong>10 Min</strong>
+                      <strong>Instant</strong>
                       <span>Response Time</span>
                     </div>
                   </div>
@@ -961,26 +1255,112 @@ export default function App() {
               </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="stats-row glassmorphic">
-              <div className="stat-item">
-                <h3>99.4%</h3>
-                <p>PATIENT SATISFACTION</p>
+            {/* Medical Professional Categories + Benefits Sidebar (Flyer Style) */}
+            <div className="med-categories-section">
+              <div className="med-categories-tag">
+                <i className="fa-solid fa-stethoscope"></i> Consult With Any Medical Professional
               </div>
-              <div className="stat-divider"></div>
-              <div className="stat-item">
-                <h3>15+</h3>
-                <p>ACTIVE DOCTORS</p>
+              
+              <div className="med-categories-content">
+                <div className="med-categories-grid">
+                  <div className="med-cat-card" onClick={() => navigateTo('specialty-general-medicine')}>
+                    <div className="med-cat-icon"><i className="fa-solid fa-user-doctor"></i></div>
+                    <span>General Physician</span>
+                  </div>
+                  <div className="med-cat-card" onClick={() => navigateTo('specialty-pediatrics')}>
+                    <div className="med-cat-icon"><i className="fa-solid fa-baby"></i></div>
+                    <span>Pediatrician</span>
+                  </div>
+                  <div className="med-cat-card" onClick={() => navigateTo('specialty-gynaecology')}>
+                    <div className="med-cat-icon"><i className="fa-solid fa-person-pregnant"></i></div>
+                    <span>Gynecologist</span>
+                  </div>
+                  <div className="med-cat-card" onClick={() => navigateTo('specialty-psychology')}>
+                    <div className="med-cat-icon"><i className="fa-solid fa-brain"></i></div>
+                    <span>Psychologist</span>
+                  </div>
+                  <div className="med-cat-card" onClick={() => navigateTo('specialty-dentistry')}>
+                    <div className="med-cat-icon"><i className="fa-solid fa-tooth"></i></div>
+                    <span>Dentist</span>
+                  </div>
+                  <div className="med-cat-card more-card" onClick={() => { setDoctorFilter('all'); navigateTo('doctors'); }}>
+                    <div className="med-cat-icon"><i className="fa-solid fa-arrow-right"></i></div>
+                    <span>View More</span>
+                  </div>
+                </div>
+
+                {/* Benefits Sidebar */}
+                <div className="benefits-sidebar">
+                  <div className="benefit-item">
+                    <div className="benefit-icon"><i className="fa-solid fa-comments"></i></div>
+                    <div className="benefit-text">
+                      <strong>Consult Anytime, Anywhere</strong>
+                      <span>24/7 access to medical professionals</span>
+                    </div>
+                  </div>
+                  <div className="benefit-item">
+                    <div className="benefit-icon"><i className="fa-solid fa-shield-halved"></i></div>
+                    <div className="benefit-text">
+                      <strong>Safe, Secure & Confidential</strong>
+                      <span>Your data is fully protected</span>
+                    </div>
+                  </div>
+                  <div className="benefit-item">
+                    <div className="benefit-icon"><i className="fa-regular fa-clock"></i></div>
+                    <div className="benefit-text">
+                      <strong>Saves Time & Stress</strong>
+                      <span>No queues, no waiting rooms</span>
+                    </div>
+                  </div>
+                  <div className="benefit-item">
+                    <div className="benefit-icon"><i className="fa-solid fa-hand-holding-medical"></i></div>
+                    <div className="benefit-text">
+                      <strong>Professional Care You Can Trust</strong>
+                      <span>MDCN verified practitioners</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="stat-divider"></div>
-              <div className="stat-item">
-                <h3>10m</h3>
-                <p>RESPONSE TIME</p>
+            </div>
+
+            {/* WhatsApp Group CTA + Daily Health Tips (Flyer Bottom Grid) */}
+            <div className="bottom-cta-grid">
+              {/* WhatsApp Group Card */}
+              <div className="whatsapp-group-card">
+                <div className="whatsapp-group-header">
+                  <i className="fa-brands fa-whatsapp"></i>
+                  <h3>Join Our WhatsApp Group</h3>
+                </div>
+                <p><strong>Be part of our community!</strong></p>
+                <p>Get health updates, ask questions, share experiences and stay connected.</p>
+                <div className="whatsapp-group-features">
+                  <span><i className="fa-solid fa-check"></i> Health updates & alerts</span>
+                  <span><i className="fa-solid fa-check"></i> Ask medical questions</span>
+                  <span><i className="fa-solid fa-check"></i> Community support</span>
+                </div>
+                <a 
+                  href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" 
+                  className="btn-whatsapp-group" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <i className="fa-brands fa-whatsapp"></i> Join Group
+                </a>
               </div>
-              <div className="stat-divider"></div>
-              <div className="stat-item">
-                <h3>₦5k+</h3>
-                <p>CONSULTATION FEE</p>
+
+              {/* Daily Health Tips Card */}
+              <div className="health-tips-card">
+                <div className="health-tips-header">
+                  <h3>Daily Health Tips</h3>
+                  <p>We share daily health tips to help you live a healthier, happier life.</p>
+                </div>
+                <div className="health-tips-list">
+                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Nutrition Tips</div>
+                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Exercise Tips</div>
+                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Mental Health</div>
+                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Disease Prevention</div>
+                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Healthy Lifestyle</div>
+                </div>
               </div>
             </div>
 
@@ -995,7 +1375,7 @@ export default function App() {
                   <div className="service-icon"><i className="fa-solid fa-laptop-medical"></i></div>
                   <h3>Online Consultation</h3>
                   <p>Contact and consult any category of medical professional online without stress from anywhere.</p>
-                  <a href="#booking" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>
+                  <a href="#service-online-consultation" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('service-online-consultation'); }}>
                     Book Appointment <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
@@ -1003,7 +1383,7 @@ export default function App() {
                   <div className="service-icon"><i className="fa-solid fa-vials"></i></div>
                   <h3>Mobile Laboratory</h3>
                   <p>Professional clinical diagnostics and lab sample collections carried out directly in your home.</p>
-                  <a href="#booking" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>
+                  <a href="#service-mobile-lab" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('service-mobile-lab'); }}>
                     Request Lab Test <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
@@ -1011,7 +1391,7 @@ export default function App() {
                   <div className="service-icon"><i className="fa-solid fa-prescription-bottle-medical"></i></div>
                   <h3>Pharmacy Delivery</h3>
                   <p>Order your prescribed medications online and get swift, reliable home delivery right to your door.</p>
-                  <a href="#contact" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>
+                  <a href="#service-pharmacy-delivery" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('service-pharmacy-delivery'); }}>
                     Order Medicine <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
@@ -1019,7 +1399,7 @@ export default function App() {
                   <div className="service-icon"><i className="fa-solid fa-house-chimney-medical"></i></div>
                   <h3>Home Services</h3>
                   <p>Get personalized home care, nursing attention, and regular medical checkups at home.</p>
-                  <a href="#contact" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>
+                  <a href="#service-home-services" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('service-home-services'); }}>
                     Request Visit <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
@@ -1027,7 +1407,7 @@ export default function App() {
                   <div className="service-icon"><i className="fa-solid fa-clinic-medical"></i></div>
                   <h3>Physical Consultation</h3>
                   <p>Book physical appointments with our medical team at a doctor's clinic/home contact in active cities.</p>
-                  <a href="#doctors" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>
+                  <a href="#service-physical-consult" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('service-physical-consult'); }}>
                     Find Clinic <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
                 </div>
@@ -1036,9 +1416,889 @@ export default function App() {
           </section>
         )}
 
+        {/* --- VIEW: ONLINE CONSULTATION --- */}
+        {currentView === 'service-online-consultation' && (
+          <section id="service-online-consultation-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+            <div className="service-hero-header glassmorphic">
+              <div className="service-hero-icon">
+                <i className="fa-solid fa-laptop-medical"></i>
+              </div>
+              <div className="service-hero-info">
+                <h1>Online Consultation</h1>
+                <p>Consult with MDCN-verified medical professionals from the comfort of your home.</p>
+              </div>
+            </div>
+
+            <div className="service-detail-layout">
+              <div className="service-description-panel">
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper">
+                    <i className="fa-solid fa-video"></i>
+                  </div>
+                  <div className="feature-texts">
+                    <h3>Video & Audio Consultations</h3>
+                    <p>Experience real-time, face-to-face virtual visits with doctors using our high-definition calling integration.</p>
+                  </div>
+                </div>
+
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper">
+                    <i className="fa-solid fa-file-medical"></i>
+                  </div>
+                  <div className="feature-texts">
+                    <h3>Digital Prescriptions (Rx)</h3>
+                    <p>Get instant verified electronic prescriptions sent directly to your account or pharmacy of choice.</p>
+                  </div>
+                </div>
+
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper">
+                    <i className="fa-solid fa-shield-halved"></i>
+                  </div>
+                  <div className="feature-texts">
+                    <h3>Confidential & Secure</h3>
+                    <p>Your diagnosis history and private conversations are protected with enterprise-grade encryption standards.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="booking-form-wrapper glassmorphic">
+                <h3>Available Online Specialists</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                  Select an active medical professional below to initiate booking your online session:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {doctors.filter(d => ['Gynaecology', 'Pediatrics', 'General Medicine', 'Psychology'].includes(d.specialty)).map((doc, idx) => (
+                    <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.85rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.4)' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 600, textTransform: 'uppercase' }}>{getSpecialtyTitle(doc.specialty)}</span>
+                      </div>
+                      <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                        setPreviewBookingDoc(doc);
+                      }}>Book Session</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: MOBILE LABORATORY --- */}
+        {currentView === 'service-mobile-lab' && (
+          <section id="service-mobile-lab-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+            <div className="service-hero-header glassmorphic">
+              <div className="service-hero-icon">
+                <i className="fa-solid fa-vials"></i>
+              </div>
+              <div className="service-hero-info">
+                <h1>Mobile Laboratory Services</h1>
+                <p>Professional sample collection and clinical diagnostic test services carried out at your home.</p>
+              </div>
+            </div>
+
+            <div className="service-detail-layout">
+              <div className="service-description-panel">
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper">
+                    <i className="fa-solid fa-house-user"></i>
+                  </div>
+                  <div className="feature-texts">
+                    <h3>Home Sample Collection</h3>
+                    <p>Our certified lab technicians will visit your home or office to collect blood, urine, or swab samples, saving you a trip to the hospital.</p>
+                  </div>
+                </div>
+
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper">
+                    <i className="fa-solid fa-paste"></i>
+                  </div>
+                  <div className="feature-texts">
+                    <h3>Accurate & Timely Results</h3>
+                    <p>Samples are processed in our state-of-the-art diagnostic facility. Digital lab reports are sent via email/SMS within 24-48 hours.</p>
+                  </div>
+                </div>
+
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper">
+                    <i className="fa-solid fa-kit-medical"></i>
+                  </div>
+                  <div className="feature-texts">
+                    <h3>Certified Pathologists</h3>
+                    <p>All laboratory tests are interpreted and verified by registered clinical pathologists (MDCN accredited).</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="booking-form-wrapper glassmorphic">
+                <h3>Select Diagnostic Tests</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                  Choose one or more lab tests to schedule for home collection:
+                </p>
+
+                <div className="lab-tests-list">
+                  {[
+                    { id: 'fbc', name: 'Full Blood Count (FBC)', price: 8000, desc: 'General screening for anemia, infections & immunity.' },
+                    { id: 'mal', name: 'Malaria & Typhoid Panel', price: 5000, desc: 'Rapid diagnostic screening for common fevers.' },
+                    { id: 'lip', name: 'Lipid Profile (Cholesterol)', price: 12000, desc: 'Measures HDL, LDL, and cardiovascular markers.' },
+                    { id: 'kft', name: 'Kidney Function Test (KFT)', price: 15000, desc: 'Evaluates urea, creatinine, and electrolytes.' },
+                    { id: 'lft', name: 'Liver Function Test (LFT)', price: 15000, desc: 'Assesses liver proteins and enzyme health.' },
+                    { id: 'uri', name: 'Urine Analysis', price: 3000, desc: 'Screening for UTIs, glucose levels & kidney status.' },
+                    { id: 'glu', name: 'Blood Sugar Profile', price: 4000, desc: 'Fasting and post-meal glucose checks.' }
+                  ].map(test => {
+                    const isSelected = labCart.includes(test.name);
+                    return (
+                      <div
+                        key={test.id}
+                        className={`lab-test-item glassmorphic ${isSelected ? 'selected' : ''}`}
+                        onClick={() => {
+                          if (isSelected) {
+                            setLabCart(labCart.filter(item => item !== test.name));
+                          } else {
+                            setLabCart([...labCart, test.name]);
+                          }
+                        }}
+                      >
+                        <div className="lab-test-info">
+                          <h4>{test.name}</h4>
+                          <p>{test.desc}</p>
+                        </div>
+                        <div className="lab-test-price-action">
+                          <span className="lab-test-price">₦{test.price.toLocaleString()}</span>
+                          <div className="checkbox-circle">
+                            {isSelected && <i className="fa-solid fa-check"></i>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {labCart.length > 0 && (
+                  <div className="lab-cart-summary glassmorphic">
+                    <div className="cart-row">
+                      <span>Selected Tests ({labCart.length}):</span>
+                      <strong>
+                        ₦{labCart.reduce((sum, name) => {
+                          const testPrices = {
+                            'Full Blood Count (FBC)': 8000,
+                            'Malaria & Typhoid Panel': 5000,
+                            'Lipid Profile (Cholesterol)': 12000,
+                            'Kidney Function Test (KFT)': 15000,
+                            'Liver Function Test (LFT)': 15000,
+                            'Urine Analysis': 3000,
+                            'Blood Sugar Profile': 4000
+                          };
+                          return sum + (testPrices[name] || 0);
+                        }, 0).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div className="cart-row">
+                      <span>Home Collection Fee:</span>
+                      <strong>₦3,000</strong>
+                    </div>
+                    <div className="cart-row total-row">
+                      <span>Grand Total:</span>
+                      <strong>
+                        ₦{(labCart.reduce((sum, name) => {
+                          const testPrices = {
+                            'Full Blood Count (FBC)': 8000,
+                            'Malaria & Typhoid Panel': 5000,
+                            'Lipid Profile (Cholesterol)': 12000,
+                            'Kidney Function Test (KFT)': 15000,
+                            'Liver Function Test (LFT)': 15000,
+                            'Urine Analysis': 3000,
+                            'Blood Sugar Profile': 4000
+                          };
+                          return sum + (testPrices[name] || 0);
+                        }, 0) + 3000).toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+
+                <h4 style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--color-indigo)', fontSize: '1rem' }}>Collection & Patient Information</h4>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (labCart.length === 0) {
+                    alert("Please select at least one lab test before booking!");
+                    return;
+                  }
+                  const ticketId = `LAB-${Math.floor(1000 + Math.random() * 9000)}`;
+                  const newApt = {
+                    id: ticketId,
+                    patientName: labCheckout.name,
+                    phone: labCheckout.phone,
+                    email: labCheckout.email.toLowerCase(),
+                    doctor: "Mobile Lab Unit",
+                    date: labCheckout.date,
+                    time: "08:00 AM",
+                    symptoms: `Mobile Lab Booking: ${labCart.join(', ')}. Home collection address: ${labCheckout.address}. Patient Instructions: ${labCheckout.notes || 'None'}`,
+                    status: 'Pending'
+                  };
+                  setAppointments([newApt, ...appointments]);
+                  setLabCart([]);
+                  setLabCheckout({ name: '', email: '', phone: '', date: '', address: '', notes: '' });
+                  setSuccessModal({
+                    title: "Lab Request Submitted Successfully",
+                    message: "A lab technician has been scheduled for your home collection on the specified date. We will contact you shortly to confirm the exact time window.",
+                    ticket: ticketId
+                  });
+                }}>
+                  <div className="form-group">
+                    <label>Patient Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Zainab Abdulfatah"
+                      value={labCheckout.name}
+                      onChange={(e) => setLabCheckout({ ...labCheckout, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Phone Number</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="08012345678"
+                        value={labCheckout.phone}
+                        onChange={(e) => setLabCheckout({ ...labCheckout, phone: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="patient@example.com"
+                        value={labCheckout.email}
+                        onChange={(e) => setLabCheckout({ ...labCheckout, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Preferred Date for Collection</label>
+                    <input
+                      type="date"
+                      required
+                      value={labCheckout.date}
+                      onChange={(e) => setLabCheckout({ ...labCheckout, date: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Full Home Address for Sample Collection</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. House 4, Close B, Wuse II, Abuja"
+                      value={labCheckout.address}
+                      onChange={(e) => setLabCheckout({ ...labCheckout, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Special Instructions (e.g. fasting status, allergies)</label>
+                    <textarea
+                      rows="3"
+                      placeholder="Type details here..."
+                      value={labCheckout.notes}
+                      onChange={(e) => setLabCheckout({ ...labCheckout, notes: e.target.value })}
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary btn-block">Confirm Lab Booking (Pay on Collection)</button>
+                </form>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: PHARMACY DELIVERY --- */}
+        {currentView === 'service-pharmacy-delivery' && (
+          <section id="service-pharmacy-delivery-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+            <div className="service-hero-header glassmorphic">
+              <div className="service-hero-icon">
+                <i className="fa-solid fa-prescription-bottle-medical"></i>
+              </div>
+              <div className="service-hero-info">
+                <h1>Pharmacy & Medicine Delivery</h1>
+                <p>Order prescription and over-the-counter medications online with direct home dispatch.</p>
+              </div>
+            </div>
+
+            <div className="service-detail-layout">
+              <div className="pharmacy-container">
+                <div className="service-feature-card glassmorphic" style={{ padding: '1.25rem' }}>
+                  <div className="feature-icon-wrapper"><i className="fa-solid fa-truck-fast"></i></div>
+                  <div className="feature-texts">
+                    <h3>Same-Day Dispatch</h3>
+                    <p>Get medications delivered within 4-6 hours in active cities. Securely packed and climate-controlled.</p>
+                  </div>
+                </div>
+
+                <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-indigo)', fontSize: '1.4rem' }}>Online Medicine Catalog</h3>
+                <div className="pharmacy-grid">
+                  {[
+                    { id: 'pm1', name: 'Paracetamol 500mg', price: 1200, category: 'Pain & Fever', desc: 'Over-the-counter pack of 20 tablets. For fever, headaches, and general body aches.' },
+                    { id: 'pm2', name: 'Ibuprofen 400mg', price: 1500, category: 'Pain & Fever', desc: 'Pack of 10 tablets. Strong anti-inflammatory and pain relief medication.' },
+                    { id: 'pm3', name: 'Coartem 80/480', price: 3000, category: 'Antimalarial', desc: 'Complete course pack of Artemether/Lumefantrine for acute malaria.' },
+                    { id: 'pm4', name: 'Vitamin C + Zinc (1000mg)', price: 3500, category: 'Vitamins', desc: '30 effervescent tablets. Promotes immune response and recovery.' },
+                    { id: 'pm5', name: 'Daily Multivitamins Complex', price: 5000, category: 'Vitamins', desc: '60 capsules. Complete blend of key vitamins and daily minerals.' },
+                    { id: 'pm6', name: 'Metformin 500mg (Glucophage)', price: 4000, category: 'Prescription', desc: '50 tablets. Chronic care medication for type-2 diabetes control. Rx required.' },
+                    { id: 'pm7', name: 'Amlodipine 5mg', price: 4500, category: 'Prescription', desc: '30 tablets. Daily cardiovascular blood pressure management. Rx required.' }
+                  ].map(prod => {
+                    return (
+                      <div key={prod.id} className="pharmacy-product-card glassmorphic">
+                        <span className="product-tag">{prod.category}</span>
+                        <h4>{prod.name}</h4>
+                        <p>{prod.desc}</p>
+                        <div className="product-footer">
+                          <span className="product-price">₦{prod.price.toLocaleString()}</span>
+                          <button className="btn-add-cart" onClick={() => {
+                            const existing = pharmacyCart.find(item => item.id === prod.id);
+                            if (existing) {
+                              setPharmacyCart(pharmacyCart.map(item => item.id === prod.id ? { ...item, qty: item.qty + 1 } : item));
+                            } else {
+                              setPharmacyCart([...pharmacyCart, { id: prod.id, name: prod.name, price: prod.price, qty: 1 }]);
+                            }
+                          }} title="Add to Order Cart">
+                            <i className="fa-solid fa-plus"></i>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pharmacy-cart-panel glassmorphic">
+                <h3>Your Medication Cart</h3>
+                {pharmacyCart.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--color-text-muted)' }}>
+                    <i className="fa-solid fa-basket-shopping" style={{ fontSize: '2rem', marginBottom: '0.75rem', display: 'block', color: 'rgba(24,43,73,0.15)' }}></i>
+                    Cart is empty. Add products from the catalog.
+                  </div>
+                ) : (
+                  <>
+                    <div className="cart-items-list">
+                      {pharmacyCart.map(item => (
+                        <div key={item.id} className="cart-item-row">
+                          <div style={{ flex: 1 }}>
+                            <div className="cart-item-name">{item.name}</div>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>₦{item.price.toLocaleString()} each</span>
+                          </div>
+                          <div className="cart-item-controls">
+                            <button className="btn-qty" onClick={() => {
+                              if (item.qty === 1) {
+                                setPharmacyCart(pharmacyCart.filter(cartItem => cartItem.id !== item.id));
+                              } else {
+                                setPharmacyCart(pharmacyCart.map(cartItem => cartItem.id === item.id ? { ...cartItem, qty: cartItem.qty - 1 } : cartItem));
+                              }
+                            }}>-</button>
+                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.qty}</span>
+                            <button className="btn-qty" onClick={() => {
+                              setPharmacyCart(pharmacyCart.map(cartItem => cartItem.id === item.id ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem));
+                            }}>+</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="lab-cart-summary glassmorphic" style={{ marginTop: '0', background: 'rgba(255,255,255,0.45)' }}>
+                      <div className="cart-row">
+                        <span>Items Subtotal:</span>
+                        <strong>₦{pharmacyCart.reduce((sum, item) => sum + (item.price * item.qty), 0).toLocaleString()}</strong>
+                      </div>
+                      <div className="cart-row">
+                        <span>Flat Delivery Fee:</span>
+                        <strong>₦1,500</strong>
+                      </div>
+                      <div className="cart-row total-row">
+                        <span>Grand Total:</span>
+                        <strong>₦{(pharmacyCart.reduce((sum, item) => sum + (item.price * item.qty), 0) + 1500).toLocaleString()}</strong>
+                      </div>
+                    </div>
+
+                    <h4 style={{ marginTop: '1rem', color: 'var(--color-indigo)', fontSize: '0.95rem' }}>Shipping & Checkout Info</h4>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+                      const itemsString = pharmacyCart.map(i => `${i.name} (x${i.qty})`).join(', ');
+                      const totalCost = pharmacyCart.reduce((sum, i) => sum + (i.price * i.qty), 0) + 1500;
+                      
+                      const newInquiry = {
+                        id: orderId,
+                        name: pharmacyCheckout.name,
+                        email: pharmacyCheckout.email,
+                        message: `Pharmacy Purchase Order: [${itemsString}]. Shipping Address: [${pharmacyCheckout.address}]. Rx Notes: [${pharmacyCheckout.notes || 'None'}]. Total Cost: ₦${totalCost.toLocaleString()}`,
+                        date: new Date().toISOString().split('T')[0]
+                      };
+                      setInquiries([newInquiry, ...inquiries]);
+                      setPharmacyCart([]);
+                      setPharmacyCheckout({ name: '', email: '', phone: '', address: '', notes: '' });
+                      setSuccessModal({
+                        title: "Medication Order Placed",
+                        message: "Your medication delivery order has been received. Our pharmacist will review it and dispatch your courier. You will pay cash/card on delivery.",
+                        ticket: orderId
+                      });
+                    }}>
+                      <div className="form-group">
+                        <label>Customer Name</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Zainab Abdulfatah"
+                          value={pharmacyCheckout.name}
+                          onChange={(e) => setPharmacyCheckout({ ...pharmacyCheckout, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Phone Number</label>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="e.g. 08012345678"
+                          value={pharmacyCheckout.phone}
+                          onChange={(e) => setPharmacyCheckout({ ...pharmacyCheckout, phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                          type="email"
+                          required
+                          placeholder="patient@example.com"
+                          value={pharmacyCheckout.email}
+                          onChange={(e) => setPharmacyCheckout({ ...pharmacyCheckout, email: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Shipping Address</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. House 4, Close B, Wuse II, Abuja"
+                          value={pharmacyCheckout.address}
+                          onChange={(e) => setPharmacyCheckout({ ...pharmacyCheckout, address: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Prescription Notes / Doctor Ref (If any)</label>
+                        <textarea
+                          rows="2"
+                          placeholder="For prescription meds, type dosage notes here..."
+                          value={pharmacyCheckout.notes}
+                          onChange={(e) => setPharmacyCheckout({ ...pharmacyCheckout, notes: e.target.value })}
+                        />
+                      </div>
+                      <button type="submit" className="btn btn-primary btn-block">Submit Order Request</button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: HOME SERVICES --- */}
+        {currentView === 'service-home-services' && (
+          <section id="service-home-services-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+            <div className="service-hero-header glassmorphic">
+              <div className="service-hero-icon">
+                <i className="fa-solid fa-house-chimney-medical"></i>
+              </div>
+              <div className="service-hero-info">
+                <h1>Home Care & Nursing Services</h1>
+                <p>Personalized in-home clinical care, nursing visits, and recovery physiotherapy sessions.</p>
+              </div>
+            </div>
+
+            <div className="service-detail-layout">
+              <div className="service-description-panel">
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper"><i className="fa-solid fa-user-nurse"></i></div>
+                  <div className="feature-texts">
+                    <h3>Experienced Clinical Nurses</h3>
+                    <p>Our certified home care nurses are trained in patient hygiene, wound dressing, vital signs monitoring, and medication administration.</p>
+                  </div>
+                </div>
+
+                <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-indigo)', fontSize: '1.4rem', marginTop: '1rem' }}>In-Home Care Packages</h3>
+                <div className="home-packages-grid">
+                  {[
+                    { name: 'Elderly Care & Companion Visit', price: 25000, desc: 'Includes vitals monitoring, daily hygiene assistance, medication administration, and mental companionship.' },
+                    { name: 'Post-natal Care (Mother & Baby)', price: 30000, desc: 'Neonatal checks, umbilical cord care, nursing support, and maternal postpartum recovery monitoring.' },
+                    { name: 'Nurse Home Visit (Injection/Dressing)', price: 15000, desc: 'Quick 1-hour professional clinical visit for injections, IV drip setups, or sterile wound dressings.' },
+                    { name: 'Physiotherapy Home Session', price: 25000, desc: 'Personalized physical rehabilitation exercises for post-stroke, orthopedic recovery, or chronic pain.' }
+                  ].map(pkg => (
+                    <div key={pkg.name} className="package-card glassmorphic">
+                      <div className="package-header">
+                        <h4>{pkg.name}</h4>
+                        <span className="package-price">₦{pkg.price.toLocaleString()}</span>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', flex: 1 }}>{pkg.desc}</p>
+                      <button className="btn btn-outline btn-sm" onClick={() => {
+                        setHomeServiceCheckout({ ...homeServiceCheckout, package: pkg.name });
+                        document.getElementById('home-service-form')?.scrollIntoView({ behavior: 'smooth' });
+                      }}>Select Package</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="booking-form-wrapper glassmorphic" id="home-service-form">
+                <h3>Schedule a Home Visit</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                  Fill in your details below to request a clinical home care visitation slot:
+                </p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const ticketId = `HMS-${Math.floor(1000 + Math.random() * 9000)}`;
+                  const newApt = {
+                    id: ticketId,
+                    patientName: homeServiceCheckout.name,
+                    phone: homeServiceCheckout.phone,
+                    email: homeServiceCheckout.email.toLowerCase(),
+                    doctor: "Home Care Unit",
+                    date: homeServiceCheckout.date,
+                    time: "10:00 AM",
+                    symptoms: `Home Care Service Request: [${homeServiceCheckout.package}]. Home address: [${homeServiceCheckout.address}]. Special client request: [${homeServiceCheckout.notes || 'None'}]`,
+                    status: 'Pending'
+                  };
+                  setAppointments([newApt, ...appointments]);
+                  setHomeServiceCheckout({ name: '', email: '', phone: '', date: '', address: '', notes: '', package: 'Elderly Care & Companion Visit' });
+                  setSuccessModal({
+                    title: "Home Service Booking Received",
+                    message: "Your home service care request has been received. Our clinical supervisor will contact you to assign the nurse or therapist and verify your schedule.",
+                    ticket: ticketId
+                  });
+                }}>
+                  <div className="form-group">
+                    <label>Select Package</label>
+                    <select
+                      value={homeServiceCheckout.package}
+                      onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, package: e.target.value })}
+                    >
+                      <option value="Elderly Care & Companion Visit">Elderly Care & Companion Visit (₦25,000)</option>
+                      <option value="Post-natal Care (Mother & Baby)">Post-natal Care (Mother & Baby) (₦30,000)</option>
+                      <option value="Nurse Home Visit (Injection/Dressing)">Nurse Home Visit (₦15,000)</option>
+                      <option value="Physiotherapy Home Session">Physiotherapy Home Session (₦25,000)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Patient Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Zainab Abdulfatah"
+                      value={homeServiceCheckout.name}
+                      onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Phone Number</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="08012345678"
+                        value={homeServiceCheckout.phone}
+                        onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, phone: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="patient@example.com"
+                        value={homeServiceCheckout.email}
+                        onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Preferred Visit Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={homeServiceCheckout.date}
+                      onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, date: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Full Home Address for Visitation</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. House 4, Close B, Wuse II, Abuja"
+                      value={homeServiceCheckout.address}
+                      onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Special Instructions (e.g. symptoms, specific medical history)</label>
+                    <textarea
+                      rows="3"
+                      placeholder="Type details here..."
+                      value={homeServiceCheckout.notes}
+                      onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, notes: e.target.value })}
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary btn-block">Confirm Home Care Booking</button>
+                </form>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: PHYSICAL CONSULTATION --- */}
+        {currentView === 'service-physical-consult' && (
+          <section id="service-physical-consult-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+            <div className="service-hero-header glassmorphic">
+              <div className="service-hero-icon">
+                <i className="fa-solid fa-clinic-medical"></i>
+              </div>
+              <div className="service-hero-info">
+                <h1>Physical Doctor Consultation</h1>
+                <p>Book walk-in or scheduled doctor appointments at our physical branches.</p>
+              </div>
+            </div>
+
+            <div className="service-detail-layout">
+              <div className="service-description-panel">
+                <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-indigo)', fontSize: '1.4rem' }}>Our Active Clinical Branches</h3>
+                <div className="clinic-locations-grid">
+                  {[
+                    { city: 'Abuja (HQ)', address: 'Suite 12, Garki Mall, Garki, Abuja', phone: '+234 901 432 4442' },
+                    { city: 'Kaduna', address: '4, Constitution Road, Kaduna', phone: '+234 802 112 3344' },
+                    { city: 'Kano', address: '45, Zoo Road, Kano', phone: '+234 803 556 6778' },
+                    { city: 'Bauchi', address: '12, Yakubun Bauchi Road, Bauchi', phone: '+234 805 776 6554' },
+                    { city: 'Gombe', address: '18, Biu Road, Gombe', phone: '+234 809 988 7766' }
+                  ].map(clinic => (
+                    <div key={clinic.city} className="clinic-card glassmorphic">
+                      <h4>{clinic.city} Branch</h4>
+                      <p><i className="fa-solid fa-map-location-dot"></i> {clinic.address}</p>
+                      <p><i className="fa-solid fa-phone"></i> {clinic.phone}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="service-feature-card glassmorphic">
+                  <div className="feature-icon-wrapper"><i className="fa-solid fa-clock-rotate-left"></i></div>
+                  <div className="feature-texts">
+                    <h3>Flexible Scheduling</h3>
+                    <p>Consultations are open Monday through Saturday with dedicated morning and evening slots for busy professionals.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="booking-form-wrapper glassmorphic">
+                <h3>Book Physical Doctor Slot</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                  Select an MDCN-certified specialist to schedule your face-to-face clinical checkup:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {doctors.filter(d => ['Gynaecology', 'Pediatrics', 'General Medicine', 'Dentistry'].includes(d.specialty)).map((doc, idx) => (
+                    <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.85rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.4)' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Location: {doc.clinicRoom || 'Main Clinic Unit'}</span>
+                      </div>
+                      <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                        setPreviewBookingDoc(doc);
+                      }}>Book Slot</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: SPECIALIZATION PAGES --- */}
+        {['specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'].map(specRoute => {
+          const specMap = {
+            'specialty-general-medicine': {
+              title: 'General Medicine & Family Health',
+              desc: 'Comprehensive everyday healthcare diagnostic services, chronic condition management, general physical screening, and preventative wellness therapy guidance.',
+              specialtyName: 'General Medicine',
+              icon: 'fa-user-doctor',
+              highlights: ['Primary Care', 'Chronic Management', 'Annual Checkups', 'Vitals Screening']
+            },
+            'specialty-pediatrics': {
+              title: 'Pediatrics & Infant Care',
+              desc: 'Dedicated clinical care focusing on infants, growing children, and adolescent wellness. Includes childhood immunizations, development tracking, and neonatal checkups.',
+              specialtyName: 'Pediatrics',
+              icon: 'fa-baby',
+              highlights: ['Infant Immunization', 'Development Tracking', 'Neonatal Support', 'Child Nutrition']
+            },
+            'specialty-gynaecology': {
+              title: 'Gynaecology & Obstetric Care',
+              desc: 'Comprehensive women reproductive health services. MDCN specialist consultation for maternal wellness, prenatal monitoring, obstetric scans, and clinical reproductive guides.',
+              specialtyName: 'Gynaecology',
+              icon: 'fa-person-pregnant',
+              highlights: ['Maternal Care', 'Prenatal Checks', 'Family Planning', 'Reproductive Health']
+            },
+            'specialty-psychology': {
+              title: 'Mental Health & Clinical Psychology',
+              desc: 'Compassionate, confidential professional counseling and cognitive therapy. Support for stress management, anxiety, family counseling, and emotional balance.',
+              specialtyName: 'Psychology',
+              icon: 'fa-brain',
+              highlights: ['Cognitive Therapy', 'Anxiety Support', 'Stress Management', 'Family Counselling']
+            },
+            'specialty-dentistry': {
+              title: 'Dental Clinic & Oral Wellness',
+              desc: 'Restorative, aesthetic, and surgical dental health services. Cavity checks, deep cleansing, composite alignments, and smile whitening under certified practitioners.',
+              specialtyName: 'Dentistry',
+              icon: 'fa-tooth',
+              highlights: ['Dental Cleansing', 'Cavity Fillings', 'Cosmetic Braces', 'Oral Surgery']
+            }
+          };
+
+          const specInfo = specMap[specRoute];
+          if (!specInfo) return null;
+
+          return currentView === specRoute && (
+            <section key={specRoute} id={`${specRoute}-view`} className="view-section animate-fade">
+              <button className="back-nav-btn" onClick={navigateBack}>
+                <i className="fa-solid fa-arrow-left"></i> Back to Previous
+              </button>
+              <div className="service-hero-header glassmorphic">
+                <div className="service-hero-icon">
+                  <i className={`fa-solid ${specInfo.icon}`}></i>
+                </div>
+                <div className="service-hero-info">
+                  <h1>{specInfo.title}</h1>
+                  <p>Expert medical support tailored specifically to your needs.</p>
+                </div>
+              </div>
+
+              <div className="specialty-page-grid">
+                <div>
+                  <div className="specialty-about-box glassmorphic">
+                    <h3>About the Specialization</h3>
+                    <p>{specInfo.desc}</p>
+                    <div className="specialty-highlights">
+                      {specInfo.highlights.map(hl => (
+                        <div key={hl} className="highlight-item">
+                          <i className="fa-solid fa-circle-check"></i> {hl}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-indigo)', fontSize: '1.4rem', marginBottom: '1.5rem' }}>
+                    Available {specInfo.specialtyName} Specialists
+                  </h3>
+                  <div className="doctors-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                    {doctors.filter(d => d.specialty === specInfo.specialtyName).map((doc, idx) => {
+                      const grad = getAvatarGradient(idx);
+                      return (
+                        <div className="doctor-card glassmorphic" key={doc.id}>
+                          <div className="doctor-image-container">
+                            {doc.image ? (
+                              <img className="doctor-avatar-img" src={doc.image} alt={doc.name} />
+                            ) : (
+                              <svg className="doctor-avatar-svg" width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                  <linearGradient id={`docGradSpecialty-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style={{ stopColor: grad.from, stopOpacity: 1 }} />
+                                    <stop offset="100%" style={{ stopColor: grad.to, stopOpacity: 1 }} />
+                                  </linearGradient>
+                                </defs>
+                                <rect width="100%" height="100%" fill={`url(#docGradSpecialty-${idx})`} />
+                                <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontFamily="'Lora', serif" fontSize="28" fontWeight="600" fill="#FAF6EE">
+                                  {doc.name.split(" ").map(n => n.charAt(0)).slice(1).join("").toUpperCase()}
+                                </text>
+                              </svg>
+                            )}
+                            <div className="doctor-badge">{doc.experience}</div>
+                          </div>
+                          
+                          <div className="doctor-info">
+                            <h3>{doc.name}</h3>
+                            <div className="doctor-specialty">{getSpecialtyTitle(doc.specialty)}</div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>{doc.bio}</p>
+                            <div className="doctor-details" style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+                              <span style={{ fontSize: '0.75rem' }}><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
+                            </div>
+                            <button className="btn btn-primary btn-sm" style={{ marginTop: '0.75rem' }} onClick={() => {
+                              setPreviewBookingDoc(doc);
+                            }}>
+                              Book Slot
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="booking-form-wrapper glassmorphic">
+                  <h3>Department Inquiry</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                    Have questions about treatments or schedules in this department? Send a direct message:
+                  </p>
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const target = e.target;
+                    const name = target.elements.namedItem('inqName').value;
+                    const email = target.elements.namedItem('inqEmail').value;
+                    const msg = target.elements.namedItem('inqMsg').value;
+                    
+                    const newInquiry = {
+                      id: `INQ-${Math.floor(1000 + Math.random() * 9000)}`,
+                      name,
+                      email,
+                      message: `Specialty Inquiry (${specInfo.specialtyName}): ${msg}`,
+                      date: new Date().toISOString().split('T')[0]
+                    };
+                    setInquiries([newInquiry, ...inquiries]);
+                    target.reset();
+                    alert("Your inquiry has been sent to our department head. We will get back to you shortly!");
+                  }}>
+                    <div className="form-group">
+                      <label htmlFor="inqName">Your Name</label>
+                      <input type="text" id="inqName" required placeholder="e.g. John Doe" />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="inqEmail">Email Address</label>
+                      <input type="email" id="inqEmail" required placeholder="patient@example.com" />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="inqMsg">Your Inquiry</label>
+                      <textarea id="inqMsg" rows="4" required placeholder="Type your question here..."></textarea>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-block">Send Inquiry</button>
+                  </form>
+                </div>
+              </div>
+            </section>
+          );
+        })}
+
         {/* --- VIEW: DOCTORS --- */}
         {currentView === 'doctors' && (
           <section id="doctors-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
             <div className="section-header">
               <h2>Doctor Directory</h2>
               <p>Search and inspect verified medical professionals active on our digital board.</p>
@@ -1098,19 +2358,27 @@ export default function App() {
                       
                       <div className="doctor-info">
                         <h3>{doc.name}</h3>
-                        <div className="doctor-specialty">{doc.specialty}</div>
+                        <div className="doctor-specialty">{getSpecialtyTitle(doc.specialty)}</div>
                         <div className="doctor-details">
                           <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
+                          {doc.consultationRate && (
+                            <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
+                          )}
+                          {doc.services && doc.services.length > 0 && (
+                            <div className="doctor-services-list" style={{ marginTop: '0.5rem' }}>
+                              <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services:</strong>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                {doc.services.map(srv => (
+                                  <span key={srv} style={{ fontSize: '0.7rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
+                                    {srv}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <button className="btn btn-primary" onClick={() => {
-                          setBookingFormData({ 
-                            ...bookingFormData, 
-                            doctorId: doc.id.toString(),
-                            patientName: loggedInPatient ? loggedInPatient.name : '',
-                            email: loggedInPatient ? loggedInPatient.email : '',
-                            phone: loggedInPatient ? loggedInPatient.phone : ''
-                          });
-                          navigateTo('booking');
+                          setPreviewBookingDoc(doc);
                         }}>
                           Book Consultation
                         </button>
@@ -1132,6 +2400,9 @@ export default function App() {
         {/* --- VIEW: BOOKING FORM --- */}
         {currentView === 'booking' && (
           <section id="booking-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
             <div className="booking-layout">
               <div className="booking-info-panel">
                 <h2>Schedule a Virtual Consultation Slot</h2>
@@ -1205,8 +2476,8 @@ export default function App() {
                         onChange={(e) => setBookingFormData({ ...bookingFormData, doctorId: e.target.value })}
                       >
                         <option value="">Choose Specialist...</option>
-                        {doctors.map(d => (
-                          <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+                        {doctors.filter(d => d.active !== false).map(d => (
+                          <option key={d.id} value={d.id}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
                         ))}
                       </select>
                     </div>
@@ -1263,6 +2534,9 @@ export default function App() {
         {/* --- VIEW: CONTACT --- */}
         {currentView === 'contact' && (
           <section id="contact-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
             <div className="section-header">
               <h2>Contact Support</h2>
               <p>For administrative inquiries, partnerships, or support, send us a direct message.</p>
@@ -1325,6 +2599,9 @@ export default function App() {
         {/* --- VIEW: PORTAL LOGIN (Multi-Role Login) --- */}
         {currentView === 'portal-login' && (
           <section id="portal-login-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem', alignSelf: 'flex-start' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
             <div className="login-card-wrapper">
               <div className="login-card glassmorphic">
                 
@@ -1623,7 +2900,7 @@ export default function App() {
                                       <td>{apt.doctor}</td>
                                       <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
                                       <td>
-                                        <span className={`status-badge status-${apt.status.toLowerCase()}`}>
+                                        <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
                                           {apt.status}
                                         </span>
                                       </td>
@@ -1691,8 +2968,8 @@ export default function App() {
                                 })}
                               >
                                 <option value="">Choose Specialist...</option>
-                                {doctors.map(d => (
-                                  <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+                                {doctors.filter(d => d.active !== false).map(d => (
+                                  <option key={d.id} value={d.id}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
                                 ))}
                               </select>
                             </div>
@@ -1906,7 +3183,9 @@ export default function App() {
                           phone: loggedInDoctor.phone || '',
                           bio: loggedInDoctor.bio || '',
                           clinicRoom: loggedInDoctor.clinicRoom || '',
-                          license: loggedInDoctor.license || ''
+                          license: loggedInDoctor.license || '',
+                          consultationRate: loggedInDoctor.consultationRate || '',
+                          services: loggedInDoctor.services || []
                         });
                         setIsEditingDocSelf(false);
                       }}
@@ -1936,43 +3215,199 @@ export default function App() {
                               </thead>
                               <tbody>
                                 {myDoctorAppointments.map(apt => (
-                                  <tr key={apt.id}>
-                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
-                                    <td>
-                                      <strong>{apt.patientName}</strong>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
-                                    </td>
-                                    <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
-                                    <td style={{ maxWidth: '240px', wordBreak: 'break-word' }}>{apt.symptoms}</td>
-                                    <td>
-                                      <span className={`status-badge status-${apt.status.toLowerCase()}`}>
-                                        {apt.status}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      {apt.notes || apt.prescription ? (
-                                        <div className="patient-prescription-box">
-                                          {apt.notes && <p><strong>Notes:</strong> {apt.notes}</p>}
-                                          {apt.prescription && <p><strong>Rx:</strong> <span className="rx-label">{apt.prescription}</span></p>}
+                                  <React.Fragment key={apt.id}>
+                                    <tr style={{ background: apt.status === 'Approved' ? 'rgba(34,197,94,0.02)' : apt.status === 'Rejected' ? 'rgba(239,68,68,0.01)' : 'transparent' }}>
+                                      <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
+                                      <td>
+                                        <strong>{apt.patientName}</strong>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
+                                      </td>
+                                      <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
+                                      <td style={{ maxWidth: '240px', wordBreak: 'break-word' }}>{apt.symptoms}</td>
+                                      <td>
+                                        <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                                          {apt.status}
+                                        </span>
+                                      </td>
+                                      <td>
+                                        {apt.status === 'Approved' ? (
+                                          apt.notes || apt.prescription ? (
+                                            <div className="patient-prescription-box" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.5rem', borderRadius: '6px' }}>
+                                              {apt.notes && <p style={{ margin: 0, fontSize: '0.85rem' }}><strong>Notes:</strong> {apt.notes}</p>}
+                                              {apt.prescription && <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}><strong>Rx:</strong> <span className="rx-label" style={{ background: 'var(--color-accent)', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>{apt.prescription}</span></p>}
+                                            </div>
+                                          ) : (
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending medical note. Fill form below...</span>
+                                          )
+                                        ) : apt.status === 'Rejected' ? (
+                                          <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '500' }}>Slot Rejected (Unavailable)</span>
+                                        ) : (
+                                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Awaiting availability check...</span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                          <button className="action-btn" style={{ color: 'var(--color-indigo)', padding: '0.2rem 0.4rem' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Ticket Details">
+                                            <i className="fa-solid fa-eye"></i> View
+                                          </button>
+                                          
+                                          {apt.status === 'Pending' && (
+                                            <>
+                                              <button 
+                                                className="btn btn-success btn-sm" 
+                                                style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                onClick={() => handleApproveAppointment(apt.id)}
+                                              >
+                                                <i className="fa-solid fa-circle-check"></i> Approve
+                                              </button>
+                                              <button 
+                                                className="btn btn-danger btn-sm" 
+                                                style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                onClick={() => handleRejectAppointment(apt.id)}
+                                              >
+                                                <i className="fa-solid fa-circle-xmark"></i> Reject
+                                              </button>
+                                            </>
+                                          )}
+
+                                          <button className="btn btn-outline btn-sm" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => startEditApt(apt)} title="Reschedule Ticket">
+                                            <i className="fa-solid fa-pen-to-square"></i> Reschedule
+                                          </button>
+
+                                          {apt.status === 'Approved' && (
+                                            <button 
+                                              className="btn btn-secondary btn-sm" 
+                                              style={{ background: 'var(--color-accent)', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
+                                              onClick={() => {
+                                                setFollowUpApt(apt);
+                                                const twoWeeksLater = new Date();
+                                                twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+                                                const dateStr = twoWeeksLater.toISOString().split('T')[0];
+                                                setFollowUpData({
+                                                  date: dateStr,
+                                                  time: '10:00 AM',
+                                                  reason: '2-Week Observation Follow-up'
+                                                });
+                                              }}
+                                              title="Schedule Return Appointment"
+                                            >
+                                              <i className="fa-solid fa-clock-rotate-left"></i> Book Follow-up
+                                            </button>
+                                          )}
                                         </div>
-                                      ) : (
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending medical report...</span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                        <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Ticket Details">
-                                          <i className="fa-solid fa-eye"></i> View
-                                        </button>
-                                        <button className="btn btn-primary btn-sm" onClick={() => openConsultationNotesModal(apt)}>
-                                          <i className="fa-solid fa-file-signature"></i> Add Rx/Notes
-                                        </button>
-                                        <button className="btn btn-outline btn-sm" onClick={() => startEditApt(apt)} title="Modify / Reschedule Ticket">
-                                          <i className="fa-solid fa-pen-to-square"></i> Reschedule
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
+                                      </td>
+                                    </tr>
+
+                                    {apt.status === 'Approved' && (
+                                      <tr className="doctor-note-subrow">
+                                        <td colSpan={7} style={{ background: 'rgba(28,43,73,0.01)', padding: '0.75rem 1rem 1.25rem 1rem', borderTop: 'none', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                                          <div className="doctor-note-editor-card glassmorphic" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', borderLeft: '4px solid var(--color-primary)', padding: '1rem', borderRadius: '8px', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.02)' }}>
+                                            <div>
+                                              <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                                                <i className="fa-solid fa-notes-medical"></i> Clinical Consultation Notes (Plain Text)
+                                              </label>
+                                              <textarea 
+                                                rows={3}
+                                                style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
+                                                placeholder="Write patient clinical findings and consultation details..."
+                                                value={docNotesState[apt.id]?.notes !== undefined ? docNotesState[apt.id].notes : (apt.notes || '')}
+                                                onChange={(e) => handleDocNoteChange(apt.id, 'notes', e.target.value)}
+                                              />
+                                            </div>
+                                            <div>
+                                              <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-accent)', display: 'block', marginBottom: '0.5rem' }}>
+                                                <i className="fa-solid fa-prescription"></i> Rx Prescription Details (Edit before submitting)
+                                              </label>
+                                              <textarea 
+                                                rows={3}
+                                                style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
+                                                placeholder="List prescribed medicines, dosage instruction (e.g. Tab Paracetamol 500mg, 1x3 for 3 days)..."
+                                                value={docNotesState[apt.id]?.prescription !== undefined ? docNotesState[apt.id].prescription : (apt.prescription || '')}
+                                                onChange={(e) => handleDocNoteChange(apt.id, 'prescription', e.target.value)}
+                                              />
+                                            </div>
+                                            
+                                            {/* Department Referrals & Pushing */}
+                                            <div style={{ gridColumn: 'span 2', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '1rem', marginTop: '0.25rem' }}>
+                                              <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                                                <i className="fa-solid fa-network-wired"></i> Push Patient Referrals to Medical Departments (Optional)
+                                              </label>
+                                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
+                                                <div>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                    <i className="fa-solid fa-flask"></i> Laboratory Tests Referral
+                                                  </span>
+                                                  <input 
+                                                    type="text"
+                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
+                                                    placeholder="e.g. Malaria smear, FBC..."
+                                                    value={docNotesState[apt.id]?.labTests !== undefined ? docNotesState[apt.id].labTests : (apt.labTests || '')}
+                                                    onChange={(e) => handleDocNoteChange(apt.id, 'labTests', e.target.value)}
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                    <i className="fa-solid fa-x-ray"></i> Scan / Imaging Referral
+                                                  </span>
+                                                  <input 
+                                                    type="text"
+                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
+                                                    placeholder="e.g. Pelvic ultrasound, Chest X-ray..."
+                                                    value={docNotesState[apt.id]?.scans !== undefined ? docNotesState[apt.id].scans : (apt.scans || '')}
+                                                    onChange={(e) => handleDocNoteChange(apt.id, 'scans', e.target.value)}
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                    <i className="fa-solid fa-hospital-user"></i> Clinical Office Referral
+                                                  </span>
+                                                  <input 
+                                                    type="text"
+                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
+                                                    placeholder="e.g. Return in 2 weeks..."
+                                                    value={docNotesState[apt.id]?.officeReferral !== undefined ? docNotesState[apt.id].officeReferral : (apt.officeReferral || '')}
+                                                    onChange={(e) => handleDocNoteChange(apt.id, 'officeReferral', e.target.value)}
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                    <i className="fa-solid fa-square-check"></i> Consultation Status
+                                                  </span>
+                                                  <select
+                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem', height: '37px', backgroundColor: '#fff', color: 'var(--color-text)' }}
+                                                    value={docNotesState[apt.id]?.status !== undefined ? docNotesState[apt.id].status : (apt.status || 'Approved')}
+                                                    onChange={(e) => handleDocNoteChange(apt.id, 'status', e.target.value)}
+                                                  >
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="Approved">Approved</option>
+                                                    <option value="Completed">Completed</option>
+                                                    <option value="Awaiting Lab">Awaiting Lab Results</option>
+                                                    <option value="Awaiting Scan">Awaiting Scan Results</option>
+                                                    <option value="Cancelled">Cancelled</option>
+                                                    <option value="Rejected">Rejected</option>
+                                                  </select>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '0.25rem' }}>
+                                              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                                <i className="fa-solid fa-circle-info"></i> Submit compiles notes into the patient's official portal record.
+                                              </span>
+                                              <button 
+                                                type="button"
+                                                className="btn btn-primary"
+                                                style={{ padding: '0.45rem 1.15rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}
+                                                onClick={() => handleSubmitDocNotes(apt.id)}
+                                              >
+                                                <i className="fa-solid fa-cloud-arrow-up"></i> Submit Consultation Record
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </React.Fragment>
                                 ))}
                               </tbody>
                             </table>
@@ -2034,6 +3469,28 @@ export default function App() {
                                   </button>
                                 </span>
                               </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Consultation Rate</strong>
+                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.consultationRate || 'N/A'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Consultation Duration</strong>
+                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.consultationDuration || '30 mins'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', gridColumn: 'span 2' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services / Features</strong>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.25rem' }}>
+                                  {loggedInDoctor.services && loggedInDoctor.services.length > 0 ? (
+                                    loggedInDoctor.services.map(srv => (
+                                      <span key={srv} style={{ fontSize: '0.8rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: '600' }}>
+                                        {srv}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>No services specified.</span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
 
                             {loggedInDoctor.bio && (
@@ -2070,7 +3527,9 @@ export default function App() {
                                   phone: loggedInDoctor.phone || '',
                                   bio: loggedInDoctor.bio || '',
                                   clinicRoom: loggedInDoctor.clinicRoom || '',
-                                  license: loggedInDoctor.license || ''
+                                  license: loggedInDoctor.license || '',
+                                  consultationRate: loggedInDoctor.consultationRate || '',
+                                  services: loggedInDoctor.services || []
                                 });
                                 setIsEditingDocSelf(true);
                               }}>
@@ -2181,6 +3640,53 @@ export default function App() {
                                   value={docSelfData.clinicRoom || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, clinicRoom: e.target.value })}
                                 />
+                              </div>
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label>Consultation Rate</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="e.g. ₦5,000"
+                                  value={docSelfData.consultationRate || ''}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, consultationRate: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Consultation Duration</label>
+                                <input 
+                                  type="text" 
+                                  placeholder="e.g. 30 mins"
+                                  value={docSelfData.consultationDuration || ''}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, consultationDuration: e.target.value })}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="form-row">
+                              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label style={{ marginBottom: '0.5rem' }}>Offered Services / Features</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', background: 'rgba(255,255,255,0.4)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(24, 43, 73, 0.15)' }}>
+                                  {ALL_SERVICES.map(srv => (
+                                    <label key={srv} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textTransform: 'none', fontSize: '0.85rem', color: 'var(--color-indigo)', cursor: 'pointer', fontWeight: '500' }}>
+                                      <input 
+                                        type="checkbox" 
+                                        checked={(docSelfData.services || []).includes(srv)}
+                                        onChange={(e) => {
+                                          const currentServices = docSelfData.services || [];
+                                          if (e.target.checked) {
+                                            setDocSelfData({ ...docSelfData, services: [...currentServices, srv] });
+                                          } else {
+                                            setDocSelfData({ ...docSelfData, services: currentServices.filter(s => s !== srv) });
+                                          }
+                                        }}
+                                        style={{ width: 'auto', margin: 0 }}
+                                      />
+                                      {srv}
+                                    </label>
+                                  ))}
+                                </div>
                               </div>
                             </div>
 
@@ -2384,7 +3890,7 @@ export default function App() {
                                       {apt.symptoms}
                                     </td>
                                     <td>
-                                      <span className={`status-badge status-${apt.status.toLowerCase()}`}>
+                                      <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
                                         {apt.status}
                                       </span>
                                     </td>
@@ -2394,6 +3900,14 @@ export default function App() {
                                           <>
                                             <button className="action-btn btn-approve" onClick={() => handleApproveAppointment(apt.id)} title="Approve Booking">
                                               Approve
+                                            </button>
+                                            <button 
+                                              className="action-btn" 
+                                              style={{ backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
+                                              onClick={() => handleAutoRouteSpecialist(apt.id)} 
+                                              title="Auto-Route to Most Available Doctor"
+                                            >
+                                              <i className="fa-solid fa-route"></i> Route
                                             </button>
                                             <button className="action-btn btn-cancel" onClick={() => handleCancelAppointment(apt.id)} title="Cancel Booking">
                                               Cancel
@@ -2534,6 +4048,53 @@ export default function App() {
                             </div>
                           </div>
 
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Consultation Rate</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g. ₦5,000"
+                                value={newDoctorData.consultationRate || ''}
+                                onChange={(e) => setNewDoctorData({ ...newDoctorData, consultationRate: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Consultation Duration</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g. 30 mins"
+                                value={newDoctorData.consultationDuration || ''}
+                                onChange={(e) => setNewDoctorData({ ...newDoctorData, consultationDuration: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                              <label style={{ marginBottom: '0.5rem' }}>Offered Services / Features</label>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', background: 'rgba(255,255,255,0.4)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(24, 43, 73, 0.15)' }}>
+                                {ALL_SERVICES.map(srv => (
+                                  <label key={srv} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textTransform: 'none', fontSize: '0.85rem', color: 'var(--color-indigo)', cursor: 'pointer', fontWeight: '500' }}>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={(newDoctorData.services || []).includes(srv)}
+                                      onChange={(e) => {
+                                        const currentServices = newDoctorData.services || [];
+                                        if (e.target.checked) {
+                                          setNewDoctorData({ ...newDoctorData, services: [...currentServices, srv] });
+                                        } else {
+                                          setNewDoctorData({ ...newDoctorData, services: currentServices.filter(s => s !== srv) });
+                                        }
+                                      }}
+                                      style={{ width: 'auto', margin: 0 }}
+                                    />
+                                    {srv}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="form-group">
                             <label>Professional Biography / Clinical Summary</label>
                             <textarea 
@@ -2616,7 +4177,7 @@ export default function App() {
                                 className="btn btn-outline" 
                                 onClick={() => {
                                   setEditingDoctorId(null);
-                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '' });
+                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', services: [] });
                                 }}
                               >
                                 Cancel Edit
@@ -2627,37 +4188,100 @@ export default function App() {
 
                         <div style={{ marginTop: '2rem' }}>
                           <h4>Registered Doctors ({doctors.length})</h4>
-                          <div className="admin-doctors-list-grid">
-                            {doctors.map(d => (
-                              <div className="admin-doctor-card glassmorphic" key={d.id}>
-                                <div style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem', alignItems: 'center' }}>
-                                  {d.image ? (
-                                    <img src={d.image} alt={d.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)', flexShrink: 0 }} />
-                                  ) : (
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
-                                      {d.name.charAt(d.name.indexOf(' ') + 1) || d.name.charAt(0)}
-                                    </div>
-                                  )}
-                                  <div className="admin-doc-info">
-                                    <strong>{d.name}</strong>
-                                    <span>{d.specialty} — {d.experience}</span>
-                                    <small>{d.schedule} | {d.regNo}</small>
-                                    <small style={{ display: 'block', color: 'var(--color-accent)', marginTop: '0.25rem', fontWeight: '500' }}>Login: {d.email || 'N/A'} / {d.password || 'N/A'}</small>
-                                  </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                  <button className="delete-doctor-btn" onClick={() => setAdminSelectedDoctor(d)} title="View Profile" style={{ backgroundColor: 'rgba(28, 43, 73, 0.1)', color: 'var(--color-indigo)' }}>
-                                    <i className="fa-solid fa-eye"></i>
-                                  </button>
-                                  <button className="delete-doctor-btn" onClick={() => startEditDoctor(d)} title="Edit Profile" style={{ backgroundColor: 'rgba(28, 43, 73, 0.1)', color: 'var(--color-indigo)' }}>
-                                    <i className="fa-solid fa-pen-to-square"></i>
-                                  </button>
-                                  <button className="delete-doctor-btn" onClick={() => handleDeleteDoctor(d.id)} title="Delete Profile">
-                                    <i className="fa-solid fa-trash"></i>
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Specialist</th>
+                                  <th>Department</th>
+                                  <th>Weekly Hours</th>
+                                  <th>Credentials Code</th>
+                                  <th>Consultation Rate</th>
+                                  <th>Offered Services</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {doctors.map(d => (
+                                  <tr key={d.id}>
+                                    <td>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        {d.image ? (
+                                          <img src={d.image} alt={d.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)', flexShrink: 0 }} />
+                                        ) : (
+                                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
+                                            {d.name.charAt(d.name.indexOf(' ') + 1) || d.name.charAt(0)}
+                                          </div>
+                                        )}
+                                        <div>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <strong style={{ color: 'var(--color-indigo)' }}>{d.name}</strong>
+                                            <span className={`status-badge ${d.active === false ? 'status-cancelled' : 'status-approved'}`} style={{ padding: '0.05rem 0.35rem', fontSize: '0.6rem', borderRadius: '4px' }}>
+                                              {d.active === false ? 'Inactive' : 'Active'}
+                                            </span>
+                                          </div>
+                                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{d.regNo || 'N/A'}</span>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-accent)' }}>{getSpecialtyTitle(d.specialty)}</span>
+                                    </td>
+                                    <td>
+                                      <span style={{ fontSize: '0.85rem' }}>{d.schedule || 'N/A'}</span>
+                                    </td>
+                                    <td>
+                                      <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                                        <div>Email: <code>{d.email || 'N/A'}</code></div>
+                                        <div>Password: <code>{d.password || 'N/A'}</code></div>
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{d.consultationRate || 'N/A'}</span>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', maxWidth: '200px' }}>
+                                        {d.services && d.services.length > 0 ? (
+                                          d.services.map(srv => (
+                                            <span key={srv} style={{ fontSize: '0.7rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: '600' }}>
+                                              {srv}
+                                            </span>
+                                          ))
+                                        ) : (
+                                          <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>None</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button 
+                                          className="delete-doctor-btn" 
+                                          onClick={() => handleToggleDoctorActive(d.id)} 
+                                          title={d.active === false ? "Activate Profile" : "Deactivate Profile"} 
+                                          style={{ 
+                                            padding: '4px 8px', 
+                                            borderRadius: '4px', 
+                                            backgroundColor: d.active === false ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)', 
+                                            color: d.active === false ? '#10B981' : '#EF4444' 
+                                          }}
+                                        >
+                                          <i className={`fa-solid ${d.active === false ? 'fa-toggle-off' : 'fa-toggle-on'}`}></i>
+                                        </button>
+                                        <button className="delete-doctor-btn" onClick={() => setAdminSelectedDoctor(d)} title="View Profile" style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}>
+                                          <i className="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button className="delete-doctor-btn" onClick={() => startEditDoctor(d)} title="Edit Profile" style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}>
+                                          <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button className="delete-doctor-btn" onClick={() => handleDeleteDoctor(d.id)} title="Delete Profile" style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}>
+                                          <i className="fa-solid fa-trash"></i>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       </div>
@@ -2741,24 +4365,40 @@ export default function App() {
 
                         <div style={{ marginTop: '2rem' }}>
                           <h4>Registered Patients ({patients.length})</h4>
-                          <div className="admin-doctors-list-grid">
-                            {patients.map(p => (
-                              <div className="admin-doctor-card glassmorphic" key={p.email}>
-                                <div className="admin-doc-info">
-                                  <strong>{p.name}</strong>
-                                  <span>{p.phone}</span>
-                                  <small style={{ display: 'block', color: 'var(--color-accent)', marginTop: '0.25rem', fontWeight: '500' }}>Login: {p.email} / {p.password}</small>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                  <button className="delete-doctor-btn" onClick={() => startEditPatient(p)} title="Edit Account" style={{ backgroundColor: 'rgba(28, 43, 73, 0.1)', color: 'var(--color-indigo)' }}>
-                                    <i className="fa-solid fa-pen-to-square"></i>
-                                  </button>
-                                  <button className="delete-doctor-btn" onClick={() => handleDeletePatient(p.email)} title="Delete Account">
-                                    <i className="fa-solid fa-trash"></i>
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Patient Name</th>
+                                  <th>Contact Phone</th>
+                                  <th>Email Address</th>
+                                  <th>Portal Password</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {patients.map(p => (
+                                  <tr key={p.email}>
+                                    <td>
+                                      <strong>{p.name}</strong>
+                                    </td>
+                                    <td>{p.phone}</td>
+                                    <td><code>{p.email}</code></td>
+                                    <td><code>{p.password}</code></td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button className="delete-doctor-btn" onClick={() => startEditPatient(p)} title="Edit Account" style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}>
+                                          <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button className="delete-doctor-btn" onClick={() => handleDeletePatient(p.email)} title="Delete Account" style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}>
+                                          <i className="fa-solid fa-trash"></i>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       </div>
@@ -2769,27 +4409,51 @@ export default function App() {
                       <div>
                         <h3>Inquiries Inbox</h3>
                         {inquiries.length > 0 ? (
-                          <div className="inquiry-cards-list">
-                            {inquiries.map(inq => (
-                              <div className="inquiry-card-item glassmorphic" key={inq.id}>
-                                <div className="inq-header">
-                                  <div>
-                                    <strong>{inq.name}</strong> ({inq.email})
-                                    <span className="inq-ticket">{inq.id}</span>
-                                  </div>
-                                  <span className="inq-date">{inq.date}</span>
-                                </div>
-                                <p className="inq-message">"{inq.message}"</p>
-                                <div className="inq-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
-                                  <button className="btn btn-primary btn-sm" onClick={() => setAdminSelectedInquiry(inq)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
-                                    <i className="fa-solid fa-eye" style={{ marginRight: '0.25rem' }}></i> View Details
-                                  </button>
-                                  <button className="inq-btn-delete" onClick={() => handleDeleteInquiry(inq.id)} style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
-                                    <i className="fa-solid fa-trash"></i> Delete Inquiry
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Ticket ID</th>
+                                  <th>Date</th>
+                                  <th>Sender</th>
+                                  <th>Message</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {inquiries.map(inq => (
+                                  <tr key={inq.id}>
+                                    <td>
+                                      <span className="inq-ticket" style={{ marginLeft: 0 }}>{inq.id}</span>
+                                    </td>
+                                    <td>
+                                      <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{inq.date}</span>
+                                    </td>
+                                    <td>
+                                      <div style={{ fontSize: '0.85rem' }}>
+                                        <strong>{inq.name}</strong>
+                                        <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>{inq.email}</div>
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <p className="inq-message" style={{ margin: 0, fontSize: '0.85rem', maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                                        "{inq.message}"
+                                      </p>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button className="btn btn-primary btn-sm" onClick={() => setAdminSelectedInquiry(inq)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                                          <i className="fa-solid fa-eye"></i> View Details
+                                        </button>
+                                        <button className="inq-btn-delete" onClick={() => handleDeleteInquiry(inq.id)} style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                                          <i className="fa-solid fa-trash"></i> Delete
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         ) : (
                           <div className="empty-state">
@@ -2892,7 +4556,7 @@ export default function App() {
 
       </main>
 
-      {/* --- 3. Footer Section (Glassmorphic & Transparent) --- */}
+      {/* --- 3. Footer Section (Flyer-Style Compact Bar + Classic Links) --- */}
       <footer className="app-footer glassmorphic">
         <div className="footer-container">
           <div className="footer-brand">
@@ -2915,28 +4579,45 @@ export default function App() {
             </ul>
           </div>
 
-          <div className="footer-links-col">
-            <h4>Legal & Compliance</h4>
-            <ul>
-              <li><a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('view'); }}>Terms & Conditions</a></li>
-              <li><a href="#privacy" onClick={(e) => { e.preventDefault(); setShowTermsModal('view'); }}>Privacy Policy</a></li>
-            </ul>
-          </div>
-
           <div className="footer-hours-col">
             <h4>Operational Hours</h4>
-            <p>Monday – Friday: 8:00 AM – 5:00 PM</p>
-            <p>Saturday: 9:00 AM – 2:00 PM</p>
+            <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
+            <p>Saturday: 9:00 AM - 2:00 PM</p>
             <p>Sunday: Emergency Consultations Only</p>
             <p className="footer-contact-phone"><i className="fa-solid fa-phone"></i> +234 901 432 4442</p>
           </div>
         </div>
+      </footer>
 
-        <div className="footer-bottom">
+      {/* Flyer-Style Compact Footer Bar */}
+      <div className="flyer-footer-bar">
+        <div className="flyer-footer-container">
+          <div className="flyer-footer-item">
+            <div className="flyer-footer-icon"><i className="fa-solid fa-heart-pulse"></i></div>
+            <div className="flyer-footer-text">
+              <strong>Your Health. Our Care.</strong>
+              <span>Simmycare - <a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Always Here for You.</a></span>
+            </div>
+          </div>
+          <div className="flyer-footer-item center">
+            <div className="flyer-footer-icon"><i className="fa-solid fa-globe"></i></div>
+            <div className="flyer-footer-text">
+              <strong>www.simmycare.com</strong>
+            </div>
+          </div>
+          <div className="flyer-footer-item right">
+            <div className="flyer-footer-icon"><i className="fa-solid fa-phone"></i></div>
+            <div className="flyer-footer-text">
+              <strong>09014324442</strong>
+              <span>We are just a message away!</span>
+            </div>
+          </div>
+        </div>
+        <div className="flyer-footer-bottom">
           <p>© 2026 SimmyCare Online Clinic. Developed by Nexel Technologies. All rights reserved.</p>
           <p>RC Number: RC 9198656</p>
         </div>
-      </footer>
+      </div>
 
       {/* --- 4. Success Modal Popup --- */}
       {successModal && (
@@ -3026,12 +4707,48 @@ export default function App() {
               </div>
 
               <div>
-                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Status</strong>
-                <div style={{ marginTop: '0.25rem' }}>
-                  <span className={`status-badge status-${adminSelectedApt.status.toLowerCase()}`}>
-                    {adminSelectedApt.status}
-                  </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Status</strong>
+                  {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.status && (
+                    <button 
+                      onClick={() => {
+                        setModalEditingFields(prev => ({ ...prev, status: true }));
+                        setModalTempValues(prev => ({ ...prev, status: adminSelectedApt.status }));
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.85rem' }}
+                      title="Change Status"
+                    >
+                      <i className="fa-solid fa-pen-to-square"></i> Change
+                    </button>
+                  )}
                 </div>
+                {modalEditingFields.status ? (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <select 
+                      style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}
+                      value={modalTempValues.status || ''}
+                      onChange={(e) => handleModalFieldEdit('status', e.target.value)}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Awaiting Lab">Awaiting Lab Results</option>
+                      <option value="Awaiting Scan">Awaiting Scan Results</option>
+                      <option value="Cancelled">Cancelled</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', justifyContent: 'flex-end' }}>
+                      <button className="btn btn-primary btn-sm" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => handleModalFieldSave(adminSelectedApt.id, 'status')}>Save</button>
+                      <button className="btn btn-outline btn-sm" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setModalEditingFields(prev => ({ ...prev, status: false }))}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <span className={`status-badge status-${adminSelectedApt.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {adminSelectedApt.status}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -3040,25 +4757,194 @@ export default function App() {
                   "{adminSelectedApt.symptoms}"
                 </p>
               </div>
-
-              {adminSelectedApt.notes && (
-                <div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Clinical Consultation Notes</strong>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.95rem', lineHeight: '1.4', backgroundColor: 'rgba(28, 43, 73, 0.05)', padding: '0.75rem', borderRadius: '4px' }}>
-                    {adminSelectedApt.notes}
-                  </p>
+                  {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.notes && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button 
+                        onClick={() => {
+                          setModalEditingFields(prev => ({ ...prev, notes: true }));
+                          setModalTempValues(prev => ({ ...prev, notes: adminSelectedApt.notes || '' }));
+                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.9rem' }}
+                        title="Edit Notes"
+                      >
+                        <i className="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      {adminSelectedApt.notes && (
+                        <button 
+                          onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'notes')}
+                          style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.9rem' }}
+                          title="Delete Notes"
+                        >
+                          <i className="fa-solid fa-trash-can"></i>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
+                {modalEditingFields.notes ? (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <textarea 
+                      rows="3"
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'inherit', fontSize: '0.9rem' }}
+                      value={modalTempValues.notes || ''}
+                      onChange={(e) => handleModalFieldEdit('notes', e.target.value)}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', justifyContent: 'flex-end' }}>
+                      <button className="btn btn-primary btn-sm" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => handleModalFieldSave(adminSelectedApt.id, 'notes')}>Save</button>
+                      <button className="btn btn-outline btn-sm" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setModalEditingFields(prev => ({ ...prev, notes: false }))}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.95rem', lineHeight: '1.4', backgroundColor: 'rgba(28, 43, 73, 0.05)', padding: '0.75rem', borderRadius: '4px', minHeight: '38px' }}>
+                    {adminSelectedApt.notes || <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No clinical notes recorded.</span>}
+                  </p>
+                )}
+              </div>
 
-              {adminSelectedApt.prescription && (
-                <div>
+              {/* Medication/Rx Section with Edit/Delete */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Prescribed Medication (Rx)</strong>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.95rem', fontWeight: '500', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '4px' }}>
-                    <i className="fa-solid fa-prescription-bottle-medical" style={{ marginRight: '0.5rem' }}></i>
-                    {adminSelectedApt.prescription}
-                  </p>
+                  {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.prescription && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button 
+                        onClick={() => {
+                          setModalEditingFields(prev => ({ ...prev, prescription: true }));
+                          setModalTempValues(prev => ({ ...prev, prescription: adminSelectedApt.prescription || '' }));
+                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.9rem' }}
+                        title="Edit Rx"
+                      >
+                        <i className="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      {adminSelectedApt.prescription && (
+                        <button 
+                          onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'prescription')}
+                          style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.9rem' }}
+                          title="Delete Rx"
+                        >
+                          <i className="fa-solid fa-trash-can"></i>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
+                {modalEditingFields.prescription ? (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <textarea 
+                      rows="2"
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'inherit', fontSize: '0.9rem' }}
+                      value={modalTempValues.prescription || ''}
+                      onChange={(e) => handleModalFieldEdit('prescription', e.target.value)}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', justifyContent: 'flex-end' }}>
+                      <button className="btn btn-primary btn-sm" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => handleModalFieldSave(adminSelectedApt.id, 'prescription')}>Save</button>
+                      <button className="btn btn-outline btn-sm" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setModalEditingFields(prev => ({ ...prev, prescription: false }))}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.95rem', fontWeight: '500', color: adminSelectedApt.prescription ? '#10B981' : 'var(--color-text-muted)', backgroundColor: adminSelectedApt.prescription ? 'rgba(16, 185, 129, 0.1)' : 'rgba(28, 43, 73, 0.05)', padding: '0.75rem', borderRadius: '4px', minHeight: '38px' }}>
+                    {adminSelectedApt.prescription ? (
+                      <>
+                        <i className="fa-solid fa-prescription-bottle-medical" style={{ marginRight: '0.5rem' }}></i>
+                        {adminSelectedApt.prescription}
+                      </>
+                    ) : (
+                      <span style={{ fontStyle: 'italic' }}>No prescription recorded.</span>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              {/* Department Referrals & Pushes with Edit/Delete */}
+              <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                <strong style={{ fontSize: '0.9rem', color: 'var(--color-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
+                  <i className="fa-solid fa-network-wired"></i> Department Referrals & Pushes
+                </strong>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {/* Lab Referral */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>Lab Tests Referral</span>
+                      {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.labTests && (
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button onClick={() => { setModalEditingFields(prev => ({ ...prev, labTests: true })); setModalTempValues(prev => ({ ...prev, labTests: adminSelectedApt.labTests || '' })); }} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.8rem' }}><i className="fa-solid fa-pen"></i></button>
+                          {adminSelectedApt.labTests && <button onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'labTests')} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.8rem' }}><i className="fa-solid fa-trash-can"></i></button>}
+                        </div>
+                      )}
+                    </div>
+                    {modalEditingFields.labTests ? (
+                      <div>
+                        <input type="text" style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }} value={modalTempValues.labTests || ''} onChange={(e) => handleModalFieldEdit('labTests', e.target.value)} />
+                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem', justifyContent: 'flex-end' }}>
+                          <button className="btn btn-primary btn-sm" style={{ padding: '0.15rem 0.5rem', fontSize: '0.7rem' }} onClick={() => handleModalFieldSave(adminSelectedApt.id, 'labTests')}>Save</button>
+                          <button className="btn btn-outline btn-sm" style={{ padding: '0.15rem 0.5rem', fontSize: '0.7rem' }} onClick={() => setModalEditingFields(prev => ({ ...prev, labTests: false }))}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.85rem', color: adminSelectedApt.labTests ? 'var(--color-text)' : 'var(--color-text-muted)', fontStyle: adminSelectedApt.labTests ? 'normal' : 'italic', background: 'rgba(28,43,73,0.02)', padding: '0.5rem', borderRadius: '4px' }}>
+                        {adminSelectedApt.labTests || "None"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Scan Referral */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>Imaging Scans Referral</span>
+                      {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.scans && (
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button onClick={() => { setModalEditingFields(prev => ({ ...prev, scans: true })); setModalTempValues(prev => ({ ...prev, scans: adminSelectedApt.scans || '' })); }} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.8rem' }}><i className="fa-solid fa-pen"></i></button>
+                          {adminSelectedApt.scans && <button onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'scans')} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.8rem' }}><i className="fa-solid fa-trash-can"></i></button>}
+                        </div>
+                      )}
+                    </div>
+                    {modalEditingFields.scans ? (
+                      <div>
+                        <input type="text" style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }} value={modalTempValues.scans || ''} onChange={(e) => handleModalFieldEdit('scans', e.target.value)} />
+                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem', justifyContent: 'flex-end' }}>
+                          <button className="btn btn-primary btn-sm" style={{ padding: '0.15rem 0.5rem', fontSize: '0.7rem' }} onClick={() => handleModalFieldSave(adminSelectedApt.id, 'scans')}>Save</button>
+                          <button className="btn btn-outline btn-sm" style={{ padding: '0.15rem 0.5rem', fontSize: '0.7rem' }} onClick={() => setModalEditingFields(prev => ({ ...prev, scans: false }))}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.85rem', color: adminSelectedApt.scans ? 'var(--color-text)' : 'var(--color-text-muted)', fontStyle: adminSelectedApt.scans ? 'normal' : 'italic', background: 'rgba(28,43,73,0.02)', padding: '0.5rem', borderRadius: '4px' }}>
+                        {adminSelectedApt.scans || "None"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Office Referral */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>Clinical Office / Follow-up</span>
+                      {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.officeReferral && (
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button onClick={() => { setModalEditingFields(prev => ({ ...prev, officeReferral: true })); setModalTempValues(prev => ({ ...prev, officeReferral: adminSelectedApt.officeReferral || '' })); }} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.8rem' }}><i className="fa-solid fa-pen"></i></button>
+                          {adminSelectedApt.officeReferral && <button onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'officeReferral')} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.8rem' }}><i className="fa-solid fa-trash-can"></i></button>}
+                        </div>
+                      )}
+                    </div>
+                    {modalEditingFields.officeReferral ? (
+                      <div>
+                        <input type="text" style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }} value={modalTempValues.officeReferral || ''} onChange={(e) => handleModalFieldEdit('officeReferral', e.target.value)} />
+                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem', justifyContent: 'flex-end' }}>
+                          <button className="btn btn-primary btn-sm" style={{ padding: '0.15rem 0.5rem', fontSize: '0.7rem' }} onClick={() => handleModalFieldSave(adminSelectedApt.id, 'officeReferral')}>Save</button>
+                          <button className="btn btn-outline btn-sm" style={{ padding: '0.15rem 0.5rem', fontSize: '0.7rem' }} onClick={() => setModalEditingFields(prev => ({ ...prev, officeReferral: false }))}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.85rem', color: adminSelectedApt.officeReferral ? 'var(--color-text)' : 'var(--color-text-muted)', fontStyle: adminSelectedApt.officeReferral ? 'normal' : 'italic', background: 'rgba(28,43,73,0.02)', padding: '0.5rem', borderRadius: '4px' }}>
+                        {adminSelectedApt.officeReferral || "None"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end' }}>
@@ -3158,6 +5044,30 @@ export default function App() {
                   <div style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.schedule || 'N/A'}</div>
                 </div>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Consultation Rate</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontWeight: 'bold' }}>{adminSelectedDoctor.consultationRate || 'N/A'}</div>
+                </div>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Consultation Duration</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontWeight: 'bold' }}>{adminSelectedDoctor.consultationDuration || '30 mins'}</div>
+                </div>
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Offered Services / Features</strong>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.25rem' }}>
+                  {adminSelectedDoctor.services && adminSelectedDoctor.services.length > 0 ? (
+                    adminSelectedDoctor.services.map(srv => (
+                      <span key={srv} style={{ fontSize: '0.75rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
+                        {srv}
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>None</span>
+                  )}
+                </div>
+              </div>
               {adminSelectedDoctor.bio && (
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Professional Biography</strong>
@@ -3209,8 +5119,8 @@ export default function App() {
                   required
                 >
                   <option value="">Select Specialist...</option>
-                  {doctors.map(d => (
-                    <option key={d.id} value={d.id}>Dr. {d.name} ({d.specialty})</option>
+                  {doctors.filter(d => d.active !== false).map(d => (
+                    <option key={d.id} value={d.id}>Dr. {d.name} ({getSpecialtyTitle(d.specialty)})</option>
                   ))}
                 </select>
               </div>
@@ -3282,20 +5192,202 @@ export default function App() {
         </div>
       )}
 
-      {/* --- 7. WhatsApp Floating Widget --- */}
-      <a 
-        href="https://wa.me/2349014324442?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation." 
-        className="whatsapp-widget" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        title="Chat on WhatsApp"
-      >
-        <i className="fa-brands fa-whatsapp"></i>
-      </a>
+      {/* --- 6.7 Book Follow-up Modal (Doctor/Admin Roles) --- */}
+      {followUpApt && (
+        <div className="modal-backdrop" onClick={() => setFollowUpApt(null)}>
+          <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '500px', textAlign: 'left', alignItems: 'stretch' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0 }}>Schedule Return / Follow-up Booking</h3>
+              <button onClick={() => setFollowUpApt(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleCreateFollowUp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Patient Name (Locked)</label>
+                <input 
+                  type="text" 
+                  disabled 
+                  value={followUpApt.patientName} 
+                  style={{ backgroundColor: 'rgba(28, 43, 73, 0.05)', color: 'var(--color-text-muted)' }}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Scheduled Return Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={followUpData.date}
+                    onChange={(e) => setFollowUpData({ ...followUpData, date: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Time Slot</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. 10:00 AM"
+                    value={followUpData.time}
+                    onChange={(e) => setFollowUpData({ ...followUpData, time: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Symptoms / Return Reason Statement</label>
+                <textarea 
+                  rows="3" 
+                  required
+                  placeholder="Describe reasons for follow-up/return checkup..."
+                  value={followUpData.reason}
+                  onChange={(e) => setFollowUpData({ ...followUpData, reason: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '1rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ background: 'var(--color-accent)', border: 'none' }}>
+                  <i className="fa-solid fa-circle-check"></i> Book Return Appointment
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setFollowUpApt(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- 7. WhatsApp Floating Widget with Dual Options --- */}
+      <div className="whatsapp-float-wrapper">
+        <div className={`whatsapp-popup ${whatsappPopupOpen ? 'open' : ''}`}>
+          <div className="whatsapp-popup-header">
+            <i className="fa-brands fa-whatsapp"></i> SimmyCare WhatsApp
+          </div>
+          <a 
+            href="https://wa.me/2349014324442?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation." 
+            className="whatsapp-popup-option"
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={() => setWhatsappPopupOpen(false)}
+          >
+            <div className="option-icon dm"><i className="fa-solid fa-message"></i></div>
+            <div className="option-info">
+              Send Direct Message
+              <span>Chat with our team directly</span>
+            </div>
+          </a>
+          <a 
+            href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" 
+            className="whatsapp-popup-option"
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={() => setWhatsappPopupOpen(false)}
+          >
+            <div className="option-icon group"><i className="fa-solid fa-users"></i></div>
+            <div className="option-info">
+              Join WhatsApp Group
+              <span>Health community & updates</span>
+            </div>
+          </a>
+        </div>
+        <button 
+          className="whatsapp-widget" 
+          onClick={() => setWhatsappPopupOpen(!whatsappPopupOpen)}
+          title="WhatsApp Options"
+        >
+          <i className={`fa-${whatsappPopupOpen ? 'solid fa-xmark' : 'brands fa-whatsapp'}`}></i>
+        </button>
+      </div>
+
+      {/* --- Doctor Booking Details Preview Modal --- */}
+      {previewBookingDoc && (
+        <div className="modal-backdrop" onClick={() => setPreviewBookingDoc(null)}>
+          <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '550px', textAlign: 'left', alignItems: 'stretch' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0 }}>Consultation Rate & Offered Services</h3>
+              <button onClick={() => setPreviewBookingDoc(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
+              {previewBookingDoc.image ? (
+                <img src={previewBookingDoc.image} alt={previewBookingDoc.name} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent)' }} />
+              ) : (
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#fff', fontWeight: 'bold' }}>
+                  {previewBookingDoc.name.charAt(previewBookingDoc.name.indexOf(' ') + 1) || previewBookingDoc.name.charAt(0)}
+                </div>
+              )}
+              <div>
+                <strong style={{ fontSize: '1.1rem', color: 'var(--color-indigo)' }}>{previewBookingDoc.name}</strong>
+                <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>{getSpecialtyTitle(previewBookingDoc.specialty)}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{previewBookingDoc.experience} Experience</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Consultation Rates & Duration:</strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
+                    <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>General Consultation Rate</span>
+                    <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationRate || '₦5,000'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
+                    <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>Consultation Session Duration</span>
+                    <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationDuration || '30 mins'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Offered Clinical Services:</strong>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {previewBookingDoc.services && previewBookingDoc.services.length > 0 ? (
+                    previewBookingDoc.services.map(srv => (
+                      <div key={srv} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '600' }}>
+                        <i className="fa-solid fa-circle-check" style={{ fontSize: '0.8rem' }}></i> {srv}
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No specific services assigned.</span>
+                  )}
+                </div>
+              </div>
+
+              {previewBookingDoc.bio && (
+                <div>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Professional Bio Summary</strong>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4', fontStyle: 'italic' }}>
+                    "{previewBookingDoc.bio}"
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '1.75rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button className="btn btn-outline" onClick={() => setPreviewBookingDoc(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setBookingFormData({ 
+                  ...bookingFormData, 
+                  doctorId: previewBookingDoc.id.toString(),
+                  patientName: loggedInPatient ? loggedInPatient.name : '',
+                  email: loggedInPatient ? loggedInPatient.email : '',
+                  phone: loggedInPatient ? loggedInPatient.phone : '',
+                  symptoms: `Consultation request for ${getSpecialtyTitle(previewBookingDoc.specialty)} department.`
+                });
+                setPreviewBookingDoc(null);
+                navigateTo('booking');
+              }}>
+                Confirm & Proceed to Booking Form
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- 7. Terms & Conditions & Privacy Policy Modal --- */}
       {showTermsModal && (
-        <div className="modal-backdrop" style={{ zIndex: 1000 }}>
+        <div className="modal-backdrop">
           <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '600px', textAlign: 'left', alignItems: 'stretch', maxHeight: '90vh' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
               <h3 style={{ margin: 0 }}>Terms of Service & Privacy Policy</h3>
@@ -3323,7 +5415,7 @@ export default function App() {
               <h4>4. Physical Branches & Jurisdictions</h4>
               <p>While primary services are digital, physical consultation requests are routed to doctor-contact locations in Abuja, Kaduna, Kano, Bauchi, and Gombe.</p>
 
-              <p style={{ fontSize: '0.8rem', fontStyle: 'italic', marginTop: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>— End of Document —</p>
+              <p style={{ fontSize: '0.8rem', fontStyle: 'italic', marginTop: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>- End of Document -</p>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

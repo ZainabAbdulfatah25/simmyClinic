@@ -6,21 +6,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #b6c3c9;         /* Slate blue-grey background */
-  --bg-secondary: #bdc5ce;       /* Darker slate-grey for sections */
-  --bg-card: rgba(255, 255, 255, 0.45);
-  --color-primary: #0F1E36;      /* Dark Navy Charcoal */
+  --bg-primary: #EFF5F9;         /* Clean light blue-grey background */
+  --bg-secondary: #E8EFF5;       /* Slightly deeper ice blue */
+  --bg-card: rgba(255, 255, 255, 0.65);
+  --color-primary: #1A1A2E;      /* Deep Charcoal */
   --color-indigo: #182B49;       /* Deep Slate Navy (from logo text) */
-  --color-accent: #2C5D88;       /* Medium Steel Blue */
-  --color-accent-light: #E2ECF5; /* Pale Steel Blue */
-  --color-accent-hover: #1F4A6F; /* Darker Steel Blue */
-  --color-text-main: #182B49;    /* Dark Navy Text for high contrast */
-  --color-text-muted: #4A5D6E;   /* Muted Slate */
-  --color-border: rgba(255, 255, 255, 0.3);
-  --color-border-active: rgba(24, 43, 73, 0.2);
-  --shadow-sm: 0 2px 4px rgba(24, 43, 73, 0.01);
-  --shadow-md: 0 10px 30px rgba(24, 43, 73, 0.03);
-  --shadow-lg: 0 20px 40px rgba(24, 43, 73, 0.06);
+  --color-accent: #0099D6;       /* Vibrant SimmyCare Blue */
+  --color-accent-light: #E0F2FE; /* Pale Sky Blue */
+  --color-accent-hover: #007AB8; /* Deeper Blue on hover */
+  --color-text-main: #1E293B;    /* Dark Slate Text */
+  --color-text-muted: #5A6A7E;   /* Muted Slate */
+  --color-border: rgba(0, 153, 214, 0.12);
+  --color-border-active: rgba(0, 153, 214, 0.25);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.08);
   --font-serif: 'Lora', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', sans-serif;
@@ -44,6 +44,12 @@ html, body {
   line-height: 1.6;
   overflow-x: hidden;
   min-height: 100vh;
+  background-image: 
+    radial-gradient(ellipse at 15% 5%, rgba(0, 153, 214, 0.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 90%, rgba(0, 153, 214, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(24, 43, 73, 0.03) 0%, transparent 60%),
+    radial-gradient(circle at 2px 2px, rgba(0, 153, 214, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px;
 }
 
 /* Scrollbar Customization */
@@ -66,11 +72,11 @@ html, body {
 
 /* --- Glassmorphism Foundation --- */
 .glassmorphic {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.70) !important;
   backdrop-filter: blur(16px) saturate(125%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(125%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 8px 32px 0 rgba(24, 43, 73, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.04) !important;
 }
 
 /* --- Global Background Particles Backdrop --- */
@@ -87,9 +93,9 @@ html, body {
 
 .bg-orbit-svg {
   position: absolute;
-  width: 650px;
-  height: 650px;
-  opacity: 0.18;
+  width: 600px;
+  height: 600px;
+  opacity: 0.12;
 }
 
 .orbit-top-left {
@@ -102,24 +108,32 @@ html, body {
   right: -150px;
 }
 
+.orbit-middle-right {
+  display: none;
+}
+
 .orbit-ring-outer {
   stroke: var(--color-indigo);
-  stroke-dasharray: 4, 12;
+  stroke-dasharray: 6, 16;
+  stroke-width: 1.5;
+  opacity: 0.85;
 }
 
 .orbit-ring-inner {
   stroke: var(--color-accent);
-  stroke-dasharray: 8, 8;
+  stroke-dasharray: 10, 10;
+  stroke-width: 1.25;
+  opacity: 0.9;
 }
 
 .orbit-node-glow {
-  filter: drop-shadow(0 0 8px rgba(44, 93, 136, 0.8));
+  filter: drop-shadow(0 0 10px rgba(0, 153, 214, 0.95)) drop-shadow(0 0 4px rgba(24, 43, 73, 0.8));
 }
 
-.node-color-1 { fill: var(--color-indigo); }
-.node-color-2 { fill: var(--color-accent); }
-.node-color-3 { fill: var(--color-accent-light); }
-.node-color-4 { fill: var(--color-accent-hover); }
+.node-color-1 { fill: var(--color-indigo); r: 8px; }
+.node-color-2 { fill: var(--color-accent); r: 7px; }
+.node-color-3 { fill: var(--color-accent-light); stroke: var(--color-accent); stroke-width: 1; r: 9px; }
+.node-color-4 { fill: var(--color-accent-hover); r: 7px; }
 
 /* Orbit animations */
 .orbit-group-outer {
@@ -163,11 +177,17 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: rgba(255, 255, 255, 0.45);
+  background-color: #182B49;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: var(--transition-smooth);
+}
+
+.app-header.glassmorphic {
+  background: #182B49 !important;
+  border: none !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 .header-container {
@@ -189,6 +209,10 @@ html, body {
   align-items: center;
   gap: 0.75rem;
   transition: var(--transition-smooth);
+}
+
+.app-header .logo {
+  color: #FFFFFF;
 }
 
 .logo-img-wrapper {
@@ -225,7 +249,7 @@ html, body {
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--color-indigo);
+  color: rgba(255, 255, 255, 0.85);
   transition: var(--transition-smooth);
   position: relative;
   padding: 0.25rem 0;
@@ -243,7 +267,7 @@ html, body {
 }
 
 .nav-links a.active, .nav-links a:hover {
-  color: var(--color-accent-hover);
+  color: #FFFFFF;
 }
 
 .nav-links a.active::after, .nav-links a:hover::after {
@@ -254,6 +278,17 @@ html, body {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.header-actions .btn-outline {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.header-actions .btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #FFFFFF;
 }
 
 /* --- Buttons --- */
@@ -312,15 +347,16 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: rgba(44, 93, 136, 0.12);
-  color: var(--color-accent-hover);
-  padding: 0.35rem 0.85rem;
+  background-color: rgba(0, 153, 214, 0.1);
+  color: var(--color-accent);
+  padding: 0.45rem 1rem;
   border-radius: 50px;
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 1.5px;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 153, 214, 0.15);
 }
 
 .badge-dot {
@@ -343,7 +379,7 @@ html, body {
   font-size: 3.25rem;
   line-height: 1.15;
   color: var(--color-primary);
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 1.5rem;
 }
 
@@ -353,10 +389,19 @@ html, body {
 }
 
 .hero-subtitle {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--color-text-muted);
   margin-bottom: 2.5rem;
   max-width: 520px;
+  line-height: 1.7;
+}
+
+.hero-subtitle em {
+  color: var(--color-accent);
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 153, 214, 0.35);
+  text-underline-offset: 3px;
 }
 
 .hero-ctas {
@@ -1138,9 +1183,29 @@ textarea {
   color: #047857;
 }
 
-.status-cancelled {
+.status-completed {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: #4F46E5;
+}
+
+.status-rejected {
   background-color: rgba(239, 68, 68, 0.15);
   color: #B91C1C;
+}
+
+.status-cancelled {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: #475569;
+}
+
+.status-awaiting-lab {
+  background-color: rgba(6, 182, 212, 0.15);
+  color: #0891B2;
+}
+
+.status-awaiting-scan {
+  background-color: rgba(236, 72, 153, 0.15);
+  color: #DB2777;
 }
 
 /* Action controls */
@@ -1304,6 +1369,476 @@ textarea {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+/* --- Medical Professional Categories (Flyer Style) --- */
+.med-categories-section {
+  padding: 3rem 0 2rem 0;
+}
+
+.med-categories-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  color: #FFFFFF;
+  padding: 0.55rem 1.25rem;
+  border-radius: 50px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 2.5rem;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 153, 214, 0.25);
+}
+
+.med-categories-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.med-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .med-categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.med-cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.75rem 1rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 153, 214, 0.08);
+  transition: var(--transition-smooth);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.med-cat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light));
+  opacity: 0;
+  transition: var(--transition-smooth);
+}
+
+.med-cat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 153, 214, 0.12);
+  border-color: var(--color-accent);
+}
+
+.med-cat-card:hover::before {
+  opacity: 1;
+}
+
+.med-cat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+  transition: var(--transition-smooth);
+}
+
+.med-cat-icon i {
+  font-size: 1.35rem;
+  color: var(--color-accent);
+  transition: var(--transition-smooth);
+}
+
+.med-cat-card:hover .med-cat-icon {
+  background: var(--color-accent);
+}
+
+.med-cat-card:hover .med-cat-icon i {
+  color: #FFFFFF;
+}
+
+.med-cat-card span {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-indigo);
+}
+
+.med-cat-card.more-card .med-cat-icon {
+  background: rgba(0, 153, 214, 0.08);
+}
+
+/* Benefits Sidebar */
+.benefits-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.benefit-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: var(--color-accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+
+.benefit-icon i {
+  font-size: 1rem;
+  color: var(--color-accent);
+}
+
+.benefit-item:hover .benefit-icon {
+  background: var(--color-accent);
+}
+
+.benefit-item:hover .benefit-icon i {
+  color: #FFFFFF;
+}
+
+.benefit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.benefit-text strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--color-indigo);
+  font-weight: 600;
+}
+
+.benefit-text span {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+/* --- WhatsApp Group & Health Tips Bottom Grid --- */
+.bottom-cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem 0 3rem 0;
+}
+
+/* WhatsApp Group CTA Card */
+.whatsapp-group-card {
+  background: linear-gradient(135deg, #128C7E 0%, #25D366 100%);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.whatsapp-group-card::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -15%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.whatsapp-group-card::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -10%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.whatsapp-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.whatsapp-group-header i {
+  font-size: 2rem;
+}
+
+.whatsapp-group-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  border: none;
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.whatsapp-group-card p {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  opacity: 0.92;
+  position: relative;
+  z-index: 1;
+}
+
+.whatsapp-group-card p strong {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.whatsapp-group-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+  margin-top: 0.5rem;
+}
+
+.whatsapp-group-features span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.92;
+}
+
+.whatsapp-group-features i {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.btn-whatsapp-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+.btn-whatsapp-group:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Health Tips Card */
+.health-tips-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  border: 1px solid rgba(0, 153, 214, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.health-tips-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light));
+}
+
+.health-tips-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-indigo);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.health-tips-header p {
+  font-size: 0.92rem;
+  color: var(--color-text-muted);
+  margin-top: 0.35rem;
+  line-height: 1.5;
+}
+
+.health-tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.health-tip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.92rem;
+  color: var(--color-indigo);
+  font-weight: 500;
+}
+
+.health-tip-item i {
+  color: var(--color-accent);
+  font-size: 0.85rem;
+}
+
+.health-tips-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, var(--color-accent-light) 0%, rgba(0, 153, 214, 0.08) 100%);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  border: 1px solid rgba(0, 153, 214, 0.12);
+}
+
+.health-tips-tagline i {
+  color: #25D366;
+}
+
+/* --- New Footer Bar (Flyer Style) --- */
+.flyer-footer-bar {
+  background: linear-gradient(135deg, #182B49 0%, #1A3A5C 100%);
+  padding: 1.5rem 2rem;
+  position: relative;
+  z-index: 10;
+}
+
+.flyer-footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.flyer-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.flyer-footer-item.center {
+  justify-content: center;
+}
+
+.flyer-footer-item.right {
+  justify-content: flex-end;
+}
+
+.flyer-footer-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: rgba(0, 153, 214, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  font-size: 1rem;
+}
+
+.flyer-footer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.flyer-footer-text strong {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.flyer-footer-text span {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.flyer-footer-text a {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition-smooth);
+}
+
+.flyer-footer-text a:hover {
+  color: #FFFFFF;
+}
+
+.flyer-footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* --- Footer Section --- */
@@ -1486,11 +2021,112 @@ textarea {
   color: var(--color-indigo);
 }
 
-/* --- WhatsApp Float --- */
-.whatsapp-widget {
+/* --- WhatsApp Float with Dual-Option Popup --- */
+.whatsapp-float-wrapper {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.whatsapp-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  min-width: 240px;
+  opacity: 0;
+  transform: translateY(12px) scale(0.95);
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.whatsapp-popup.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.whatsapp-popup-header {
+  background: linear-gradient(135deg, #128C7E, #25D366);
+  padding: 0.85rem 1rem;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.whatsapp-popup-header i {
+  font-size: 1.1rem;
+}
+
+.whatsapp-popup-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  color: var(--color-indigo);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: var(--transition-smooth);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.whatsapp-popup-option:last-child {
+  border-bottom: none;
+}
+
+.whatsapp-popup-option:hover {
+  background: rgba(37, 211, 102, 0.08);
+  color: #128C7E;
+}
+
+.whatsapp-popup-option .option-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.whatsapp-popup-option .option-icon.dm {
+  background: rgba(37, 211, 102, 0.12);
+  color: #25D366;
+}
+
+.whatsapp-popup-option .option-icon.group {
+  background: rgba(18, 140, 126, 0.12);
+  color: #128C7E;
+}
+
+.whatsapp-popup-option .option-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.whatsapp-popup-option .option-info span {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  margin-top: 0.1rem;
+}
+
+.whatsapp-widget {
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -1502,7 +2138,8 @@ textarea {
   font-size: 1.85rem;
   box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
   text-decoration: none;
-  z-index: 999;
+  cursor: pointer;
+  border: none;
   transition: var(--transition-smooth);
 }
 
@@ -1536,6 +2173,25 @@ textarea {
   .booking-layout {
     grid-template-columns: 1fr;
     gap: 3rem;
+  }
+  .med-categories-content {
+    grid-template-columns: 1fr;
+  }
+  .med-categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .bottom-cta-grid {
+    grid-template-columns: 1fr;
+  }
+  .flyer-footer-container {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    text-align: center;
+  }
+  .flyer-footer-item,
+  .flyer-footer-item.center,
+  .flyer-footer-item.right {
+    justify-content: center;
   }
 }
 
@@ -1616,6 +2272,96 @@ textarea {
     gap: 1rem;
     text-align: center;
   }
+  .med-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .flyer-footer-bottom {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .hero-title {
+    font-size: 2.35rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .hero-subtitle {
+    font-size: 0.95rem;
+    text-align: center;
+    margin-bottom: 1.75rem;
+  }
+  .hero-ctas {
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .hero-ctas .btn {
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+    justify-content: center;
+  }
+  .hero-container {
+    padding: 2rem 0;
+  }
+  .bg-orbit-svg {
+    opacity: 0.12 !important;
+    width: 450px !important;
+    height: 450px !important;
+  }
+  .orbit-top-left {
+    top: -100px !important;
+    left: -100px !important;
+  }
+  .orbit-bottom-right {
+    bottom: -100px !important;
+    right: -100px !important;
+  }
+  .orbit-middle-right {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .global-particles-backdrop {
+    display: none !important;
+  }
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1rem;
+  }
+  .med-categories-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+  .whatsapp-float-wrapper {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  .whatsapp-popup {
+    min-width: 210px;
+  }
+  .med-categories-tag {
+    font-size: 0.7rem;
+    padding: 0.45rem 1rem;
+    text-align: center;
+  }
+  .whatsapp-group-card, .health-tips-card {
+    padding: 1.75rem 1.25rem;
+  }
+  .whatsapp-group-header h3, .health-tips-header h3 {
+    font-size: 1.25rem;
+  }
+  .btn-whatsapp-group {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .hero-title {
+    font-size: 2rem;
+  }
 }
 
 /* --- Multi-Role Tab Panels --- */
@@ -1671,8 +2417,8 @@ textarea {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0.35rem 0.85rem;
   border-radius: 50px;
   backdrop-filter: blur(4px);
@@ -1682,7 +2428,7 @@ textarea {
   font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--color-indigo);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .logout-btn {
@@ -1731,4 +2477,496 @@ textarea {
   display: inline-block;
   margin-top: 0.15rem;
 }
+
+/* ==========================================================================
+   Service Detail Pages & Specialization Pages - Premium Custom Layouts
+   ========================================================================== */
+
+/* --- Back navigation button --- */
+.back-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid rgba(24, 43, 73, 0.15);
+  color: var(--color-indigo);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  transition: var(--transition-smooth);
+}
+
+.back-nav-btn:hover {
+  background-color: var(--color-indigo);
+  color: #FFFFFF;
+  transform: translateX(-4px);
+}
+
+/* --- Service Hero Header --- */
+.service-hero-header {
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  border-left: 5px solid var(--color-accent);
+}
+
+.service-hero-icon {
+  width: 72px;
+  height: 72px;
+  background: #FFFFFF;
+  color: var(--color-accent);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.service-hero-info h1 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: var(--color-indigo);
+  margin-bottom: 0.5rem;
+}
+
+.service-hero-info p {
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+}
+
+/* --- Detail Layout (Split View) --- */
+.service-detail-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .service-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.service-description-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.service-feature-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  gap: 1.25rem;
+}
+
+.feature-icon-wrapper {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+  margin-top: 0.1rem;
+}
+
+.feature-texts h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--color-indigo);
+  margin-bottom: 0.5rem;
+}
+
+.feature-texts p {
+  color: var(--color-text-muted);
+  font-size: 0.925rem;
+  line-height: 1.5;
+}
+
+/* --- Mobile Laboratory Interactive Widget --- */
+.lab-tests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.lab-test-item {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.lab-test-item:hover {
+  border-color: var(--color-accent);
+  background-color: rgba(0, 153, 214, 0.03);
+}
+
+.lab-test-item.selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-light);
+}
+
+.lab-test-info h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--color-indigo);
+  margin-bottom: 0.25rem;
+}
+
+.lab-test-info p {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.lab-test-price-action {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.lab-test-price {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-indigo);
+}
+
+.checkbox-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(24, 43, 73, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+
+.lab-test-item.selected .checkbox-circle {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #FFFFFF;
+  font-size: 0.7rem;
+}
+
+.lab-cart-summary {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.cart-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.cart-row.total-row {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-indigo);
+  border-top: 1px solid rgba(24, 43, 73, 0.1);
+  padding-top: 0.85rem;
+}
+
+/* --- Pharmacy Interactive Shop Widget --- */
+.pharmacy-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.pharmacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.pharmacy-product-card {
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+.pharmacy-product-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent);
+}
+
+.product-tag {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.pharmacy-product-card h4 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-indigo);
+  margin-top: 0.25rem;
+}
+
+.pharmacy-product-card p {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  flex: 1;
+}
+
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.product-price {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-indigo);
+}
+
+.btn-add-cart {
+  background-color: var(--color-indigo);
+  color: #FFFFFF;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+
+.btn-add-cart:hover {
+  background-color: var(--color-accent);
+  transform: scale(1.1);
+}
+
+.pharmacy-cart-panel {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cart-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.cart-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.cart-item-name {
+  font-weight: 500;
+  color: var(--color-indigo);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-qty {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(24, 43, 73, 0.15);
+  background: #FFFFFF;
+  color: var(--color-indigo);
+  cursor: pointer;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-qty:hover {
+  background-color: var(--color-accent-light);
+}
+
+/* --- Home Packages Styles --- */
+.home-packages-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .home-packages-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.package-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: var(--transition-smooth);
+}
+
+.package-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent);
+}
+
+.package-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.package-header h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--color-indigo);
+}
+
+.package-price {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-accent);
+  font-size: 1.1rem;
+}
+
+.package-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.package-features i {
+  color: #10B981;
+  margin-right: 0.35rem;
+}
+
+/* --- Clinic Locations Styles --- */
+.clinic-locations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.clinic-card {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 4px solid var(--color-indigo);
+}
+
+.clinic-card h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--color-indigo);
+  margin-bottom: 0.25rem;
+}
+
+.clinic-card p {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.clinic-card p i {
+  color: var(--color-accent);
+  margin-right: 0.35rem;
+}
+
+/* --- Specialty Care Detail Page --- */
+.specialty-page-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .specialty-page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.specialty-about-box {
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+}
+
+.specialty-about-box h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-indigo);
+  margin-bottom: 1rem;
+}
+
+.specialty-about-box p {
+  color: var(--color-text-muted);
+  font-size: 0.975rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.specialty-highlights {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-indigo);
+  font-weight: 500;
+}
+
+.highlight-item i {
+  color: var(--color-accent);
+}
+
 
