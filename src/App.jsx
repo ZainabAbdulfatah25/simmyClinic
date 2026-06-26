@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
+import doctorAdamImg from './assets/doctor_adam.jpg';
 import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
 import doctorBamalliImg from './assets/doctor_bamalli.jpg';
 import heroPng from './assets/hero.png';
@@ -51,8 +52,26 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"]
   },
+  { 
+    id: 2, 
+    name: "Dr. Adam Zamzam", 
+    specialty: "General Medicine", 
+    schedule: "Mon - Fri (8am - 4pm)", 
+    experience: "10 Years", 
+    regNo: "MDCN/7123", 
+    image: doctorAdamImg, 
+    email: "adam@simmycare.com", 
+    password: "password123",
+    phone: "08051234567",
+    bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
+    clinicRoom: "Room 205, Main Block",
+    license: "",
+    consultationRate: "₦5,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Mobile Laboratory"]
+  },
   {
-    id: 2,
+    id: 3,
     name: "Dr. Mato Saddiqa Tijjani",
     specialty: "Public Health",
     schedule: "Mon - Fri (9am - 4pm)",
@@ -70,7 +89,7 @@ const INITIAL_DOCTORS = [
     services: ["Online Consultation", "Physical Consultation"]
   },
   {
-    id: 3,
+    id: 4,
     name: "Dr. Abubakar Muhammad Bamalli",
     specialty: "General Medicine",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -117,7 +136,7 @@ export default function App() {
   });
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
-  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorTijjaniImg, 3: doctorBamalliImg };
+  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorAdamImg, 3: doctorTijjaniImg, 4: doctorBamalliImg };
 
   const [doctors, setDoctors] = useState(() => {
     const data = localStorage.getItem("simmy_doctors");
