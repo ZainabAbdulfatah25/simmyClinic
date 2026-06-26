@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
+import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
+import doctorBamalliImg from './assets/doctor_bamalli.jpg';
 import heroPng from './assets/hero.png';
 import logoSvg from './assets/logo.svg';
 
@@ -25,7 +27,8 @@ const getSpecialtyTitle = (specialty) => {
     'Optometry': 'Optometrist',
     'Cardiology': 'Cardiologist',
     'Dermatology': 'Dermatologist',
-    'Psychology': 'Psychologist'
+    'Psychology': 'Psychologist',
+    'Public Health': 'Public Health Physician'
   };
   return mapping[specialty] || specialty;
 };
@@ -151,6 +154,42 @@ const INITIAL_DOCTORS = [
     consultationRate: "₦6,000",
     consultationDuration: "15 mins",
     services: ["Mobile Laboratory"]
+  },
+  {
+    id: 8,
+    name: "Dr. Mato Saddiqa Tijjani",
+    specialty: "Public Health",
+    schedule: "Mon - Fri (9am - 4pm)",
+    experience: "4 Years",
+    regNo: "MDCN/6203",
+    image: doctorTijjaniImg,
+    email: "matosaddiqa@gmail.com",
+    password: "password123",
+    phone: "+234 909 677 6797",
+    bio: "Medical Doctor and Public Health Practitioner with more than 4 years of progressive clinical experience in tertiary and specialist hospitals, skilled in patient-centered care, emergency medicine, maternal and child health, and preventive healthcare.",
+    clinicRoom: "Room 110, Public Health Wing",
+    license: "",
+    consultationRate: "₦10,000 - ₦20,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation"]
+  },
+  {
+    id: 9,
+    name: "Dr. Abubakar Muhammad Bamalli",
+    specialty: "General Medicine",
+    schedule: "Mon - Fri (9am - 5pm)",
+    experience: "9 Years",
+    regNo: "MDCN/5890",
+    image: doctorBamalliImg,
+    email: "abubakarbalili79@gmail.com",
+    password: "password123",
+    phone: "+234 813 870 5738",
+    bio: "Experienced Medical Doctor with 9 years of clinical practice, providing comprehensive general medical consultations across physical and telemedicine platforms.",
+    clinicRoom: "Room 207, Main Block",
+    license: "",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation"]
   }
 ];
 
@@ -189,7 +228,7 @@ export default function App() {
   });
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
-  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 3: doctorAdamImg };
+  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 3: doctorAdamImg, 8: doctorTijjaniImg, 9: doctorBamalliImg };
 
   const [doctors, setDoctors] = useState(() => {
     const data = localStorage.getItem("simmy_doctors");
@@ -2317,7 +2356,7 @@ export default function App() {
               </div>
 
               <div className="specialty-filters">
-                {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Laboratory', 'Pharmacy'].map(spec => (
+                {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Public Health', 'Laboratory', 'Pharmacy'].map(spec => (
                   <button 
                     key={spec}
                     className={`filter-btn ${doctorFilter === spec ? 'active' : ''}`}
@@ -3560,6 +3599,7 @@ export default function App() {
                                   <option value="Pediatrics">Pediatrics</option>
                                   <option value="General Medicine">General Medicine</option>
                                   <option value="Gynaecology">Gynaecology</option>
+                                  <option value="Public Health">Public Health</option>
                                   <option value="Laboratory">Laboratory</option>
                                   <option value="Pharmacy">Pharmacy</option>
                                 </select>
@@ -3964,6 +4004,7 @@ export default function App() {
                                 <option value="Pediatrics">Pediatrics</option>
                                 <option value="General Medicine">General Medicine</option>
                                 <option value="Gynaecology">Gynaecology</option>
+                                <option value="Public Health">Public Health</option>
                                 <option value="Laboratory">Laboratory</option>
                                 <option value="Pharmacy">Pharmacy</option>
                               </select>

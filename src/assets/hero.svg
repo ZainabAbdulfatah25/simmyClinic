@@ -23,23 +23,27 @@
       <stop offset="100%" stop-color="#94A3B8" />
     </linearGradient>
 
-    <!-- Glassmorphic Card fill -->
-    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.4" />
+    <!-- Avatar Gradients -->
+    <linearGradient id="maternalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDA4AF" />
+      <stop offset="100%" stop-color="#F43F5E" />
+    </linearGradient>
+    <linearGradient id="pediatricGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#86EFAC" />
+      <stop offset="100%" stop-color="#22C55E" />
+    </linearGradient>
+    <linearGradient id="adultGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93C5FD" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+    <linearGradient id="generalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C084FC" />
+      <stop offset="100%" stop-color="#A855F7" />
     </linearGradient>
 
-    <!-- Drop Shadows and Glow Filters -->
+    <!-- Drop Shadows -->
     <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
       <feDropShadow dx="2" dy="8" stdDeviation="6" flood-color="#182B49" flood-opacity="0.1" />
-    </filter>
-
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="4" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
     </filter>
   </defs>
 
@@ -68,51 +72,69 @@
     <rect x="330" y="102" width="38" height="16" rx="8" fill="rgba(255,255,255,0.15)" />
     <text x="349" y="113" fill="#FFFFFF" font-family="'Inter', sans-serif" font-size="8" font-weight="600" text-anchor="middle">v2.1</text>
 
-    <!-- Main Diagnostic Section inside the screen -->
-    <!-- Heart Rate Vitals Graph Panel -->
-    <rect x="132" y="145" width="236" height="100" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
-    <text x="144" y="162" fill="#182B49" font-family="'Outfit', sans-serif" font-size="10" font-weight="700">Patient Vitals Telemetry</text>
-    <text x="144" y="172" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500">Live ECG Diagnostics Stream</text>
+    <!-- Title / Headline -->
+    <text x="250" y="152" fill="#182B49" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" text-anchor="middle">Everyday Health for Everyone</text>
+    <text x="250" y="162" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500" text-anchor="middle">Multi-Specialty Care Directory &amp; Booking</text>
+
+    <!-- 2x2 Clinic Specialties Grid (No detailed faces, clean avatars) -->
     
-    <!-- Gridlines in Vitals Panel -->
-    <line x1="140" y1="190" x2="350" y2="190" stroke="#F1F5F9" stroke-width="1" />
-    <line x1="140" y1="210" x2="350" y2="210" stroke="#F1F5F9" stroke-width="1" />
-    <line x1="140" y1="230" x2="350" y2="230" stroke="#F1F5F9" stroke-width="1" />
-    
-    <!-- Pulse Waveform -->
-    <path d="M 140 210 L 175 210 L 182 195 L 188 225 L 196 175 L 204 235 L 210 220 L 216 210 L 250 210 L 257 198 L 263 220 L 269 180 L 275 230 L 281 210 L 350 210" 
-          fill="none" stroke="url(#primaryGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Card 1: Maternal Care (Pregnant Woman) -->
+    <rect x="130" y="176" width="112" height="78" rx="8" fill="#FFF1F2" stroke="#FECDD3" stroke-width="1" />
+    <!-- Avatar Circle -->
+    <circle cx="156" cy="210" r="16" fill="url(#maternalGrad)" />
+    <!-- Pregnant Woman Silhouette Profile -->
+    <circle cx="156" cy="202" r="3.5" fill="#FFFFFF" />
+    <path d="M 153 207 C 151 209, 150 213, 151 216 C 152 219, 156 222, 156 224 L 153 226 L 157 226 C 160 223, 160 219, 158 216 C 156 214, 156 211, 156 207 Z" fill="#FFFFFF" />
+    <path d="M 152 201 C 149 201, 149 205, 151 205 Z" fill="#FFFFFF" />
+    <!-- Labels -->
+    <text x="178" y="206" fill="#182B49" font-family="'Outfit', sans-serif" font-size="8" font-weight="700">Maternal Care</text>
+    <text x="178" y="214" fill="#E11D48" font-family="'Inter', sans-serif" font-size="6" font-weight="600">Gynaecology</text>
+    <rect x="178" y="220" width="28" height="8" rx="3" fill="#FFE4E6" />
+    <text x="192" y="226" fill="#E11D48" font-family="'Inter', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">ACTIVE</text>
 
-    <text x="325" y="166" fill="#2C5D88" font-family="'Outfit', sans-serif" font-size="18" font-weight="800" text-anchor="end">72</text>
-    <text x="328" y="166" fill="#64748B" font-family="'Inter', sans-serif" font-size="8" font-weight="600">BPM</text>
+    <!-- Card 2: Pediatrics (Child Care) -->
+    <rect x="258" y="176" width="112" height="78" rx="8" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1" />
+    <circle cx="284" cy="210" r="16" fill="url(#pediatricGrad)" />
+    <!-- Child Silhouette Profile -->
+    <circle cx="284" cy="203" r="3.2" fill="#FFFFFF" />
+    <path d="M 284 207.5 C 280 210, 278 213, 278 222 L 290 222 C 290 213, 288 210, 284 207.5 Z" fill="#FFFFFF" />
+    <!-- Labels -->
+    <text x="306" y="206" fill="#182B49" font-family="'Outfit', sans-serif" font-size="8" font-weight="700">Child Care</text>
+    <text x="306" y="214" fill="#16A34A" font-family="'Inter', sans-serif" font-size="6" font-weight="600">Pediatrics</text>
+    <rect x="306" y="220" width="28" height="8" rx="3" fill="#DCFCE7" />
+    <text x="320" y="226" fill="#16A34A" font-family="'Inter', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">ACTIVE</text>
 
-    <!-- Consultation Schedule Cards List (No AI Faces, Clean UI components) -->
-    <rect x="132" y="255" width="236" height="42" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
-    <!-- Status Icon/Dot indicator -->
-    <rect x="142" y="265" width="22" height="22" rx="6" fill="#E2ECF5" />
-    <!-- Heart Icon in UI -->
-    <path d="M 153 271 C 151 269, 149 269, 148 270 C 147 269, 145 269, 144 270 C 143 271, 143 273, 146 275 L 148 277 L 150 275 C 153 273, 153 271, 153 271 Z" 
-          fill="#2C5D88" transform="translate(0,0) scale(0.9)" />
-    <text x="172" y="274" fill="#182B49" font-family="'Outfit', sans-serif" font-size="9" font-weight="700">Dr. Amina Yusuf</text>
-    <text x="172" y="283" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500">Pediatrics • 10:00 AM Slot</text>
-    <rect x="315" y="267" width="45" height="16" rx="8" fill="#DCFCE7" />
-    <text x="337" y="278" fill="#15803D" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">Approved</text>
+    <!-- Card 3: Adult Care (Senior/Mature) -->
+    <rect x="130" y="264" width="112" height="78" rx="8" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1" />
+    <circle cx="156" cy="298" r="16" fill="url(#adultGrad)" />
+    <!-- Senior/Adult Silhouette Profile (e.g. with simple glasses outline) -->
+    <circle cx="156" cy="290" r="3.6" fill="#FFFFFF" />
+    <path d="M 156 295 C 151 297.5, 149 301, 149 310 L 163 310 C 163 301, 161 297.5, 156 295 Z" fill="#FFFFFF" />
+    <rect x="151.5" y="289" width="9" height="2" rx="0.5" fill="#2563EB" opacity="0.8" />
+    <!-- Labels -->
+    <text x="178" y="294" fill="#182B49" font-family="'Outfit', sans-serif" font-size="8" font-weight="700">Adult Clinic</text>
+    <text x="178" y="302" fill="#2563EB" font-family="'Inter', sans-serif" font-size="6" font-weight="600">Senior Care</text>
+    <rect x="178" y="308" width="28" height="8" rx="3" fill="#DBEAFE" />
+    <text x="192" y="314" fill="#2563EB" font-family="'Inter', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">ACTIVE</text>
 
-    <rect x="132" y="305" width="236" height="42" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" />
-    <rect x="142" y="315" width="22" height="22" rx="6" fill="#F1F5F9" />
-    <path d="M 153 321 C 151 319, 149 319, 148 320 C 147 319, 145 319, 144 320 C 143 321, 143 323, 146 325 L 148 327 L 150 325 C 153 323, 153 321, 153 321 Z" 
-          fill="#4A5D6E" transform="translate(0,0) scale(0.9)" />
-    <text x="172" y="324" fill="#182B49" font-family="'Outfit', sans-serif" font-size="9" font-weight="700">Dr. Babajide Alao</text>
-    <text x="172" y="333" fill="#64748B" font-family="'Inter', sans-serif" font-size="7" font-weight="500">General Medicine • 02:30 PM Slot</text>
-    <rect x="315" y="317" width="45" height="16" rx="8" fill="#FEF9C3" />
-    <text x="337" y="328" fill="#A16207" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">Pending</text>
+    <!-- Card 4: General Care (Normal Person) -->
+    <rect x="258" y="264" width="112" height="78" rx="8" fill="#FDF4FF" stroke="#F5D0FE" stroke-width="1" />
+    <circle cx="284" cy="298" r="16" fill="url(#generalGrad)" />
+    <!-- Normal Person/Adult Silhouette Profile -->
+    <circle cx="284" cy="290.5" r="3.5" fill="#FFFFFF" />
+    <path d="M 284 295 C 279 297, 277.5 301, 277.5 310 L 290.5 310 C 290.5 301, 289 297, 284 295 Z" fill="#FFFFFF" />
+    <!-- Labels -->
+    <text x="306" y="294" fill="#182B49" font-family="'Outfit', sans-serif" font-size="8" font-weight="700">General Pool</text>
+    <text x="306" y="302" fill="#9333EA" font-family="'Inter', sans-serif" font-size="6" font-weight="600">Family Health</text>
+    <rect x="306" y="308" width="28" height="8" rx="3" fill="#F3E8FF" />
+    <text x="320" y="314" fill="#9333EA" font-family="'Inter', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">ACTIVE</text>
 
     <!-- Bottom Action Ribbon -->
-    <rect x="132" y="357" width="236" height="38" rx="8" fill="url(#accentGrad)" opacity="0.9" />
-    <text x="250" y="380" fill="#FFFFFF" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="0.5">LAUNCH DIGITAL CONSULTATION</text>
+    <rect x="132" y="358" width="236" height="36" rx="8" fill="url(#accentGrad)" opacity="0.95" />
+    <text x="250" y="380" fill="#FFFFFF" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="0.5">LAUNCH DIGITAL PORTAL</text>
   </g>
 
-  <!-- 4. REALISTIC STETHOSCOPE GRAPHIC (Gracefully curves behind/around tablet) -->
+  <!-- 4. REALISTIC STETHOSCOPE GRAPHIC (Curves behind/around tablet) -->
   <!-- Ear Tips / Metal Tubes (Top-Left Backdrop) -->
   <g stroke="#64748B" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6">
     <path d="M 120 70 C 115 50, 140 40, 150 65 L 150 90" />
@@ -121,7 +143,7 @@
     <rect x="158" y="58" width="4" height="6" rx="2" fill="#1E293B" stroke="none" />
   </g>
 
-  <!-- Flexible Black Stethoscope Cord (Bezier curves weaving around) -->
+  <!-- Flexible Black Stethoscope Cord (Curves weaving around) -->
   <path d="M 155 90 
            C 155 140, 80 180, 80 280 
            C 80 370, 200 450, 290 450 
@@ -134,7 +156,7 @@
            C 390 450, 420 380, 420 320" 
         fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" opacity="0.4" />
 
-  <!-- Stethoscope Chestpiece (Resting beautifully on the right of the tablet) -->
+  <!-- Stethoscope Chestpiece (Resting on the right of the tablet) -->
   <g filter="url(#shadow)" transform="translate(420, 320)">
     <!-- Base Metal Ring -->
     <circle cx="0" cy="0" r="32" fill="url(#metallic)" stroke="#64748B" stroke-width="1" />
@@ -142,13 +164,13 @@
     <circle cx="0" cy="0" r="26" fill="url(#primaryGrad)" />
     <!-- Inner Metallic Core -->
     <circle cx="0" cy="0" r="18" fill="url(#metallic)" opacity="0.9" />
-    <!-- Heart Telemetry Watermark inside Stethoscope diaphragm -->
-    <path d="M -8 0 L -2 0 L 1 -10 L 4 10 L 7 -5 L 10 3 L 14 0" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Medical Cross inside Stethoscope diaphragm (Representing Clinic for everyone) -->
+    <path d="M -8 -2.5 L -2.5 -2.5 L -2.5 -8 L 2.5 -8 L 2.5 -2.5 L 8 -2.5 L 8 2.5 L 2.5 2.5 L 2.5 8 L -2.5 8 L -2.5 2.5 L -8 2.5 Z" fill="#FFFFFF" stroke="none" />
+    
     <!-- Plastic Cord Connector joint -->
     <rect x="-6" y="-36" width="12" height="10" rx="2" fill="#1E293B" />
   </g>
-
-
 
   <!-- Subtle Medical Cross sparkles floating around -->
   <g opacity="0.6">
