@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
-import doctorAdamImg from './assets/doctor_adam.jpg';
 import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
 import doctorBamalliImg from './assets/doctor_bamalli.jpg';
 import heroPng from './assets/hero.png';
@@ -52,111 +51,8 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"]
   },
-  { 
-    id: 2, 
-    name: "Dr. Chioma Nwachukwu", 
-    specialty: "Pediatrics", 
-    schedule: "Tue - Thu (12pm - 5pm)", 
-    experience: "12 Years", 
-    regNo: "MDCN/9102", 
-    email: "chioma@simmycare.com", 
-    password: "password123",
-    phone: "08099887766",
-    bio: "Experienced pediatrician dedicated to comprehensive neonatal care, childhood development, and immunizations.",
-    clinicRoom: "Room 304, Pediatrics Annex",
-    license: "",
-    consultationRate: "₦8,500",
-    consultationDuration: "45 mins",
-    services: ["Online Consultation", "Home Services"]
-  },
-  { 
-    id: 3, 
-    name: "Dr. Adam Zamzam", 
-    specialty: "General Medicine", 
-    schedule: "Mon - Fri (8am - 4pm)", 
-    experience: "10 Years", 
-    regNo: "MDCN/7123", 
-    image: doctorAdamImg, 
-    email: "adam@simmycare.com", 
-    password: "password123",
-    phone: "08051234567",
-    bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
-    clinicRoom: "Room 205, Main Block",
-    license: "",
-    consultationRate: "₦5,000",
-    consultationDuration: "30 mins",
-    services: ["Online Consultation", "Mobile Laboratory"]
-  },
-  { 
-    id: 4, 
-    name: "Dr. Favour Obi", 
-    specialty: "Pharmacy", 
-    schedule: "Wed - Fri (10am - 3pm)", 
-    experience: "6 Years", 
-    regNo: "MDCN/7291", 
-    email: "favour@simmycare.com", 
-    password: "password123",
-    phone: "08077665544",
-    bio: "Clinical pharmacist focusing on medication therapy management, pharmacotherapy safety, and drug interactions counsel.",
-    clinicRoom: "Dispensary Station B",
-    license: "",
-    consultationRate: "₦3,500",
-    consultationDuration: "20 mins",
-    services: ["Pharmacy Delivery"]
-  },
   {
-    id: 5,
-    name: "Dr. Samuel Adebayo",
-    specialty: "Psychology",
-    schedule: "Mon, Wed, Fri (1pm - 6pm)",
-    experience: "10 Years",
-    regNo: "MDCN/5432",
-    email: "samuel@simmycare.com",
-    password: "password123",
-    phone: "08033221100",
-    bio: "Experienced clinical psychologist specializing in cognitive behavioral therapy, anxiety, depression, and stress management.",
-    clinicRoom: "Room 401, Mental Health Block",
-    license: "",
-    consultationRate: "₦7,500",
-    consultationDuration: "50 mins",
-    services: ["Online Consultation"]
-  },
-  {
-    id: 6,
-    name: "Dr. Elizabeth Harrison",
-    specialty: "Dentistry",
-    schedule: "Tue, Thu (9am - 3pm)",
-    experience: "8 Years",
-    regNo: "MDCN/3842",
-    email: "elizabeth@simmycare.com",
-    password: "password123",
-    phone: "08044556677",
-    bio: "Restorative and cosmetic dentist focused on oral hygiene, dental surgery, cavity prevention, and aesthetic dentistry.",
-    clinicRoom: "Room 108, Dental Clinic Unit",
-    license: "",
-    consultationRate: "₦12,000",
-    consultationDuration: "40 mins",
-    services: ["Physical Consultation"]
-  },
-  {
-    id: 7,
-    name: "Dr. Jibril Musa",
-    specialty: "Laboratory",
-    schedule: "Mon - Sat (8am - 5pm)",
-    experience: "7 Years",
-    regNo: "MDCN/4781",
-    email: "jibril@simmycare.com",
-    password: "password123",
-    phone: "08055667788",
-    bio: "Consultant pathologist overseeing laboratory diagnostics, specimen sampling accuracy, and rapid analysis procedures.",
-    clinicRoom: "Diagnostic Pathology Lab B",
-    license: "",
-    consultationRate: "₦6,000",
-    consultationDuration: "15 mins",
-    services: ["Mobile Laboratory"]
-  },
-  {
-    id: 8,
+    id: 2,
     name: "Dr. Mato Saddiqa Tijjani",
     specialty: "Public Health",
     schedule: "Mon - Fri (9am - 4pm)",
@@ -174,7 +70,7 @@ const INITIAL_DOCTORS = [
     services: ["Online Consultation", "Physical Consultation"]
   },
   {
-    id: 9,
+    id: 3,
     name: "Dr. Abubakar Muhammad Bamalli",
     specialty: "General Medicine",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -193,16 +89,9 @@ const INITIAL_DOCTORS = [
   }
 ];
 
-const INITIAL_APPOINTMENTS = [
-  { id: "APT-1048", patientName: "Zainab Abdulfatah", phone: "08012345678", email: "zainab@example.com", doctor: "Dr. Fatima Yahaya Maiauduga", date: "2026-06-25", time: "10:00 AM", symptoms: "Routine checkup for child vaccines.", status: "Approved", notes: "Vaccinations completed. Child is in good health.", prescription: "Paracetamol Syrup 5ml as needed for fever." },
-  { id: "APT-1092", patientName: "David Okon", phone: "09087654321", email: "david.okon@gmail.com", doctor: "Dr. Adam Zamzam", date: "2026-06-24", time: "02:30 PM", symptoms: "Experiencing persistent headaches and mild fever.", status: "Pending", notes: "", prescription: "" },
-  { id: "APT-1102", patientName: "Sarah Ahmed", phone: "07033445566", email: "sarah@example.com", doctor: "Dr. Favour Obi", date: "2026-06-26", time: "11:30 AM", symptoms: "Inquiry about prenatal consultations.", status: "Cancelled", notes: "", prescription: "" }
-];
+const INITIAL_APPOINTMENTS = [];
 
-const INITIAL_INQUIRIES = [
-  { id: "INQ-8902", name: "John Doe", email: "john.doe@gmail.com", message: "Do you support corporate health insurance plans?", date: "2026-06-21" },
-  { id: "INQ-8903", name: "Mary Williams", email: "mary.w@yahoo.com", message: "Hi, do you offer home sample collections for lab work?", date: "2026-06-22" }
-];
+const INITIAL_INQUIRIES = [];
 
 // Helper to generate initials avatar gradients
 function getAvatarGradient(index) {
@@ -228,7 +117,7 @@ export default function App() {
   });
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
-  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 3: doctorAdamImg, 8: doctorTijjaniImg, 9: doctorBamalliImg };
+  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorTijjaniImg, 3: doctorBamalliImg };
 
   const [doctors, setDoctors] = useState(() => {
     const data = localStorage.getItem("simmy_doctors");
@@ -425,24 +314,21 @@ export default function App() {
     localStorage.setItem("simmy_admin_credentials", JSON.stringify(adminCredentials));
   }, [adminCredentials]);
 
-  // Migrate older appointments containing non-existent doctors to seeded active doctors
+  // Migrate older appointments containing non-existent doctors to current active doctors
   useEffect(() => {
     let changed = false;
+    const validDoctorNames = doctors.map(d => d.name);
     const updatedApts = appointments.map(apt => {
-      if (apt.doctor === "Dr. Amina Yusuf") {
+      if (!validDoctorNames.includes(apt.doctor)) {
         changed = true;
-        return { ...apt, doctor: "Dr. Fatima Yahaya Maiauduga" };
-      }
-      if (apt.doctor === "Dr. Babajide Alao") {
-        changed = true;
-        return { ...apt, doctor: "Dr. Adam Zamzam" };
+        return { ...apt, doctor: doctors[0]?.name || apt.doctor };
       }
       return apt;
     });
     if (changed) {
       setAppointments(updatedApts);
     }
-  }, [appointments]);
+  }, []);
 
   // Sync Auth State
   useEffect(() => {
@@ -1510,7 +1396,7 @@ export default function App() {
                   Select an active medical professional below to initiate booking your online session:
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {doctors.filter(d => ['Gynaecology', 'Pediatrics', 'General Medicine', 'Psychology'].includes(d.specialty)).map((doc, idx) => (
+                  {doctors.filter(d => d.active !== false).map((doc, idx) => (
                     <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.85rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.4)' }}>
                       <div style={{ flex: 1 }}>
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
@@ -2153,7 +2039,7 @@ export default function App() {
                   Select an MDCN-certified specialist to schedule your face-to-face clinical checkup:
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {doctors.filter(d => ['Gynaecology', 'Pediatrics', 'General Medicine', 'Dentistry'].includes(d.specialty)).map((doc, idx) => (
+                  {doctors.filter(d => d.active !== false).map((doc, idx) => (
                     <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.85rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.4)' }}>
                       <div style={{ flex: 1 }}>
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
