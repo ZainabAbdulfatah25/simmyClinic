@@ -105,6 +105,24 @@ const INITIAL_DOCTORS = [
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"]
+  },
+  {
+    id: 5,
+    name: "Dr. Wasila Goranduma",
+    specialty: "Public Health",
+    schedule: "Mon - Fri (9am - 5pm)",
+    experience: "6 Years",
+    regNo: "MLS/REG",
+    image: "",
+    email: "wasilagoranduma@gmail.com",
+    password: "password123",
+    phone: "+234 803 133 8534",
+    bio: "Registered Medical Laboratory Scientist with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
+    clinicRoom: "",
+    license: "",
+    consultationRate: "Free",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation"]
   }
 ];
 
@@ -138,12 +156,25 @@ export default function App() {
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
   const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorAdamImg, 3: doctorTijjaniImg, 4: doctorBamalliImg };
 
+  // Data version - increment to force localStorage refresh and remove stale/dummy data
+  const DATA_VERSION = "v5_real_staff_only";
+
   const [doctors, setDoctors] = useState(() => {
+    const storedVersion = localStorage.getItem("simmy_data_version");
+    // If version mismatch, wipe old data and use fresh seed data
+    if (storedVersion !== DATA_VERSION) {
+      localStorage.removeItem("simmy_doctors");
+      localStorage.setItem("simmy_data_version", DATA_VERSION);
+      return INITIAL_DOCTORS;
+    }
     const data = localStorage.getItem("simmy_doctors");
     if (data) {
       const parsed = JSON.parse(data);
+      const seedIds = INITIAL_DOCTORS.map(sd => sd.id);
+      // Only keep doctors that exist in INITIAL_DOCTORS (removes any stale dummy entries)
+      const validDoctors = parsed.filter(doc => seedIds.includes(doc.id));
       // Re-apply bundled images for seed doctors unless they have a user-uploaded base64 image
-      return parsed.map(doc => {
+      const merged = validDoctors.map(doc => {
         const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
         const updatedDoc = {
           ...doc,
@@ -156,6 +187,10 @@ export default function App() {
         }
         return updatedDoc;
       });
+      // Append any new seed doctors not yet in cached data
+      const cachedIds = validDoctors.map(d => d.id);
+      const newSeedDoctors = INITIAL_DOCTORS.filter(sd => !cachedIds.includes(sd.id));
+      return [...merged, ...newSeedDoctors];
     }
     return INITIAL_DOCTORS;
   });
@@ -1357,6 +1392,92 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* How It Works - Steps Section */}
+            <div className="how-it-works-section">
+              <div className="section-header">
+                <h2>Healthcare in 3 simple steps</h2>
+                <p>From symptom to solution in minutes - no queues, no travel.</p>
+              </div>
+              <div className="steps-grid">
+                <div className="step-card glassmorphic">
+                  <div className="step-icon"><i className="fa-solid fa-heart-pulse"></i></div>
+                  <span className="step-label">STEP 1</span>
+                  <h3>Create your account</h3>
+                  <p>Sign up in under a minute and complete your health profile.</p>
+                </div>
+                <div className="step-card glassmorphic">
+                  <div className="step-icon"><i className="fa-solid fa-stethoscope"></i></div>
+                  <span className="step-label">STEP 2</span>
+                  <h3>Book a verified doctor</h3>
+                  <p>Browse specialists across Nigeria and pick a time that suits you.</p>
+                </div>
+                <div className="step-card glassmorphic">
+                  <div className="step-icon"><i className="fa-solid fa-video"></i></div>
+                  <span className="step-label">STEP 3</span>
+                  <h3>Consult from anywhere</h3>
+                  <p>Join a secure video or chat consultation and get prescriptions instantly.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonials Section */}
+            <div className="testimonials-section">
+              <div className="section-header">
+                <h2>What our patients say</h2>
+                <p>Real stories from Nigerians who trust SimmyCare.</p>
+              </div>
+              <div className="testimonials-grid">
+                <div className="testimonial-card glassmorphic">
+                  <div className="testimonial-stars">
+                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
+                  </div>
+                  <p className="testimonial-quote">"I consulted a doctor from my home in Kaduna. Got my prescription and medicines delivered same day. Incredible."</p>
+                  <div className="testimonial-author">
+                    <div className="testimonial-avatar" style={{background: 'linear-gradient(135deg, #182B49, #2C5D88)'}}>HA</div>
+                    <div className="testimonial-author-info">
+                      <strong>Halima Abubakar</strong>
+                      <span><i className="fa-solid fa-location-dot"></i> Kaduna</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="testimonial-card glassmorphic">
+                  <div className="testimonial-stars">
+                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
+                  </div>
+                  <p className="testimonial-quote">"As a busy mum, the online consultations save me hours. The doctors are wonderful with my kids."</p>
+                  <div className="testimonial-author">
+                    <div className="testimonial-avatar" style={{background: 'linear-gradient(135deg, #2C5D88, #E2ECF5)'}}>AM</div>
+                    <div className="testimonial-author-info">
+                      <strong>Amina Musa</strong>
+                      <span><i className="fa-solid fa-location-dot"></i> Abuja</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="testimonial-card glassmorphic">
+                  <div className="testimonial-stars">
+                    <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
+                  </div>
+                  <p className="testimonial-quote">"Living far from specialist hospitals, SimmyCare changed everything. My follow-ups happen from home."</p>
+                  <div className="testimonial-author">
+                    <div className="testimonial-avatar" style={{background: 'linear-gradient(135deg, #1F4A6F, #182B49)'}}>YI</div>
+                    <div className="testimonial-author-info">
+                      <strong>Yusuf Ibrahim</strong>
+                      <span><i className="fa-solid fa-location-dot"></i> Kano</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Banner */}
+            <div className="cta-banner">
+              <h2>Ready to see a doctor today?</h2>
+              <p>Join thousands of Nigerians getting quality healthcare from the comfort of home.</p>
+              <button className="btn btn-cta-outline" onClick={() => navigateTo('booking')}>
+                Book Your Consultation <i className="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
           </section>
         )}
 
@@ -2546,81 +2667,129 @@ export default function App() {
             <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem', alignSelf: 'flex-start' }}>
               <i className="fa-solid fa-arrow-left"></i> Back to Previous
             </button>
-            <div className="login-card-wrapper">
-              <div className="login-card glassmorphic">
-                
-                {/* Role Tabs */}
-                <div className="login-tabs">
-                  <button className={`login-tab-btn ${loginTab === 'patient' ? 'active' : ''}`} onClick={() => { setLoginTab('patient'); setLoginError(''); }}>Patient</button>
-                  <button className={`login-tab-btn ${loginTab === 'doctor' ? 'active' : ''}`} onClick={() => { setLoginTab('doctor'); setLoginError(''); }}>Doctor</button>
-                  <button className={`login-tab-btn ${loginTab === 'admin' ? 'active' : ''}`} onClick={() => { setLoginTab('admin'); setLoginError(''); }}>Admin</button>
-                </div>
-
-                <div className="login-header">
-                  <h2>
-                    {loginTab === 'patient' && "Patient Portal"}
-                    {loginTab === 'doctor' && "Doctor Board"}
-                    {loginTab === 'admin' && "Administrator Access"}
-                  </h2>
-                  <p>
-                    {loginTab === 'patient' && (isPatientRegistering ? "Create your patient account" : "Sign in to access your portal")}
-                    {loginTab === 'doctor' && "Sign in with your doctor account email and password"}
-                    {loginTab === 'admin' && "Sign in to access administrator panel"}
+            <div className="login-split-container">
+              {/* Left Column: Brand & Stats */}
+              <div className="login-left-pane">
+                <div className="login-left-inner">
+                  <div className="login-logo-row">
+                    <div className="login-logo-box">
+                      <img className="logo-img" src={logoSvg} alt="SimmyCare Logo" />
+                    </div>
+                    <span className="login-logo-text">SimmyCare</span>
+                  </div>
+                  <h1 className="login-left-title">Quality healthcare, wherever you are in Nigeria.</h1>
+                  <p className="login-left-desc">
+                    Book appointments, consult doctors by video, get prescriptions, and have medicines delivered to your door.
                   </p>
+                  
+                  <div className="login-stats-row">
+                    <div className="login-stat-col">
+                      <h3>12k+</h3>
+                      <p>Patients served</p>
+                    </div>
+                    <div className="login-stat-col">
+                      <h3>180+</h3>
+                      <p>Verified doctors</p>
+                    </div>
+                    <div className="login-stat-col">
+                      <h3>64</h3>
+                      <p>Pharmacy partners</p>
+                    </div>
+                  </div>
+                  
+                  <div className="login-left-footer">
+                    <p>&copy; 2026 SimmyCare. All rights reserved.</p>
+                  </div>
                 </div>
+              </div>
 
-                {loginError && <div className="error-message">{loginError}</div>}
+              {/* Right Column: Interactive Login form */}
+              <div className="login-right-pane">
+                <div className="login-right-inner">
+                  {/* Role Tabs */}
+                  <div className="login-tabs">
+                    <button className={`login-tab-btn ${loginTab === 'patient' ? 'active' : ''}`} onClick={() => { setLoginTab('patient'); setLoginError(''); }}>Patient</button>
+                    <button className={`login-tab-btn ${loginTab === 'doctor' ? 'active' : ''}`} onClick={() => { setLoginTab('doctor'); setLoginError(''); }}>Doctor</button>
+                    <button className={`login-tab-btn ${loginTab === 'admin' ? 'active' : ''}`} onClick={() => { setLoginTab('admin'); setLoginError(''); }}>Admin</button>
+                  </div>
 
-                {/* Patient Login Form */}
-                {loginTab === 'patient' && (
-                  <form onSubmit={handlePatientLoginSubmit}>
-                    <div className="form-group">
-                      <label>Email Address</label>
-                      <input 
-                        type="email" 
-                        required 
-                        placeholder="patient@example.com"
-                        value={patientLoginForm.email}
-                        onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Password</label>
-                      <div className="password-input-wrapper">
-                        <input 
-                          type={showPasswords.patient ? 'text' : 'password'} 
-                          required 
-                          placeholder="••••••••"
-                          value={patientLoginForm.password}
-                          onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
-                        />
-                        <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
-                          <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                        </button>
+                  <div className="login-header">
+                    <h2>Welcome back</h2>
+                    <p>
+                      {loginTab === 'patient' && (isPatientRegistering ? "Create your patient account" : "Sign in to continue to SimmyCare")}
+                      {loginTab === 'doctor' && "Sign in to continue to SimmyCare"}
+                      {loginTab === 'admin' && "Sign in to continue to SimmyCare"}
+                    </p>
+                  </div>
+
+                  {loginError && <div className="error-message">{loginError}</div>}
+
+                  {/* Patient Login Form */}
+                  {loginTab === 'patient' && (
+                    <form onSubmit={handlePatientLoginSubmit}>
+                      {isPatientRegistering && (
+                        <>
+                          <div className="form-group">
+                            <label>Full Name</label>
+                            <div className="input-with-icon">
+                              <i className="fa-regular fa-user"></i>
+                              <input 
+                                type="text" 
+                                required 
+                                placeholder="e.g. Zainab Abdulfatah"
+                                value={patientLoginForm.name}
+                                onChange={(e) => setPatientLoginForm({ ...patientLoginForm, name: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          <div className="form-group">
+                            <label>Phone Number</label>
+                            <div className="input-with-icon">
+                              <i className="fa-solid fa-phone"></i>
+                              <input 
+                                type="tel" 
+                                required 
+                                placeholder="e.g. 08012345678"
+                                value={patientLoginForm.phone}
+                                onChange={(e) => setPatientLoginForm({ ...patientLoginForm, phone: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="form-group">
+                        <label>Email address</label>
+                        <div className="input-with-icon">
+                          <i className="fa-regular fa-envelope"></i>
+                          <input 
+                            type="email" 
+                            required 
+                            placeholder="you@example.com"
+                            value={patientLoginForm.email}
+                            onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    {isPatientRegistering && (
-                      <>
-                        <div className="form-group">
-                          <label>Full Name</label>
+                      
+                      <div className="form-group">
+                        <label>Password</label>
+                        <div className="input-with-icon">
+                          <i className="fa-solid fa-lock"></i>
                           <input 
-                            type="text" 
+                            type={showPasswords.patient ? 'text' : 'password'} 
                             required 
-                            placeholder="e.g. Zainab Abdulfatah"
-                            value={patientLoginForm.name}
-                            onChange={(e) => setPatientLoginForm({ ...patientLoginForm, name: e.target.value })}
+                            placeholder="••••••••"
+                            value={patientLoginForm.password}
+                            onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
                           />
+                          <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
+                            <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                          </button>
                         </div>
-                        <div className="form-group">
-                          <label>Phone Number</label>
-                          <input 
-                            type="tel" 
-                            required 
-                            placeholder="e.g. 08012345678"
-                            value={patientLoginForm.phone}
-                            onChange={(e) => setPatientLoginForm({ ...patientLoginForm, phone: e.target.value })}
-                          />
-                        </div>
+                      </div>
+
+                      {isPatientRegistering && (
                         <div className="form-group consent-checkbox-group" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                           <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
                             <input 
@@ -2639,116 +2808,146 @@ export default function App() {
                             <span>I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('register'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> compliance guidelines.</span>
                           </label>
                         </div>
-                      </>
-                    )}
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
-                      {isPatientRegistering 
-                        ? "*All fields are required to establish your medical file."
-                        : "Demo Account: zainab@example.com / password123"}
-                    </p>
-                    <button type="submit" className="btn btn-primary btn-block">
-                      {isPatientRegistering ? "Register" : "Login"}
-                    </button>
-                    
-                    <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem' }}>
-                      {isPatientRegistering ? (
-                        <span style={{ color: 'var(--color-indigo)' }}>
-                          Already have an account?{' '}
-                          <button 
-                            type="button" 
-                            style={{ background: 'none', border: 'none', color: 'var(--color-accent-hover)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                            onClick={() => { setIsPatientRegistering(false); setLoginError(''); }}
-                          >
-                            Sign In
-                          </button>
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--color-indigo)' }}>
-                          New to SimmyCare?{' '}
-                          <button 
-                            type="button" 
-                            style={{ background: 'none', border: 'none', color: 'var(--color-accent-hover)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                            onClick={() => { setIsPatientRegistering(true); setLoginError(''); }}
-                          >
-                            Register Here
-                          </button>
-                        </span>
                       )}
-                    </div>
-                  </form>
-                )}
 
-                {/* Doctor Login Form */}
-                {loginTab === 'doctor' && (
-                  <form onSubmit={handleDoctorLoginSubmit}>
-                    <div className="form-group">
-                      <label>Doctor Email Address</label>
-                      <input 
-                        type="email" 
-                        required 
-                        placeholder="doctor@simmycare.com"
-                        value={doctorLoginForm.email}
-                        onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Password</label>
-                      <div className="password-input-wrapper">
-                        <input 
-                          type={showPasswords.doctor ? 'text' : 'password'} 
-                          required 
-                          placeholder="••••••••"
-                          value={doctorLoginForm.password}
-                          onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, password: e.target.value })}
-                        />
-                        <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, doctor: !p.doctor }))} tabIndex={-1}>
-                          <i className={`fa-solid ${showPasswords.doctor ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                        </button>
+                      {!isPatientRegistering && (
+                        <div className="form-actions-row">
+                          <label className="remember-me">
+                            <input type="checkbox" /> Remember me
+                          </label>
+                          <a href="#forgot" className="forgot-password" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+                        </div>
+                      )}
+
+                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', marginTop: '1rem' }}>
+                        {isPatientRegistering 
+                          ? "*All fields are required to establish your medical file."
+                          : "Demo Account: zainab@example.com / password123"}
+                      </p>
+                      
+                      <button type="submit" className="btn btn-primary btn-block">
+                        {isPatientRegistering ? "Sign Up" : "Sign In"}
+                      </button>
+                      
+                      <div className="signup-toggle">
+                        {isPatientRegistering ? (
+                          <span>
+                            Already have an account?{' '}
+                            <button 
+                              type="button" 
+                              className="toggle-link-btn"
+                              onClick={() => { setIsPatientRegistering(false); setLoginError(''); }}
+                            >
+                              Sign In
+                            </button>
+                          </span>
+                        ) : (
+                          <span>
+                            Don't have an account?{' '}
+                            <button 
+                              type="button" 
+                              className="toggle-link-btn"
+                              onClick={() => { setIsPatientRegistering(true); setLoginError(''); }}
+                            >
+                              Create one
+                            </button>
+                          </span>
+                        )}
                       </div>
-                    </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
-                      Demo Account: fatima@simmycare.com / password123
-                    </p>
-                    <button type="submit" className="btn btn-primary btn-block">Login</button>
-                  </form>
-                )}
+                    </form>
+                  )}
 
-                {/* Admin Login Form */}
-                {loginTab === 'admin' && (
-                  <form onSubmit={handleAdminLoginSubmit}>
-                    <div className="form-group">
-                      <label>Username</label>
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="admin"
-                        value={adminLoginForm.username}
-                        onChange={(e) => setAdminLoginForm({ ...adminLoginForm, username: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Password</label>
-                      <div className="password-input-wrapper">
-                        <input 
-                          type={showPasswords.admin ? 'text' : 'password'} 
-                          required 
-                          placeholder="•••••"
-                          value={adminLoginForm.password}
-                          onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
-                        />
-                        <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, admin: !p.admin }))} tabIndex={-1}>
-                          <i className={`fa-solid ${showPasswords.admin ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                        </button>
+                  {/* Doctor Login Form */}
+                  {loginTab === 'doctor' && (
+                    <form onSubmit={handleDoctorLoginSubmit}>
+                      <div className="form-group">
+                        <label>Doctor Email Address</label>
+                        <div className="input-with-icon">
+                          <i className="fa-regular fa-envelope"></i>
+                          <input 
+                            type="email" 
+                            required 
+                            placeholder="doctor@simmycare.com"
+                            value={doctorLoginForm.email}
+                            onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, email: e.target.value })}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-block">Login</button>
-                  </form>
-                )}
+                      
+                      <div className="form-group">
+                        <label>Password</label>
+                        <div className="input-with-icon">
+                          <i className="fa-solid fa-lock"></i>
+                          <input 
+                            type={showPasswords.doctor ? 'text' : 'password'} 
+                            required 
+                            placeholder="••••••••"
+                            value={doctorLoginForm.password}
+                            onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, password: e.target.value })}
+                          />
+                          <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, doctor: !p.doctor }))} tabIndex={-1}>
+                            <i className={`fa-solid ${showPasswords.doctor ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="form-actions-row">
+                        <label className="remember-me">
+                          <input type="checkbox" /> Remember me
+                        </label>
+                        <a href="#forgot" className="forgot-password" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+                      </div>
 
-                <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                  <a href="#home" className="back-home-link" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>← Back to Homepage</a>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', marginTop: '1rem' }}>
+                        Demo Account: fatima@simmycare.com / password123
+                      </p>
+                      
+                      <button type="submit" className="btn btn-primary btn-block">Sign In</button>
+                    </form>
+                  )}
+
+                  {/* Admin Login Form */}
+                  {loginTab === 'admin' && (
+                    <form onSubmit={handleAdminLoginSubmit}>
+                      <div className="form-group">
+                        <label>Username</label>
+                        <div className="input-with-icon">
+                          <i className="fa-regular fa-user"></i>
+                          <input 
+                            type="text" 
+                            required 
+                            placeholder="admin"
+                            value={adminLoginForm.username}
+                            onChange={(e) => setAdminLoginForm({ ...adminLoginForm, username: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Password</label>
+                        <div className="input-with-icon">
+                          <i className="fa-solid fa-lock"></i>
+                          <input 
+                            type={showPasswords.admin ? 'text' : 'password'} 
+                            required 
+                            placeholder="•••••"
+                            value={adminLoginForm.password}
+                            onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
+                          />
+                          <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, admin: !p.admin }))} tabIndex={-1}>
+                            <i className={`fa-solid ${showPasswords.admin ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <button type="submit" className="btn btn-primary btn-block">Sign In</button>
+                    </form>
+                  )}
+
+                  <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                    <a href="#home" className="back-home-link" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>← Back to Homepage</a>
+                  </div>
                 </div>
-
               </div>
             </div>
           </section>
@@ -4502,8 +4701,8 @@ export default function App() {
 
       </main>
 
-      {/* --- 3. Footer Section (Flyer-Style Compact Bar + Classic Links) --- */}
-      <footer className="app-footer glassmorphic">
+      {/* --- 3. Footer Section --- */}
+      <footer className="app-footer">
         <div className="footer-container">
           <div className="footer-brand">
             <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
@@ -4512,56 +4711,50 @@ export default function App() {
               </div>
               <span className="logo-text">Simmy<span>Care</span></span>
             </a>
-            <p>SimmyCare is an online clinic offering stress-free medical consultations, mobile laboratory diagnostics, pharmacy deliveries, and home services across Abuja, Kaduna, Kano, Bauchi, and Gombe.</p>
+            <p>Nigeria's trusted telehealth platform. Quality healthcare, wherever you are.</p>
+            <div className="footer-social-icons">
+              <a href="#" aria-label="Facebook"><i className="fa-brands fa-facebook-f"></i></a>
+              <a href="#" aria-label="Twitter"><i className="fa-brands fa-x-twitter"></i></a>
+              <a href="#" aria-label="Instagram"><i className="fa-brands fa-instagram"></i></a>
+              <a href="#" aria-label="LinkedIn"><i className="fa-brands fa-linkedin-in"></i></a>
+            </div>
           </div>
 
           <div className="footer-links-col">
-            <h4>Clinic Pages</h4>
+            <h4>QUICK LINKS</h4>
             <ul>
-              <li><a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home Page</a></li>
-              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Doctor Directory</a></li>
-              <li><a href="#booking" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Book Consultation</a></li>
-              <li><a href="#contact" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Send Inquiries</a></li>
+              <li><a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
+              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Find Doctors</a></li>
+              <li><a href="#booking" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Book Appointment</a></li>
+              <li><a href="#contact" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact Us</a></li>
             </ul>
           </div>
 
-          <div className="footer-hours-col">
-            <h4>Operational Hours</h4>
-            <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
-            <p>Saturday: 9:00 AM - 2:00 PM</p>
-            <p>Sunday: Emergency Consultations Only</p>
-            <p className="footer-contact-phone"><i className="fa-solid fa-phone"></i> +234 901 432 4442</p>
+          <div className="footer-links-col">
+            <h4>SPECIALTIES</h4>
+            <ul>
+              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); setDoctorFilter('General Medicine'); navigateTo('doctors'); }}>General Practitioner</a></li>
+              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); setDoctorFilter('Gynaecology'); navigateTo('doctors'); }}>Gynaecologist</a></li>
+              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); setDoctorFilter('Public Health'); navigateTo('doctors'); }}>Public Health</a></li>
+              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); setDoctorFilter('Laboratory'); navigateTo('doctors'); }}>Laboratory</a></li>
+            </ul>
+          </div>
+
+          <div className="footer-contact-col">
+            <h4>CONTACT</h4>
+            <p><i className="fa-solid fa-phone"></i> +234 901 432 4442</p>
+            <p><i className="fa-solid fa-envelope"></i> support@simmycare.com</p>
+            <p><i className="fa-regular fa-clock"></i> Mon - Fri: 8AM - 5PM</p>
+            <p><i className="fa-regular fa-clock"></i> Sat: 9AM - 2PM</p>
           </div>
         </div>
       </footer>
 
-      {/* Flyer-Style Compact Footer Bar */}
-      <div className="flyer-footer-bar">
-        <div className="flyer-footer-container">
-          <div className="flyer-footer-item">
-            <div className="flyer-footer-icon"><i className="fa-solid fa-heart-pulse"></i></div>
-            <div className="flyer-footer-text">
-              <strong>Your Health. Our Care.</strong>
-              <span>Simmycare - <a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Always Here for You.</a></span>
-            </div>
-          </div>
-          <div className="flyer-footer-item center">
-            <div className="flyer-footer-icon"><i className="fa-solid fa-globe"></i></div>
-            <div className="flyer-footer-text">
-              <strong>www.simmycare.com</strong>
-            </div>
-          </div>
-          <div className="flyer-footer-item right">
-            <div className="flyer-footer-icon"><i className="fa-solid fa-phone"></i></div>
-            <div className="flyer-footer-text">
-              <strong>09014324442</strong>
-              <span>We are just a message away!</span>
-            </div>
-          </div>
-        </div>
-        <div className="flyer-footer-bottom">
-          <p>© 2026 SimmyCare Online Clinic. Developed by Nexel Technologies. All rights reserved.</p>
-          <p>RC Number: RC 9198656</p>
+      {/* Footer Copyright Bar */}
+      <div className="footer-bottom-bar">
+        <div className="footer-bottom-container">
+          <p>&copy; 2026 SimmyCare. All rights reserved.</p>
+          <p>RC Number: RC 9198656 | Developed by Nexel Technologies</p>
         </div>
       </div>
 
