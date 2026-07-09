@@ -212,6 +212,29 @@ export default function App() {
     ];
   });
 
+  const [pharmacists, setPharmacists] = useState(() => {
+    const data = localStorage.getItem("simmy_pharmacists");
+    return data ? JSON.parse(data) : [
+      { name: "Pharm. Bello Ibrahim", email: "pharmacist@simmycare.com", password: "password123", phone: "08012345678", pharmacyName: "SimmyCare Central Pharmacy", pharmacyLicense: "PCN/P/9482" }
+    ];
+  });
+
+  const [labs, setLabs] = useState(() => {
+    const data = localStorage.getItem("simmy_labs");
+    return data ? JSON.parse(data) : [
+      { name: "MLS Wasila Goranduma", email: "lab@simmycare.com", password: "password123", phone: "08023456789", facilityName: "SimmyCare Diagnostics", labLicense: "MLSCN/L/3821" }
+    ];
+  });
+
+  const [logistics, setLogistics] = useState(() => {
+    const data = localStorage.getItem("simmy_logistics");
+    return data ? JSON.parse(data) : [
+      { name: "Chinedu Okeke", email: "logistics@simmycare.com", password: "password123", phone: "08034567890", vehicleType: "Motorbike", dispatchArea: "Abuja Central" }
+    ];
+  });
+
+  const [registerRole, setRegisterRole] = useState('patient');
+
   // --- Auth Role State ---
   const [authRole, setAuthRole] = useState(() => {
     return sessionStorage.getItem("simmy_auth_role") || null; // 'patient' | 'doctor' | 'admin' | null
@@ -233,8 +256,20 @@ export default function App() {
   const [doctorSearch, setDoctorSearch] = useState('');
   const [doctorFilter, setDoctorFilter] = useState('all');
   
-  // Form inputs
-  const [patientLoginForm, setPatientLoginForm] = useState({ email: '', name: '', phone: '', password: '' });
+  const [patientLoginForm, setPatientLoginForm] = useState({
+    email: '',
+    name: '',
+    phone: '',
+    password: '',
+    specialty: 'General Medicine',
+    regNo: '',
+    pharmacyName: '',
+    pharmacyLicense: '',
+    facilityName: '',
+    labLicense: '',
+    vehicleType: 'Motorbike',
+    dispatchArea: ''
+  });
   const [doctorLoginForm, setDoctorLoginForm] = useState({ email: '', password: '' });
   const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
@@ -328,9 +363,13 @@ export default function App() {
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
   
   // Patient Profile & Navigation States
-  const [patientNavView, setPatientNavView] = useState('bookings'); // 'bookings' | 'profile'
+  const [patientNavView, setPatientNavView] = useState('bookings'); // 'bookings' | 'profile' | 'orders' | 'labs'
   const [isEditingPatSelf, setIsEditingPatSelf] = useState(false);
   const [patSelfData, setPatSelfData] = useState({ name: '', email: '', phone: '', password: '' });
+  const [selectedPharmacyOrder, setSelectedPharmacyOrder] = useState(null);
+  const [selectedLabRequest, setSelectedLabRequest] = useState(null);
+  const [activeTrackingId, setActiveTrackingId] = useState(null);
+  const [simulatedProgress, setSimulatedProgress] = useState(25);
 
   const [adminSelectedApt, setAdminSelectedApt] = useState(null);
   const [adminSelectedInquiry, setAdminSelectedInquiry] = useState(null);
@@ -339,13 +378,71 @@ export default function App() {
   const [consultationNotes, setConsultationNotes] = useState({ notes: '', prescription: '' });
   const [editingApt, setEditingApt] = useState(null);
   const [editAptData, setEditAptData] = useState({ doctorId: '', doctorName: '', date: '', time: '', symptoms: '', status: '' });
-  const [showPasswords, setShowPasswords] = useState({ patient: false, doctor: false, admin: false, doctorForm: false, patientForm: false, adminForm: false });
+  const [showPasswords, setShowPasswords] = useState({ patient: false, doctor: false, admin: false, pharmacist: false, lab: false, logistics: false, doctorForm: false, patientForm: false, adminForm: false });
   const [docNotesState, setDocNotesState] = useState({});
   const [modalEditingFields, setModalEditingFields] = useState({});
   const [modalTempValues, setModalTempValues] = useState({});
   const [followUpApt, setFollowUpApt] = useState(null);
   const [followUpData, setFollowUpData] = useState({ date: '', time: '10:00 AM', reason: '2-Week Observation Follow-up' });
   const [whatsappPopupOpen, setWhatsappPopupOpen] = useState(false);
+
+  // New role authentication & UI states
+  const [loggedInPharmacist, setLoggedInPharmacist] = useState(() => {
+    const data = sessionStorage.getItem("simmy_auth_pharmacist");
+    return data ? JSON.parse(data) : null;
+  });
+  const [loggedInLab, setLoggedInLab] = useState(() => {
+    const data = sessionStorage.getItem("simmy_auth_lab");
+    return data ? JSON.parse(data) : null;
+  });
+  const [loggedInLogistics, setLoggedInLogistics] = useState(() => {
+    const data = sessionStorage.getItem("simmy_auth_logistics");
+    return data ? JSON.parse(data) : null;
+  });
+
+  const [pharmacistNavView, setPharmacistNavView] = useState('orders');
+  const [labNavView, setLabNavView] = useState('requests');
+  const [logisticsNavView, setLogisticsNavView] = useState('deliveries');
+
+  const [pharmacistLoginForm, setPharmacistLoginForm] = useState({ email: '', password: '' });
+  const [labLoginForm, setLabLoginForm] = useState({ email: '', password: '' });
+  const [logisticsLoginForm, setLogisticsLoginForm] = useState({ email: '', password: '' });
+
+  const [pharmacistSelectedOrder, setPharmacistSelectedOrder] = useState(null);
+  const [pharmacistSelectedPrescription, setPharmacistSelectedPrescription] = useState(null);
+  const [prescOrderForm, setPrescOrderForm] = useState({ address: '', notes: '', cost: '3000' });
+  const [labSelectedRequest, setLabSelectedRequest] = useState(null);
+  const [labResultsText, setLabResultsText] = useState('');
+  const [logisticsSelectedShipment, setLogisticsSelectedShipment] = useState(null);
+  const [logisticsSelectedRider, setLogisticsSelectedRider] = useState(null);
+  const [deliveryIssueText, setDeliveryIssueText] = useState('');
+  const [riderStatusFilter, setRiderStatusFilter] = useState('All');
+  const [onboardRiderForm, setOnboardRiderForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    password: '',
+    vehicleType: 'Motorbike',
+    dispatchArea: ''
+  });
+
+  // Simulated Real-Time Logistics Tracking progress
+  useEffect(() => {
+    let interval;
+    if (activeTrackingId) {
+      interval = setInterval(() => {
+        setSimulatedProgress(p => {
+          if (p >= 95) {
+            return 15;
+          }
+          return p + 5;
+        });
+      }, 1800);
+    } else {
+      setSimulatedProgress(25);
+    }
+    return () => clearInterval(interval);
+  }, [activeTrackingId]);
 
   // Sync to local storage
   useEffect(() => {
@@ -363,6 +460,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("simmy_patients", JSON.stringify(patients));
   }, [patients]);
+
+  useEffect(() => {
+    localStorage.setItem("simmy_pharmacists", JSON.stringify(pharmacists));
+  }, [pharmacists]);
+
+  useEffect(() => {
+    localStorage.setItem("simmy_labs", JSON.stringify(labs));
+  }, [labs]);
+
+  useEffect(() => {
+    localStorage.setItem("simmy_logistics", JSON.stringify(logistics));
+  }, [logistics]);
 
   useEffect(() => {
     localStorage.setItem("simmy_admin_credentials", JSON.stringify(adminCredentials));
@@ -389,7 +498,10 @@ export default function App() {
     sessionStorage.setItem("simmy_auth_role", authRole || '');
     sessionStorage.setItem("simmy_auth_patient", loggedInPatient ? JSON.stringify(loggedInPatient) : '');
     sessionStorage.setItem("simmy_auth_doctor", loggedInDoctor ? JSON.stringify(loggedInDoctor) : '');
-  }, [authRole, loggedInPatient, loggedInDoctor]);
+    sessionStorage.setItem("simmy_auth_pharmacist", loggedInPharmacist ? JSON.stringify(loggedInPharmacist) : '');
+    sessionStorage.setItem("simmy_auth_lab", loggedInLab ? JSON.stringify(loggedInLab) : '');
+    sessionStorage.setItem("simmy_auth_logistics", loggedInLogistics ? JSON.stringify(loggedInLogistics) : '');
+  }, [authRole, loggedInPatient, loggedInDoctor, loggedInPharmacist, loggedInLab, loggedInLogistics]);
 
   // Keep loggedInDoctor synchronized with doctors registry updates
   useEffect(() => {
@@ -465,90 +577,266 @@ export default function App() {
   };
 
   // --- Auth Handlers ---
-  const handlePatientLoginSubmit = (e) => {
+  const handleUnifiedLoginSubmit = (e) => {
     e.preventDefault();
     const email = patientLoginForm.email.toLowerCase().trim();
     const password = patientLoginForm.password.trim();
 
+    const clearForm = () => {
+      setPatientLoginForm({
+        email: '',
+        name: '',
+        phone: '',
+        password: '',
+        specialty: 'General Medicine',
+        regNo: '',
+        pharmacyName: '',
+        pharmacyLicense: '',
+        facilityName: '',
+        labLicense: '',
+        vehicleType: 'Motorbike',
+        dispatchArea: ''
+      });
+      setLoginError('');
+    };
+
     if (isPatientRegistering) {
-      const existing = patients.find(p => p.email.toLowerCase() === email);
-      if (existing) {
+      const allEmails = [
+        ...patients.map(p => p.email.toLowerCase()),
+        ...doctors.map(d => d.email.toLowerCase()),
+        ...pharmacists.map(p => p.email.toLowerCase()),
+        ...labs.map(l => l.email.toLowerCase()),
+        ...logistics.map(l => l.email.toLowerCase())
+      ];
+      if (allEmails.includes(email)) {
         setLoginError("This email address is already registered.");
         return;
       }
-      const newPatient = {
-        email,
-        name: patientLoginForm.name || "Valued Patient",
-        phone: patientLoginForm.phone || "",
-        password: password
-      };
-      setPatients([...patients, newPatient]);
-      setAuthRole('patient');
-      setLoggedInPatient(newPatient);
-      sessionStorage.setItem("simmy_auth_role", "patient");
-      sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPatient));
-      setPatientLoginForm({ email: '', name: '', phone: '', password: '' });
+
+      if (registerRole === 'patient') {
+        const newPatient = {
+          email,
+          name: patientLoginForm.name || "Valued Patient",
+          phone: patientLoginForm.phone || "",
+          password: password
+        };
+        setPatients([...patients, newPatient]);
+        setAuthRole('patient');
+        setLoggedInPatient(newPatient);
+        sessionStorage.setItem("simmy_auth_role", "patient");
+        sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPatient));
+      } else if (registerRole === 'doctor') {
+        const newDoc = {
+          id: doctors.length + 1,
+          email,
+          name: patientLoginForm.name || "Dr. Staff Member",
+          phone: patientLoginForm.phone || "",
+          password: password,
+          specialty: patientLoginForm.specialty || "General Medicine",
+          regNo: patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
+          schedule: "Mon - Fri (9am - 4pm)",
+          experience: "1 Year",
+          bio: "Registered Medical Professional Committed to Excellence",
+          clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Main Block`,
+          license: "",
+          consultationRate: "₦5,000",
+          consultationDuration: "30 mins",
+          services: ["Online Consultation"]
+        };
+        setDoctors([...doctors, newDoc]);
+        setAuthRole('doctor');
+        setLoggedInDoctor(newDoc);
+        sessionStorage.setItem("simmy_auth_role", "doctor");
+        sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(newDoc));
+      } else if (registerRole === 'pharmacist') {
+        const newPharm = {
+          email,
+          name: patientLoginForm.name || "Pharm. Specialist",
+          phone: patientLoginForm.phone || "",
+          password: password,
+          pharmacyName: patientLoginForm.pharmacyName || "SimmyCare Pharmacy Partner",
+          pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`
+        };
+        setPharmacists([...pharmacists, newPharm]);
+        setAuthRole('pharmacist');
+        setLoggedInPharmacist(newPharm);
+        sessionStorage.setItem("simmy_auth_role", "pharmacist");
+        sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(newPharm));
+      } else if (registerRole === 'lab') {
+        const newLab = {
+          email,
+          name: patientLoginForm.name || "MLS Specialist",
+          phone: patientLoginForm.phone || "",
+          password: password,
+          facilityName: patientLoginForm.facilityName || "SimmyCare Diagnostic Lab",
+          labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`
+        };
+        setLabs([...labs, newLab]);
+        setAuthRole('lab');
+        setLoggedInLab(newLab);
+        sessionStorage.setItem("simmy_auth_role", "lab");
+        sessionStorage.setItem("simmy_auth_lab", JSON.stringify(newLab));
+      } else if (registerRole === 'logistics') {
+        const newLog = {
+          email,
+          name: patientLoginForm.name || "Logistics Dispatcher",
+          phone: patientLoginForm.phone || "",
+          password: password,
+          vehicleType: patientLoginForm.vehicleType || "Motorbike",
+          dispatchArea: patientLoginForm.dispatchArea || "Lagos Metro"
+        };
+        setLogistics([...logistics, newLog]);
+        setAuthRole('logistics');
+        setLoggedInLogistics(newLog);
+        sessionStorage.setItem("simmy_auth_role", "logistics");
+        sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(newLog));
+      }
+
+      clearForm();
       setIsPatientRegistering(false);
-      setLoginError('');
       navigateTo('dashboard');
     } else {
+      // 1. Check Admin
+      const isMainMatch = email === adminCredentials.username && password === adminCredentials.password;
+      const isFallbackMatch = email === 'admin' && password === 'admin';
+      const isAltMatch = email === 'admin@simmycare.com' && password === 'password123';
+      if (isMainMatch || isFallbackMatch || isAltMatch) {
+        setAuthRole('admin');
+        sessionStorage.setItem("simmy_auth_role", "admin");
+        clearForm();
+        navigateTo('dashboard');
+        return;
+      }
+
+      // 2. Check Pharmacist
+      const pharm = pharmacists.find(p => p.email.toLowerCase().trim() === email);
+      if (pharm && pharm.password === password) {
+        setAuthRole('pharmacist');
+        setLoggedInPharmacist(pharm);
+        sessionStorage.setItem("simmy_auth_role", "pharmacist");
+        sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(pharm));
+        clearForm();
+        navigateTo('dashboard');
+        return;
+      }
+
+      // 3. Check Lab Tech
+      const labUser = labs.find(l => l.email.toLowerCase().trim() === email);
+      if (labUser && labUser.password === password) {
+        setAuthRole('lab');
+        setLoggedInLab(labUser);
+        sessionStorage.setItem("simmy_auth_role", "lab");
+        sessionStorage.setItem("simmy_auth_lab", JSON.stringify(labUser));
+        clearForm();
+        navigateTo('dashboard');
+        return;
+      }
+
+      // 4. Check Logistics
+      const logUser = logistics.find(l => l.email.toLowerCase().trim() === email);
+      if (logUser && logUser.password === password) {
+        setAuthRole('logistics');
+        setLoggedInLogistics(logUser);
+        sessionStorage.setItem("simmy_auth_role", "logistics");
+        sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(logUser));
+        clearForm();
+        navigateTo('dashboard');
+        return;
+      }
+
+      // 5. Check Doctor
+      const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === email);
+      if (doc && doc.password && doc.password === password) {
+        setAuthRole('doctor');
+        setLoggedInDoctor(doc);
+        sessionStorage.setItem("simmy_auth_role", "doctor");
+        sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
+        clearForm();
+        navigateTo('dashboard');
+        return;
+      }
+
+      // 6. Check Patient
       const existing = patients.find(p => p.email.toLowerCase() === email);
       if (existing && existing.password === password) {
         setAuthRole('patient');
         setLoggedInPatient(existing);
         sessionStorage.setItem("simmy_auth_role", "patient");
         sessionStorage.setItem("simmy_auth_patient", JSON.stringify(existing));
-        setPatientLoginForm({ email: '', name: '', phone: '', password: '' });
-        setLoginError('');
+        clearForm();
         navigateTo('dashboard');
       } else {
-        setLoginError("Invalid email address or password. Tip: Use zainab@example.com / password123");
+        setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
       }
     }
   };
 
-  const handleDoctorLoginSubmit = (e) => {
+  const handleCreatePrescOrder = (e) => {
     e.preventDefault();
-    const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === doctorLoginForm.email.toLowerCase().trim());
-
-    if (doc && doc.password && doc.password === doctorLoginForm.password.trim()) {
-      setAuthRole('doctor');
-      setLoggedInDoctor(doc);
-      sessionStorage.setItem("simmy_auth_role", "doctor");
-      sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
-      setDoctorLoginForm({ email: '', password: '' });
-      setLoginError('');
-      navigateTo('dashboard');
-    } else {
-      setLoginError('Invalid doctor email address or password.');
-    }
+    if (!pharmacistSelectedPrescription) return;
+    const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+    const newOrder = {
+      id: orderId,
+      name: pharmacistSelectedPrescription.patientName,
+      email: pharmacistSelectedPrescription.patientEmail || `${pharmacistSelectedPrescription.patientName.toLowerCase().replace(/\s+/g, '')}@example.com`,
+      phone: pharmacistSelectedPrescription.phone || '08000000000',
+      date: new Date().toLocaleDateString('en-CA'),
+      message: `Medication Dispensed: ${pharmacistSelectedPrescription.prescription}. Shipping Address: [${prescOrderForm.address}]. Rx Notes: [${prescOrderForm.notes}]. Cost: ₦${prescOrderForm.cost}`,
+      status: 'Awaiting Dispatch',
+      read: false
+    };
+    setInquiries([newOrder, ...inquiries]);
+    setPharmacistSelectedPrescription(null);
   };
 
-  const handleAdminLoginSubmit = (e) => {
+  const handleSaveLabResults = (e) => {
     e.preventDefault();
-    const enteredUser = adminLoginForm.username.trim();
-    const enteredPass = adminLoginForm.password.trim();
-    const isMainMatch = enteredUser === adminCredentials.username && enteredPass === adminCredentials.password;
-    const isFallbackMatch = enteredUser === 'admin' && enteredPass === 'admin';
+    if (!labSelectedRequest) return;
+    const updated = appointments.map(apt => {
+      if (apt.id === labSelectedRequest.id) {
+        return {
+          ...apt,
+          status: 'Completed',
+          prescription: labResultsText,
+          notes: `Diagnostic Report: ${labResultsText}`
+        };
+      }
+      return apt;
+    });
+    setAppointments(updated);
+    setLabSelectedRequest(null);
+  };
 
-    if (isMainMatch || isFallbackMatch) {
-      setAuthRole('admin');
-      sessionStorage.setItem("simmy_auth_role", "admin");
-      setAdminLoginForm({ username: '', password: '' });
-      setLoginError('');
-      navigateTo('dashboard');
-    } else {
-      setLoginError('Invalid administrator credentials.');
-    }
+  const handleSaveDeliveryIssue = (e) => {
+    e.preventDefault();
+    if (!logisticsSelectedShipment) return;
+    const updated = inquiries.map(inq => {
+      if (inq.id === logisticsSelectedShipment.id) {
+        return {
+          ...inq,
+          status: 'Delivery Issue Logged',
+          message: `${inq.message} | Logistics Alert: ${deliveryIssueText}`
+        };
+      }
+      return inq;
+    });
+    setInquiries(updated);
+    setLogisticsSelectedShipment(null);
   };
 
   const handleLogout = () => {
     setAuthRole(null);
     setLoggedInPatient(null);
     setLoggedInDoctor(null);
+    setLoggedInPharmacist(null);
+    setLoggedInLab(null);
+    setLoggedInLogistics(null);
     sessionStorage.removeItem("simmy_auth_role");
     sessionStorage.removeItem("simmy_auth_patient");
     sessionStorage.removeItem("simmy_auth_doctor");
+    sessionStorage.removeItem("simmy_auth_pharmacist");
+    sessionStorage.removeItem("simmy_auth_lab");
+    sessionStorage.removeItem("simmy_auth_logistics");
     navigateTo('home');
   };
 
@@ -1119,12 +1407,54 @@ export default function App() {
 
   // Filter Appointments for the currently logged in patient/doctor
   const myPatientAppointments = appointments.filter(apt => 
-    loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase()
+    loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase() && !apt.id.startsWith('LAB-')
   );
 
-  const myDoctorAppointments = appointments.filter(apt => 
-    loggedInDoctor && apt.doctor.toLowerCase() === loggedInDoctor.name.toLowerCase()
+  const myPatientLabRequests = appointments.filter(apt => 
+    loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase() && apt.id.startsWith('LAB-')
   );
+
+  const myPatientPharmacyOrders = inquiries.filter(inq => 
+    loggedInPatient && inq.email && inq.email.toLowerCase() === loggedInPatient.email.toLowerCase() && inq.id.startsWith('ORD-')
+  );
+
+  const parseOrderMessage = (msg) => {
+    let items = "Generic Medicines";
+    let address = "Contact client";
+    let notes = "None";
+    let total = "N/A";
+    
+    if (msg.includes('Pharmacy Purchase Order: [')) {
+      items = msg.split('Pharmacy Purchase Order: [')[1].split(']. Shipping Address:')[0] || items;
+    }
+    if (msg.includes('Shipping Address: [')) {
+      address = msg.split('Shipping Address: [')[1].split(']. Rx Notes')[0] || address;
+    }
+    if (msg.includes('Rx Notes: [')) {
+      notes = msg.split('Rx Notes: [')[1].split(']. Total Cost')[0] || notes;
+    }
+    if (msg.includes('Total Cost: ')) {
+      total = msg.split('Total Cost: ')[1] || total;
+    }
+    return { items, address, notes, total };
+  };
+
+  const parseLabRequest = (symptoms) => {
+    let tests = "Standard Diagnostic Panel";
+    let address = "Contact patient";
+    let instructions = "None";
+    
+    if (symptoms.includes('Mobile Lab Booking: ')) {
+      tests = symptoms.split('Mobile Lab Booking: ')[1].split('. Home collection')[0] || tests;
+    }
+    if (symptoms.includes('Home collection address: ')) {
+      address = symptoms.split('Home collection address: ')[1].split('. Patient Instructions')[0] || address;
+    }
+    if (symptoms.includes('Patient Instructions: ')) {
+      instructions = symptoms.split('Patient Instructions: ')[1] || instructions;
+    }
+    return { tests, address, instructions };
+  };
 
   return (
     <div className="app-layout">
@@ -1153,8 +1483,11 @@ export default function App() {
             {authRole ? (
               <div className="auth-profile-badge">
                 <span className="auth-badge-name">
-                  {authRole === 'patient' && `${loggedInPatient.name} (Patient)`}
-                  {authRole === 'doctor' && `${loggedInDoctor.name} (Doctor)`}
+                  {authRole === 'patient' && `${loggedInPatient?.name || 'User'} (Patient)`}
+                  {authRole === 'doctor' && `${loggedInDoctor?.name || 'Dr.'} (Doctor)`}
+                  {authRole === 'pharmacist' && `${loggedInPharmacist?.name || 'Pharm.'} (Pharmacist)`}
+                  {authRole === 'lab' && `${loggedInLab?.name || 'MLS.'} (Lab Specialist)`}
+                  {authRole === 'logistics' && `${loggedInLogistics?.name || 'Courier'} (Logistics Lead)`}
                   {authRole === 'admin' && 'Admin Console'}
                 </span>
                 <button className="btn btn-outline btn-sm" onClick={() => navigateTo('dashboard')}>Dashboard</button>
@@ -2706,243 +3039,357 @@ export default function App() {
               {/* Right Column: Interactive Login form */}
               <div className="login-right-pane">
                 <div className="login-right-inner">
-                  {/* Role Tabs */}
-                  <div className="login-tabs">
-                    <button className={`login-tab-btn ${loginTab === 'patient' ? 'active' : ''}`} onClick={() => { setLoginTab('patient'); setLoginError(''); }}>Patient</button>
-                    <button className={`login-tab-btn ${loginTab === 'doctor' ? 'active' : ''}`} onClick={() => { setLoginTab('doctor'); setLoginError(''); }}>Doctor</button>
-                    <button className={`login-tab-btn ${loginTab === 'admin' ? 'active' : ''}`} onClick={() => { setLoginTab('admin'); setLoginError(''); }}>Admin</button>
-                  </div>
-
                   <div className="login-header">
-                    <h2>Welcome back</h2>
-                    <p>
-                      {loginTab === 'patient' && (isPatientRegistering ? "Create your patient account" : "Sign in to continue to SimmyCare")}
-                      {loginTab === 'doctor' && "Sign in to continue to SimmyCare"}
-                      {loginTab === 'admin' && "Sign in to continue to SimmyCare"}
+                    <h2>{isPatientRegistering ? "Create Account" : "Welcome back"}</h2>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                      {isPatientRegistering ? `Create your ${registerRole} account` : "Sign in to access your secure dashboard"}
                     </p>
                   </div>
 
                   {loginError && <div className="error-message">{loginError}</div>}
 
-                  {/* Patient Login Form */}
-                  {loginTab === 'patient' && (
-                    <form onSubmit={handlePatientLoginSubmit}>
-                      {isPatientRegistering && (
-                        <>
-                          <div className="form-group">
-                            <label>Full Name</label>
-                            <div className="input-with-icon">
-                              <i className="fa-regular fa-user"></i>
-                              <input 
-                                type="text" 
-                                required 
-                                placeholder="e.g. Zainab Abdulfatah"
-                                value={patientLoginForm.name}
-                                onChange={(e) => setPatientLoginForm({ ...patientLoginForm, name: e.target.value })}
-                              />
-                            </div>
+                  {/* Unified Login Form */}
+                  <form onSubmit={handleUnifiedLoginSubmit}>
+                    {isPatientRegistering ? (
+                      <>
+                        <div className="form-group" style={{ marginBottom: '1rem' }}>
+                          <label>Registration Role</label>
+                          <div className="input-with-icon">
+                            <i className="fa-solid fa-user-tag" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
+                            <select 
+                              required
+                              value={registerRole}
+                              onChange={(e) => setRegisterRole(e.target.value)}
+                              style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
+                            >
+                              <option value="patient">Patient (Health Consumer)</option>
+                              <option value="doctor">Medical Practitioner / Specialist</option>
+                              <option value="pharmacist">Pharmacy Facility Partner</option>
+                              <option value="lab">Diagnostic Lab Technician</option>
+                              <option value="logistics">Courier & Drone Logistics Fleet</option>
+                            </select>
                           </div>
-                          <div className="form-group">
+                        </div>
+                        <div className="form-group" style={{ marginBottom: '1rem' }}>
+                          <label>Full Name</label>
+                          <div className="input-with-icon">
+                            <i className="fa-regular fa-user"></i>
+                            <input 
+                              type="text" 
+                              required 
+                              placeholder=""
+                              value={patientLoginForm.name}
+                              onChange={(e) => setPatientLoginForm({ ...patientLoginForm, name: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
                             <label>Phone Number</label>
                             <div className="input-with-icon">
                               <i className="fa-solid fa-phone"></i>
                               <input 
                                 type="tel" 
                                 required 
-                                placeholder="e.g. 08012345678"
+                                placeholder=""
                                 value={patientLoginForm.phone}
                                 onChange={(e) => setPatientLoginForm({ ...patientLoginForm, phone: e.target.value })}
                               />
                             </div>
                           </div>
-                        </>
-                      )}
 
-                      <div className="form-group">
-                        <label>Email address</label>
-                        <div className="input-with-icon">
-                          <i className="fa-regular fa-envelope"></i>
-                          <input 
-                            type="email" 
-                            required 
-                            placeholder="you@example.com"
-                            value={patientLoginForm.email}
-                            onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Password</label>
-                        <div className="input-with-icon">
-                          <i className="fa-solid fa-lock"></i>
-                          <input 
-                            type={showPasswords.patient ? 'text' : 'password'} 
-                            required 
-                            placeholder="••••••••"
-                            value={patientLoginForm.password}
-                            onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
-                          />
-                          <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
-                            <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                          </button>
-                        </div>
-                      </div>
-
-                      {isPatientRegistering && (
-                        <div className="form-group consent-checkbox-group" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-                          <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                            <input 
-                              type="checkbox" 
-                              required 
-                              checked={registerConsent}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setShowTermsModal('register');
-                                } else {
-                                  setRegisterConsent(false);
-                                }
-                              }}
-                              style={{ width: 'auto', marginTop: '0.2rem' }}
-                            />
-                            <span>I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('register'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> compliance guidelines.</span>
-                          </label>
-                        </div>
-                      )}
-
-                      {!isPatientRegistering && (
-                        <div className="form-actions-row">
-                          <label className="remember-me">
-                            <input type="checkbox" /> Remember me
-                          </label>
-                          <a href="#forgot" className="forgot-password" onClick={(e) => e.preventDefault()}>Forgot password?</a>
-                        </div>
-                      )}
-
-                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', marginTop: '1rem' }}>
-                        {isPatientRegistering 
-                          ? "*All fields are required to establish your medical file."
-                          : "Demo Account: zainab@example.com / password123"}
-                      </p>
-                      
-                      <button type="submit" className="btn btn-primary btn-block">
-                        {isPatientRegistering ? "Sign Up" : "Sign In"}
-                      </button>
-                      
-                      <div className="signup-toggle">
-                        {isPatientRegistering ? (
-                          <span>
-                            Already have an account?{' '}
-                            <button 
-                              type="button" 
-                              className="toggle-link-btn"
-                              onClick={() => { setIsPatientRegistering(false); setLoginError(''); }}
-                            >
-                              Sign In
-                            </button>
-                          </span>
-                        ) : (
-                          <span>
-                            Don't have an account?{' '}
-                            <button 
-                              type="button" 
-                              className="toggle-link-btn"
-                              onClick={() => { setIsPatientRegistering(true); setLoginError(''); }}
-                            >
-                              Create one
-                            </button>
-                          </span>
+                        {/* Dynamic Role-specific details */}
+                        {registerRole === 'doctor' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Specialty</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-stethoscope" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
+                                <select 
+                                  required 
+                                  value={patientLoginForm.specialty}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, specialty: e.target.value })}
+                                  style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
+                                >
+                                  <option value="General Medicine">General Medicine</option>
+                                  <option value="Gynaecology">Gynaecology</option>
+                                  <option value="Pediatrics">Pediatrics</option>
+                                  <option value="Public Health">Public Health</option>
+                                  <option value="Cardiology">Cardiology</option>
+                                  <option value="Dermatology">Dermatology</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>MDCN License Number</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-id-card"></i>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  placeholder=""
+                                  value={patientLoginForm.regNo}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, regNo: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         )}
-                      </div>
-                    </form>
-                  )}
 
-                  {/* Doctor Login Form */}
-                  {loginTab === 'doctor' && (
-                    <form onSubmit={handleDoctorLoginSubmit}>
-                      <div className="form-group">
-                        <label>Doctor Email Address</label>
-                        <div className="input-with-icon">
-                          <i className="fa-regular fa-envelope"></i>
-                          <input 
-                            type="email" 
-                            required 
-                            placeholder="doctor@simmycare.com"
-                            value={doctorLoginForm.email}
-                            onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, email: e.target.value })}
-                          />
+                        {registerRole === 'pharmacist' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Pharmacy Name</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-prescription-bottle-medical"></i>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  placeholder=""
+                                  value={patientLoginForm.pharmacyName}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, pharmacyName: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>PCN License Number</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-id-card"></i>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  placeholder=""
+                                  value={patientLoginForm.pharmacyLicense}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, pharmacyLicense: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {registerRole === 'lab' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Facility Name</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-house-medical"></i>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  placeholder=""
+                                  value={patientLoginForm.facilityName}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, facilityName: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>MLSCN License Number</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-id-card"></i>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  placeholder=""
+                                  value={patientLoginForm.labLicense}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, labLicense: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {registerRole === 'logistics' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Vehicle Type</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-motorcycle" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
+                                <select 
+                                  required 
+                                  value={patientLoginForm.vehicleType}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, vehicleType: e.target.value })}
+                                  style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
+                                >
+                                  <option value="Motorbike">Motorbike</option>
+                                  <option value="Bicycle">Bicycle</option>
+                                  <option value="Delivery Van">Delivery Van</option>
+                                  <option value="Electric Scooter">Electric Scooter</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Coverage Area</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-map-location-dot"></i>
+                                <input 
+                                  type="text" 
+                                  required 
+                                  placeholder=""
+                                  value={patientLoginForm.dispatchArea}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, dispatchArea: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }}>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Email address</label>
+                            <div className="input-with-icon">
+                              <i className="fa-regular fa-envelope"></i>
+                              <input 
+                                type="email" 
+                                required 
+                                placeholder=""
+                                value={patientLoginForm.email}
+                                onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Password</label>
+                            <div className="input-with-icon">
+                              <i className="fa-solid fa-lock"></i>
+                              <input 
+                                type={showPasswords.patient ? 'text' : 'password'} 
+                                required 
+                                placeholder=""
+                                value={patientLoginForm.password}
+                                onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
+                              />
+                              <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
+                                <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Password</label>
-                        <div className="input-with-icon">
-                          <i className="fa-solid fa-lock"></i>
-                          <input 
-                            type={showPasswords.doctor ? 'text' : 'password'} 
-                            required 
-                            placeholder="••••••••"
-                            value={doctorLoginForm.password}
-                            onChange={(e) => setDoctorLoginForm({ ...doctorLoginForm, password: e.target.value })}
-                          />
-                          <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, doctor: !p.doctor }))} tabIndex={-1}>
-                            <i className={`fa-solid ${showPasswords.doctor ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                          </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="form-group">
+                          <label>Email address</label>
+                          <div className="input-with-icon">
+                            <i className="fa-regular fa-envelope"></i>
+                            <input 
+                              type="email" 
+                              required 
+                              placeholder=""
+                              value={patientLoginForm.email}
+                              onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
+                            />
+                          </div>
                         </div>
+                        
+                        <div className="form-group">
+                          <label>Password</label>
+                          <div className="input-with-icon">
+                            <i className="fa-solid fa-lock"></i>
+                            <input 
+                              type={showPasswords.patient ? 'text' : 'password'} 
+                              required 
+                              placeholder=""
+                              value={patientLoginForm.password}
+                              onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
+                            />
+                            <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
+                              <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {isPatientRegistering && (
+                      <div className="form-group consent-checkbox-group" style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+                        <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                          <input 
+                            type="checkbox" 
+                            required 
+                            checked={registerConsent}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setShowTermsModal('register');
+                              } else {
+                                setRegisterConsent(false);
+                              }
+                            }}
+                            style={{ width: 'auto', marginTop: '0.2rem' }}
+                          />
+                          <span>I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('register'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> compliance guidelines.</span>
+                        </label>
                       </div>
-                      
+                    )}
+
+                    {!isPatientRegistering && (
                       <div className="form-actions-row">
                         <label className="remember-me">
                           <input type="checkbox" /> Remember me
                         </label>
                         <a href="#forgot" className="forgot-password" onClick={(e) => e.preventDefault()}>Forgot password?</a>
                       </div>
+                    )}
 
-                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', marginTop: '1rem' }}>
-                        Demo Account: fatima@simmycare.com / password123
-                      </p>
-                      
-                      <button type="submit" className="btn btn-primary btn-block">Sign In</button>
-                    </form>
-                  )}
-
-                  {/* Admin Login Form */}
-                  {loginTab === 'admin' && (
-                    <form onSubmit={handleAdminLoginSubmit}>
-                      <div className="form-group">
-                        <label>Username</label>
-                        <div className="input-with-icon">
-                          <i className="fa-regular fa-user"></i>
-                          <input 
-                            type="text" 
-                            required 
-                            placeholder="admin"
-                            value={adminLoginForm.username}
-                            onChange={(e) => setAdminLoginForm({ ...adminLoginForm, username: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Password</label>
-                        <div className="input-with-icon">
-                          <i className="fa-solid fa-lock"></i>
-                          <input 
-                            type={showPasswords.admin ? 'text' : 'password'} 
-                            required 
-                            placeholder="•••••"
-                            value={adminLoginForm.password}
-                            onChange={(e) => setAdminLoginForm({ ...adminLoginForm, password: e.target.value })}
-                          />
-                          <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, admin: !p.admin }))} tabIndex={-1}>
-                            <i className={`fa-solid ${showPasswords.admin ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    <div className="demo-credentials-box" style={{ 
+                      background: 'rgba(24, 43, 73, 0.04)', 
+                      padding: '0.75rem', 
+                      borderRadius: 'var(--radius-sm)', 
+                      border: '1px solid rgba(24, 43, 73, 0.08)',
+                      fontSize: '0.78rem',
+                      color: 'var(--color-text-muted)',
+                      marginTop: '1.25rem',
+                      marginBottom: '1.25rem',
+                      lineHeight: '1.4'
+                    }}>
+                      {isPatientRegistering ? (
+                        <span>*All fields are required to establish your medical file.</span>
+                      ) : (
+                        <>
+                          <div style={{ fontWeight: '600', color: 'var(--color-indigo)', marginBottom: '0.25rem' }}>
+                            <i className="fa-solid fa-circle-info" style={{ marginRight: '4px' }}></i> Demo Logins (Password: <code>password123</code>):
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 0.5rem' }}>
+                            <div>• Patient: <code>zainab@example.com</code></div>
+                            <div>• Doctor: <code>fatima@simmycare.com</code></div>
+                            <div>• Pharmacist: <code>pharmacist@simmycare.com</code></div>
+                            <div>• Lab Tech: <code>lab@simmycare.com</code></div>
+                            <div>• Logistics: <code>logistics@simmycare.com</code></div>
+                            <div>• Admin: <code>admin@simmycare.com</code></div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    <button type="submit" className="btn btn-primary btn-block">
+                      {isPatientRegistering ? "Sign Up" : "Sign In"}
+                    </button>
+                    
+                    <div className="signup-toggle">
+                      {isPatientRegistering ? (
+                        <span>
+                          Already have an account?{' '}
+                          <button 
+                            type="button" 
+                            className="toggle-link-btn"
+                            onClick={() => { setIsPatientRegistering(false); setLoginError(''); }}
+                          >
+                            Sign In
                           </button>
-                        </div>
-                      </div>
-                      
-                      <button type="submit" className="btn btn-primary btn-block">Sign In</button>
-                    </form>
-                  )}
+                        </span>
+                      ) : (
+                        <span>
+                          Don't have an account?{' '}
+                          <button 
+                            type="button" 
+                            className="toggle-link-btn"
+                            onClick={() => { setIsPatientRegistering(true); setLoginError(''); }}
+                          >
+                            Create one
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </form>
 
                   <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                     <a href="#home" className="back-home-link" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>← Back to Homepage</a>
@@ -2973,20 +3420,20 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
+                 <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
                   <div className="stat-item">
                     <h3>{myPatientAppointments.length}</h3>
-                    <p>TOTAL CONSULTATIONS</p>
+                    <p>CLINICAL CONSULTATIONS</p>
                   </div>
                   <div className="stat-divider"></div>
                   <div className="stat-item">
-                    <h3>{myPatientAppointments.filter(a => a.status === 'Approved').length}</h3>
-                    <p>APPROVED / COMPLETED</p>
+                    <h3>{myPatientPharmacyOrders.length}</h3>
+                    <p>PHARMACY DELIVERIES</p>
                   </div>
                   <div className="stat-divider"></div>
                   <div className="stat-item">
-                    <h3>{myPatientAppointments.filter(a => a.status === 'Pending').length}</h3>
-                    <p>PENDING CHECKS</p>
+                    <h3>{myPatientLabRequests.length}</h3>
+                    <p>LAB SAMPLE TRIPS</p>
                   </div>
                 </div>
 
@@ -2997,7 +3444,27 @@ export default function App() {
                       className={`sidebar-nav-btn ${patientNavView === 'bookings' ? 'active' : ''}`}
                       onClick={() => setPatientNavView('bookings')}
                     >
-                      <i className="fa-solid fa-calendar-check"></i> Bookings & Request
+                      <i className="fa-solid fa-calendar-check"></i> Consultation Bookings
+                    </button>
+                    <button 
+                      className={`sidebar-nav-btn ${patientNavView === 'orders' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPatientNavView('orders');
+                        setSelectedPharmacyOrder(null);
+                        setActiveTrackingId(null);
+                      }}
+                    >
+                      <i className="fa-solid fa-prescription-bottle-medical"></i> Pharmacy Deliveries
+                    </button>
+                    <button 
+                      className={`sidebar-nav-btn ${patientNavView === 'labs' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPatientNavView('labs');
+                        setSelectedLabRequest(null);
+                        setActiveTrackingId(null);
+                      }}
+                    >
+                      <i className="fa-solid fa-vial"></i> Lab Collection Trips
                     </button>
                     <button 
                       className={`sidebar-nav-btn ${patientNavView === 'profile' ? 'active' : ''}`}
@@ -3139,6 +3606,624 @@ export default function App() {
 
                             <button type="submit" className="btn btn-primary btn-block">Confirm Request Slot</button>
                           </form>
+                        </div>
+                      </div>
+                    )}
+
+                    <style>{`
+                      @keyframes pulse {
+                        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+                        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+                        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                      }
+                      @keyframes ping {
+                        0% { transform: scale(1); opacity: 1; }
+                        70% { transform: scale(1.6); opacity: 0; }
+                        100% { transform: scale(1.6); opacity: 0; }
+                      }
+                      .stage-dot.active {
+                        background-color: var(--color-accent) !important;
+                        border-color: var(--color-accent) !important;
+                        color: #fff !important;
+                      }
+                      .stage-text.active {
+                        color: var(--color-text) !important;
+                        font-weight: 600;
+                      }
+                    `}</style>
+
+                    {patientNavView === 'orders' && (
+                      <div className="dashboard-layout" style={{ gridTemplateColumns: '1.2fr 1.8fr', padding: 0, gap: '1.5rem', background: 'none', border: 'none', boxShadow: 'none' }}>
+                        {/* Left Column: My Orders List */}
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0 }}>
+                          <h3>My Pharmacy Deliveries</h3>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                            Track your prescription orders and delivery statuses.
+                          </p>
+                          {myPatientPharmacyOrders.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                              {myPatientPharmacyOrders.map(order => {
+                                const { items, total } = parseOrderMessage(order.message);
+                                const isSelected = selectedPharmacyOrder && selectedPharmacyOrder.id === order.id;
+                                return (
+                                  <div 
+                                    key={order.id} 
+                                    onClick={() => {
+                                      setSelectedPharmacyOrder(order);
+                                      if (order.status === 'Out for Delivery') {
+                                        setActiveTrackingId(order.id);
+                                      } else {
+                                        setActiveTrackingId(null);
+                                      }
+                                    }}
+                                    style={{
+                                      padding: '1rem',
+                                      borderRadius: '8px',
+                                      border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                                      background: isSelected ? 'rgba(51, 102, 255, 0.04)' : 'rgba(255, 255, 255, 0.4)',
+                                      cursor: 'pointer',
+                                      transition: 'all var(--transition-fast)'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '0.9rem' }}>{order.id}</span>
+                                      <span style={{ 
+                                        display: 'inline-block', 
+                                        padding: '0.2rem 0.5rem', 
+                                        borderRadius: '4px', 
+                                        fontSize: '0.7rem', 
+                                        fontWeight: 'bold', 
+                                        backgroundColor: order.status === 'Delivered' ? 'rgba(34, 197, 94, 0.15)' : order.status === 'Out for Delivery' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', 
+                                        color: order.status === 'Delivered' ? '#166534' : order.status === 'Out for Delivery' ? '#1d4ed8' : '#854d0e' 
+                                      }}>
+                                        {order.status || 'Pending Review'}
+                                      </span>
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.4rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {items}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.6rem', fontSize: '0.8rem' }}>
+                                      <span style={{ color: 'var(--color-text-muted)' }}>{order.date}</span>
+                                      <strong style={{ color: 'var(--color-accent-hover)' }}>{total}</strong>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="empty-state" style={{ padding: '2rem 1rem' }}>
+                              <p>No pharmacy purchase orders found.</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right Column: Order Details & Live Tracking Map */}
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0 }}>
+                          {selectedPharmacyOrder ? (() => {
+                            const { items, address, notes, total } = parseOrderMessage(selectedPharmacyOrder.message);
+                            const status = selectedPharmacyOrder.status || 'Pending Review';
+                            
+                            // Determine stage indices
+                            const stages = ['Pending Review', 'Processing & Packaging', 'Awaiting Dispatch', 'Out for Delivery', 'Delivered'];
+                            const currentStageIndex = stages.indexOf(status) !== -1 ? stages.indexOf(status) : 0;
+                            
+                            return (
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                                  <h4 style={{ margin: 0 }}>Order Tracking: {selectedPharmacyOrder.id}</h4>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Ordered on {selectedPharmacyOrder.date}</span>
+                                </div>
+
+                                {/* Capsule-style Delivery Progress Timeline */}
+                                <div style={{ marginBottom: '2rem' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+                                    {/* Connecting Line */}
+                                    <div style={{ position: 'absolute', top: '15px', left: '5%', right: '5%', height: '3px', backgroundColor: 'var(--color-border)', zIndex: 1 }}></div>
+                                    <div style={{ position: 'absolute', top: '15px', left: '5%', width: `${(currentStageIndex / 4) * 90}%`, height: '3px', backgroundColor: 'var(--color-accent)', zIndex: 2, transition: 'all 0.5s ease' }}></div>
+                                    
+                                    {/* Timeline Nodes */}
+                                    {[
+                                      { label: 'Ordered', icon: 'fa-file-medical' },
+                                      { label: 'Preparing', icon: 'fa-box-open' },
+                                      { label: 'Ready', icon: 'fa-boxes-packing' },
+                                      { label: 'In Transit', icon: 'fa-truck-ramp-box' },
+                                      { label: 'Delivered', icon: 'fa-house-circle-check' }
+                                    ].map((stage, idx) => {
+                                      const isActive = idx <= currentStageIndex;
+                                      return (
+                                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 3, width: '18%' }}>
+                                          <div 
+                                            style={{ 
+                                              width: '32px', 
+                                              height: '32px', 
+                                              borderRadius: '50%', 
+                                              backgroundColor: isActive ? 'var(--color-accent)' : '#f1f5f9', 
+                                              border: `2px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                                              color: isActive ? '#fff' : 'var(--color-text-muted)',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              fontSize: '0.85rem',
+                                              transition: 'all 0.3s ease',
+                                              justifyContent: 'center'
+                                            }}
+                                            className={isActive ? 'stage-dot active' : 'stage-dot'}
+                                          >
+                                            <i className={`fa-solid ${stage.icon}`}></i>
+                                          </div>
+                                          <span 
+                                            style={{ 
+                                              fontSize: '0.72rem', 
+                                              color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)', 
+                                              fontWeight: isActive ? 'bold' : 'normal',
+                                              textAlign: 'center',
+                                              marginTop: '0.4rem',
+                                              whiteSpace: 'nowrap'
+                                            }}
+                                            className={isActive ? 'stage-text active' : 'stage-text'}
+                                          >
+                                            {stage.label}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Prescribed Medicines</strong>
+                                    <span style={{ fontSize: '0.9rem', color: 'var(--color-text)', display: 'block', lineHeight: '1.4' }}>{items}</span>
+                                  </div>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Shipping Address</strong>
+                                    <span style={{ fontSize: '0.9rem', color: 'var(--color-text)', display: 'block' }}>{address}</span>
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Doctor Rx Notes</strong>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>{notes || 'None'}</span>
+                                  </div>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Total Cost Paid</strong>
+                                    <strong style={{ fontSize: '1.1rem', color: 'var(--color-success)', display: 'block' }}>{total}</strong>
+                                  </div>
+                                </div>
+
+                                {/* Logistics Live Tracking Map for In Transit */}
+                                {status === 'Out for Delivery' && (
+                                  <div>
+                                    <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
+                                      Live Courier Tracking (Capsule Integration)
+                                    </strong>
+                                    
+                                    <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                      <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#10b981', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+                                        LIVE GPS ROUTE
+                                      </div>
+                                      <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
+                                        ETA: {Math.max(1, Math.round(15 * (1 - simulatedProgress / 100)))} MINS
+                                      </div>
+                                      
+                                      <svg viewBox="0 0 400 200" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
+                                        {/* Roads Map Background Grid */}
+                                        <path d="M 0,100 L 400,100 M 100,0 L 100,200 M 300,0 L 300,200 M 0,50 L 400,50 M 0,150 L 400,150" stroke="rgba(255,255,255,0.04)" strokeWidth="6" fill="none" />
+                                        <path d="M 200,0 L 200,200" stroke="rgba(255,255,255,0.04)" strokeWidth="9" fill="none" />
+                                        
+                                        {/* Route path */}
+                                        <path id="delivery-route" d="M 100,100 Q 200,40 200,160 T 300,100" stroke="#0ea5e9" strokeWidth="3" strokeDasharray="6,4" fill="none" />
+                                        
+                                        {/* Start Hub Pin */}
+                                        <circle cx="100" cy="100" r="7" fill="#10b981" />
+                                        <circle cx="100" cy="100" r="13" fill="#10b981" fillOpacity="0.15" />
+                                        <text x="85" y="85" fill="#10b981" fontSize="8" fontWeight="bold">SimmyCare Hub</text>
+
+                                        {/* Destination Pin */}
+                                        <circle cx="300" cy="100" r="7" fill="#ef4444" />
+                                        <circle cx="300" cy="100" r="13" fill="#ef4444" fillOpacity="0.15" />
+                                        <text x="270" y="85" fill="#ef4444" fontSize="8" fontWeight="bold">Your Home</text>
+
+                                        {/* Moving Courier */}
+                                        {(() => {
+                                          const t = simulatedProgress / 100;
+                                          let courierX = 100;
+                                          let courierY = 100;
+                                          if (t < 0.5) {
+                                            const tSeg = t / 0.5;
+                                            courierX = 100 + (200 - 100) * tSeg;
+                                            courierY = 100 + (160 - 100) * tSeg;
+                                          } else {
+                                            const tSeg = (t - 0.5) / 0.5;
+                                            courierX = 200 + (300 - 200) * tSeg;
+                                            courierY = 160 + (100 - 160) * tSeg;
+                                          }
+                                          return (
+                                            <g transform={`translate(${courierX}, ${courierY})`}>
+                                              <circle r="9" fill="var(--color-accent)" />
+                                              <circle r="16" fill="var(--color-accent)" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
+                                              <text textAnchor="middle" y="3" fill="#fff" fontSize="9">🏍️</text>
+                                            </g>
+                                          );
+                                        })()}
+                                      </svg>
+                                      
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
+                                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                          {(selectedPharmacyOrder.assignedRider || 'Rider').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                          <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
+                                            {selectedPharmacyOrder.assignedRider || 'Default Courier'}
+                                          </div>
+                                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                            SimmyCare Dispatcher • Motorbike
+                                          </div>
+                                        </div>
+                                        <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                          <i className="fa-solid fa-phone" style={{ fontSize: '0.8rem' }}></i>
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {status === 'Delivered' && (
+                                  <div style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <i className="fa-solid fa-circle-check" style={{ color: '#22c55e', fontSize: '1.5rem' }}></i>
+                                    <div>
+                                      <strong style={{ color: '#166534', display: 'block', fontSize: '0.9rem' }}>Delivery Completed Successfully</strong>
+                                      <span style={{ fontSize: '0.82rem', color: '#166534' }}>Your items were verified and delivered by {selectedPharmacyOrder.assignedRider || 'Default Courier'}.</span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(status === 'Pending Review' || status === 'Processing & Packaging' || status === 'Awaiting Dispatch') && (
+                                  <div style={{ padding: '1rem', background: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <i className="fa-solid fa-clock" style={{ color: '#eab308', fontSize: '1.5rem' }}></i>
+                                    <div>
+                                      <strong style={{ color: '#854d0e', display: 'block', fontSize: '0.9rem' }}>Order Preparation in Progress</strong>
+                                      <span style={{ fontSize: '0.82rem', color: '#854d0e' }}>
+                                        {status === 'Pending Review' && "Awaiting clinical review from our pharmacologists."}
+                                        {status === 'Processing & Packaging' && "We are packaging your drugs inside the sterile clean-room."}
+                                        {status === 'Awaiting Dispatch' && "Package sealed. Awaiting courier rider dispatch."}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })() : (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', color: 'var(--color-text-muted)' }}>
+                              <i className="fa-solid fa-truck-drop-off" style={{ fontSize: '3rem', marginBottom: '1rem', opacity: '0.3' }}></i>
+                              <p style={{ textAlign: 'center', fontSize: '0.95rem' }}>Select an order from the directory list to track its preparation and courier route in real-time.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {patientNavView === 'labs' && (
+                      <div className="dashboard-layout" style={{ gridTemplateColumns: '1.2fr 1.8fr', padding: 0, gap: '1.5rem', background: 'none', border: 'none', boxShadow: 'none' }}>
+                        {/* Left Column: My Lab Collections */}
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0 }}>
+                          <h3>Home Lab Collections</h3>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                            View and download results from mobile diagnostics sample collections.
+                          </p>
+                          {myPatientLabRequests.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                              {myPatientLabRequests.map(req => {
+                                const { tests } = parseLabRequest(req.symptoms);
+                                const isSelected = selectedLabRequest && selectedLabRequest.id === req.id;
+                                return (
+                                  <div 
+                                    key={req.id} 
+                                    onClick={() => {
+                                      setSelectedLabRequest(req);
+                                      if (req.status === 'Sample Collected') {
+                                        setActiveTrackingId(req.id);
+                                      } else {
+                                        setActiveTrackingId(null);
+                                      }
+                                    }}
+                                    style={{
+                                      padding: '1rem',
+                                      borderRadius: '8px',
+                                      border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                                      background: isSelected ? 'rgba(51, 102, 255, 0.04)' : 'rgba(255, 255, 255, 0.4)',
+                                      cursor: 'pointer',
+                                      transition: 'all var(--transition-fast)'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '0.9rem' }}>{req.id}</span>
+                                      <span style={{ 
+                                        display: 'inline-block', 
+                                        padding: '0.2rem 0.5rem', 
+                                        borderRadius: '4px', 
+                                        fontSize: '0.7rem', 
+                                        fontWeight: 'bold', 
+                                        backgroundColor: req.status === 'Completed' || req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : req.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', 
+                                        color: req.status === 'Completed' || req.status === 'Approved' ? '#166534' : req.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e' 
+                                      }}>
+                                        {req.status === 'Completed' || req.status === 'Approved' ? 'Results Ready' : req.status === 'Sample Collected' ? 'Sample Transit' : 'Pending Collection'}
+                                      </span>
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.4rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {tests}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.6rem', fontSize: '0.8rem' }}>
+                                      <span style={{ color: 'var(--color-text-muted)' }}>{req.date}</span>
+                                      <span style={{ color: 'var(--color-primary)', fontWeight: '600' }}>Lab Dispatch</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="empty-state" style={{ padding: '2rem 1rem' }}>
+                              <p>No mobile lab requests found.</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right Column: Lab Tracking / Diagnostic Report */}
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0 }}>
+                          {selectedLabRequest ? (() => {
+                            const { tests, address } = parseLabRequest(selectedLabRequest.symptoms);
+                            const status = selectedLabRequest.status || 'Pending';
+                            const isDone = status === 'Completed' || status === 'Approved';
+                            const currentStageIndex = status === 'Completed' || status === 'Approved' ? 2 : status === 'Sample Collected' ? 1 : 0;
+                            
+                            return (
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                                  <h4 style={{ margin: 0 }}>Diagnostic Request: {selectedLabRequest.id}</h4>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Booked for {selectedLabRequest.date}</span>
+                                </div>
+
+                                {/* Quest Diagnostics-style Progress Timeline */}
+                                <div style={{ marginBottom: '2rem' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+                                    <div style={{ position: 'absolute', top: '15px', left: '15%', right: '15%', height: '3px', backgroundColor: 'var(--color-border)', zIndex: 1 }}></div>
+                                    <div style={{ position: 'absolute', top: '15px', left: '15%', width: `${(currentStageIndex / 2) * 70}%`, height: '3px', backgroundColor: 'var(--color-accent)', zIndex: 2, transition: 'all 0.5s ease' }}></div>
+                                    
+                                    {[
+                                      { label: 'Collection Scheduled', icon: 'fa-calendar-day' },
+                                      { label: 'Sample in Transit', icon: 'fa-vial-circle-check' },
+                                      { label: 'Results Ready', icon: 'fa-file-shield' }
+                                    ].map((stage, idx) => {
+                                      const isActive = idx <= currentStageIndex;
+                                      return (
+                                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 3, width: '30%' }}>
+                                          <div 
+                                            style={{ 
+                                              width: '32px', 
+                                              height: '32px', 
+                                              borderRadius: '50%', 
+                                              backgroundColor: isActive ? 'var(--color-accent)' : '#f1f5f9', 
+                                              border: `2px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                                              color: isActive ? '#fff' : 'var(--color-text-muted)',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              fontSize: '0.85rem',
+                                              transition: 'all 0.3s ease'
+                                            }}
+                                            className={isActive ? 'stage-dot active' : 'stage-dot'}
+                                          >
+                                            <i className={`fa-solid ${stage.icon}`}></i>
+                                          </div>
+                                          <span 
+                                            style={{ 
+                                              fontSize: '0.72rem', 
+                                              color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)', 
+                                              fontWeight: isActive ? 'bold' : 'normal',
+                                              textAlign: 'center',
+                                              marginTop: '0.4rem',
+                                              whiteSpace: 'nowrap'
+                                            }}
+                                            className={isActive ? 'stage-text active' : 'stage-text'}
+                                          >
+                                            {stage.label}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Requested Diagnostics</strong>
+                                    <span style={{ fontSize: '0.9rem', color: 'var(--color-text)', display: 'block', fontWeight: 'bold' }}>{tests}</span>
+                                  </div>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Collection Address</strong>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text)' }}>{address}</span>
+                                  </div>
+                                </div>
+
+                                {/* Live Diagnostic Report Preview Card */}
+                                {isDone ? (
+                                  <div className="diagnostic-report-card" style={{ border: '2px solid var(--color-indigo)', borderRadius: '12px', background: '#fff', overflow: 'hidden', boxShadow: '0 4px 12px rgba(24, 43, 73, 0.08)', color: '#1e293b' }}>
+                                    <div style={{ background: 'var(--color-indigo)', color: '#fff', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>SimmyCare Labs</span>
+                                        <span style={{ fontSize: '0.65rem', opacity: '0.8' }}>MLSCN Licensed Facility #3821</span>
+                                      </div>
+                                      <span style={{ fontSize: '0.75rem', fontWeight: '600', background: 'rgba(255,255,255,0.15)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>OFFICIAL RECORD</span>
+                                    </div>
+                                    <div style={{ padding: '1rem' }}>
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.75rem', borderBottom: '1px dashed #cbd5e1', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
+                                        <div><strong>Patient:</strong> {selectedLabRequest.patientName}</div>
+                                        <div><strong>Collected Date:</strong> {selectedLabRequest.date}</div>
+                                        <div><strong>Physician:</strong> SimmyCare Practitioner</div>
+                                        <div><strong>Report ID:</strong> RPT-{selectedLabRequest.id}</div>
+                                      </div>
+
+                                      <strong style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-accent)', display: 'block', marginBottom: '0.5rem' }}>Analyte Findings</strong>
+                                      
+                                      <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                        <thead>
+                                          <tr style={{ borderBottom: '1px solid #cbd5e1', color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>
+                                            <th style={{ padding: '0.25rem 0' }}>TEST NAME</th>
+                                            <th style={{ padding: '0.25rem 0' }}>FINDING</th>
+                                            <th style={{ padding: '0.25rem 0' }}>REFERENCE RANGE</th>
+                                            <th style={{ padding: '0.25rem 0', textAlign: 'right' }}>STATUS</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {tests.toLowerCase().includes('malaria') && (
+                                            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                              <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>Malaria Antigen (Pf/Pv)</td>
+                                              <td style={{ padding: '0.4rem 0', color: '#d97706', fontWeight: 'bold' }}>Positive (1+)</td>
+                                              <td style={{ padding: '0.4rem 0' }}>Negative</td>
+                                              <td style={{ padding: '0.4rem 0', textAlign: 'right', color: '#d97706', fontWeight: 'bold' }}>ABNORMAL</td>
+                                            </tr>
+                                          )}
+                                          {tests.toLowerCase().includes('sugar') || tests.toLowerCase().includes('glucose') ? (
+                                            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                              <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>Fasting Blood Glucose</td>
+                                              <td style={{ padding: '0.4rem 0', color: '#16a34a', fontWeight: 'bold' }}>94 mg/dL</td>
+                                              <td style={{ padding: '0.4rem 0' }}>70 - 100 mg/dL</td>
+                                              <td style={{ padding: '0.4rem 0', textAlign: 'right', color: '#16a34a', fontWeight: 'bold' }}>NORMAL</td>
+                                            </tr>
+                                          ) : null}
+                                          <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                            <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>Full Blood Count (WBC)</td>
+                                            <td style={{ padding: '0.4rem 0', color: '#16a34a' }}>6.2 x10^9/L</td>
+                                            <td style={{ padding: '0.4rem 0' }}>4.0 - 11.0 x10^9/L</td>
+                                            <td style={{ padding: '0.4rem 0', textAlign: 'right', color: '#16a34a', fontWeight: 'bold' }}>NORMAL</td>
+                                          </tr>
+                                          <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                            <td style={{ padding: '0.4rem 0', fontWeight: 'bold' }}>Hemoglobin (Hb)</td>
+                                            <td style={{ padding: '0.4rem 0', color: '#16a34a' }}>14.1 g/dL</td>
+                                            <td style={{ padding: '0.4rem 0' }}>12.0 - 16.0 g/dL</td>
+                                            <td style={{ padding: '0.4rem 0', textAlign: 'right', color: '#16a34a', fontWeight: 'bold' }}>NORMAL</td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+
+                                      {(selectedLabRequest.notes || selectedLabRequest.prescription) && (
+                                        <div style={{ marginTop: '0.75rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '4px', fontSize: '0.75rem', borderLeft: '3px solid var(--color-indigo)' }}>
+                                          <strong>Lab Comments:</strong> {selectedLabRequest.prescription || selectedLabRequest.notes}
+                                        </div>
+                                      )}
+
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid #cbd5e1', paddingTop: '0.75rem', fontSize: '0.7rem' }}>
+                                        <div>
+                                          <strong>Verified By:</strong> MLS Wasila Goranduma <br />
+                                          <span style={{ color: 'var(--color-text-muted)' }}>Chief Medical Laboratory Scientist</span>
+                                        </div>
+                                        <button 
+                                          className="btn btn-primary btn-sm" 
+                                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
+                                          onClick={() => alert("Report downloaded successfully to medical records file folder!")}
+                                        >
+                                          <i className="fa-solid fa-download"></i> Download PDF Report
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
+                                      Logistics Courier & Trip Progress (Zipline Integration)
+                                    </strong>
+
+                                    <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                      <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#eab308', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#eab308', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+                                        {status === 'Sample Collected' ? 'RETURNING SAMPLES' : 'TECHNICIAN EN ROUTE'}
+                                      </div>
+                                      <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
+                                        ETA: {Math.max(1, Math.round(15 * (1 - simulatedProgress / 100)))} MINS
+                                      </div>
+                                      
+                                      <svg viewBox="0 0 400 200" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
+                                        <path d="M 0,100 L 400,100 M 100,0 L 100,200 M 300,0 L 300,200 M 0,50 L 400,50 M 0,150 L 400,150" stroke="rgba(255,255,255,0.04)" strokeWidth="6" fill="none" />
+                                        <path d="M 200,0 L 200,200" stroke="rgba(255,255,255,0.04)" strokeWidth="9" fill="none" />
+                                        
+                                        {/* Route path */}
+                                        <path id="lab-route" d="M 300,100 Q 200,150 200,50 T 100,100" stroke="#f59e0b" strokeWidth="3" strokeDasharray="6,4" fill="none" />
+                                        
+                                        {/* Diagnostic Hub Pin */}
+                                        <circle cx="100" cy="100" r="7" fill="#10b981" />
+                                        <circle cx="100" cy="100" r="13" fill="#10b981" fillOpacity="0.15" />
+                                        <text x="85" y="85" fill="#10b981" fontSize="8" fontWeight="bold">Simmy Diagnostics Hub</text>
+
+                                        {/* Patient address Pin */}
+                                        <circle cx="300" cy="100" r="7" fill="#ef4444" />
+                                        <circle cx="300" cy="100" r="13" fill="#ef4444" fillOpacity="0.15" />
+                                        <text x="270" y="85" fill="#ef4444" fontSize="8" fontWeight="bold">Your Home</text>
+
+                                        {/* Moving Courier */}
+                                        {(() => {
+                                          const t = status === 'Sample Collected' ? (simulatedProgress / 100) : (1 - simulatedProgress / 100);
+                                          let courierX = 300;
+                                          let courierY = 100;
+                                          if (t < 0.5) {
+                                            const tSeg = t / 0.5;
+                                            courierX = 300 - (300 - 200) * tSeg;
+                                            courierY = 100 - (100 - 150) * tSeg;
+                                          } else {
+                                            const tSeg = (t - 0.5) / 0.5;
+                                            courierX = 200 - (200 - 100) * tSeg;
+                                            courierY = 150 - (150 - 50) * tSeg;
+                                          }
+                                          return (
+                                            <g transform={`translate(${courierX}, ${courierY})`}>
+                                              <circle r="9" fill="#f59e0b" />
+                                              <circle r="16" fill="#f59e0b" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
+                                              <text textAnchor="middle" y="3" fill="#fff" fontSize="9">🚁</text>
+                                            </g>
+                                          );
+                                        })()}
+                                      </svg>
+                                      
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
+                                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                          {(selectedLabRequest.assignedRider || 'Rider').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                          <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
+                                            {selectedLabRequest.assignedRider || 'Default Courier'}
+                                          </div>
+                                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                            Simmy Diagnostics Specialist • Mobile Lab Unit
+                                          </div>
+                                        </div>
+                                        <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                          <i className="fa-solid fa-phone" style={{ fontSize: '0.8rem' }}></i>
+                                        </a>
+                                      </div>
+                                    </div>
+                                    
+                                    <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }}>
+                                      <i className="fa-solid fa-truck" style={{ color: '#d97706', fontSize: '1.5rem' }}></i>
+                                      <div>
+                                        <strong style={{ color: '#b45309', display: 'block', fontSize: '0.9rem' }}>
+                                          {status === 'Sample Collected' ? "Sample Collection Complete" : "Technician Dispatched"}
+                                        </strong>
+                                        <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
+                                          {status === 'Sample Collected' ? "The technician is safely returning your diagnostic samples to the central lab for pathology check." : "The technician is carrying a temperature-regulated sterile cold-chain collection kit."}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })() : (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px', color: 'var(--color-text-muted)' }}>
+                              <i className="fa-solid fa-vial" style={{ fontSize: '3rem', marginBottom: '1rem', opacity: '0.3' }}></i>
+                              <p style={{ textAlign: 'center', fontSize: '0.95rem' }}>Select a laboratory request from the directory list to track technician dispatch and view verified clinical diagnostic results.</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -3916,6 +5001,1035 @@ export default function App() {
                         )}
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PHARMACIST DASHBOARD */}
+            {authRole === 'pharmacist' && loggedInPharmacist && (
+              <div>
+                <div className="dashboard-header glassmorphic">
+                  <div>
+                    <h2>Pharmacy Dispense Hub</h2>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-accent)' }}>Logged in as: {loggedInPharmacist.name}</p>
+                  </div>
+                  <div className="dashboard-header-actions">
+                    <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
+                  </div>
+                </div>
+
+                {/* Pharmacy Stats */}
+                {(() => {
+                  const orders = inquiries.filter(inq => inq.id.startsWith('ORD-'));
+                  const pending = orders.filter(o => !o.status || o.status === 'Pending' || o.status === 'Pending Review');
+                  const processing = orders.filter(o => o.status === 'Processing & Packaging');
+                  const dispatched = orders.filter(o => o.status === 'Out for Delivery' || o.status === 'Awaiting Dispatch');
+                  const rxCount = appointments.filter(apt => apt.prescription && apt.prescription.trim() !== '').length;
+                  return (
+                    <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+                      <div className="stat-item">
+                        <h3>{orders.length}</h3>
+                        <p>TOTAL ORDERS</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{pending.length}</h3>
+                        <p>PENDING REVIEW</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{processing.length + dispatched.length}</h3>
+                        <p>IN PROGRESS</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{rxCount}</h3>
+                        <p>DOCTOR RX FILES</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Dashboard layout: Sidebar + Workspace */}
+                <div className="dashboard-layout">
+                  {/* Left Column: Sidebar Menu */}
+                  <div className="dashboard-sidebar glassmorphic">
+                    <button 
+                      className={`sidebar-link ${pharmacistNavView === 'orders' ? 'active' : ''}`}
+                      onClick={() => setPharmacistNavView('orders')}
+                    >
+                      <i className="fa-solid fa-boxes-stacked"></i> Medication Orders
+                    </button>
+                    <button 
+                      className={`sidebar-link ${pharmacistNavView === 'prescriptions' ? 'active' : ''}`}
+                      onClick={() => setPharmacistNavView('prescriptions')}
+                    >
+                      <i className="fa-solid fa-file-prescription"></i> Doctor Prescriptions (Rx)
+                    </button>
+                  </div>
+
+                  {/* Right Column: Workspaces */}
+                  <div className="dashboard-workspace glassmorphic">
+                    
+                    {/* Workspace: Orders */}
+                    {pharmacistNavView === 'orders' && (
+                      <div>
+                        <h3>Medication Delivery Orders</h3>
+                        {(() => {
+                          const orders = inquiries.filter(inq => inq.id.startsWith('ORD-'));
+                          if (orders.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy purchase orders found.</p>;
+                          }
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Patient/Customer</th>
+                                    <th>Status</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {orders.map(order => {
+                                    const status = order.status || 'Pending Review';
+                                    let badgeColor = '#cbd5e1';
+                                    let textColor = '#475569';
+                                    if (status === 'Pending Review' || status === 'Pending') {
+                                      badgeColor = 'rgba(234, 179, 8, 0.15)'; textColor = '#854d0e';
+                                    } else if (status === 'Processing & Packaging') {
+                                      badgeColor = 'rgba(59, 130, 246, 0.15)'; textColor = '#1d4ed8';
+                                    } else if (status === 'Awaiting Dispatch' || status === 'Out for Delivery') {
+                                      badgeColor = 'rgba(147, 51, 234, 0.15)'; textColor = '#6b21a8';
+                                    } else if (status === 'Delivered') {
+                                      badgeColor = 'rgba(34, 197, 94, 0.15)'; textColor = '#166534';
+                                    } else if (status === 'Cancelled') {
+                                      badgeColor = 'rgba(239, 68, 68, 0.15)'; textColor = '#991b1b';
+                                    }
+                                    return (
+                                      <tr key={order.id}>
+                                        <td><strong>{order.id}</strong></td>
+                                        <td>{order.date}</td>
+                                        <td>
+                                          <strong>{order.name}</strong>
+                                          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{order.email}</div>
+                                        </td>
+                                        <td>
+                                          <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: badgeColor, color: textColor }}>
+                                            {status}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                            <button className="btn btn-primary btn-sm" onClick={() => setPharmacistSelectedOrder(order)}>
+                                              <i className="fa-solid fa-eye"></i> View & Process
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Workspace: Prescriptions */}
+                    {pharmacistNavView === 'prescriptions' && (
+                      <div>
+                        <h3>Clinical Prescriptions Registry</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+                          These are medication instructions generated by doctors during patient consultations. Click "Dispense & Ship" to create an active delivery order.
+                        </p>
+                        {(() => {
+                          const rxApts = appointments.filter(apt => apt.prescription && apt.prescription.trim() !== '');
+                          if (rxApts.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No digital prescriptions found in the clinic database.</p>;
+                          }
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Apt ID</th>
+                                    <th>Date</th>
+                                    <th>Patient</th>
+                                    <th>Prescribed Rx</th>
+                                    <th style={{ textAlign: 'right' }}>Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rxApts.map(apt => (
+                                    <tr key={apt.id}>
+                                      <td>{apt.id}</td>
+                                      <td>{apt.date}</td>
+                                      <td>
+                                        <strong>{apt.patientName}</strong>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
+                                      </td>
+                                      <td>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {apt.prescription}
+                                        </p>
+                                      </td>
+                                      <td>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                          <button 
+                                            className="btn btn-accent btn-sm" 
+                                            onClick={() => {
+                                              setPharmacistSelectedPrescription(apt);
+                                              setPrescOrderForm({ address: '', notes: `Dispensing Rx from doctor ${apt.doctor}`, cost: '3500' });
+                                            }}
+                                          >
+                                            <i className="fa-solid fa-truck-ramp-box"></i> Dispense & Ship
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LAB SPECIALIST DASHBOARD */}
+            {authRole === 'lab' && loggedInLab && (
+              <div>
+                <div className="dashboard-header glassmorphic">
+                  <div>
+                    <h2>Laboratory Diagnostics Console</h2>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-accent)' }}>Logged in as: {loggedInLab.name}</p>
+                  </div>
+                  <div className="dashboard-header-actions">
+                    <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
+                  </div>
+                </div>
+
+                {/* Lab Stats */}
+                {(() => {
+                  const requests = appointments.filter(apt => apt.id.startsWith('LAB-') || apt.doctor === 'Mobile Lab Unit');
+                  const pending = requests.filter(r => r.status === 'Pending');
+                  const collected = requests.filter(r => r.status === 'Sample Collected');
+                  const completed = requests.filter(r => r.status === 'Completed' || r.status === 'Approved');
+                  return (
+                    <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+                      <div className="stat-item">
+                        <h3>{requests.length}</h3>
+                        <p>TOTAL LAB BOOKINGS</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{pending.length}</h3>
+                        <p>PENDING COLLECTION</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{collected.length}</h3>
+                        <p>SAMPLES COLLECTED</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{completed.length}</h3>
+                        <p>RESULTS READY</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Dashboard layout: Sidebar + Workspace */}
+                <div className="dashboard-layout">
+                  {/* Left Column: Sidebar Menu */}
+                  <div className="dashboard-sidebar glassmorphic">
+                    <button 
+                      className={`sidebar-link ${labNavView === 'requests' ? 'active' : ''}`}
+                      onClick={() => setLabNavView('requests')}
+                    >
+                      <i className="fa-solid fa-microscope"></i> Active Lab Bookings
+                    </button>
+                    <button 
+                      className={`sidebar-link ${labNavView === 'history' ? 'active' : ''}`}
+                      onClick={() => setLabNavView('history')}
+                    >
+                      <i className="fa-solid fa-clock-rotate-left"></i> Completed Reports
+                    </button>
+                  </div>
+
+                  {/* Right Column: Workspaces */}
+                  <div className="dashboard-workspace glassmorphic">
+                    
+                    {/* Workspace: Active Requests */}
+                    {labNavView === 'requests' && (
+                      <div>
+                        <h3>Active Lab Bookings & Tests</h3>
+                        {(() => {
+                          const requests = appointments.filter(apt => (apt.id.startsWith('LAB-') || apt.doctor === 'Mobile Lab Unit') && apt.status !== 'Completed' && apt.status !== 'Approved');
+                          if (requests.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active laboratory collections/tests pending.</p>;
+                          }
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Date</th>
+                                    <th>Patient</th>
+                                    <th>Tests Requested</th>
+                                    <th>Status</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {requests.map(req => {
+                                    // Parse tests out of symptoms string
+                                    const rawSymp = req.symptoms || '';
+                                    let tests = rawSymp;
+                                    if (rawSymp.includes('Mobile Lab Booking:')) {
+                                      const parts = rawSymp.split('Mobile Lab Booking:')[1].split('. Home collection');
+                                      tests = parts[0] || rawSymp;
+                                    }
+                                    return (
+                                      <tr key={req.id}>
+                                        <td><strong>{req.id}</strong></td>
+                                        <td>{req.date}</td>
+                                        <td>
+                                          <strong>{req.patientName}</strong>
+                                          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{req.phone}</div>
+                                        </td>
+                                        <td>
+                                          <span style={{ fontSize: '0.85rem' }}>{tests}</span>
+                                        </td>
+                                        <td>
+                                          <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: req.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: req.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e' }}>
+                                            {req.status}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                            {req.status === 'Pending' && (
+                                              <button className="btn btn-outline btn-sm" onClick={() => {
+                                                const updated = appointments.map(a => a.id === req.id ? { ...a, status: 'Sample Collected' } : a);
+                                                setAppointments(updated);
+                                              }}>
+                                                Collect Sample
+                                              </button>
+                                            )}
+                                            <button className="btn btn-primary btn-sm" onClick={() => {
+                                              setLabSelectedRequest(req);
+                                              setLabResultsText('');
+                                            }}>
+                                              <i className="fa-solid fa-file-medical"></i> Enter Results
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Workspace: History */}
+                    {labNavView === 'history' && (
+                      <div>
+                        <h3>Diagnostic Reports Archive</h3>
+                        {(() => {
+                          const completed = appointments.filter(apt => (apt.id.startsWith('LAB-') || apt.doctor === 'Mobile Lab Unit') && (apt.status === 'Completed' || apt.status === 'Approved'));
+                          if (completed.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No completed reports in archive.</p>;
+                          }
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Completed Date</th>
+                                    <th>Patient</th>
+                                    <th>Report Details</th>
+                                    <th>Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {completed.map(req => (
+                                    <tr key={req.id}>
+                                      <td><strong>{req.id}</strong></td>
+                                      <td>{req.date}</td>
+                                      <td><strong>{req.patientName}</strong></td>
+                                      <td>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {req.prescription || req.notes || 'No results text logged'}
+                                        </p>
+                                      </td>
+                                      <td>
+                                        <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#166534' }}>
+                                          Results Ready
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LOGISTICS DASHBOARD */}
+            {authRole === 'logistics' && loggedInLogistics && (
+              <div>
+                <div className="dashboard-header glassmorphic">
+                  <div>
+                    <h2>Logistics & Dispatch Control</h2>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-accent)' }}>Logged in as: {loggedInLogistics.name}</p>
+                  </div>
+                  <div className="dashboard-header-actions">
+                    <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
+                  </div>
+                </div>
+
+                {/* Logistics Stats */}
+                {(() => {
+                  const shipments = inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Awaiting Dispatch' || inq.status === 'Out for Delivery' || inq.status === 'Delivered'));
+                  const labTrips = appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Pending' || apt.status === 'Sample Collected'));
+                  const pendingDisp = shipments.filter(s => s.status === 'Awaiting Dispatch').length;
+                  const inTransit = shipments.filter(s => s.status === 'Out for Delivery').length + labTrips.filter(t => t.status === 'Sample Collected').length;
+                  const pendingColl = labTrips.filter(t => t.status === 'Pending').length;
+                  const completedDeliv = shipments.filter(s => s.status === 'Delivered').length;
+                  return (
+                    <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+                      <div className="stat-item">
+                        <h3>{pendingDisp + pendingColl}</h3>
+                        <p>PENDING TASKS</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{inTransit}</h3>
+                        <p>IN TRANSIT</p>
+                      </div>
+                      <div className="stat-divider"></div>
+                      <div className="stat-item">
+                        <h3>{completedDeliv}</h3>
+                        <p>COMPLETED DELIVERIES</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Dashboard layout: Sidebar + Workspace */}
+                <div className="dashboard-layout">
+                  {/* Left Column: Sidebar Menu */}
+                  <div className="dashboard-sidebar glassmorphic">
+                    <button 
+                      className={`sidebar-link ${logisticsNavView === 'deliveries' ? 'active' : ''}`}
+                      onClick={() => { setLogisticsNavView('deliveries'); setLogisticsSelectedRider(null); }}
+                    >
+                      <i className="fa-solid fa-truck-drop-off"></i> Pharmacy Deliveries
+                    </button>
+                    <button 
+                      className={`sidebar-link ${logisticsNavView === 'lab-trips' ? 'active' : ''}`}
+                      onClick={() => { setLogisticsNavView('lab-trips'); setLogisticsSelectedRider(null); }}
+                    >
+                      <i className="fa-solid fa-vial"></i> Lab Collection Trips
+                    </button>
+                    <button 
+                      className={`sidebar-link ${logisticsNavView === 'control-room' ? 'active' : ''}`}
+                      onClick={() => { setLogisticsNavView('control-room'); setLogisticsSelectedRider(null); }}
+                    >
+                      <i className="fa-solid fa-earth-africa"></i> Live Dispatch Map
+                    </button>
+                    <button 
+                      className={`sidebar-link ${logisticsNavView === 'riders' ? 'active' : ''}`}
+                      onClick={() => { setLogisticsNavView('riders'); setLogisticsSelectedRider(null); }}
+                    >
+                      <i className="fa-solid fa-motorcycle"></i> Rider Directory
+                    </button>
+                  </div>
+
+                  {/* Right Column: Workspaces */}
+                  <div className="dashboard-workspace glassmorphic">
+                    
+                    {/* Workspace: Deliveries */}
+                    {logisticsNavView === 'deliveries' && (
+                      <div>
+                        <h3>Pharmacy Package Deliveries</h3>
+                        {(() => {
+                          const shipments = inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Awaiting Dispatch' || inq.status === 'Out for Delivery' || inq.status === 'Delivered'));
+                          if (shipments.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy packages assigned for delivery.</p>;
+                          }
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Order ID</th>
+                                    <th>Recipient</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    <th>Assigned Rider</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {shipments.map(ship => {
+                                    // Extract address from message
+                                    let address = "Contact client";
+                                    const msg = ship.message || '';
+                                    if (msg.includes('Shipping Address: [')) {
+                                      address = msg.split('Shipping Address: [')[1].split(']. Rx Notes')[0] || address;
+                                    }
+                                    return (
+                                      <tr key={ship.id}>
+                                        <td><strong>{ship.id}</strong></td>
+                                        <td>{ship.name}</td>
+                                        <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
+                                        <td>
+                                          <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: ship.status === 'Delivered' ? 'rgba(34, 197, 94, 0.15)' : ship.status === 'Out for Delivery' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: ship.status === 'Delivered' ? '#166534' : ship.status === 'Out for Delivery' ? '#1d4ed8' : '#854d0e' }}>
+                                            {ship.status}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          {ship.status === 'Delivered' ? (
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                              <i className="fa-solid fa-motorcycle" style={{ color: 'var(--color-success)' }}></i> {ship.assignedRider || 'Default Courier'}
+                                            </span>
+                                          ) : (
+                                            <select
+                                              value={ship.assignedRider || ''}
+                                              onChange={(e) => {
+                                                const riderName = e.target.value;
+                                                const updated = inquiries.map(i => i.id === ship.id ? { 
+                                                  ...i, 
+                                                  assignedRider: riderName,
+                                                  status: riderName ? 'Out for Delivery' : 'Awaiting Dispatch'
+                                                } : i);
+                                                setInquiries(updated);
+                                              }}
+                                              style={{ 
+                                                padding: '0.25rem 0.5rem', 
+                                                borderRadius: 'var(--radius-sm)', 
+                                                border: '1px solid rgba(24, 43, 73, 0.12)', 
+                                                fontSize: '0.82rem',
+                                                background: 'var(--color-bg)',
+                                                color: 'var(--color-text)',
+                                                cursor: 'pointer'
+                                              }}
+                                            >
+                                              <option value="">-- Unassigned --</option>
+                                              {logistics.map(rider => (
+                                                <option key={rider.email} value={rider.name}>
+                                                  {rider.name} ({rider.vehicleType})
+                                                </option>
+                                              ))}
+                                            </select>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                            {ship.status === 'Out for Delivery' && (
+                                              <button className="btn btn-accent btn-sm" onClick={() => {
+                                                const updated = inquiries.map(i => i.id === ship.id ? { ...i, status: 'Delivered' } : i);
+                                                setInquiries(updated);
+                                              }}>
+                                                Mark Delivered
+                                              </button>
+                                            )}
+                                            <button className="btn btn-outline btn-sm" onClick={() => setLogisticsSelectedShipment(ship)}>
+                                              <i className="fa-solid fa-eye"></i> Details
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Workspace: Lab Trips */}
+                    {logisticsNavView === 'lab-trips' && (
+                      <div>
+                        <h3>Lab Sample Collection Trips</h3>
+                        {(() => {
+                          const trips = appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Pending' || apt.status === 'Sample Collected'));
+                          if (trips.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active sample collections pending.</p>;
+                          }
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Scheduled Date</th>
+                                    <th>Patient</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    <th>Assigned Rider</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {trips.map(trip => {
+                                    let address = "Contact patient";
+                                    const rawSymp = trip.symptoms || '';
+                                    if (rawSymp.includes('Home collection address: ')) {
+                                      address = rawSymp.split('Home collection address: ')[1].split('. Patient Instructions')[0] || address;
+                                    }
+                                    return (
+                                      <tr key={trip.id}>
+                                        <td><strong>{trip.id}</strong></td>
+                                        <td>{trip.date}</td>
+                                        <td>{trip.patientName}</td>
+                                        <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
+                                        <td>
+                                          <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: trip.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: trip.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e' }}>
+                                            {trip.status === 'Pending' ? 'Collection Pending' : 'Sample Collected'}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          {trip.status === 'Completed' ? (
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                              {trip.assignedRider || 'Default Courier'}
+                                            </span>
+                                          ) : (
+                                            <select
+                                              value={trip.assignedRider || ''}
+                                              onChange={(e) => {
+                                                const riderName = e.target.value;
+                                                const updated = appointments.map(a => a.id === trip.id ? { 
+                                                  ...a, 
+                                                  assignedRider: riderName,
+                                                  status: riderName ? 'Sample Collected' : 'Pending'
+                                                } : a);
+                                                setAppointments(updated);
+                                              }}
+                                              style={{ 
+                                                padding: '0.25rem 0.5rem', 
+                                                borderRadius: 'var(--radius-sm)', 
+                                                border: '1px solid rgba(24, 43, 73, 0.12)', 
+                                                fontSize: '0.82rem',
+                                                background: 'var(--color-bg)',
+                                                color: 'var(--color-text)',
+                                                cursor: 'pointer'
+                                              }}
+                                            >
+                                              <option value="">-- Unassigned --</option>
+                                              {logistics.map(rider => (
+                                                <option key={rider.email} value={rider.name}>
+                                                  {rider.name} ({rider.vehicleType})
+                                                </option>
+                                              ))}
+                                            </select>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                            {trip.status === 'Sample Collected' && (
+                                              <button className="btn btn-accent btn-sm" onClick={() => {
+                                                const updated = appointments.map(a => a.id === trip.id ? { ...a, status: 'Completed' } : a);
+                                                setAppointments(updated);
+                                              }}>
+                                                Deliver to Lab
+                                              </button>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Workspace: Control Room Map */}
+                    {logisticsNavView === 'control-room' && (
+                      <div>
+                        <h3>Logistics Dispatch Control Room</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+                          Real-time geographic status of active courier riders and delivery drone payloads across Abuja metropolitan sectors.
+                        </p>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '1.5rem' }}>
+                          {/* Map container */}
+                          <div style={{ background: '#0b1329', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem', position: 'relative', minHeight: '400px' }}>
+                            <div style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10 }}>
+                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+                              SATELLITE TELEMETRY ACTIVE
+                            </div>
+
+                            <svg viewBox="0 0 500 350" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
+                              {/* Grid Gridlines */}
+                              <defs>
+                                <pattern id="mapGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
+                                </pattern>
+                              </defs>
+                              <rect width="500" height="350" fill="url(#mapGrid)" />
+
+                              {/* Main Roads network in Abuja */}
+                              <path d="M 50,50 L 450,50 M 50,150 L 450,150 M 50,250 L 450,250 M 150,50 L 150,300 M 350,50 L 350,300 M 50,50 Q 250,180 450,250" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+                              <path d="M 250,50 L 250,300" stroke="rgba(255,255,255,0.03)" strokeWidth="10" fill="none" />
+
+                              {/* SimmyCare Central Hub Pin */}
+                              <g transform="translate(250, 150)">
+                                <circle r="8" fill="#10b981" />
+                                <circle r="16" fill="#10b981" fillOpacity="0.15" style={{ animation: 'ping 2s infinite' }} />
+                                <text x="12" y="4" fill="#10b981" fontSize="9" fontWeight="bold">Central Hub</text>
+                              </g>
+
+                              {/* Render Rider Pins */}
+                              {logistics.map((rider, idx) => {
+                                const coords = [
+                                  { x: 120, y: 80 },   // Rider 1
+                                  { x: 380, y: 110 },  // Rider 2
+                                  { x: 170, y: 220 },  // Rider 3
+                                  { x: 310, y: 260 },  // Rider 4
+                                  { x: 220, y: 90 },   // Rider 5
+                                ];
+                                const coord = coords[idx % coords.length];
+                                
+                                const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
+                                const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
+                                const isBusy = !!(activeOrder || activeTrip);
+                                
+                                const isSelected = logisticsSelectedRider && logisticsSelectedRider.email === rider.email;
+
+                                return (
+                                  <g 
+                                    key={rider.email} 
+                                    transform={`translate(${coord.x}, ${coord.y})`}
+                                    onClick={() => setLogisticsSelectedRider(rider)}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <circle r="7" fill={isSelected ? 'var(--color-accent)' : (isBusy ? '#eab308' : '#3b82f6')} />
+                                    <circle r="14" fill={isSelected ? 'var(--color-accent)' : (isBusy ? '#eab308' : '#3b82f6')} fillOpacity="0.2" />
+                                    <text x="10" y="-3" fill="#fff" fontSize="8" fontWeight="bold" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                                      {rider.name.split(' ')[0]}
+                                    </text>
+                                    <text x="10" y="6" fill="#cbd5e1" fontSize="7">
+                                      {rider.vehicleType === 'Drone' ? '🛸' : '🏍️'}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </svg>
+                          </div>
+
+                          {/* Detail Panel */}
+                          <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            {logisticsSelectedRider ? (() => {
+                              const rider = logisticsSelectedRider;
+                              const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
+                              const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
+                              
+                              let cargo = "Idle / No Active Payload";
+                              let route = "At dispatch station";
+                              let statusLabel = "Available";
+                              let statusColor = "#3b82f6";
+                              
+                              if (activeOrder) {
+                                const parsed = parseOrderMessage(activeOrder.message);
+                                cargo = `Cardiovascular Drugs (Rx: ${activeOrder.id})`;
+                                route = `Hub ➡️ ${parsed.address}`;
+                                statusLabel = "Delivering Order";
+                                statusColor = "#eab308";
+                              } else if (activeTrip) {
+                                const parsed = parseLabRequest(activeTrip.symptoms);
+                                cargo = `Blood Diagnostics Pathology (Lab: ${activeTrip.id})`;
+                                route = `${parsed.address} ➡️ Lab Hub`;
+                                statusLabel = "Collecting Samples";
+                                statusColor = "#eab308";
+                              }
+
+                              const hashVal = rider.name.charCodeAt(0) + (rider.name.charCodeAt(1) || 0);
+                              const battery = (hashVal % 30) + 70;
+                              
+                              return (
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                                      {rider.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{rider.name}</h4>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{rider.phone}</div>
+                                    </div>
+                                    <span style={{ marginLeft: 'auto', display: 'inline-block', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', backgroundColor: `${statusColor}22`, color: statusColor }}>
+                                      {statusLabel}
+                                    </span>
+                                  </div>
+
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Vehicle & Fleet Type</strong>
+                                      <span style={{ fontSize: '0.85rem' }}>{rider.vehicleType} (Sector: {rider.dispatchArea || 'Wuse II Area'})</span>
+                                    </div>
+
+                                    <div>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Battery / Fuel Status</strong>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                                          <div style={{ width: `${battery}%`, height: '100%', background: battery > 80 ? '#16a34a' : '#eab308', borderRadius: '3px' }}></div>
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{battery}%</span>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Active Payload Cargo</strong>
+                                      <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{cargo}</span>
+                                    </div>
+
+                                    <div>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Current Route Waypoints</strong>
+                                      <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{route}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })() : (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '250px', color: 'var(--color-text-muted)' }}>
+                                <i className="fa-solid fa-map-location-dot" style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: '0.3' }}></i>
+                                <p style={{ textAlign: 'center', fontSize: '0.85rem' }}>Select a courier pin on the live Abuja map to inspect telemetry, fuel level, cargo type, and routing path.</p>
+                              </div>
+                            )}
+
+                            {logisticsSelectedRider && (
+                              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                                <a href={`tel:${logisticsSelectedRider.phone}`} className="btn btn-outline btn-sm" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.35rem' }}>
+                                  <i className="fa-solid fa-phone"></i> Call Courier
+                                </a>
+                                <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => alert("Ping payload command sent to Rider device successfully!")}>
+                                  <i className="fa-solid fa-satellite-dish"></i> Ping Rider
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Workspace: Riders Directory & Onboarding */}
+                    {logisticsNavView === 'riders' && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                          <div>
+                            <h3 style={{ margin: 0 }}>Dispatch Rider Directory</h3>
+                            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                              Onboard new riders, monitor their active transit tasks, and manage coverage regions.
+                            </p>
+                          </div>
+                          <button 
+                            className="btn btn-primary"
+                            onClick={() => {
+                              const name = prompt("Enter Dispatch Rider's Full Name:");
+                              if (!name) return;
+                              const email = prompt("Enter Rider's Email Address:");
+                              if (!email) return;
+                              const phone = prompt("Enter Rider's Phone Number:");
+                              if (!phone) return;
+                              const vehicleType = prompt("Enter Vehicle Type (Motorbike, Bicycle, Delivery Van, Electric Scooter):", "Motorbike");
+                              if (!vehicleType) return;
+                              const dispatchArea = prompt("Enter Primary Coverage / Dispatch Area:", "Lagos Central");
+                              if (!dispatchArea) return;
+                              const password = prompt("Create Rider Account Password:", "password123");
+                              if (!password) return;
+
+                              const newRider = {
+                                name,
+                                email,
+                                phone,
+                                vehicleType,
+                                dispatchArea,
+                                password,
+                                status: 'Idle'
+                              };
+                              setLogistics([...logistics, newRider]);
+                              alert(`Rider "${name}" successfully onboarded into SimmyCare Logistics network!`);
+                            }}
+                          >
+                            <i className="fa-solid fa-user-plus" style={{ marginRight: '6px' }}></i> Onboard Rider
+                          </button>
+                        </div>
+
+                        {/* Status Filter Bar */}
+                        <div className="filter-bar" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                          {['All', 'Idle', 'Active / In Transit', 'Offline'].map(status => {
+                            // Calculate count
+                            let count = 0;
+                            if (status === 'All') count = logistics.length;
+                            else if (status === 'Idle') {
+                              // Rider is idle if they have no active deliveries in progress
+                              count = logistics.filter(r => {
+                                const hasActive = inquiries.some(i => i.assignedRider === r.name && i.status === 'Out for Delivery') ||
+                                                  appointments.some(a => a.assignedRider === r.name && a.status === 'Sample Collected');
+                                return !hasActive;
+                              }).length;
+                            } else if (status === 'Active / In Transit') {
+                              count = logistics.filter(r => {
+                                const hasActive = inquiries.some(i => i.assignedRider === r.name && i.status === 'Out for Delivery') ||
+                                                  appointments.some(a => a.assignedRider === r.name && a.status === 'Sample Collected');
+                                return hasActive;
+                              }).length;
+                            } else if (status === 'Offline') {
+                              count = 0; // Simulated offline for demo, or match offline
+                            }
+
+                            return (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() => setRiderStatusFilter(status)}
+                                style={{
+                                  padding: '0.4rem 0.8rem',
+                                  borderRadius: '20px',
+                                  border: 'none',
+                                  fontSize: '0.8rem',
+                                  fontWeight: '600',
+                                  background: riderStatusFilter === status ? 'var(--color-accent)' : 'rgba(24, 43, 73, 0.05)',
+                                  color: riderStatusFilter === status ? '#ffffff' : 'var(--color-text)',
+                                  cursor: 'pointer',
+                                  transition: 'all var(--transition-fast)'
+                                }}
+                              >
+                                {status} ({count})
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Riders Table */}
+                        {(() => {
+                          const filteredRiders = logistics.filter(rider => {
+                            const hasActive = inquiries.some(i => i.assignedRider === rider.name && i.status === 'Out for Delivery') ||
+                                              appointments.some(a => a.assignedRider === rider.name && a.status === 'Sample Collected');
+                            if (riderStatusFilter === 'Idle') return !hasActive;
+                            if (riderStatusFilter === 'Active / In Transit') return hasActive;
+                            return true;
+                          });
+
+                          if (filteredRiders.length === 0) {
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', textAlign: 'center', padding: '2rem' }}>No riders match the selected status filter.</p>;
+                          }
+
+                          return (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Rider Name</th>
+                                    <th>Phone</th>
+                                    <th>Vehicle Type</th>
+                                    <th>Coverage Area</th>
+                                    <th>Active Assignments</th>
+                                    <th>Status</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {filteredRiders.map(rider => {
+                                    // Calculate active assignments
+                                    const activePharmacy = inquiries.filter(i => i.assignedRider === rider.name && i.status === 'Out for Delivery');
+                                    const activeLab = appointments.filter(a => a.assignedRider === rider.name && a.status === 'Sample Collected');
+                                    const activeCount = activePharmacy.length + activeLab.length;
+                                    const isTransit = activeCount > 0;
+
+                                    return (
+                                      <tr key={rider.email}>
+                                        <td>
+                                          <div style={{ fontWeight: 'bold', color: 'var(--color-text)' }}>{rider.name}</div>
+                                          <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{rider.email}</div>
+                                        </td>
+                                        <td>{rider.phone || 'N/A'}</td>
+                                        <td>
+                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}>
+                                            <i className={`fa-solid ${rider.vehicleType === 'Delivery Van' ? 'fa-truck' : rider.vehicleType === 'Bicycle' ? 'fa-bicycle' : 'fa-motorcycle'}`} style={{ color: 'var(--color-indigo)' }}></i>
+                                            {rider.vehicleType}
+                                          </span>
+                                        </td>
+                                        <td>{rider.dispatchArea || 'Lagos Metro'}</td>
+                                        <td>
+                                          {isTransit ? (
+                                            <span style={{ fontWeight: '600', color: 'var(--color-accent)' }}>
+                                              {activeCount} active task{activeCount > 1 ? 's' : ''}
+                                            </span>
+                                          ) : (
+                                            <span style={{ color: 'var(--color-text-muted)' }}>0 tasks</span>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <span style={{ 
+                                            display: 'inline-block', 
+                                            padding: '0.25rem 0.5rem', 
+                                            borderRadius: '4px', 
+                                            fontSize: '0.75rem', 
+                                            fontWeight: 'bold', 
+                                            backgroundColor: isTransit ? 'rgba(59, 130, 246, 0.15)' : 'rgba(34, 197, 94, 0.15)', 
+                                            color: isTransit ? '#1d4ed8' : '#166534' 
+                                          }}>
+                                            {isTransit ? 'Active / In Transit' : 'Idle'}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                            <button 
+                                              className="btn btn-outline btn-sm"
+                                              onClick={() => {
+                                                if (confirm(`Are you sure you want to offboard Rider "${rider.name}"?`)) {
+                                                  setLogistics(logistics.filter(r => r.email !== rider.email));
+                                                }
+                                              }}
+                                              style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                                            >
+                                              <i className="fa-solid fa-trash-can"></i> Offboard
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
                   </div>
                 </div>
               </div>
@@ -5391,6 +7505,216 @@ export default function App() {
                 <button type="button" className="btn btn-outline" onClick={() => setFollowUpApt(null)}>Cancel</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pharmacist View Order Details Modal */}
+      {pharmacistSelectedOrder && (
+        <div className="modal-backdrop" onClick={() => setPharmacistSelectedOrder(null)}>
+          <div className="modal-content glassmorphic" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h3>Order details: {pharmacistSelectedOrder.id}</h3>
+              <button className="close-btn" onClick={() => setPharmacistSelectedOrder(null)}>×</button>
+            </div>
+            
+            <div style={{ padding: '1rem 0' }}>
+              <div className="detail-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <strong>Customer/Patient:</strong>
+                  <p style={{ margin: '0.25rem 0 0 0' }}>{pharmacistSelectedOrder.name}</p>
+                </div>
+                <div>
+                  <strong>Date Placed:</strong>
+                  <p style={{ margin: '0.25rem 0 0 0' }}>{pharmacistSelectedOrder.date}</p>
+                </div>
+              </div>
+              <div className="detail-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <strong>Email:</strong>
+                  <p style={{ margin: '0.25rem 0 0 0' }}>{pharmacistSelectedOrder.email}</p>
+                </div>
+                <div>
+                  <strong>Phone:</strong>
+                  <p style={{ margin: '0.25rem 0 0 0' }}>{pharmacistSelectedOrder.phone}</p>
+                </div>
+              </div>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <strong>Order Details & Delivery Specs:</strong>
+                <p style={{ margin: '0.25rem 0 0 0', background: 'rgba(255,255,255,0.08)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.9rem' }}>
+                  {pharmacistSelectedOrder.message}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <strong>Current Order Status: </strong>
+                <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', backgroundColor: 'rgba(234, 179, 8, 0.15)', color: '#854d0e' }}>
+                  {pharmacistSelectedOrder.status || 'Pending Review'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    const updated = inquiries.map(i => i.id === pharmacistSelectedOrder.id ? { ...i, status: 'Processing & Packaging' } : i);
+                    setInquiries(updated);
+                    setPharmacistSelectedOrder(null);
+                  }}
+                >
+                  Process Order
+                </button>
+                <button 
+                  className="btn btn-accent" 
+                  onClick={() => {
+                    const updated = inquiries.map(i => i.id === pharmacistSelectedOrder.id ? { ...i, status: 'Awaiting Dispatch' } : i);
+                    setInquiries(updated);
+                    setPharmacistSelectedOrder(null);
+                  }}
+                >
+                  Send to Logistics
+                </button>
+                <button 
+                  className="btn btn-outline" 
+                  onClick={() => {
+                    const updated = inquiries.map(i => i.id === pharmacistSelectedOrder.id ? { ...i, status: 'Cancelled' } : i);
+                    setInquiries(updated);
+                    setPharmacistSelectedOrder(null);
+                  }}
+                  style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                >
+                  Cancel Order
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pharmacist Dispense Presc Modal */}
+      {pharmacistSelectedPrescription && (
+        <div className="modal-backdrop" onClick={() => setPharmacistSelectedPrescription(null)}>
+          <div className="modal-content glassmorphic" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <h3>Generate Dispense Order</h3>
+              <button className="close-btn" onClick={() => setPharmacistSelectedPrescription(null)}>×</button>
+            </div>
+            <form onSubmit={handleCreatePrescOrder} style={{ padding: '1rem 0' }}>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', borderRadius: '6px' }}>
+                <strong>Prescription to Dispense:</strong>
+                <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', fontSize: '0.9rem' }}>{pharmacistSelectedPrescription.prescription}</p>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                  Patient: {pharmacistSelectedPrescription.patientName} | Doctor: {pharmacistSelectedPrescription.doctor}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Shipping / Delivery Address *</label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="Street Address, City, State"
+                  value={prescOrderForm.address}
+                  onChange={(e) => setPrescOrderForm({ ...prescOrderForm, address: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Dispensing Notes & Instructions</label>
+                <textarea 
+                  rows="2"
+                  placeholder="Dosage instructions, substitute details..."
+                  value={prescOrderForm.notes}
+                  onChange={(e) => setPrescOrderForm({ ...prescOrderForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Total Price (₦) *</label>
+                <input 
+                  type="number" 
+                  required
+                  value={prescOrderForm.cost}
+                  onChange={(e) => setPrescOrderForm({ ...prescOrderForm, cost: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                <button type="submit" className="btn btn-accent">Generate Dispatch Order</button>
+                <button type="button" className="btn btn-outline" onClick={() => setPharmacistSelectedPrescription(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lab Enter Results Modal */}
+      {labSelectedRequest && (
+        <div className="modal-backdrop" onClick={() => setLabSelectedRequest(null)}>
+          <div className="modal-content glassmorphic" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <h3>Upload Diagnostics Results: {labSelectedRequest.id}</h3>
+              <button className="close-btn" onClick={() => setLabSelectedRequest(null)}>×</button>
+            </div>
+            <form onSubmit={handleSaveLabResults} style={{ padding: '1rem 0' }}>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', borderRadius: '6px' }}>
+                <strong>Patient:</strong> {labSelectedRequest.patientName} <br />
+                <strong>Tests Requested:</strong> {labSelectedRequest.symptoms}
+              </div>
+
+              <div className="form-group">
+                <label>Laboratory Findings & Report Findings *</label>
+                <textarea 
+                  rows="5"
+                  required
+                  placeholder="Enter detailed clinical findings, blood values, ranges..."
+                  value={labResultsText}
+                  onChange={(e) => setLabResultsText(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                <button type="submit" className="btn btn-primary">Complete Test & Upload</button>
+                <button type="button" className="btn btn-outline" onClick={() => setLabSelectedRequest(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Logistics Detail & Issues Modal */}
+      {logisticsSelectedShipment && (
+        <div className="modal-backdrop" onClick={() => setLogisticsSelectedShipment(null)}>
+          <div className="modal-content glassmorphic" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <h3>Delivery details: {logisticsSelectedShipment.id}</h3>
+              <button className="close-btn" onClick={() => setLogisticsSelectedShipment(null)}>×</button>
+            </div>
+            <div style={{ padding: '1rem 0' }}>
+              <p><strong>Customer Name:</strong> {logisticsSelectedShipment.name}</p>
+              <p><strong>Phone:</strong> {logisticsSelectedShipment.phone}</p>
+              <p style={{ background: 'rgba(255,255,255,0.06)', padding: '0.75rem', borderRadius: '6px' }}>
+                <strong>Logistics details:</strong> <br />
+                {logisticsSelectedShipment.message}
+              </p>
+
+              <form onSubmit={handleSaveDeliveryIssue} style={{ marginTop: '1.5rem' }}>
+                <div className="form-group">
+                  <label>Log Delivery Issue or Custom Alert Note</label>
+                  <textarea 
+                    rows="2"
+                    required
+                    placeholder="e.g. Recipient phone switched off, gates locked..."
+                    value={deliveryIssueText}
+                    onChange={(e) => setDeliveryIssueText(e.target.value)}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                  <button type="submit" className="btn btn-outline" style={{ color: '#f59e0b', borderColor: '#f59e0b' }}>Log Logistics Issue</button>
+                  <button type="button" className="btn btn-outline" onClick={() => setLogisticsSelectedShipment(null)}>Close</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

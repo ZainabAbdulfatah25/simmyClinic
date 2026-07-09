@@ -965,6 +965,51 @@ textarea {
   resize: vertical;
 }
 
+/* Input with Icon & Password Toggle styles */
+.input-with-icon {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  font-size: 1rem;
+  z-index: 5;
+}
+
+.input-with-icon input,
+.input-with-icon select {
+  padding-left: 2.75rem !important;
+}
+
+.pw-toggle-btn {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  z-index: 5;
+}
+
+.pw-toggle-btn:hover {
+  color: var(--color-indigo);
+}
+
 /* Contact box styling */
 .contact-details-box {
   padding: 2rem;
@@ -2416,16 +2461,21 @@ textarea {
 
 .login-tab-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   background: transparent;
   border: none;
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 0.65rem 0.5rem;
+  padding: 0.55rem 0.25rem;
   border-radius: var(--radius-sm);
   color: var(--color-indigo);
   cursor: pointer;
   transition: var(--transition-smooth);
+  white-space: nowrap;
 }
 
 .login-tab-btn.active {
@@ -3489,5 +3539,89 @@ input[type="checkbox"] {
 
   .testimonials-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --- 6-Role Portal Login Tabs Grid --- */
+.login-tabs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  background: rgba(24, 43, 73, 0.08);
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 480px) {
+  .login-tabs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --- Dashboard layout with side menu --- */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  height: fit-content;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-main);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.sidebar-link i {
+  font-size: 1rem;
+  color: var(--color-indigo);
+  width: 20px;
+}
+
+.sidebar-link:hover {
+  background: rgba(24, 43, 73, 0.05);
+  color: var(--color-indigo);
+}
+
+.sidebar-link.active {
+  background: var(--color-indigo) !important;
+  color: #FFFFFF !important;
+}
+
+.sidebar-link.active i {
+  color: #FFFFFF !important;
+}
+
+.dashboard-workspace {
+  padding: 1.75rem;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
   }
 }
