@@ -15,6 +15,19 @@ const ALL_SERVICES = [
   "Physical Consultation"
 ];
 
+const CLINIC_DRUG_STOCK = [
+  { id: 'dg-1', name: 'Paracetamol Syrup 125mg/5ml', price: 1200, category: 'Analgesics' },
+  { id: 'dg-2', name: 'Ibuprofen Tablets 400mg', price: 1500, category: 'Analgesics' },
+  { id: 'dg-3', name: 'Amoxicillin Capsules 500mg', price: 3500, category: 'Antibiotics' },
+  { id: 'dg-4', name: 'Azithromycin Tablets 500mg', price: 5000, category: 'Antibiotics' },
+  { id: 'dg-5', name: 'Ciprofloxacin Tablets 500mg', price: 4200, category: 'Antibiotics' },
+  { id: 'dg-6', name: 'Artemether + Lumefantrine (ACT) Antimalarial', price: 2500, category: 'Antimalarials' },
+  { id: 'dg-7', name: 'Vitamin C Syrup & B-Complex', price: 1000, category: 'Supplements' },
+  { id: 'dg-8', name: 'Multivitamin Capsules (30 Days Pack)', price: 2800, category: 'Supplements' },
+  { id: 'dg-9', name: 'Cetirizine Allergy Tablets 10mg', price: 1800, category: 'Antihistamines' },
+  { id: 'dg-10', name: 'Cough Expectoral Syrup', price: 2200, category: 'Respiratory' }
+];
+
 const getSpecialtyTitle = (specialty) => {
   if (!specialty) return '';
   const mapping = {
@@ -260,6 +273,10 @@ export default function App() {
     return data ? JSON.parse(data) : null;
   });
 
+  const myDoctorAppointments = loggedInDoctor 
+    ? appointments.filter(apt => apt.doctorId === loggedInDoctor.id || apt.doctor === loggedInDoctor.name)
+    : [];
+
   // --- UI state ---
   const [loginTab, setLoginTab] = useState('patient'); // 'patient' | 'doctor' | 'admin'
   const [isPatientRegistering, setIsPatientRegistering] = useState(false);
@@ -425,7 +442,13 @@ export default function App() {
 
   const [pharmacistSelectedOrder, setPharmacistSelectedOrder] = useState(null);
   const [pharmacistSelectedPrescription, setPharmacistSelectedPrescription] = useState(null);
-  const [prescOrderForm, setPrescOrderForm] = useState({ address: '', notes: '', cost: '3000' });
+  const [prescOrderForm, setPrescOrderForm] = useState({ address: '', notes: '', cost: '0' });
+  const [selectedDrugs, setSelectedDrugs] = useState([]);
+  
+  // Route Map Tracking & Simulation States
+  const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
+  const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
+  const [isMapSimulating, setIsMapSimulating] = useState(false);
   const [labSelectedRequest, setLabSelectedRequest] = useState(null);
   const [labResultsText, setLabResultsText] = useState('');
   const [logisticsSelectedShipment, setLogisticsSelectedShipment] = useState(null);
@@ -440,6 +463,25 @@ export default function App() {
     vehicleType: 'Motorbike',
     dispatchArea: ''
   });
+
+  // Live Route Map Simulation progress timer
+  useEffect(() => {
+    let interval = null;
+    if (isMapSimulating) {
+      interval = setInterval(() => {
+        setMapSimulationProgress(prev => {
+          if (prev >= 100) {
+            setIsMapSimulating(false);
+            return 100;
+          }
+          return prev + 5;
+        });
+      }, 500);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isMapSimulating]);
 
   // Simulated Real-Time Logistics Tracking progress
   useEffect(() => {
@@ -794,18 +836,22 @@ export default function App() {
     e.preventDefault();
     if (!pharmacistSelectedPrescription) return;
     const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+    const drugsList = selectedDrugs.length > 0 
+      ? selectedDrugs.map(d => `${d.name} (₦${d.price.toLocaleString()})`).join(', ') 
+      : 'None';
     const newOrder = {
       id: orderId,
       name: pharmacistSelectedPrescription.patientName,
       email: pharmacistSelectedPrescription.patientEmail || `${pharmacistSelectedPrescription.patientName.toLowerCase().replace(/\s+/g, '')}@example.com`,
       phone: pharmacistSelectedPrescription.phone || '08000000000',
       date: new Date().toLocaleDateString('en-CA'),
-      message: `Medication Dispensed: ${pharmacistSelectedPrescription.prescription}. Shipping Address: [${prescOrderForm.address}]. Rx Notes: [${prescOrderForm.notes}]. Cost: ₦${prescOrderForm.cost}`,
+      message: `Pharmacy Purchase Order: [Dispensing Doctor Rx: ${pharmacistSelectedPrescription.prescription}]. Selected Stock Drugs: [${drugsList}]. Shipping Address: [${prescOrderForm.address}]. Rx Notes: [${prescOrderForm.notes}]. Total Cost: ₦${prescOrderForm.cost}`,
       status: 'Awaiting Dispatch',
       read: false
     };
     setInquiries([newOrder, ...inquiries]);
     setPharmacistSelectedPrescription(null);
+    setSelectedDrugs([]);
   };
 
   const handleSaveLabResults = (e) => {
@@ -1499,7 +1545,13 @@ export default function App() {
     let total = "N/A";
     
     if (msg.includes('Pharmacy Purchase Order: [')) {
-      items = msg.split('Pharmacy Purchase Order: [')[1].split(']. Shipping Address:')[0] || items;
+      items = msg.split('Pharmacy Purchase Order: [')[1].split(']. Selected Stock Drugs:')[0] || items;
+    }
+    if (msg.includes('Selected Stock Drugs: [')) {
+      const selected = msg.split('Selected Stock Drugs: [')[1].split(']. Shipping Address:')[0];
+      if (selected && selected !== 'None') {
+        items = `${items} + [Stock: ${selected}]`;
+      }
     }
     if (msg.includes('Shipping Address: [')) {
       address = msg.split('Shipping Address: [')[1].split(']. Rx Notes')[0] || address;
@@ -1528,6 +1580,25 @@ export default function App() {
       instructions = symptoms.split('Patient Instructions: ')[1] || instructions;
     }
     return { tests, address, instructions };
+  };
+
+  const getTripCoords = (tripId) => {
+    if (!tripId) return { x: 250, y: 150 };
+    let hash = 0;
+    for (let i = 0; i < tripId.length; i++) {
+      hash = tripId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const x = 80 + Math.abs(hash % 340); // 80 to 420
+    const y = 80 + Math.abs((hash >> 2) % 200); // 80 to 280
+    return { x, y };
+  };
+
+  const getInterpolatedCoords = (progress, dest) => {
+    const startX = 250;
+    const startY = 150;
+    const currentX = startX + (dest.x - startX) * (progress / 100);
+    const currentY = startY + (dest.y - startY) * (progress / 100);
+    return { x: currentX, y: currentY };
   };
 
   return (
@@ -1592,7 +1663,7 @@ export default function App() {
                   <span>Our Priority</span>
                 </h1>
                 <p className="hero-subtitle">
-                  Simmycare is an online consultation clinic where you can contact <em>any category</em> of medical professional online <em>without any stress</em>. We also have physical doctors active in Abuja, Kaduna, Kano, Bauchi, and Gombe.
+                  SimmyCare connects you directly with MDCN-certified specialists, general practitioners, and laboratory consultants. Access on-demand virtual sessions or book physical visits and home healthcare across Abuja, Kaduna, Kano, Bauchi, and Gombe.
                 </p>
                 <div className="hero-ctas">
                   <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Consultation</button>
@@ -1694,8 +1765,8 @@ export default function App() {
                   <div className="benefit-item">
                     <div className="benefit-icon"><i className="fa-regular fa-clock"></i></div>
                     <div className="benefit-text">
-                      <strong>Saves Time & Stress</strong>
-                      <span>No queues, no waiting rooms</span>
+                      <strong>Rapid Care Cycle</strong>
+                      <span>Skip wait times with scheduled or direct-dial consultations</span>
                     </div>
                   </div>
                   <div className="benefit-item">
@@ -1738,7 +1809,7 @@ export default function App() {
               <div className="health-tips-card">
                 <div className="health-tips-header">
                   <h3>Daily Health Tips</h3>
-                  <p>We share daily health tips to help you live a healthier, happier life.</p>
+                  <p>Curated clinical insights, wellness guidance, and preventative tips compiled by our medical board.</p>
                 </div>
                 <div className="health-tips-list">
                   <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Nutrition Tips</div>
@@ -1760,7 +1831,7 @@ export default function App() {
                 <div className="service-card glassmorphic">
                   <div className="service-icon"><i className="fa-solid fa-laptop-medical"></i></div>
                   <h3>Online Consultation</h3>
-                  <p>Contact and consult any category of medical professional online without stress from anywhere.</p>
+                  <p>Consult MDCN-licensed general doctors and specialized consultants via secure video or voice links.</p>
                   <a href="#service-online-consultation" className="service-link" onClick={(e) => { e.preventDefault(); navigateTo('service-online-consultation'); }}>
                     Book Appointment <i className="fa-solid fa-arrow-right-long"></i>
                   </a>
@@ -1803,27 +1874,27 @@ export default function App() {
             {/* How It Works - Steps Section */}
             <div className="how-it-works-section">
               <div className="section-header">
-                <h2>Healthcare in 3 simple steps</h2>
-                <p>From symptom to solution in minutes - no queues, no travel.</p>
+                <h2>Your Pathway to Wellness</h2>
+                <p>Navigate from initial consultation to diagnostics and prescription delivery in hours, not days.</p>
               </div>
               <div className="steps-grid">
                 <div className="step-card glassmorphic">
                   <div className="step-icon"><i className="fa-solid fa-heart-pulse"></i></div>
                   <span className="step-label">STEP 1</span>
-                  <h3>Create your account</h3>
-                  <p>Sign up in under a minute and complete your health profile.</p>
+                  <h3>Set Up Your Health Record</h3>
+                  <p>Register securely and build a comprehensive medical profile for seamless doctor handovers.</p>
                 </div>
                 <div className="step-card glassmorphic">
                   <div className="step-icon"><i className="fa-solid fa-stethoscope"></i></div>
                   <span className="step-label">STEP 2</span>
-                  <h3>Book a verified doctor</h3>
-                  <p>Browse specialists across Nigeria and pick a time that suits you.</p>
+                  <h3>Schedule with a Specialist</h3>
+                  <p>Match with accredited clinicians based on therapeutic specialty, availability, or location.</p>
                 </div>
                 <div className="step-card glassmorphic">
                   <div className="step-icon"><i className="fa-solid fa-video"></i></div>
                   <span className="step-label">STEP 3</span>
-                  <h3>Consult from anywhere</h3>
-                  <p>Join a secure video or chat consultation and get prescriptions instantly.</p>
+                  <h3>Receive Integrated Care</h3>
+                  <p>Connect securely online, get detailed care plans, digital prescriptions, and logistics tracking.</p>
                 </div>
               </div>
             </div>
@@ -1879,8 +1950,8 @@ export default function App() {
 
             {/* CTA Banner */}
             <div className="cta-banner">
-              <h2>Ready to see a doctor today?</h2>
-              <p>Join thousands of Nigerians getting quality healthcare from the comfort of home.</p>
+              <h2>Take Control of Your Health Journey</h2>
+              <p>Join over 12,000 Nigerians receiving modern, accessible, and certified digital clinical care.</p>
               <button className="btn btn-cta-outline" onClick={() => navigateTo('booking')}>
                 Book Your Consultation <i className="fa-solid fa-arrow-right"></i>
               </button>
@@ -3098,9 +3169,9 @@ export default function App() {
                     </div>
                     <span className="login-logo-text">SimmyCare</span>
                   </div>
-                  <h1 className="login-left-title">Quality healthcare, wherever you are in Nigeria.</h1>
+                  <h1 className="login-left-title">Connecting Nigeria to World-Class Medical Expertise.</h1>
                   <p className="login-left-desc">
-                    Book appointments, consult doctors by video, get prescriptions, and have medicines delivered to your door.
+                    Schedule certified virtual consultations, order home lab tests, and track your pharmacy prescriptions directly to your door.
                   </p>
                   
                   <div className="login-stats-row">
@@ -5361,7 +5432,8 @@ export default function App() {
                                             className="btn btn-accent btn-sm" 
                                             onClick={() => {
                                               setPharmacistSelectedPrescription(apt);
-                                              setPrescOrderForm({ address: '', notes: `Dispensing Rx from doctor ${apt.doctor}`, cost: '3500' });
+                                              setPrescOrderForm({ address: '', notes: `Dispensing Rx from doctor ${apt.doctor}`, cost: '0' });
+                                              setSelectedDrugs([]);
                                             }}
                                           >
                                             <i className="fa-solid fa-truck-ramp-box"></i> Dispense & Ship
@@ -5857,15 +5929,15 @@ export default function App() {
                       <div>
                         <h3>Logistics Dispatch Control Room</h3>
                         <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-                          Real-time geographic status of active courier riders and delivery drone payloads across Abuja metropolitan sectors.
+                          Real-time geographic status of active courier riders and delivery drone payloads across Abuja metropolitan sectors. Select a task to simulate routing.
                         </p>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1.3fr', gap: '1.5rem' }}>
                           {/* Map container */}
                           <div style={{ background: '#0b1329', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem', position: 'relative', minHeight: '400px' }}>
                             <div style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10 }}>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
-                              SATELLITE TELEMETRY ACTIVE
+                              {isMapSimulating ? 'TELEMETRY SIMULATION ACTIVE' : 'SATELLITE TELEMETRY IDLE'}
                             </div>
 
                             <svg viewBox="0 0 500 350" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
@@ -5884,7 +5956,7 @@ export default function App() {
                               {/* SimmyCare Central Hub Pin */}
                               <g transform="translate(250, 150)">
                                 <circle r="8" fill="#10b981" />
-                                <circle r="16" fill="#10b981" fillOpacity="0.15" style={{ animation: 'ping 2s infinite' }} />
+                                <circle r="16" fill="#10b981" fillOpacity="0.15" />
                                 <text x="12" y="4" fill="#10b981" fontSize="9" fontWeight="bold">Central Hub</text>
                               </g>
 
@@ -5902,7 +5974,6 @@ export default function App() {
                                 const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
                                 const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
                                 const isBusy = !!(activeOrder || activeTrip);
-                                
                                 const isSelected = logisticsSelectedRider && logisticsSelectedRider.email === rider.email;
 
                                 return (
@@ -5923,96 +5994,333 @@ export default function App() {
                                   </g>
                                 );
                               })}
+
+                              {/* Draw Tracked Route line if active shipment is being simulated */}
+                              {(() => {
+                                if (!mapTrackedTripId) return null;
+                                const dest = getTripCoords(mapTrackedTripId);
+                                const progressCoords = getInterpolatedCoords(mapSimulationProgress, dest);
+                                return (
+                                  <g>
+                                    {/* Dotted path to client destination */}
+                                    <line 
+                                      x1="250" 
+                                      y1="150" 
+                                      x2={dest.x} 
+                                      y2={dest.y} 
+                                      stroke="var(--color-accent)" 
+                                      strokeWidth="2.5" 
+                                      strokeDasharray="5,5" 
+                                      opacity="0.8" 
+                                    />
+                                    {/* Destination target */}
+                                    <g transform={`translate(${dest.x}, ${dest.y})`}>
+                                      <circle r="8" fill="#ef4444" />
+                                      <circle r="16" fill="#ef4444" fillOpacity="0.2" />
+                                      <text x="12" y="4" fill="#ef4444" fontSize="9" fontWeight="bold">Destination</text>
+                                    </g>
+                                    {/* Live Moving Pin */}
+                                    <g transform={`translate(${progressCoords.x}, ${progressCoords.y})`}>
+                                      <circle r="8" fill="var(--color-accent)" />
+                                      <circle r="16" fill="var(--color-accent)" fillOpacity="0.4" />
+                                      <text x="-15" y="-12" fill="var(--color-accent)" fontSize="8" fontWeight="bold" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                                        📦 Transit ({mapSimulationProgress}%)
+                                      </text>
+                                    </g>
+                                  </g>
+                                );
+                              })()}
                             </svg>
                           </div>
 
-                          {/* Detail Panel */}
-                          <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            {logisticsSelectedRider ? (() => {
-                              const rider = logisticsSelectedRider;
-                              const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
-                              const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
+                          {/* Detail Panel & Simulation Controller */}
+                          <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'flex-start' }}>
+                            {/* Route Selector Dropdown */}
+                            <div>
+                              <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem' }}>Select Live Dispatch to Track</strong>
+                              <select 
+                                value={mapTrackedTripId || ''} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setMapTrackedTripId(val);
+                                  setMapSimulationProgress(0);
+                                  setIsMapSimulating(false);
+                                  if (val) {
+                                    const matchedOrder = inquiries.find(i => i.id === val);
+                                    const matchedTrip = appointments.find(a => a.id === val);
+                                    const rName = matchedOrder ? matchedOrder.assignedRider : (matchedTrip ? matchedTrip.assignedRider : null);
+                                    if (rName) {
+                                      const matchedRider = logistics.find(r => r.name === rName);
+                                      if (matchedRider) setLogisticsSelectedRider(matchedRider);
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.5rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                  background: 'rgba(0,0,0,0.3)',
+                                  color: '#fff',
+                                  fontSize: '0.85rem',
+                                  outline: 'none'
+                                }}
+                              >
+                                <option value="">-- No Active Route Selected --</option>
+                                {inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Out for Delivery' || inq.status === 'Awaiting Dispatch')).map(d => (
+                                  <option key={d.id} value={d.id}>📦 Pharmacy Order {d.id} ({d.status})</option>
+                                ))}
+                                {appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Sample Collected' || apt.status === 'Pending')).map(l => (
+                                  <option key={l.id} value={l.id}>🔬 Lab Sample Collection {l.id}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {mapTrackedTripId ? (() => {
+                              const activeOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
+                              const activeTrip = appointments.find(apt => apt.id === mapTrackedTripId);
                               
-                              let cargo = "Idle / No Active Payload";
-                              let route = "At dispatch station";
-                              let statusLabel = "Available";
-                              let statusColor = "#3b82f6";
-                              
+                              let clientName = "N/A";
+                              let phone = "N/A";
+                              let address = "Central Hub Area";
+                              let courier = "Unassigned";
+                              let cargoType = "General Medical Supply";
+
                               if (activeOrder) {
                                 const parsed = parseOrderMessage(activeOrder.message);
-                                cargo = `Cardiovascular Drugs (Rx: ${activeOrder.id})`;
-                                route = `Hub ➡️ ${parsed.address}`;
-                                statusLabel = "Delivering Order";
-                                statusColor = "#eab308";
+                                clientName = activeOrder.name;
+                                phone = activeOrder.phone;
+                                address = parsed.address;
+                                courier = activeOrder.assignedRider || 'Default Courier';
+                                cargoType = parsed.items;
                               } else if (activeTrip) {
                                 const parsed = parseLabRequest(activeTrip.symptoms);
-                                cargo = `Blood Diagnostics Pathology (Lab: ${activeTrip.id})`;
-                                route = `${parsed.address} ➡️ Lab Hub`;
-                                statusLabel = "Collecting Samples";
-                                statusColor = "#eab308";
+                                clientName = activeTrip.patientName;
+                                phone = activeTrip.phone;
+                                address = parsed.address;
+                                courier = activeTrip.assignedRider || 'Default Courier';
+                                cargoType = "Diagnostic Lab Specimen (Vials/Swabs)";
                               }
 
-                              const hashVal = rider.name.charCodeAt(0) + (rider.name.charCodeAt(1) || 0);
-                              const battery = (hashVal % 30) + 70;
-                              
                               return (
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                                      {rider.name.charAt(0).toUpperCase()}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                                  <div style={{ background: 'rgba(255,255,255,0.04)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}>TRACKING SIMULATION</strong>
+                                      <span style={{ fontSize: '0.75rem', color: isMapSimulating ? '#10b981' : '#eab308', fontWeight: 'bold' }}>
+                                        {isMapSimulating ? '● ON THE ROAD' : '● PAUSED'}
+                                      </span>
                                     </div>
-                                    <div>
-                                      <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{rider.name}</h4>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{rider.phone}</div>
+                                    
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                      <button 
+                                        type="button" 
+                                        className="btn btn-xs btn-primary"
+                                        onClick={() => setIsMapSimulating(true)}
+                                        disabled={isMapSimulating || mapSimulationProgress >= 100}
+                                        style={{ flex: 1, padding: '0.3rem', fontSize: '0.75rem' }}
+                                      >
+                                        <i className="fa-solid fa-play"></i> Start Track
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        className="btn btn-xs btn-outline"
+                                        onClick={() => setIsMapSimulating(false)}
+                                        disabled={!isMapSimulating}
+                                        style={{ flex: 1, padding: '0.3rem', fontSize: '0.75rem' }}
+                                      >
+                                        <i className="fa-solid fa-pause"></i> Pause
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        className="btn btn-xs btn-outline"
+                                        onClick={() => {
+                                          setIsMapSimulating(false);
+                                          setMapSimulationProgress(0);
+                                        }}
+                                        style={{ padding: '0.3rem', fontSize: '0.75rem' }}
+                                      >
+                                        <i className="fa-solid fa-rotate-left"></i>
+                                      </button>
                                     </div>
-                                    <span style={{ marginLeft: 'auto', display: 'inline-block', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', backgroundColor: `${statusColor}22`, color: statusColor }}>
-                                      {statusLabel}
-                                    </span>
+
+                                    {/* Route Progress Bar */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>
+                                      <span>Progress: {mapSimulationProgress}%</span>
+                                      <span>ETA: {Math.max(0, Math.ceil((100 - mapSimulationProgress) / 5))} mins</span>
+                                    </div>
+                                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                                      <div style={{ width: `${mapSimulationProgress}%`, height: '100%', background: 'var(--color-accent)', borderRadius: '3px' }}></div>
+                                    </div>
                                   </div>
 
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div>
-                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Vehicle & Fleet Type</strong>
-                                      <span style={{ fontSize: '0.85rem' }}>{rider.vehicleType} (Sector: {rider.dispatchArea || 'Wuse II Area'})</span>
+                                  {/* Route Checkpoints */}
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '8px' }}>
+                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'block' }}>Route Checkpoints</strong>
+                                    
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
+                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                      <span>Departed SimmyCare Central Depot</span>
                                     </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
+                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                      <span>Transiting Abuja Ring Expressway</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
+                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                      <span>Entering Destination Area Ward</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
+                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                      <span>Delivered & Handed Over to Client</span>
+                                    </div>
+                                  </div>
 
+                                  {/* Trip Telemetry Fields */}
+                                  <div style={{ fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     <div>
-                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Battery / Fuel Status</strong>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                                          <div style={{ width: `${battery}%`, height: '100%', background: battery > 80 ? '#16a34a' : '#eab308', borderRadius: '3px' }}></div>
-                                        </div>
-                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{battery}%</span>
-                                      </div>
+                                      <strong style={{ fontSize: '0.7rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block' }}>Recipient Client</strong>
+                                      <span>{clientName} ({phone})</span>
                                     </div>
+                                    <div>
+                                      <strong style={{ fontSize: '0.7rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block' }}>Destination Address</strong>
+                                      <span>{address}</span>
+                                    </div>
+                                    <div>
+                                      <strong style={{ fontSize: '0.7rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block' }}>Transit Courier</strong>
+                                      <span>{courier}</span>
+                                    </div>
+                                    <div>
+                                      <strong style={{ fontSize: '0.7rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block' }}>Payload Cargo</strong>
+                                      <span>{cargoType}</span>
+                                    </div>
+                                  </div>
 
-                                    <div>
-                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Active Payload Cargo</strong>
-                                      <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{cargo}</span>
-                                    </div>
-
-                                    <div>
-                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2' }}>Current Route Waypoints</strong>
-                                      <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{route}</span>
-                                    </div>
+                                  {/* Manual actions */}
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                    {mapSimulationProgress < 100 ? (
+                                      <button 
+                                        type="button" 
+                                        className="btn btn-accent btn-sm" 
+                                        style={{ flex: 1 }}
+                                        onClick={() => {
+                                          if (mapTrackedTripId.startsWith('ORD-')) {
+                                            const updated = inquiries.map(i => i.id === mapTrackedTripId ? { ...i, status: 'Delivered' } : i);
+                                            setInquiries(updated);
+                                          } else {
+                                            const updated = appointments.map(a => a.id === mapTrackedTripId ? { ...a, status: 'Completed' } : a);
+                                            setAppointments(updated);
+                                          }
+                                          setMapSimulationProgress(100);
+                                          setIsMapSimulating(false);
+                                          alert(`Delivery complete! Shipment ${mapTrackedTripId} marked as Delivered.`);
+                                        }}
+                                      >
+                                        <i className="fa-solid fa-clipboard-check"></i> Complete Delivery
+                                      </button>
+                                    ) : (
+                                      <button 
+                                        type="button" 
+                                        className="btn btn-outline btn-sm" 
+                                        style={{ flex: 1 }}
+                                        onClick={() => {
+                                          setMapTrackedTripId(null);
+                                          setMapSimulationProgress(0);
+                                        }}
+                                      >
+                                        Clear Active Track
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               );
                             })() : (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '250px', color: 'var(--color-text-muted)' }}>
-                                <i className="fa-solid fa-map-location-dot" style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: '0.3' }}></i>
-                                <p style={{ textAlign: 'center', fontSize: '0.85rem' }}>Select a courier pin on the live Abuja map to inspect telemetry, fuel level, cargo type, and routing path.</p>
-                              </div>
-                            )}
+                              <div>
+                                {logisticsSelectedRider ? (() => {
+                                  const rider = logisticsSelectedRider;
+                                  const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
+                                  const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
+                                  
+                                  let cargo = "Idle / No Active Payload";
+                                  let route = "At dispatch station";
+                                  let statusLabel = "Available";
+                                  let statusColor = "#3b82f6";
+                                  
+                                  if (activeOrder) {
+                                    const parsed = parseOrderMessage(activeOrder.message);
+                                    cargo = `Cardiovascular Drugs (Rx: ${activeOrder.id})`;
+                                    route = `Hub ➡️ ${parsed.address}`;
+                                    statusLabel = "Delivering Order";
+                                    statusColor = "#eab308";
+                                  } else if (activeTrip) {
+                                    const parsed = parseLabRequest(activeTrip.symptoms);
+                                    cargo = `Blood Diagnostics Pathology (Lab: ${activeTrip.id})`;
+                                    route = `${parsed.address} ➡️ Lab Hub`;
+                                    statusLabel = "Collecting Samples";
+                                    statusColor = "#eab308";
+                                  }
 
-                            {logisticsSelectedRider && (
-                              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                                <a href={`tel:${logisticsSelectedRider.phone}`} className="btn btn-outline btn-sm" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.35rem' }}>
-                                  <i className="fa-solid fa-phone"></i> Call Courier
-                                </a>
-                                <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => alert("Ping payload command sent to Rider device successfully!")}>
-                                  <i className="fa-solid fa-satellite-dish"></i> Ping Rider
-                                </button>
+                                  const hashVal = rider.name.charCodeAt(0) + (rider.name.charCodeAt(1) || 0);
+                                  const battery = (hashVal % 30) + 70;
+                                  
+                                  return (
+                                    <div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                                          {rider.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                          <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{rider.name}</h4>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{rider.phone}</div>
+                                        </div>
+                                        <span style={{ marginLeft: 'auto', display: 'inline-block', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', backgroundColor: `${statusColor}22`, color: statusColor }}>
+                                          {statusLabel}
+                                        </span>
+                                      </div>
+
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div>
+                                          <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>Vehicle & Fleet Type</strong>
+                                          <span style={{ fontSize: '0.85rem' }}>{rider.vehicleType} (Sector: {rider.dispatchArea || 'Wuse II Area'})</span>
+                                        </div>
+
+                                        <div>
+                                          <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>Battery / Fuel Status</strong>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                                              <div style={{ width: `${battery}%`, height: '100%', background: battery > 80 ? '#16a34a' : '#eab308', borderRadius: '3px' }}></div>
+                                            </div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{battery}%</span>
+                                          </div>
+                                        </div>
+
+                                        <div>
+                                          <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>Active Payload Cargo</strong>
+                                          <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{cargo}</span>
+                                        </div>
+
+                                        <div>
+                                          <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.2rem' }}>Current Route Waypoints</strong>
+                                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{route}</span>
+                                        </div>
+                                      </div>
+                                      
+                                      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', marginTop: '1.25rem', display: 'flex', gap: '0.5rem' }}>
+                                        <a href={`tel:${rider.phone}`} className="btn btn-outline btn-sm" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.35rem' }}>
+                                          <i className="fa-solid fa-phone"></i> Call Courier
+                                        </a>
+                                        <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => alert("Ping payload command sent to Rider device successfully!")}>
+                                          <i className="fa-solid fa-satellite-dish"></i> Ping Rider
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })() : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '250px', color: 'var(--color-text-muted)' }}>
+                                    <i className="fa-solid fa-map-location-dot" style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: '0.3' }}></i>
+                                    <p style={{ textAlign: 'center', fontSize: '0.85rem' }}>Select a courier pin or choose an active dispatch task from the dropdown to track its routing path live.</p>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -7045,7 +7353,7 @@ export default function App() {
               </div>
               <span className="logo-text">Simmy<span>Care</span></span>
             </a>
-            <p>Nigeria's trusted telehealth platform. Quality healthcare, wherever you are.</p>
+            <p>Nigeria's primary digital care network. Bridging the gap between patient care, diagnostics, and pharmaceutical logistics.</p>
             <div className="footer-social-icons">
               <a href="#" aria-label="Facebook"><i className="fa-brands fa-facebook-f"></i></a>
               <a href="#" aria-label="Twitter"><i className="fa-brands fa-x-twitter"></i></a>
@@ -7819,14 +8127,68 @@ export default function App() {
               <h3>Generate Dispense Order</h3>
               <button className="close-btn" onClick={() => setPharmacistSelectedPrescription(null)}>×</button>
             </div>
-            <form onSubmit={handleCreatePrescOrder} style={{ padding: '1rem 0' }}>
+            <form onSubmit={handleCreatePrescOrder} style={{ padding: '1rem 0', maxHeight: '75vh', overflowY: 'auto' }}>
               <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', borderRadius: '6px' }}>
                 <strong>Prescription to Dispense:</strong>
-                <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', fontSize: '0.9rem' }}>{pharmacistSelectedPrescription.prescription}</p>
+                <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--color-accent)' }}>{pharmacistSelectedPrescription.prescription}</p>
                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
                   Patient: {pharmacistSelectedPrescription.patientName} | Doctor: {pharmacistSelectedPrescription.doctor}
                 </div>
               </div>
+
+              {/* Drug inventory stock selector */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <strong style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>Inventory Stock Matcher (Tick to add):</strong>
+                <div style={{ 
+                  maxHeight: '160px', 
+                  overflowY: 'auto', 
+                  background: 'rgba(0,0,0,0.2)', 
+                  padding: '0.75rem', 
+                  borderRadius: '6px',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem'
+                }}>
+                  {CLINIC_DRUG_STOCK.map(drug => {
+                    const isChecked = selectedDrugs.some(d => d.id === drug.id);
+                    return (
+                      <label key={drug.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', userSelect: 'none' }}>
+                        <input 
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            let updated;
+                            if (e.target.checked) {
+                              updated = [...selectedDrugs, drug];
+                            } else {
+                              updated = selectedDrugs.filter(d => d.id !== drug.id);
+                            }
+                            setSelectedDrugs(updated);
+                            // Auto sum pricing
+                            const total = updated.reduce((sum, d) => sum + d.price, 0);
+                            setPrescOrderForm(prev => ({ ...prev, cost: total.toString() }));
+                          }}
+                          style={{ width: 'auto', margin: 0, cursor: 'pointer' }}
+                        />
+                        <span style={{ color: isChecked ? 'var(--color-accent)' : 'inherit' }}>
+                          {drug.name} <strong style={{ color: 'rgba(255,255,255,0.6)' }}>(₦{drug.price.toLocaleString()})</strong>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selection Summary */}
+              {selectedDrugs.length > 0 && (
+                <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'rgba(56, 189, 248, 0.08)', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.8rem' }}>
+                  <strong>Selected Package Contents:</strong>
+                  <div style={{ color: 'rgba(255,255,255,0.85)', marginTop: '0.2rem' }}>
+                    {selectedDrugs.map(d => d.name).join(', ')}
+                  </div>
+                </div>
+              )}
 
               <div className="form-group">
                 <label>Shipping / Delivery Address *</label>
@@ -7850,7 +8212,7 @@ export default function App() {
               </div>
 
               <div className="form-group">
-                <label>Total Price (₦) *</label>
+                <label>Finalize Amount (₦) *</label>
                 <input 
                   type="number" 
                   required
@@ -7860,7 +8222,7 @@ export default function App() {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="submit" className="btn btn-accent">Generate Dispatch Order</button>
+                <button type="submit" className="btn btn-accent">Dispatch Package</button>
                 <button type="button" className="btn btn-outline" onClick={() => setPharmacistSelectedPrescription(null)}>Cancel</button>
               </div>
             </form>
