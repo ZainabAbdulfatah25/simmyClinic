@@ -50,7 +50,9 @@ const INITIAL_DOCTORS = [
     license: "",
     consultationRate: "₦10,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"]
+    services: ["Online Consultation", "Physical Consultation"],
+    verified: true,
+    level: "Senior Consultant"
   },
   { 
     id: 2, 
@@ -68,7 +70,9 @@ const INITIAL_DOCTORS = [
     license: "",
     consultationRate: "₦5,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Mobile Laboratory"]
+    services: ["Online Consultation", "Mobile Laboratory"],
+    verified: true,
+    level: "Consultant"
   },
   {
     id: 3,
@@ -86,7 +90,9 @@ const INITIAL_DOCTORS = [
     license: "",
     consultationRate: "₦10,000 - ₦20,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"]
+    services: ["Online Consultation", "Physical Consultation"],
+    verified: true,
+    level: "Senior Consultant"
   },
   {
     id: 4,
@@ -104,7 +110,9 @@ const INITIAL_DOCTORS = [
     license: "",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"]
+    services: ["Online Consultation", "Physical Consultation"],
+    verified: true,
+    level: "Consultant"
   },
   {
     id: 5,
@@ -122,7 +130,9 @@ const INITIAL_DOCTORS = [
     license: "",
     consultationRate: "Free",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"]
+    services: ["Online Consultation", "Physical Consultation"],
+    verified: true,
+    level: "Junior Doctor"
   }
 ];
 
@@ -268,7 +278,8 @@ export default function App() {
     facilityName: '',
     labLicense: '',
     vehicleType: 'Motorbike',
-    dispatchArea: ''
+    dispatchArea: '',
+    level: 'Junior Doctor'
   });
   const [doctorLoginForm, setDoctorLoginForm] = useState({ email: '', password: '' });
   const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
@@ -336,7 +347,9 @@ export default function App() {
     license: '',
     consultationRate: '',
     consultationDuration: '',
-    services: []
+    services: [],
+    level: 'Junior Doctor',
+    verified: false
   });
   const [editingDoctorId, setEditingDoctorId] = useState(null);
   const [doctorNavView, setDoctorNavView] = useState('backlog'); // 'backlog' | 'profile'
@@ -356,7 +369,9 @@ export default function App() {
     license: '',
     consultationRate: '',
     consultationDuration: '',
-    services: []
+    services: [],
+    level: 'Junior Doctor',
+    verified: false
   });
   const [previewBookingDoc, setPreviewBookingDoc] = useState(null);
   const [editingPatientId, setEditingPatientId] = useState(null);
@@ -595,7 +610,8 @@ export default function App() {
         facilityName: '',
         labLicense: '',
         vehicleType: 'Motorbike',
-        dispatchArea: ''
+        dispatchArea: '',
+        level: 'Junior Doctor'
       });
       setLoginError('');
     };
@@ -629,7 +645,7 @@ export default function App() {
         const newDoc = {
           id: doctors.length + 1,
           email,
-          name: patientLoginForm.name || "Dr. Staff Member",
+          name: patientLoginForm.name.startsWith("Dr. ") ? patientLoginForm.name : `Dr. ${patientLoginForm.name}`,
           phone: patientLoginForm.phone || "",
           password: password,
           specialty: patientLoginForm.specialty || "General Medicine",
@@ -641,7 +657,10 @@ export default function App() {
           license: "",
           consultationRate: "₦5,000",
           consultationDuration: "30 mins",
-          services: ["Online Consultation"]
+          services: ["Online Consultation"],
+          verified: false,
+          active: false,
+          level: patientLoginForm.level || "Junior Doctor"
         };
         setDoctors([...doctors, newDoc]);
         setAuthRole('doctor');
@@ -887,10 +906,50 @@ export default function App() {
   // --- Booking & Contact Handlers ---
   const handleBookingSubmit = (e) => {
     e.preventDefault();
-    const selectedDoc = doctors.find(d => d.id === parseInt(bookingFormData.doctorId));
+    let selectedDoc = doctors.find(d => d.id === parseInt(bookingFormData.doctorId));
     if (!selectedDoc) {
       alert("Please select a doctor.");
       return;
+    }
+
+    let routed = false;
+    let originalDocName = selectedDoc.name;
+
+    // Check if selected doctor is unavailable or not verified
+    if (selectedDoc.active === false || selectedDoc.verified === false) {
+      // Find active, verified candidates in same specialty
+      const candidates = doctors.filter(d => d.specialty === selectedDoc.specialty && d.active !== false && d.verified !== false && d.id !== selectedDoc.id);
+      if (candidates.length > 0) {
+        // Choose candidate with lowest active workload
+        const candidateWorkloads = candidates.map(doc => {
+          const activeCount = appointments.filter(a => 
+            (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) && 
+            (a.status === 'Pending' || a.status === 'Approved')
+          ).length;
+          return { doc, activeCount };
+        });
+        candidateWorkloads.sort((a, b) => a.activeCount - b.activeCount);
+        selectedDoc = candidateWorkloads[0].doc;
+        routed = true;
+      } else {
+        // Fallback to ANY active, verified doctor
+        const generalCandidates = doctors.filter(d => d.active !== false && d.verified !== false && d.id !== selectedDoc.id);
+        if (generalCandidates.length > 0) {
+          const candidateWorkloads = generalCandidates.map(doc => {
+            const activeCount = appointments.filter(a => 
+              (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) && 
+              (a.status === 'Pending' || a.status === 'Approved')
+            ).length;
+            return { doc, activeCount };
+          });
+          candidateWorkloads.sort((a, b) => a.activeCount - b.activeCount);
+          selectedDoc = candidateWorkloads[0].doc;
+          routed = true;
+        } else {
+          alert("We are sorry, but all specialists in this department are currently offline or pending verification. Please try again later.");
+          return;
+        }
+      }
     }
 
     const ticketNumber = "APT-" + Math.floor(1000 + Math.random() * 9000);
@@ -900,6 +959,7 @@ export default function App() {
       phone: bookingFormData.phone,
       email: bookingFormData.email.toLowerCase(),
       doctor: selectedDoc.name,
+      doctorId: selectedDoc.id.toString(),
       date: bookingFormData.date,
       time: bookingFormData.time,
       symptoms: bookingFormData.symptoms || "None provided",
@@ -920,8 +980,10 @@ export default function App() {
     });
 
     setSuccessModal({
-      title: "Booking Submitted Successfully",
-      message: `Your appointment request with ${selectedDoc.name} has been received and is currently under review.`,
+      title: routed ? "Appointment Auto-Routed" : "Booking Submitted Successfully",
+      message: routed 
+        ? `Your requested specialist (${originalDocName}) is currently offline or unverified. Your appointment has been automatically routed to Dr. ${selectedDoc.name} (${getSpecialtyTitle(selectedDoc.specialty)} - ${selectedDoc.level || 'Specialist'}) to ensure you receive immediate clinical care.`
+        : `Your appointment request with ${selectedDoc.name} has been received and is currently under review.`,
       ticket: ticketNumber
     });
   };
@@ -1023,6 +1085,18 @@ export default function App() {
     setDoctors(doctors.map(d => 
       d.id === docId ? { ...d, active: d.active === false ? true : false } : d
     ));
+    if (loggedInDoctor && loggedInDoctor.id === docId) {
+      setLoggedInDoctor(prev => prev ? { ...prev, active: prev.active === false ? true : false } : null);
+    }
+  };
+
+  const handleToggleDoctorVerify = (docId) => {
+    setDoctors(doctors.map(d => 
+      d.id === docId ? { ...d, verified: d.verified === true ? false : true } : d
+    ));
+    if (loggedInDoctor && loggedInDoctor.id === docId) {
+      setLoggedInDoctor(prev => prev ? { ...prev, verified: prev.verified === true ? false : true } : null);
+    }
   };
 
   const handleSaveAdminSelf = (e) => {
@@ -2630,8 +2704,15 @@ export default function App() {
                           </div>
                           
                           <div className="doctor-info">
-                            <h3>{doc.name}</h3>
-                            <div className="doctor-specialty">{getSpecialtyTitle(doc.specialty)}</div>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              {doc.name}
+                              {doc.verified !== false && (
+                                <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Doctor"></i>
+                              )}
+                            </h3>
+                            <div className="doctor-specialty">
+                              <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
+                            </div>
                             <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>{doc.bio}</p>
                             <div className="doctor-details" style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
                               <span style={{ fontSize: '0.75rem' }}><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
@@ -2755,8 +2836,15 @@ export default function App() {
                       </div>
                       
                       <div className="doctor-info">
-                        <h3>{doc.name}</h3>
-                        <div className="doctor-specialty">{getSpecialtyTitle(doc.specialty)}</div>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          {doc.name}
+                          {doc.verified !== false && (
+                            <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Doctor"></i>
+                          )}
+                        </h3>
+                        <div className="doctor-specialty">
+                          <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
+                        </div>
                         <div className="doctor-details">
                           <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
                           {doc.consultationRate && (
@@ -3099,40 +3187,61 @@ export default function App() {
 
                         {/* Dynamic Role-specific details */}
                         {registerRole === 'doctor' && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
-                            <div className="form-group" style={{ marginBottom: 0 }}>
-                              <label>Specialty</label>
-                              <div className="input-with-icon">
-                                <i className="fa-solid fa-stethoscope" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
-                                <select 
-                                  required 
-                                  value={patientLoginForm.specialty}
-                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, specialty: e.target.value })}
-                                  style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
-                                >
-                                  <option value="General Medicine">General Medicine</option>
-                                  <option value="Gynaecology">Gynaecology</option>
-                                  <option value="Pediatrics">Pediatrics</option>
-                                  <option value="Public Health">Public Health</option>
-                                  <option value="Cardiology">Cardiology</option>
-                                  <option value="Dermatology">Dermatology</option>
-                                </select>
+                          <>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>Specialty</label>
+                                <div className="input-with-icon">
+                                  <i className="fa-solid fa-stethoscope" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
+                                  <select 
+                                    required 
+                                    value={patientLoginForm.specialty}
+                                    onChange={(e) => setPatientLoginForm({ ...patientLoginForm, specialty: e.target.value })}
+                                    style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
+                                  >
+                                    <option value="General Medicine">General Medicine</option>
+                                    <option value="Gynaecology">Gynaecology</option>
+                                    <option value="Pediatrics">Pediatrics</option>
+                                    <option value="Public Health">Public Health</option>
+                                    <option value="Cardiology">Cardiology</option>
+                                    <option value="Dermatology">Dermatology</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>MDCN License Number</label>
+                                <div className="input-with-icon">
+                                  <i className="fa-solid fa-id-card"></i>
+                                  <input 
+                                    type="text" 
+                                    required 
+                                    placeholder=""
+                                    value={patientLoginForm.regNo}
+                                    onChange={(e) => setPatientLoginForm({ ...patientLoginForm, regNo: e.target.value })}
+                                  />
+                                </div>
                               </div>
                             </div>
-                            <div className="form-group" style={{ marginBottom: 0 }}>
-                              <label>MDCN License Number</label>
-                              <div className="input-with-icon">
-                                <i className="fa-solid fa-id-card"></i>
-                                <input 
-                                  type="text" 
-                                  required 
-                                  placeholder=""
-                                  value={patientLoginForm.regNo}
-                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, regNo: e.target.value })}
-                                />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginBottom: '1rem' }} className="animate-fade">
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label>Professional Level / Role</label>
+                                <div className="input-with-icon">
+                                  <i className="fa-solid fa-award" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
+                                  <select 
+                                    required 
+                                    value={patientLoginForm.level || 'Junior Doctor'}
+                                    onChange={(e) => setPatientLoginForm({ ...patientLoginForm, level: e.target.value })}
+                                    style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
+                                  >
+                                    <option value="Junior Doctor">Junior Doctor</option>
+                                    <option value="General Practitioner">General Practitioner</option>
+                                    <option value="Consultant">Consultant / Specialist</option>
+                                    <option value="Senior Consultant">Senior Consultant / Specialist</option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </>
                         )}
 
                         {registerRole === 'pharmacist' && (
@@ -4413,17 +4522,76 @@ export default function App() {
                           clinicRoom: loggedInDoctor.clinicRoom || '',
                           license: loggedInDoctor.license || '',
                           consultationRate: loggedInDoctor.consultationRate || '',
-                          services: loggedInDoctor.services || []
+                          services: loggedInDoctor.services || [],
+                          level: loggedInDoctor.level || 'Junior Doctor',
+                          verified: loggedInDoctor.verified || false
                         });
                         setIsEditingDocSelf(false);
                       }}
                     >
                       <i className="fa-solid fa-user-doctor"></i> My Profile Settings
                     </button>
+
+                    <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 'auto' }}>
+                      <label style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>Availability Status</label>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: (loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? '#10B981' : '#9CA3AF', display: 'inline-block' }}></span>
+                          <strong>{(loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? 'Available' : 'Unavailable'}</strong>
+                        </span>
+                        <button 
+                          className={`btn ${(loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? 'btn-danger' : 'btn-success'} btn-xs`}
+                          onClick={() => {
+                            if (loggedInDoctor.verified === false) {
+                              alert("⚠️ Your profile is currently unverified. You cannot set your status to Available until an administrator verifies your MDCN registration code.");
+                              return;
+                            }
+                            const newActiveState = loggedInDoctor.active === false ? true : false;
+                            const updatedDoc = { ...loggedInDoctor, active: newActiveState };
+                            setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
+                            setLoggedInDoctor(updatedDoc);
+                          }}
+                          style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                        >
+                          {(loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? 'Go Offline' : 'Go Online'}
+                        </button>
+                      </div>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '0.4rem', lineHeight: '1.3' }}>
+                        {(loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? 'You are visible and receiving consultations.' : 'Appointments will auto-route to other available specialists.'}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Console Workspace */}
                   <div className="dashboard-workspace glassmorphic">
+                    {loggedInDoctor.verified === false && (
+                      <div className="alert-message warning-alert glassmorphic animate-fade" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '1.75rem', color: '#EF4444' }}>
+                          <i className="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, color: '#EF4444', fontSize: '0.95rem', fontWeight: '700' }}>Account Verification Pending</h4>
+                          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                            Your MDCN registration credentials and license are currently being audited by our administration team. You will not receive patient bookings or appear in the public directory until verification is complete.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {loggedInDoctor.verified !== false && loggedInDoctor.active === false && (
+                      <div className="alert-message warning-alert glassmorphic animate-fade" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '1.5rem', color: '#F59E0B' }}>
+                          <i className="fa-solid fa-circle-exclamation"></i>
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, color: '#F59E0B', fontSize: '0.9rem', fontWeight: '700' }}>You Are Offline</h4>
+                          <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.3' }}>
+                            You have set your availability status to Offline. Incoming patients for your specialty will be automatically routed to other available specialists. Click "Go Online" in the sidebar to resume consultations.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {doctorNavView === 'backlog' && (
                       <div>
                         <h3>My Consultation Backlog ({myDoctorAppointments.length})</h3>
@@ -4821,6 +4989,15 @@ export default function App() {
                                   required
                                   value={docSelfData.regNo}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, regNo: e.target.value })}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Professional Level (Admin Managed)</label>
+                                <input 
+                                  type="text" 
+                                  disabled
+                                  value={docSelfData.level || 'Junior Doctor'} 
+                                  style={{ background: 'rgba(28,43,73,0.08)', cursor: 'not-allowed', color: 'var(--color-text-muted)' }}
                                 />
                               </div>
                             </div>
@@ -6227,6 +6404,18 @@ export default function App() {
                                 <option value="Pharmacy">Pharmacy</option>
                               </select>
                             </div>
+                            <div className="form-group">
+                              <label>Professional Level</label>
+                              <select 
+                                value={newDoctorData.level || 'Junior Doctor'}
+                                onChange={(e) => setNewDoctorData({ ...newDoctorData, level: e.target.value })}
+                              >
+                                <option value="Junior Doctor">Junior Doctor</option>
+                                <option value="General Practitioner">General Practitioner</option>
+                                <option value="Consultant">Consultant</option>
+                                <option value="Senior Consultant">Senior Consultant</option>
+                              </select>
+                            </div>
                           </div>
                           
                           <div className="form-row">
@@ -6426,6 +6615,19 @@ export default function App() {
                                 )}
                               </div>
                             </div>
+                            
+                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem' }}>
+                              <input 
+                                type="checkbox"
+                                id="admin-verify-checkbox"
+                                checked={newDoctorData.verified === true}
+                                onChange={(e) => setNewDoctorData({ ...newDoctorData, verified: e.target.checked })}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                              />
+                              <label htmlFor="admin-verify-checkbox" style={{ margin: 0, fontWeight: '600', color: 'var(--color-indigo)', cursor: 'pointer' }}>
+                                Mark Profile as Audited & Verified (Award Verified Badge)
+                              </label>
+                            </div>
                           </div>
 
                           <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
@@ -6436,10 +6638,10 @@ export default function App() {
                                 className="btn btn-outline" 
                                 onClick={() => {
                                   setEditingDoctorId(null);
-                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', services: [] });
+                                  setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', services: [], level: 'Junior Doctor', verified: false });
                                 }}
                               >
-                                Cancel Edit
+                                  Cancel Edit
                               </button>
                             )}
                           </div>
@@ -6473,13 +6675,18 @@ export default function App() {
                                           </div>
                                         )}
                                         <div>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                                             <strong style={{ color: 'var(--color-indigo)' }}>{d.name}</strong>
+                                            {d.verified !== false ? (
+                                              <i className="fa-solid fa-circle-check" style={{ color: '#10B981', fontSize: '0.85rem' }} title="Verified by board"></i>
+                                            ) : (
+                                              <span style={{ fontSize: '0.65rem', background: 'rgba(239, 68, 68, 0.08)', color: '#EF4444', padding: '1px 5px', borderRadius: '4px', fontWeight: '600' }}>Unverified</span>
+                                            )}
                                             <span className={`status-badge ${d.active === false ? 'status-cancelled' : 'status-approved'}`} style={{ padding: '0.05rem 0.35rem', fontSize: '0.6rem', borderRadius: '4px' }}>
                                               {d.active === false ? 'Inactive' : 'Active'}
                                             </span>
                                           </div>
-                                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{d.regNo || 'N/A'}</span>
+                                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{d.regNo || 'N/A'} • {d.level || 'Junior Doctor'}</span>
                                         </div>
                                       </div>
                                     </td>
@@ -6515,6 +6722,19 @@ export default function App() {
                                       <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                                         <button 
                                           className="delete-doctor-btn" 
+                                          onClick={() => handleToggleDoctorVerify(d.id)} 
+                                          title={d.verified !== false ? "Revoke Verification" : "Approve & Verify Credentials"} 
+                                          style={{ 
+                                            padding: '4px 8px', 
+                                            borderRadius: '4px', 
+                                            backgroundColor: d.verified !== false ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', 
+                                            color: d.verified !== false ? '#EF4444' : '#10B981' 
+                                          }}
+                                        >
+                                          <i className={`fa-solid ${d.verified !== false ? 'fa-user-xmark' : 'fa-user-check'}`}></i>
+                                        </button>
+                                        <button 
+                                          className="delete-doctor-btn" 
                                           onClick={() => handleToggleDoctorActive(d.id)} 
                                           title={d.active === false ? "Activate Profile" : "Deactivate Profile"} 
                                           style={{ 
@@ -6533,7 +6753,7 @@ export default function App() {
                                           <i className="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         <button className="delete-doctor-btn" onClick={() => handleDeleteDoctor(d.id)} title="Delete Profile" style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}>
-                                          <i className="fa-solid fa-trash"></i>
+                                          <i className="fa-solid fa-trash-can"></i>
                                         </button>
                                       </div>
                                     </td>
@@ -7781,8 +8001,15 @@ export default function App() {
                 </div>
               )}
               <div>
-                <strong style={{ fontSize: '1.1rem', color: 'var(--color-indigo)' }}>{previewBookingDoc.name}</strong>
-                <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>{getSpecialtyTitle(previewBookingDoc.specialty)}</div>
+                <strong style={{ fontSize: '1.1rem', color: 'var(--color-indigo)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  {previewBookingDoc.name}
+                  {previewBookingDoc.verified !== false && (
+                    <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '1rem' }} title="Verified Doctor"></i>
+                  )}
+                </strong>
+                <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>
+                  {previewBookingDoc.level || 'Junior Doctor'} • {getSpecialtyTitle(previewBookingDoc.specialty)}
+                </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{previewBookingDoc.experience} Experience</div>
               </div>
             </div>
