@@ -30,7 +30,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Zainab Abdulfatah","role":"patient","phone":"08012345678"}', 
+    '{"name":"Zainab Abdulfatah","role":"patient","phone":"08012345678","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -43,7 +43,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Dr. Fatima Yahaya Maiauduga","role":"doctor","phone":"08034567890"}', 
+    '{"name":"Dr. Fatima Yahaya Maiauduga","role":"doctor","phone":"08034567890","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -56,7 +56,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Pharm. Bello Ibrahim","role":"pharmacist","phone":"08012345678"}', 
+    '{"name":"Pharm. Bello Ibrahim","role":"pharmacist","phone":"08012345678","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -69,7 +69,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"MLS Wasila Goranduma","role":"lab","phone":"08023456789"}', 
+    '{"name":"MLS Wasila Goranduma","role":"lab","phone":"08023456789","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -82,7 +82,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Chinedu Okeke","role":"logistics","phone":"08034567890"}', 
+    '{"name":"Chinedu Okeke","role":"logistics","phone":"08034567890","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -95,7 +95,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Admin Director","role":"admin","phone":"08000000000"}', 
+    '{"name":"Admin Director","role":"admin","phone":"08000000000","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;

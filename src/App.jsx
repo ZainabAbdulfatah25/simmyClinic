@@ -9137,7 +9137,7 @@ export default function App() {
             <i className="fa-brands fa-whatsapp"></i> SimmyCare WhatsApp
           </div>
           <a
-            href="https://wa.me/2349014324442?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation."
+            href="https://wa.me/2349014324442?text=Hello%20simmycare%20I%20will%20like%20to%20booked%20for%20consultation.%20"
             className="whatsapp-popup-option"
             target="_blank"
             rel="noopener noreferrer"

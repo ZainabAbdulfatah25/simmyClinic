@@ -223,13 +223,46 @@ CREATE POLICY "Allow only admins/pharmacists to manage drugs"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, name, phone, role)
+  INSERT INTO public.profiles (
+    id, 
+    email, 
+    name, 
+    phone, 
+    role,
+    specialty,
+    reg_no,
+    facility_name,
+    license_no,
+    vehicle_type,
+    dispatch_area,
+    level,
+    verified,
+    terms_accepted,
+    terms_accepted_at
+  )
   VALUES (
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data->>'name', 'Valued Patient'),
     new.raw_user_meta_data->>'phone',
-    COALESCE((new.raw_user_meta_data->>'role')::user_role, 'patient'::user_role)
+    COALESCE((new.raw_user_meta_data->>'role')::user_role, 'patient'::user_role),
+    new.raw_user_meta_data->>'specialty',
+    new.raw_user_meta_data->>'reg_no',
+    new.raw_user_meta_data->>'facility_name',
+    new.raw_user_meta_data->>'license_no',
+    new.raw_user_meta_data->>'vehicle_type',
+    new.raw_user_meta_data->>'dispatch_area',
+    new.raw_user_meta_data->>'level',
+    -- Patients and Admins are auto-verified; staff needs admin activation
+    CASE 
+      WHEN COALESCE(new.raw_user_meta_data->>'role', 'patient') IN ('patient', 'admin') THEN true 
+      ELSE false 
+    END,
+    COALESCE((new.raw_user_meta_data->>'terms_accepted')::boolean, false),
+    CASE 
+      WHEN (new.raw_user_meta_data->>'terms_accepted')::boolean = true THEN NOW() 
+      ELSE NULL 
+    END
   );
   RETURN NEW;
 END;
