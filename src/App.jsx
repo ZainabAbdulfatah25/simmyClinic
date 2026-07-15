@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
 import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
@@ -27,6 +28,12 @@ const CLINIC_DRUG_STOCK = [
   { id: 'dg-9', name: 'Cetirizine Allergy Tablets 10mg', price: 1800, category: 'Antihistamines' },
   { id: 'dg-10', name: 'Cough Expectoral Syrup', price: 2200, category: 'Respiratory' }
 ];
+
+const isSupabaseReady = () => {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  return !!(url && anonKey && url !== 'https://placeholder.supabase.co' && !url.includes('placeholder'));
+};
 
 const getSpecialtyTitle = (specialty) => {
   if (!specialty) return '';
@@ -576,6 +583,11 @@ export default function App() {
   const [logisticsSelectedRider, setLogisticsSelectedRider] = useState(null);
   const [deliveryIssueText, setDeliveryIssueText] = useState('');
   const [riderStatusFilter, setRiderStatusFilter] = useState('All');
+  const [logisticsStatusFilter, setLogisticsStatusFilter] = useState('All');
+  const [labStatusFilter, setLabStatusFilter] = useState('All');
+  const [pharmacyStatusFilter, setPharmacyStatusFilter] = useState('All');
+  const [doctorStatusFilter, setDoctorStatusFilter] = useState('All');
+  const [adminStatusFilter, setAdminStatusFilter] = useState('All');
   const [onboardRiderForm, setOnboardRiderForm] = useState({
     name: '',
     phone: '',
@@ -755,7 +767,7 @@ export default function App() {
   };
 
   // --- Auth Handlers ---
-  const handleUnifiedLoginSubmit = (e) => {
+  const handleUnifiedLoginSubmit = async (e) => {
     e.preventDefault();
     const email = patientLoginForm.email.toLowerCase().trim();
     const password = patientLoginForm.password.trim();
@@ -780,175 +792,299 @@ export default function App() {
     };
 
     if (isPatientRegistering) {
-      const allEmails = [
-        ...patients.map(p => p.email.toLowerCase()),
-        ...doctors.map(d => d.email.toLowerCase()),
-        ...pharmacists.map(p => p.email.toLowerCase()),
-        ...labs.map(l => l.email.toLowerCase()),
-        ...logistics.map(l => l.email.toLowerCase())
-      ];
-      if (allEmails.includes(email)) {
-        setLoginError("This email address is already registered.");
-        return;
-      }
+      if (isSupabaseReady()) {
+        try {
+          const metadata = {
+            name: patientLoginForm.name || (registerRole === 'doctor' ? `Dr. ${patientLoginForm.name}` : patientLoginForm.name),
+            phone: patientLoginForm.phone || "",
+            role: registerRole,
+            terms_accepted: true
+          };
 
-      if (registerRole === 'patient') {
-        const newPatient = {
-          email,
-          name: patientLoginForm.name || "Valued Patient",
-          phone: patientLoginForm.phone || "",
-          password: password
-        };
-        setPatients([...patients, newPatient]);
-        setAuthRole('patient');
-        setLoggedInPatient(newPatient);
-        sessionStorage.setItem("simmy_auth_role", "patient");
-        sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPatient));
-      } else if (registerRole === 'doctor') {
-        const newDoc = {
-          id: doctors.length + 1,
-          email,
-          name: patientLoginForm.name.startsWith("Dr. ") ? patientLoginForm.name : `Dr. ${patientLoginForm.name}`,
-          phone: patientLoginForm.phone || "",
-          password: password,
-          specialty: patientLoginForm.specialty || "General Medicine",
-          regNo: patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
-          schedule: "Mon - Fri (9am - 4pm)",
-          experience: "1 Year",
-          bio: "Registered Medical Professional Committed to Excellence",
-          clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Main Block`,
-          license: "",
-          consultationRate: "₦5,000",
-          consultationDuration: "30 mins",
-          services: ["Online Consultation"],
-          verified: false,
-          active: false,
-          level: patientLoginForm.level || "Junior Doctor"
-        };
-        setDoctors([...doctors, newDoc]);
-        setAuthRole('doctor');
-        setLoggedInDoctor(newDoc);
-        sessionStorage.setItem("simmy_auth_role", "doctor");
-        sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(newDoc));
-      } else if (registerRole === 'pharmacist') {
-        const newPharm = {
-          email,
-          name: patientLoginForm.name || "Pharm. Specialist",
-          phone: patientLoginForm.phone || "",
-          password: password,
-          pharmacyName: patientLoginForm.pharmacyName || "SimmyCare Pharmacy Partner",
-          pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`
-        };
-        setPharmacists([...pharmacists, newPharm]);
-        setAuthRole('pharmacist');
-        setLoggedInPharmacist(newPharm);
-        sessionStorage.setItem("simmy_auth_role", "pharmacist");
-        sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(newPharm));
-      } else if (registerRole === 'lab') {
-        const newLab = {
-          email,
-          name: patientLoginForm.name || "MLS Specialist",
-          phone: patientLoginForm.phone || "",
-          password: password,
-          facilityName: patientLoginForm.facilityName || "SimmyCare Diagnostic Lab",
-          labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`
-        };
-        setLabs([...labs, newLab]);
-        setAuthRole('lab');
-        setLoggedInLab(newLab);
-        sessionStorage.setItem("simmy_auth_role", "lab");
-        sessionStorage.setItem("simmy_auth_lab", JSON.stringify(newLab));
-      } else if (registerRole === 'logistics') {
-        const newLog = {
-          email,
-          name: patientLoginForm.name || "Logistics Dispatcher",
-          phone: patientLoginForm.phone || "",
-          password: password,
-          vehicleType: patientLoginForm.vehicleType || "Motorbike",
-          dispatchArea: patientLoginForm.dispatchArea || "Lagos Metro"
-        };
-        setLogistics([...logistics, newLog]);
-        setAuthRole('logistics');
-        setLoggedInLogistics(newLog);
-        sessionStorage.setItem("simmy_auth_role", "logistics");
-        sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(newLog));
-      }
+          if (registerRole === 'doctor') {
+            metadata.specialty = patientLoginForm.specialty || "General Medicine";
+            metadata.reg_no = patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`;
+            metadata.level = patientLoginForm.level || "Junior Doctor";
+          } else if (registerRole === 'pharmacist') {
+            metadata.facility_name = patientLoginForm.pharmacyName || "SimmyCare Central Pharmacy";
+            metadata.license_no = patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`;
+          } else if (registerRole === 'lab') {
+            metadata.facility_name = patientLoginForm.facilityName || "SimmyCare Diagnostic Lab";
+            metadata.license_no = patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`;
+          } else if (registerRole === 'logistics') {
+            metadata.vehicle_type = patientLoginForm.vehicleType || "Motorbike";
+            metadata.dispatch_area = patientLoginForm.dispatchArea || "Lagos Metro";
+          }
 
-      clearForm();
-      setIsPatientRegistering(false);
-      navigateTo('dashboard');
-    } else {
-      // 1. Check Admin
-      const isMainMatch = email === adminCredentials.username && password === adminCredentials.password;
-      const isFallbackMatch = email === 'admin' && password === 'admin';
-      const isAltMatch = email === 'admin@simmycare.com' && password === 'password123';
-      if (isMainMatch || isFallbackMatch || isAltMatch) {
-        setAuthRole('admin');
-        sessionStorage.setItem("simmy_auth_role", "admin");
-        clearForm();
-        navigateTo('dashboard');
-        return;
-      }
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: metadata }
+          });
 
-      // 2. Check Pharmacist
-      const pharm = pharmacists.find(p => p.email.toLowerCase().trim() === email);
-      if (pharm && pharm.password === password) {
-        setAuthRole('pharmacist');
-        setLoggedInPharmacist(pharm);
-        sessionStorage.setItem("simmy_auth_role", "pharmacist");
-        sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(pharm));
-        clearForm();
-        navigateTo('dashboard');
-        return;
-      }
+          if (error) throw error;
 
-      // 3. Check Lab Tech
-      const labUser = labs.find(l => l.email.toLowerCase().trim() === email);
-      if (labUser && labUser.password === password) {
-        setAuthRole('lab');
-        setLoggedInLab(labUser);
-        sessionStorage.setItem("simmy_auth_role", "lab");
-        sessionStorage.setItem("simmy_auth_lab", JSON.stringify(labUser));
-        clearForm();
-        navigateTo('dashboard');
-        return;
-      }
+          if (data?.user) {
+            // Retrieve created profile
+            const { data: profile, error: profileErr } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
 
-      // 4. Check Logistics
-      const logUser = logistics.find(l => l.email.toLowerCase().trim() === email);
-      if (logUser && logUser.password === password) {
-        setAuthRole('logistics');
-        setLoggedInLogistics(logUser);
-        sessionStorage.setItem("simmy_auth_role", "logistics");
-        sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(logUser));
-        clearForm();
-        navigateTo('dashboard');
-        return;
-      }
+            if (profileErr) throw profileErr;
 
-      // 5. Check Doctor
-      const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === email);
-      if (doc && doc.password && doc.password === password) {
-        setAuthRole('doctor');
-        setLoggedInDoctor(doc);
-        sessionStorage.setItem("simmy_auth_role", "doctor");
-        sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
-        clearForm();
-        navigateTo('dashboard');
-        return;
-      }
+            setAuthRole(profile.role);
+            if (profile.role === 'patient') {
+              setLoggedInPatient(profile);
+              sessionStorage.setItem("simmy_auth_patient", JSON.stringify(profile));
+            } else if (profile.role === 'doctor') {
+              setLoggedInDoctor(profile);
+              sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(profile));
+            } else if (profile.role === 'pharmacist') {
+              setLoggedInPharmacist(profile);
+              sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(profile));
+            } else if (profile.role === 'lab') {
+              setLoggedInLab(profile);
+              sessionStorage.setItem("simmy_auth_lab", JSON.stringify(profile));
+            } else if (profile.role === 'logistics') {
+              setLoggedInLogistics(profile);
+              sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(profile));
+            }
 
-      // 6. Check Patient
-      const existing = patients.find(p => p.email.toLowerCase() === email);
-      if (existing && existing.password === password) {
-        setAuthRole('patient');
-        setLoggedInPatient(existing);
-        sessionStorage.setItem("simmy_auth_role", "patient");
-        sessionStorage.setItem("simmy_auth_patient", JSON.stringify(existing));
-        clearForm();
-        navigateTo('dashboard');
+            sessionStorage.setItem("simmy_auth_role", profile.role);
+            clearForm();
+            setIsPatientRegistering(false);
+            navigateTo('dashboard');
+          }
+        } catch (err) {
+          setLoginError(err.message || "Failed to register account via Supabase.");
+        }
       } else {
-        setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
+        // Fallback local memory signup
+        const allEmails = [
+          ...patients.map(p => p.email.toLowerCase()),
+          ...doctors.map(d => d.email.toLowerCase()),
+          ...pharmacists.map(p => p.email.toLowerCase()),
+          ...labs.map(l => l.email.toLowerCase()),
+          ...logistics.map(l => l.email.toLowerCase())
+        ];
+        if (allEmails.includes(email)) {
+          setLoginError("This email address is already registered.");
+          return;
+        }
+
+        if (registerRole === 'patient') {
+          const newPatient = {
+            email,
+            name: patientLoginForm.name || "Valued Patient",
+            phone: patientLoginForm.phone || "",
+            password: password
+          };
+          setPatients([...patients, newPatient]);
+          setAuthRole('patient');
+          setLoggedInPatient(newPatient);
+          sessionStorage.setItem("simmy_auth_role", "patient");
+          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPatient));
+        } else if (registerRole === 'doctor') {
+          const newDoc = {
+            id: doctors.length + 1,
+            email,
+            name: patientLoginForm.name.startsWith("Dr. ") ? patientLoginForm.name : `Dr. ${patientLoginForm.name}`,
+            phone: patientLoginForm.phone || "",
+            password: password,
+            specialty: patientLoginForm.specialty || "General Medicine",
+            regNo: patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
+            schedule: "Mon - Fri (9am - 4pm)",
+            experience: "1 Year",
+            bio: "Registered Medical Professional Committed to Excellence",
+            clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Main Block`,
+            license: "",
+            consultationRate: "₦5,000",
+            consultationDuration: "30 mins",
+            services: ["Online Consultation"],
+            verified: false,
+            active: false,
+            level: patientLoginForm.level || "Junior Doctor"
+          };
+          setDoctors([...doctors, newDoc]);
+          setAuthRole('doctor');
+          setLoggedInDoctor(newDoc);
+          sessionStorage.setItem("simmy_auth_role", "doctor");
+          sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(newDoc));
+        } else if (registerRole === 'pharmacist') {
+          const newPharm = {
+            email,
+            name: patientLoginForm.name || "Pharm. Specialist",
+            phone: patientLoginForm.phone || "",
+            password: password,
+            pharmacyName: patientLoginForm.pharmacyName || "SimmyCare Pharmacy Partner",
+            pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`
+          };
+          setPharmacists([...pharmacists, newPharm]);
+          setAuthRole('pharmacist');
+          setLoggedInPharmacist(newPharm);
+          sessionStorage.setItem("simmy_auth_role", "pharmacist");
+          sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(newPharm));
+        } else if (registerRole === 'lab') {
+          const newLab = {
+            email,
+            name: patientLoginForm.name || "MLS Specialist",
+            phone: patientLoginForm.phone || "",
+            password: password,
+            facilityName: patientLoginForm.facilityName || "SimmyCare Diagnostic Lab",
+            labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`
+          };
+          setLabs([...labs, newLab]);
+          setAuthRole('lab');
+          setLoggedInLab(newLab);
+          sessionStorage.setItem("simmy_auth_role", "lab");
+          sessionStorage.setItem("simmy_auth_lab", JSON.stringify(newLab));
+        } else if (registerRole === 'logistics') {
+          const newLog = {
+            email,
+            name: patientLoginForm.name || "Logistics Dispatcher",
+            phone: patientLoginForm.phone || "",
+            password: password,
+            vehicleType: patientLoginForm.vehicleType || "Motorbike",
+            dispatchArea: patientLoginForm.dispatchArea || "Lagos Metro"
+          };
+          setLogistics([...logistics, newLog]);
+          setAuthRole('logistics');
+          setLoggedInLogistics(newLog);
+          sessionStorage.setItem("simmy_auth_role", "logistics");
+          sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(newLog));
+        }
+
+        clearForm();
+        setIsPatientRegistering(false);
+        navigateTo('dashboard');
+      }
+    } else {
+      if (isSupabaseReady()) {
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (error) throw error;
+
+          if (data?.user) {
+            const { data: profile, error: profileErr } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+
+            if (profileErr) throw profileErr;
+
+            if (profile.role !== 'patient' && profile.role !== 'admin' && !profile.verified) {
+              setLoginError("Your staff account is pending administrator activation.");
+              return;
+            }
+
+            setAuthRole(profile.role);
+            if (profile.role === 'patient') {
+              setLoggedInPatient(profile);
+              sessionStorage.setItem("simmy_auth_patient", JSON.stringify(profile));
+            } else if (profile.role === 'doctor') {
+              setLoggedInDoctor(profile);
+              sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(profile));
+            } else if (profile.role === 'pharmacist') {
+              setLoggedInPharmacist(profile);
+              sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(profile));
+            } else if (profile.role === 'lab') {
+              setLoggedInLab(profile);
+              sessionStorage.setItem("simmy_auth_lab", JSON.stringify(profile));
+            } else if (profile.role === 'logistics') {
+              setLoggedInLogistics(profile);
+              sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(profile));
+            } else if (profile.role === 'admin') {
+              sessionStorage.setItem("simmy_auth_role", "admin");
+            }
+
+            sessionStorage.setItem("simmy_auth_role", profile.role);
+            clearForm();
+            navigateTo('dashboard');
+          }
+        } catch (err) {
+          setLoginError("Invalid email address or password.");
+        }
+      } else {
+        // Fallback local memory login
+        // 1. Check Admin
+        const isMainMatch = email === adminCredentials.username && password === adminCredentials.password;
+        const isFallbackMatch = email === 'admin' && password === 'admin';
+        const isAltMatch = email === 'admin@simmycare.com' && password === 'password123';
+        if (isMainMatch || isFallbackMatch || isAltMatch) {
+          setAuthRole('admin');
+          sessionStorage.setItem("simmy_auth_role", "admin");
+          clearForm();
+          navigateTo('dashboard');
+          return;
+        }
+
+        // 2. Check Pharmacist
+        const pharm = pharmacists.find(p => p.email.toLowerCase().trim() === email);
+        if (pharm && pharm.password === password) {
+          setAuthRole('pharmacist');
+          setLoggedInPharmacist(pharm);
+          sessionStorage.setItem("simmy_auth_role", "pharmacist");
+          sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(pharm));
+          clearForm();
+          navigateTo('dashboard');
+          return;
+        }
+
+        // 3. Check Lab Tech
+        const labUser = labs.find(l => l.email.toLowerCase().trim() === email);
+        if (labUser && labUser.password === password) {
+          setAuthRole('lab');
+          setLoggedInLab(labUser);
+          sessionStorage.setItem("simmy_auth_role", "lab");
+          sessionStorage.setItem("simmy_auth_lab", JSON.stringify(labUser));
+          clearForm();
+          navigateTo('dashboard');
+          return;
+        }
+
+        // 4. Check Logistics
+        const logUser = logistics.find(l => l.email.toLowerCase().trim() === email);
+        if (logUser && logUser.password === password) {
+          setAuthRole('logistics');
+          setLoggedInLogistics(logUser);
+          sessionStorage.setItem("simmy_auth_role", "logistics");
+          sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(logUser));
+          clearForm();
+          navigateTo('dashboard');
+          return;
+        }
+
+        // 5. Check Doctor
+        const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === email);
+        if (doc && doc.password && doc.password === password) {
+          setAuthRole('doctor');
+          setLoggedInDoctor(doc);
+          sessionStorage.setItem("simmy_auth_role", "doctor");
+          sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
+          clearForm();
+          navigateTo('dashboard');
+          return;
+        }
+
+        // 6. Check Patient
+        const existing = patients.find(p => p.email.toLowerCase() === email);
+        if (existing && existing.password === password) {
+          setAuthRole('patient');
+          setLoggedInPatient(existing);
+          sessionStorage.setItem("simmy_auth_role", "patient");
+          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(existing));
+          clearForm();
+          navigateTo('dashboard');
+        } else {
+          setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
+        }
       }
     }
   };
@@ -1873,7 +2009,12 @@ export default function App() {
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
-                onClick={() => setIsMapSimulating(!isMapSimulating)}
+                onClick={() => {
+                  if (mapSimulationProgress >= 100) {
+                    setMapSimulationProgress(0);
+                  }
+                  setIsMapSimulating(!isMapSimulating);
+                }}
                 style={{ flex: 1, padding: '0.35rem', fontSize: '0.75rem' }}
               >
                 <i className={isMapSimulating ? "fa-solid fa-pause" : "fa-solid fa-play"}></i> {isMapSimulating ? 'Pause' : 'Start Simulation'}
@@ -3914,17 +4055,34 @@ export default function App() {
                 </div>
 
                 <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${patientNavView === 'bookings' ? 'active' : ''}`}
+                    onClick={() => setPatientNavView('bookings')}
+                  >
                     <h3>{myPatientAppointments.length}</h3>
                     <p>CLINICAL CONSULTATIONS</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${patientNavView === 'orders' ? 'active' : ''}`}
+                    onClick={() => {
+                      setPatientNavView('orders');
+                      setSelectedPharmacyOrder(null);
+                      setActiveTrackingId(null);
+                    }}
+                  >
                     <h3>{myPatientPharmacyOrders.length}</h3>
                     <p>PHARMACY DELIVERIES</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${patientNavView === 'labs' ? 'active' : ''}`}
+                    onClick={() => {
+                      setPatientNavView('labs');
+                      setSelectedLabRequest(null);
+                      setActiveTrackingId(null);
+                    }}
+                  >
                     <h3>{myPatientLabRequests.length}</h3>
                     <p>LAB SAMPLE TRIPS</p>
                   </div>
@@ -4862,17 +5020,54 @@ export default function App() {
 
                 {/* Stats */}
                 <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${doctorStatusFilter === 'All' && doctorNavView === 'backlog' ? 'active' : ''}`}
+                    onClick={() => {
+                      setDoctorStatusFilter('All');
+                      setDoctorNavView('backlog');
+                    }}
+                  >
                     <h3>{myDoctorAppointments.length}</h3>
                     <p>TOTAL ASSIGNED PATIENTS</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${doctorStatusFilter === 'Pending' && doctorNavView === 'backlog' ? 'active' : ''}`}
+                    onClick={() => {
+                      setDoctorStatusFilter(doctorStatusFilter === 'Pending' ? 'All' : 'Pending');
+                      setDoctorNavView('backlog');
+                    }}
+                  >
                     <h3>{myDoctorAppointments.filter(a => a.status === 'Pending').length}</h3>
                     <p>AWAITING REVIEW</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${doctorNavView === 'profile' ? 'active' : ''}`}
+                    onClick={() => {
+                      setDoctorNavView('profile');
+                      const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
+                      setDocSelfData({
+                        name: cleanName,
+                        specialty: loggedInDoctor.specialty,
+                        schedule: loggedInDoctor.schedule || '',
+                        experience: loggedInDoctor.experience || '',
+                        regNo: loggedInDoctor.regNo || '',
+                        email: loggedInDoctor.email || '',
+                        password: loggedInDoctor.password || '',
+                        image: loggedInDoctor.image || '',
+                        phone: loggedInDoctor.phone || '',
+                        bio: loggedInDoctor.bio || '',
+                        clinicRoom: loggedInDoctor.clinicRoom || '',
+                        license: loggedInDoctor.license || '',
+                        consultationRate: loggedInDoctor.consultationRate || '',
+                        services: loggedInDoctor.services || [],
+                        level: loggedInDoctor.level || 'Junior Doctor',
+                        verified: loggedInDoctor.verified || false
+                      });
+                      setIsEditingDocSelf(false);
+                    }}
+                  >
                     <h3>{loggedInDoctor.schedule}</h3>
                     <p>WEEKLY DUTY HOURS</p>
                   </div>
@@ -4976,14 +5171,16 @@ export default function App() {
                       </div>
                     )}
 
-                    {doctorNavView === 'backlog' && (
-                      <div>
-                        <h3>My Consultation Backlog ({myDoctorAppointments.length})</h3>
+                    {doctorNavView === 'backlog' && (() => {
+                      const filteredAppointments = doctorStatusFilter === 'Pending' ? myDoctorAppointments.filter(a => a.status === 'Pending') : myDoctorAppointments;
+                      return (
+                        <div>
+                          <h3>My Consultation Backlog ({filteredAppointments.length})</h3>
 
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
-                          {/* Left Column: Appointments */}
-                          <div style={{ flex: '1 1 650px', minWidth: 0 }}>
-                            {myDoctorAppointments.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
+                            {/* Left Column: Appointments */}
+                            <div style={{ flex: '1 1 650px', minWidth: 0 }}>
+                              {filteredAppointments.length > 0 ? (
                               <div className="table-responsive">
                                 <table className="admin-table">
                                   <thead>
@@ -4998,9 +5195,17 @@ export default function App() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {myDoctorAppointments.map(apt => (
+                                    {filteredAppointments.map(apt => (
                                       <React.Fragment key={apt.id}>
-                                        <tr style={{ background: apt.status === 'Approved' ? 'rgba(34,197,94,0.02)' : apt.status === 'Rejected' ? 'rgba(239,68,68,0.01)' : 'transparent' }}>
+                                        <tr
+                                          className="clickable-row"
+                                          onClick={(e) => {
+                                            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                                              setAdminSelectedApt(apt);
+                                            }
+                                          }}
+                                          style={{ background: apt.status === 'Approved' ? 'rgba(34,197,94,0.02)' : apt.status === 'Rejected' ? 'rgba(239,68,68,0.01)' : 'transparent', cursor: 'pointer' }}
+                                        >
                                           <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
                                           <td>
                                             <strong>{apt.patientName}</strong>
@@ -5332,7 +5537,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                    )}
+                    ))()}
 
                     {doctorNavView === 'profile' && (
                       <div>
@@ -5751,22 +5956,45 @@ export default function App() {
                   const rxCount = appointments.filter(apt => apt.prescription && apt.prescription.trim() !== '').length;
                   return (
                     <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${pharmacyStatusFilter === 'All' && pharmacistNavView === 'orders' ? 'active' : ''}`}
+                        onClick={() => {
+                          setPharmacyStatusFilter('All');
+                          setPharmacistNavView('orders');
+                        }}
+                      >
                         <h3>{orders.length}</h3>
                         <p>TOTAL ORDERS</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${pharmacyStatusFilter === 'Pending' && pharmacistNavView === 'orders' ? 'active' : ''}`}
+                        onClick={() => {
+                          setPharmacyStatusFilter(pharmacyStatusFilter === 'Pending' ? 'All' : 'Pending');
+                          setPharmacistNavView('orders');
+                        }}
+                      >
                         <h3>{pending.length}</h3>
                         <p>PENDING REVIEW</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${pharmacyStatusFilter === 'In Progress' && pharmacistNavView === 'orders' ? 'active' : ''}`}
+                        onClick={() => {
+                          setPharmacyStatusFilter(pharmacyStatusFilter === 'In Progress' ? 'All' : 'In Progress');
+                          setPharmacistNavView('orders');
+                        }}
+                      >
                         <h3>{processing.length + dispatched.length}</h3>
                         <p>IN PROGRESS</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${pharmacistNavView === 'prescriptions' ? 'active' : ''}`}
+                        onClick={() => {
+                          setPharmacistNavView('prescriptions');
+                        }}
+                      >
                         <h3>{rxCount}</h3>
                         <p>DOCTOR RX FILES</p>
                       </div>
@@ -5800,9 +6028,14 @@ export default function App() {
                       <div>
                         <h3>Medication Delivery Orders</h3>
                         {(() => {
-                          const orders = inquiries.filter(inq => inq.id.startsWith('ORD-'));
+                          let orders = inquiries.filter(inq => inq.id.startsWith('ORD-'));
+                          if (pharmacyStatusFilter === 'Pending') {
+                            orders = orders.filter(o => !o.status || o.status === 'Pending' || o.status === 'Pending Review');
+                          } else if (pharmacyStatusFilter === 'In Progress') {
+                            orders = orders.filter(o => o.status === 'Processing & Packaging' || o.status === 'Out for Delivery' || o.status === 'Awaiting Dispatch');
+                          }
                           if (orders.length === 0) {
-                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy purchase orders found.</p>;
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy orders match the selected filter.</p>;
                           }
                           return (
                             <div className="table-responsive">
@@ -5833,7 +6066,16 @@ export default function App() {
                                       badgeColor = 'rgba(239, 68, 68, 0.15)'; textColor = '#991b1b';
                                     }
                                     return (
-                                      <tr key={order.id}>
+                                      <tr
+                                        key={order.id}
+                                        className="clickable-row"
+                                        onClick={(e) => {
+                                          if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                                            setPharmacistSelectedOrder(order);
+                                          }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                      >
                                         <td><strong>{order.id}</strong></td>
                                         <td>{order.date}</td>
                                         <td>
@@ -5981,22 +6223,46 @@ export default function App() {
                   const completed = requests.filter(r => r.status === 'Completed' || r.status === 'Approved');
                   return (
                     <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${labStatusFilter === 'All' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLabStatusFilter('All');
+                          setLabNavView('requests');
+                        }}
+                      >
                         <h3>{requests.length}</h3>
                         <p>TOTAL LAB BOOKINGS</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${labStatusFilter === 'Pending' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLabStatusFilter(labStatusFilter === 'Pending' ? 'All' : 'Pending');
+                          setLabNavView('requests');
+                        }}
+                      >
                         <h3>{pending.length}</h3>
                         <p>PENDING COLLECTION</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${labStatusFilter === 'Sample Collected' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLabStatusFilter(labStatusFilter === 'Sample Collected' ? 'All' : 'Sample Collected');
+                          setLabNavView('requests');
+                        }}
+                      >
                         <h3>{collected.length}</h3>
                         <p>SAMPLES COLLECTED</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${labStatusFilter === 'Ready' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLabStatusFilter(labStatusFilter === 'Ready' ? 'All' : 'Ready');
+                          setLabNavView('history');
+                        }}
+                      >
                         <h3>{completed.length}</h3>
                         <p>RESULTS READY</p>
                       </div>
@@ -6030,9 +6296,14 @@ export default function App() {
                       <div>
                         <h3>Active Lab Bookings & Tests</h3>
                         {(() => {
-                          const requests = appointments.filter(apt => (apt.id.startsWith('LAB-') || apt.doctor === 'Mobile Lab Unit') && apt.status !== 'Completed' && apt.status !== 'Approved');
+                          let requests = appointments.filter(apt => (apt.id.startsWith('LAB-') || apt.doctor === 'Mobile Lab Unit') && apt.status !== 'Completed' && apt.status !== 'Approved');
+                          if (labStatusFilter === 'Pending') {
+                            requests = requests.filter(r => r.status === 'Pending');
+                          } else if (labStatusFilter === 'Sample Collected') {
+                            requests = requests.filter(r => r.status === 'Sample Collected');
+                          }
                           if (requests.length === 0) {
-                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active laboratory collections/tests pending.</p>;
+                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active laboratory bookings match the selected filter.</p>;
                           }
                           return (
                             <div className="table-responsive">
@@ -6057,7 +6328,17 @@ export default function App() {
                                       tests = parts[0] || rawSymp;
                                     }
                                     return (
-                                      <tr key={req.id}>
+                                      <tr
+                                        key={req.id}
+                                        className="clickable-row"
+                                        onClick={(e) => {
+                                          if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                                            setLabSelectedRequest(req);
+                                            setLabResultsText('');
+                                          }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                      >
                                         <td><strong>{req.id}</strong></td>
                                         <td>{req.date}</td>
                                         <td>
@@ -6206,17 +6487,41 @@ export default function App() {
                   const completedDeliv = shipments.filter(s => s.status === 'Delivered').length;
                   return (
                     <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${logisticsStatusFilter === 'Pending' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLogisticsStatusFilter(logisticsStatusFilter === 'Pending' ? 'All' : 'Pending');
+                          if (logisticsNavView !== 'deliveries' && logisticsNavView !== 'lab-trips') {
+                            setLogisticsNavView('deliveries');
+                          }
+                        }}
+                      >
                         <h3>{pendingDisp + pendingColl}</h3>
                         <p>PENDING TASKS</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${logisticsStatusFilter === 'In Transit' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLogisticsStatusFilter(logisticsStatusFilter === 'In Transit' ? 'All' : 'In Transit');
+                          if (logisticsNavView !== 'deliveries' && logisticsNavView !== 'lab-trips') {
+                            setLogisticsNavView('deliveries');
+                          }
+                        }}
+                      >
                         <h3>{inTransit}</h3>
                         <p>IN TRANSIT</p>
                       </div>
                       <div className="stat-divider"></div>
-                      <div className="stat-item">
+                      <div
+                        className={`stat-item clickable ${logisticsStatusFilter === 'Completed' ? 'active' : ''}`}
+                        onClick={() => {
+                          setLogisticsStatusFilter(logisticsStatusFilter === 'Completed' ? 'All' : 'Completed');
+                          if (logisticsNavView !== 'deliveries' && logisticsNavView !== 'lab-trips') {
+                            setLogisticsNavView('deliveries');
+                          }
+                        }}
+                      >
                         <h3>{completedDeliv}</h3>
                         <p>COMPLETED DELIVERIES</p>
                       </div>
@@ -6262,13 +6567,20 @@ export default function App() {
                       <div>
                         <h3>Pharmacy Package Deliveries</h3>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem', alignItems: 'start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                           {/* Left Column: Shipment Table */}
                           <div>
                             {(() => {
-                              const shipments = inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Awaiting Dispatch' || inq.status === 'Out for Delivery' || inq.status === 'Delivered'));
+                              let shipments = inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Awaiting Dispatch' || inq.status === 'Out for Delivery' || inq.status === 'Delivered'));
+                              if (logisticsStatusFilter === 'Pending') {
+                                shipments = shipments.filter(s => s.status === 'Awaiting Dispatch');
+                              } else if (logisticsStatusFilter === 'In Transit') {
+                                shipments = shipments.filter(s => s.status === 'Out for Delivery');
+                              } else if (logisticsStatusFilter === 'Completed') {
+                                shipments = shipments.filter(s => s.status === 'Delivered');
+                              }
                               if (shipments.length === 0) {
-                                return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy packages assigned for delivery.</p>;
+                                return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy packages found matching the selected filter.</p>;
                               }
                               return (
                                 <div className="table-responsive">
@@ -6292,7 +6604,16 @@ export default function App() {
                                         }
                                         const isTrackingThis = mapTrackedTripId === ship.id;
                                         return (
-                                          <tr key={ship.id} style={{ background: isTrackingThis ? 'rgba(6, 182, 212, 0.04)' : 'transparent' }}>
+                                          <tr
+                                            key={ship.id}
+                                            className="clickable-row"
+                                            onClick={(e) => {
+                                              if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                                                setMapTrackedTripId(ship.id);
+                                              }
+                                            }}
+                                            style={{ background: isTrackingThis ? 'rgba(6, 182, 212, 0.08)' : 'transparent', cursor: 'pointer' }}
+                                          >
                                             <td><strong>{ship.id}</strong></td>
                                             <td>{ship.name}</td>
                                             <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
@@ -6391,13 +6712,20 @@ export default function App() {
                       <div>
                         <h3>Lab Sample Collection Trips</h3>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem', alignItems: 'start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                           {/* Left Column: Trips Table */}
                           <div>
                             {(() => {
-                              const trips = appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Pending' || apt.status === 'Sample Collected'));
+                              let trips = appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Pending' || apt.status === 'Sample Collected'));
+                              if (logisticsStatusFilter === 'Pending') {
+                                trips = trips.filter(t => t.status === 'Pending');
+                              } else if (logisticsStatusFilter === 'In Transit') {
+                                trips = trips.filter(t => t.status === 'Sample Collected');
+                              } else if (logisticsStatusFilter === 'Completed') {
+                                trips = trips.filter(t => t.status === 'Completed');
+                              }
                               if (trips.length === 0) {
-                                return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active sample collections pending.</p>;
+                                return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No lab collection trips found matching the selected filter.</p>;
                               }
                               return (
                                 <div className="table-responsive">
@@ -6422,7 +6750,16 @@ export default function App() {
                                         }
                                         const isTrackingThis = mapTrackedTripId === trip.id;
                                         return (
-                                          <tr key={trip.id} style={{ background: isTrackingThis ? 'rgba(6, 182, 212, 0.04)' : 'transparent' }}>
+                                          <tr
+                                            key={trip.id}
+                                            className="clickable-row"
+                                            onClick={(e) => {
+                                              if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                                                setMapTrackedTripId(trip.id);
+                                              }
+                                            }}
+                                            style={{ background: isTrackingThis ? 'rgba(6, 182, 212, 0.08)' : 'transparent', cursor: 'pointer' }}
+                                          >
                                             <td><strong>{trip.id}</strong></td>
                                             <td>{trip.date}</td>
                                             <td>{trip.patientName}</td>
@@ -6706,8 +7043,13 @@ export default function App() {
                                       <button
                                         type="button"
                                         className="btn btn-xs btn-primary"
-                                        onClick={() => setIsMapSimulating(true)}
-                                        disabled={isMapSimulating || mapSimulationProgress >= 100}
+                                        onClick={() => {
+                                          if (mapSimulationProgress >= 100) {
+                                            setMapSimulationProgress(0);
+                                          }
+                                          setIsMapSimulating(true);
+                                        }}
+                                        disabled={isMapSimulating}
                                         style={{ flex: 1, padding: '0.3rem', fontSize: '0.75rem' }}
                                       >
                                         <i className="fa-solid fa-play"></i> Start Track
@@ -7124,22 +7466,40 @@ export default function App() {
 
                 {/* Stats Summary cards */}
                 <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${adminStatusFilter === 'All' && adminNavView === 'appointments' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAdminNavView('appointments');
+                      setAdminStatusFilter('All');
+                    }}
+                  >
                     <h3>{appointments.length}</h3>
                     <p>TOTAL BOOKINGS</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${adminStatusFilter === 'Pending' && adminNavView === 'appointments' ? 'active' : ''}`}
+                    onClick={() => {
+                      setAdminNavView('appointments');
+                      setAdminStatusFilter(adminStatusFilter === 'Pending' ? 'All' : 'Pending');
+                    }}
+                  >
                     <h3>{appointments.filter(a => a.status === 'Pending').length}</h3>
                     <p>PENDING APPROVALS</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${adminNavView === 'doctors' ? 'active' : ''}`}
+                    onClick={() => setAdminNavView('doctors')}
+                  >
                     <h3>{doctors.length}</h3>
                     <p>ACTIVE DOCTORS</p>
                   </div>
                   <div className="stat-divider"></div>
-                  <div className="stat-item">
+                  <div
+                    className={`stat-item clickable ${adminNavView === 'patients' ? 'active' : ''}`}
+                    onClick={() => setAdminNavView('patients')}
+                  >
                     <h3>{patients.length}</h3>
                     <p>REGISTERED PATIENTS</p>
                   </div>
@@ -7191,15 +7551,17 @@ export default function App() {
                   <div className="dashboard-workspace glassmorphic">
 
                     {/* Workspace: Appointments */}
-                    {adminNavView === 'appointments' && (
-                      <div>
-                        <h3>Appointments Registry</h3>
+                    {adminNavView === 'appointments' && (() => {
+                      const filtered = adminStatusFilter === 'Pending' ? appointments.filter(a => a.status === 'Pending') : appointments;
+                      return (
+                        <div>
+                          <h3>Appointments Registry</h3>
 
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
-                          {/* Left Column: Appointments List */}
-                          <div style={{ flex: '1 1 650px', minWidth: 0 }}>
-                            {appointments.length > 0 ? (
-                              <div className="table-responsive">
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
+                            {/* Left Column: Appointments List */}
+                            <div style={{ flex: '1 1 650px', minWidth: 0 }}>
+                              {filtered.length > 0 ? (
+                                <div className="table-responsive">
                                 <table className="admin-table">
                                   <thead>
                                     <tr>
@@ -7213,8 +7575,17 @@ export default function App() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {appointments.map(apt => (
-                                      <tr key={apt.id}>
+                                    {filtered.map(apt => (
+                                      <tr
+                                        key={apt.id}
+                                        className="clickable-row"
+                                        onClick={(e) => {
+                                          if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+                                            setAdminSelectedApt(apt);
+                                          }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                      >
                                         <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
                                         <td>
                                           <strong>{apt.patientName}</strong>
@@ -7470,7 +7841,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                    )}
+                    ))()}
 
                     {adminNavView === 'doctors' && (
                       <div>
@@ -9137,7 +9508,7 @@ export default function App() {
             <i className="fa-brands fa-whatsapp"></i> SimmyCare WhatsApp
           </div>
           <a
-            href="https://wa.me/2349014324442?text=Hello%20simmycare%20I%20will%20like%20to%20booked%20for%20consultation.%20"
+            href="https://wa.me/2349014324442?text=Hello%20simmycare%20I%20will%20like%20to%20book%20for%20consultation.%20"
             className="whatsapp-popup-option"
             target="_blank"
             rel="noopener noreferrer"

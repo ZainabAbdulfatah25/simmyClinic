@@ -413,7 +413,7 @@ if (waClose && waWidget) {
 
 if (waSend) {
   waSend.addEventListener("click", () => {
-    const text = encodeURIComponent("Hello simmycare I will like to booked for consultation. ");
+    const text = encodeURIComponent("Hello simmycare I will like to book for consultation. ");
     window.open(`https://wa.me/2349014324442?text=${text}`, "_blank");
     waWidget.classList.remove("open");
   });
