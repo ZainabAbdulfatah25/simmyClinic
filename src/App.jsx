@@ -3837,35 +3837,21 @@ export default function App() {
                       </div>
                     )}
 
-                    <div className="demo-credentials-box" style={{
-                      background: 'rgba(24, 43, 73, 0.04)',
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid rgba(24, 43, 73, 0.08)',
-                      fontSize: '0.78rem',
-                      color: 'var(--color-text-muted)',
-                      marginTop: '1.25rem',
-                      marginBottom: '1.25rem',
-                      lineHeight: '1.4'
-                    }}>
-                      {isPatientRegistering ? (
+                    {isPatientRegistering && (
+                      <div className="demo-credentials-box" style={{
+                        background: 'rgba(24, 43, 73, 0.04)',
+                        padding: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid rgba(24, 43, 73, 0.08)',
+                        fontSize: '0.78rem',
+                        color: 'var(--color-text-muted)',
+                        marginTop: '1.25rem',
+                        marginBottom: '1.25rem',
+                        lineHeight: '1.4'
+                      }}>
                         <span>*All fields are required to establish your medical file.</span>
-                      ) : (
-                        <>
-                          <div style={{ fontWeight: '600', color: 'var(--color-indigo)', marginBottom: '0.25rem' }}>
-                            <i className="fa-solid fa-circle-info" style={{ marginRight: '4px' }}></i> Demo Logins (Password: <code>password123</code>):
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 0.5rem' }}>
-                            <div>• Patient: <code>zainab@example.com</code></div>
-                            <div>• Doctor: <code>fatima@simmycare.com</code></div>
-                            <div>• Pharmacist: <code>pharmacist@simmycare.com</code></div>
-                            <div>• Lab Tech: <code>lab@simmycare.com</code></div>
-                            <div>• Logistics: <code>logistics@simmycare.com</code></div>
-                            <div>• Admin: <code>admin@simmycare.com</code></div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     <button type="submit" className="btn btn-primary btn-block">
                       {isPatientRegistering ? "Sign Up" : "Sign In"}
