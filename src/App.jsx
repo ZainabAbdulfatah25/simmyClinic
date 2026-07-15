@@ -2123,7 +2123,7 @@ export default function App() {
                   <span><i className="fa-solid fa-check"></i> Community support</span>
                 </div>
                 <a
-                  href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK"
+                  href="https://chat.whatsapp.com/C73ZsPudjxaAYzA20f3yJm?s=sh&p=a&ilr=4"
                   className="btn-whatsapp-group"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -9164,7 +9164,7 @@ export default function App() {
             </div>
           </a>
           <a
-            href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK"
+            href="https://chat.whatsapp.com/C73ZsPudjxaAYzA20f3yJm?s=sh&p=a&ilr=4"
             className="whatsapp-popup-option"
             target="_blank"
             rel="noopener noreferrer"
