@@ -149,9 +149,107 @@ const INITIAL_DOCTORS = [
   }
 ];
 
-const INITIAL_APPOINTMENTS = [];
+const INITIAL_APPOINTMENTS = [
+  {
+    id: "LAB-3829",
+    patientName: "Chinedu Eze",
+    phone: "08098765432",
+    email: "chinedueze@example.com",
+    symptoms: "Lab Request: Full Blood Count, Fasting Blood Sugar. Address: [12 Garki Road, Area 11, Abuja]. Special Instructions: [Fasting from 8pm previous night].",
+    status: "Sample Collected",
+    assignedRider: "Chinedu Okeke",
+    date: new Date().toISOString().split('T')[0],
+    time: "10:00 AM",
+    doctorName: "Dr. Fatima Ibrahim"
+  },
+  {
+    id: "LAB-7712",
+    patientName: "Hadiza Musa",
+    phone: "08044433322",
+    email: "hadiza@example.com",
+    symptoms: "Lab Request: Malaria Smear, Widal Typhoid Test. Address: [Suite B12, Banex Plaza, Wuse II, Abuja]. Special Instructions: [Urgent testing required].",
+    status: "Pending",
+    assignedRider: "",
+    date: new Date().toISOString().split('T')[0],
+    time: "02:00 PM",
+    doctorName: "Dr. Fatima Ibrahim"
+  }
+];
 
-const INITIAL_INQUIRIES = [];
+const INITIAL_INQUIRIES = [
+  {
+    id: "ORD-8291",
+    name: "Zainab Abdulfatah",
+    email: "zainab@example.com",
+    phone: "08012345678",
+    message: "Pharmacy Purchase Order: [Insulin Pen (x2), Metformin 500mg (x1)]. Shipping Address: [Plot 824, Wuse II, Abuja]. Rx Notes: [Keep refrigerated]. Total Cost: ₦18,500",
+    date: new Date().toISOString().split('T')[0],
+    status: "Out for Delivery",
+    assignedRider: "Chinedu Okeke"
+  },
+  {
+    id: "ORD-4921",
+    name: "Emeka Okafor",
+    email: "emeka@example.com",
+    phone: "08055566677",
+    message: "Pharmacy Purchase Order: [Amoxicillin 500mg (x2), Vitamin C 1000mg (x3)]. Shipping Address: [Aso Drive, Maitama, Abuja]. Rx Notes: [None]. Total Cost: ₦12,200",
+    date: new Date().toISOString().split('T')[0],
+    status: "Awaiting Dispatch",
+    assignedRider: ""
+  }
+];
+
+// Client-side image compression helper to prevent localStorage quota exhaustion (5MB limit)
+const compressImageFile = (file, maxDimension = 500, quality = 0.7) => {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => {
+        resolve(e.target.result);
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = () => {
+      resolve(null);
+    };
+    reader.readAsDataURL(file);
+  });
+};
 
 // Helper to generate initials avatar gradients
 function getAvatarGradient(index) {
@@ -180,13 +278,15 @@ export default function App() {
   const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorAdamImg, 3: doctorTijjaniImg, 4: doctorBamalliImg };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v5_real_staff_only";
+  const DATA_VERSION = "v6_active_logistics_routes";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
     // If version mismatch, wipe old data and use fresh seed data
     if (storedVersion !== DATA_VERSION) {
       localStorage.removeItem("simmy_doctors");
+      localStorage.removeItem("simmy_appointments");
+      localStorage.removeItem("simmy_inquiries");
       localStorage.setItem("simmy_data_version", DATA_VERSION);
       return INITIAL_DOCTORS;
     }
@@ -219,11 +319,19 @@ export default function App() {
   });
 
   const [appointments, setAppointments] = useState(() => {
+    const storedVersion = localStorage.getItem("simmy_data_version");
+    if (storedVersion !== DATA_VERSION) {
+      return INITIAL_APPOINTMENTS;
+    }
     const data = localStorage.getItem("simmy_appointments");
     return data ? JSON.parse(data) : INITIAL_APPOINTMENTS;
   });
 
   const [inquiries, setInquiries] = useState(() => {
+    const storedVersion = localStorage.getItem("simmy_data_version");
+    if (storedVersion !== DATA_VERSION) {
+      return INITIAL_INQUIRIES;
+    }
     const data = localStorage.getItem("simmy_inquiries");
     return data ? JSON.parse(data) : INITIAL_INQUIRIES;
   });
@@ -449,6 +557,19 @@ export default function App() {
   const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
   const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
   const [isMapSimulating, setIsMapSimulating] = useState(false);
+  
+  // Staff Availability States
+  const [isPharmacistAvailable, setIsPharmacistAvailable] = useState(true);
+  const [isLabTechAvailable, setIsLabTechAvailable] = useState(true);
+  const [isLogisticsAvailable, setIsLogisticsAvailable] = useState(true);
+  
+  // Search state for availability
+  const [availabilitySearchQuery, setAvailabilitySearchQuery] = useState('');
+  
+  // Lab upload states
+  const [labUploadedFile, setLabUploadedFile] = useState(null);
+  const [labUploadedFileName, setLabUploadedFileName] = useState('');
+  
   const [labSelectedRequest, setLabSelectedRequest] = useState(null);
   const [labResultsText, setLabResultsText] = useState('');
   const [logisticsSelectedShipment, setLogisticsSelectedShipment] = useState(null);
@@ -1599,6 +1720,212 @@ export default function App() {
     const currentX = startX + (dest.x - startX) * (progress / 100);
     const currentY = startY + (dest.y - startY) * (progress / 100);
     return { x: currentX, y: currentY };
+  };
+
+  const renderLiveTrackingMap = (showDropdown = true) => {
+    const activeOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
+    const activeTrip = appointments.find(apt => apt.id === mapTrackedTripId);
+    
+    let clientName = "N/A";
+    let phone = "N/A";
+    let address = "Central Hub Area";
+    let courier = "Unassigned";
+    let cargoType = "General Medical Supply";
+
+    if (activeOrder) {
+      const parsed = parseOrderMessage(activeOrder.message);
+      clientName = activeOrder.name;
+      phone = activeOrder.phone;
+      address = parsed.address;
+      courier = activeOrder.assignedRider || 'Default Courier';
+      cargoType = parsed.items;
+    } else if (activeTrip) {
+      const parsed = parseLabRequest(activeTrip.symptoms);
+      clientName = activeTrip.patientName;
+      phone = activeTrip.phone;
+      address = parsed.address;
+      courier = activeTrip.assignedRider || 'Default Courier';
+      cargoType = "Diagnostic Lab Specimen (Vials/Swabs)";
+    }
+
+    const dest = getTripCoords(mapTrackedTripId);
+    const currentCoords = getInterpolatedCoords(mapSimulationProgress, dest);
+
+    return (
+      <div style={{ background: '#0b1329', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {showDropdown && (
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ color: 'var(--color-accent)', fontSize: '0.8rem', fontWeight: 'bold' }}>SELECT ACTIVE DISPATCH TO TRACK:</label>
+            <select
+              value={mapTrackedTripId || ''}
+              onChange={(e) => {
+                setMapTrackedTripId(e.target.value || null);
+                setMapSimulationProgress(0);
+                setIsMapSimulating(false);
+              }}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(0,0,0,0.3)',
+                color: '#fff',
+                fontSize: '0.85rem',
+                outline: 'none'
+              }}
+            >
+              <option value="">-- No Active Route Selected --</option>
+              {inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Out for Delivery' || inq.status === 'Awaiting Dispatch')).map(d => (
+                <option key={d.id} value={d.id}>📦 Pharmacy Order {d.id} ({d.status})</option>
+              ))}
+              {appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Sample Collected' || apt.status === 'Pending')).map(l => (
+                <option key={l.id} value={l.id}>🔬 Lab Sample Collection {l.id}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div style={{ position: 'relative', minHeight: '220px', background: '#070d1e', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.3rem', zIndex: 10 }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+            {isMapSimulating ? 'SIMULATION ACTIVE' : 'TELEMETRY IDLE'}
+          </div>
+
+          <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e' }}>
+            <defs>
+              <pattern id="mapGridMini" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="500" height="300" fill="url(#mapGridMini)" />
+
+            {/* Roads */}
+            <path d="M 50,50 L 450,50 M 50,150 L 450,150 M 50,250 L 450,250 M 150,50 L 150,300 M 350,50 L 350,300 M 50,50 Q 250,180 450,250" stroke="rgba(255,255,255,0.03)" strokeWidth="4" fill="none" />
+
+            {/* Central Hub */}
+            <g transform="translate(250, 150)">
+              <circle r="6" fill="#10b981" />
+              <circle r="12" fill="#10b981" fillOpacity="0.15" />
+              <text x="10" y="3" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
+            </g>
+
+            {/* Riders */}
+            {logistics.map((rider, idx) => {
+              const coords = [
+                { x: 120, y: 80 },
+                { x: 380, y: 110 },
+                { x: 170, y: 220 },
+                { x: 310, y: 260 },
+                { x: 220, y: 90 },
+              ];
+              const pt = coords[idx % coords.length];
+              const isRiderOnline = rider.active !== false;
+              return (
+                <g key={rider.id} transform={`translate(${pt.x}, ${pt.y})`} style={{ cursor: 'pointer' }}>
+                  <circle r="5" fill={isRiderOnline ? 'var(--color-accent)' : '#ef4444'} />
+                  <circle r="10" fill={isRiderOnline ? 'var(--color-accent)' : '#ef4444'} fillOpacity="0.1" />
+                  <text x="8" y="3" fill="rgba(255,255,255,0.7)" fontSize="7">{rider.name}</text>
+                </g>
+              );
+            })}
+
+            {/* Target Route */}
+            {mapTrackedTripId && (
+              <>
+                <line 
+                  x1="250" 
+                  y1="150" 
+                  x2={dest.x} 
+                  y2={dest.y} 
+                  stroke="rgba(6, 182, 212, 0.4)" 
+                  strokeWidth="2.5" 
+                  strokeDasharray="5,5" 
+                />
+                
+                <g transform={`translate(${dest.x}, ${dest.y})`}>
+                  <circle r="7" fill="#ec4899" />
+                  <circle r="14" fill="#ec4899" fillOpacity="0.2" className="ping-ring" />
+                  <text x="10" y="3" fill="#ec4899" fontSize="8" fontWeight="bold">Client Location</text>
+                </g>
+
+                <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
+                  <circle r="8" fill="#06b6d4" />
+                  <circle r="15" fill="#06b6d4" fillOpacity="0.25" />
+                  <text x="-4" y="3" fill="#fff" fontSize="9">📦</text>
+                </g>
+              </>
+            )}
+          </svg>
+        </div>
+
+        {mapTrackedTripId ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Progress:</span>
+              <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)' }}>{mapSimulationProgress}%</strong>
+            </div>
+            
+            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ width: `${mapSimulationProgress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #06b6d4)', transition: 'width 0.3s' }}></div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <button 
+                type="button"
+                className="btn btn-primary btn-sm" 
+                onClick={() => setIsMapSimulating(!isMapSimulating)}
+                style={{ flex: 1, padding: '0.35rem', fontSize: '0.75rem' }}
+              >
+                <i className={isMapSimulating ? "fa-solid fa-pause" : "fa-solid fa-play"}></i> {isMapSimulating ? 'Pause' : 'Start Simulation'}
+              </button>
+              <button 
+                type="button"
+                className="btn btn-outline btn-sm" 
+                onClick={() => { setMapSimulationProgress(0); setIsMapSimulating(false); }}
+                style={{ padding: '0.35rem', fontSize: '0.75rem' }}
+              >
+                <i className="fa-solid fa-rotate-left"></i> Reset
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
+              <div style={{ marginBottom: '0.25rem' }}><strong>Cargo:</strong> {cargoType}</div>
+              <div style={{ marginBottom: '0.25rem' }}><strong>Rider:</strong> {courier}</div>
+              <div style={{ marginBottom: '0.25rem' }}><strong>Recipient:</strong> {clientName} ({phone})</div>
+              <div><strong>Route destination:</strong> {address}</div>
+            </div>
+
+            <button 
+              type="button"
+              className="btn btn-success btn-sm"
+              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.45rem', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
+              onClick={() => {
+                const isOrder = mapTrackedTripId.startsWith('ORD-');
+                if (isOrder) {
+                  setInquiries(inquiries.map(inq => 
+                    inq.id === mapTrackedTripId ? { ...inq, status: 'Delivered' } : inq
+                  ));
+                } else {
+                  setAppointments(appointments.map(apt => 
+                    apt.id === mapTrackedTripId ? { ...apt, status: 'Sample Collected' } : apt
+                  ));
+                }
+                setMapSimulationProgress(100);
+                setIsMapSimulating(false);
+                alert(`Delivery status marked as completed for dispatch task: ${mapTrackedTripId}`);
+              }}
+            >
+              <i className="fa-solid fa-circle-check"></i> Complete Route Delivery
+            </button>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+            <i className="fa-solid fa-map-location-dot" style={{ fontSize: '1.8rem', marginBottom: '0.5rem', opacity: 0.3, display: 'block' }}></i>
+            Select an active dispatch task from the list or dropdown to track its routing path live.
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -4666,224 +4993,358 @@ export default function App() {
                     {doctorNavView === 'backlog' && (
                       <div>
                         <h3>My Consultation Backlog ({myDoctorAppointments.length})</h3>
-                        {myDoctorAppointments.length > 0 ? (
-                          <div className="table-responsive">
-                            <table className="admin-table">
-                              <thead>
-                                <tr>
-                                  <th>Ticket ID</th>
-                                  <th>Patient Name</th>
-                                  <th>Date / Time</th>
-                                  <th>Symptoms Statement</th>
-                                  <th>Consultation Status</th>
-                                  <th>Prescriptions & Feedback</th>
-                                  <th>Action</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {myDoctorAppointments.map(apt => (
-                                  <React.Fragment key={apt.id}>
-                                    <tr style={{ background: apt.status === 'Approved' ? 'rgba(34,197,94,0.02)' : apt.status === 'Rejected' ? 'rgba(239,68,68,0.01)' : 'transparent' }}>
-                                      <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
-                                      <td>
-                                        <strong>{apt.patientName}</strong>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
-                                      </td>
-                                      <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
-                                      <td style={{ maxWidth: '240px', wordBreak: 'break-word' }}>{apt.symptoms}</td>
-                                      <td>
-                                        <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                                          {apt.status}
-                                        </span>
-                                      </td>
-                                      <td>
-                                        {apt.status === 'Approved' ? (
-                                          apt.notes || apt.prescription ? (
-                                            <div className="patient-prescription-box" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.5rem', borderRadius: '6px' }}>
-                                              {apt.notes && <p style={{ margin: 0, fontSize: '0.85rem' }}><strong>Notes:</strong> {apt.notes}</p>}
-                                              {apt.prescription && <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}><strong>Rx:</strong> <span className="rx-label" style={{ background: 'var(--color-accent)', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>{apt.prescription}</span></p>}
-                                            </div>
-                                          ) : (
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending medical note. Fill form below...</span>
-                                          )
-                                        ) : apt.status === 'Rejected' ? (
-                                          <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '500' }}>Slot Rejected (Unavailable)</span>
-                                        ) : (
-                                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Awaiting availability check...</span>
-                                        )}
-                                      </td>
-                                      <td>
-                                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                                          <button className="action-btn" style={{ color: 'var(--color-indigo)', padding: '0.2rem 0.4rem' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Ticket Details">
-                                            <i className="fa-solid fa-eye"></i> View
-                                          </button>
-                                          
-                                          {apt.status === 'Pending' && (
-                                            <>
-                                              <button 
-                                                className="btn btn-success btn-sm" 
-                                                style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                                onClick={() => handleApproveAppointment(apt.id)}
-                                              >
-                                                <i className="fa-solid fa-circle-check"></i> Approve
-                                              </button>
-                                              <button 
-                                                className="btn btn-danger btn-sm" 
-                                                style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                                onClick={() => handleRejectAppointment(apt.id)}
-                                              >
-                                                <i className="fa-solid fa-circle-xmark"></i> Reject
-                                              </button>
-                                            </>
-                                          )}
-
-                                          <button className="btn btn-outline btn-sm" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => startEditApt(apt)} title="Reschedule Ticket">
-                                            <i className="fa-solid fa-pen-to-square"></i> Reschedule
-                                          </button>
-
-                                          {apt.status === 'Approved' && (
-                                            <button 
-                                              className="btn btn-secondary btn-sm" 
-                                              style={{ background: 'var(--color-accent)', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
-                                              onClick={() => {
-                                                setFollowUpApt(apt);
-                                                const twoWeeksLater = new Date();
-                                                twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
-                                                const dateStr = twoWeeksLater.toISOString().split('T')[0];
-                                                setFollowUpData({
-                                                  date: dateStr,
-                                                  time: '10:00 AM',
-                                                  reason: '2-Week Observation Follow-up'
-                                                });
-                                              }}
-                                              title="Schedule Return Appointment"
-                                            >
-                                              <i className="fa-solid fa-clock-rotate-left"></i> Book Follow-up
-                                            </button>
-                                          )}
-                                        </div>
-                                      </td>
+                        
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
+                          {/* Left Column: Appointments */}
+                          <div style={{ flex: '1 1 650px', minWidth: 0 }}>
+                            {myDoctorAppointments.length > 0 ? (
+                              <div className="table-responsive">
+                                <table className="admin-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Ticket ID</th>
+                                      <th>Patient Name</th>
+                                      <th>Date / Time</th>
+                                      <th>Symptoms Statement</th>
+                                      <th>Consultation Status</th>
+                                      <th>Prescriptions & Feedback</th>
+                                      <th>Action</th>
                                     </tr>
+                                  </thead>
+                                  <tbody>
+                                    {myDoctorAppointments.map(apt => (
+                                      <React.Fragment key={apt.id}>
+                                        <tr style={{ background: apt.status === 'Approved' ? 'rgba(34,197,94,0.02)' : apt.status === 'Rejected' ? 'rgba(239,68,68,0.01)' : 'transparent' }}>
+                                          <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
+                                          <td>
+                                            <strong>{apt.patientName}</strong>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
+                                          </td>
+                                          <td>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>{apt.date}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>({apt.time})</div>
+                                          </td>
+                                          <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={apt.symptoms || "None provided"}>
+                                            {apt.symptoms || <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>None provided</span>}
+                                          </td>
+                                          <td>
+                                            <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                                              {apt.status}
+                                            </span>
+                                          </td>
+                                          <td style={{ maxWidth: '200px' }}>
+                                            {apt.notes || apt.prescription ? (
+                                              <div style={{ fontSize: '0.8rem', lineHeight: '1.3' }}>
+                                                {apt.notes && <div><strong>Notes:</strong> {apt.notes.substring(0, 45)}{apt.notes.length > 45 ? '...' : ''}</div>}
+                                                {apt.prescription && <div><strong>Rx:</strong> {apt.prescription.substring(0, 45)}{apt.prescription.length > 45 ? '...' : ''}</div>}
+                                              </div>
+                                            ) : (
+                                              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Pending medical note. Fill form below...</span>
+                                            )}
+                                          </td>
+                                          <td>
+                                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                              <button 
+                                                className="action-btn" 
+                                                style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
+                                                onClick={() => setAdminSelectedApt(apt)} 
+                                                title="View / Edit Medical Record"
+                                              >
+                                                <i className="fa-solid fa-eye"></i> View
+                                              </button>
+                                              
+                                              <button 
+                                                style={{ background: 'transparent', color: 'var(--color-text)', border: '1px solid rgba(0,0,0,0.15)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                onClick={() => startEditApt(apt)} 
+                                                title="Reschedule Appointment"
+                                              >
+                                                <i className="fa-solid fa-pen-to-square"></i> Reschedule
+                                              </button>
 
-                                    {apt.status === 'Approved' && (
-                                      <tr className="doctor-note-subrow">
-                                        <td colSpan={7} style={{ background: 'rgba(28,43,73,0.01)', padding: '0.75rem 1rem 1.25rem 1rem', borderTop: 'none', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                                          <div className="doctor-note-editor-card glassmorphic" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', borderLeft: '4px solid var(--color-primary)', padding: '1rem', borderRadius: '8px', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.02)' }}>
-                                            <div>
-                                              <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
-                                                <i className="fa-solid fa-notes-medical"></i> Clinical Consultation Notes (Plain Text)
-                                              </label>
-                                              <textarea 
-                                                rows={3}
-                                                style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
-                                                placeholder="Write patient clinical findings and consultation details..."
-                                                value={docNotesState[apt.id]?.notes !== undefined ? docNotesState[apt.id].notes : (apt.notes || '')}
-                                                onChange={(e) => handleDocNoteChange(apt.id, 'notes', e.target.value)}
-                                              />
+                                              {apt.status === 'Approved' && (
+                                                <button 
+                                                  style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                  onClick={() => {
+                                                    setFollowUpApt(apt);
+                                                    const twoWeeksLater = new Date();
+                                                    twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+                                                    const dateStr = twoWeeksLater.toISOString().split('T')[0];
+                                                    setFollowUpData({
+                                                      date: dateStr,
+                                                      time: '10:00 AM',
+                                                      reason: '2-Week Observation Follow-up'
+                                                    });
+                                                  }}
+                                                  title="Schedule Return Appointment"
+                                                >
+                                                  <i className="fa-solid fa-clock-rotate-left"></i> Book Follow-up
+                                                </button>
+                                              )}
                                             </div>
-                                            <div>
-                                              <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-accent)', display: 'block', marginBottom: '0.5rem' }}>
-                                                <i className="fa-solid fa-prescription"></i> Rx Prescription Details (Edit before submitting)
-                                              </label>
-                                              <textarea 
-                                                rows={3}
-                                                style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
-                                                placeholder="List prescribed medicines, dosage instruction (e.g. Tab Paracetamol 500mg, 1x3 for 3 days)..."
-                                                value={docNotesState[apt.id]?.prescription !== undefined ? docNotesState[apt.id].prescription : (apt.prescription || '')}
-                                                onChange={(e) => handleDocNoteChange(apt.id, 'prescription', e.target.value)}
-                                              />
-                                            </div>
-                                            
-                                            {/* Department Referrals & Pushing */}
-                                            <div style={{ gridColumn: 'span 2', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '1rem', marginTop: '0.25rem' }}>
-                                              <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
-                                                <i className="fa-solid fa-network-wired"></i> Push Patient Referrals to Medical Departments (Optional)
-                                              </label>
-                                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
+                                          </td>
+                                        </tr>
+
+                                        {apt.status === 'Approved' && (
+                                          <tr className="doctor-note-subrow">
+                                            <td colSpan={7} style={{ background: 'rgba(28,43,73,0.01)', padding: '0.75rem 1rem 1.25rem 1rem', borderTop: 'none', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                                              <div className="doctor-note-editor-card glassmorphic" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', borderLeft: '4px solid var(--color-primary)', padding: '1rem', borderRadius: '8px', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.02)' }}>
                                                 <div>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
-                                                    <i className="fa-solid fa-flask"></i> Laboratory Tests Referral
-                                                  </span>
-                                                  <input 
-                                                    type="text"
-                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
-                                                    placeholder="e.g. Malaria smear, FBC..."
-                                                    value={docNotesState[apt.id]?.labTests !== undefined ? docNotesState[apt.id].labTests : (apt.labTests || '')}
-                                                    onChange={(e) => handleDocNoteChange(apt.id, 'labTests', e.target.value)}
+                                                  <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                                                    <i className="fa-solid fa-notes-medical"></i> Clinical Consultation Notes (Plain Text)
+                                                  </label>
+                                                  <textarea 
+                                                    rows={3}
+                                                    style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
+                                                    placeholder="Write patient clinical findings and consultation details..."
+                                                    value={docNotesState[apt.id]?.notes !== undefined ? docNotesState[apt.id].notes : (apt.notes || '')}
+                                                    onChange={(e) => handleDocNoteChange(apt.id, 'notes', e.target.value)}
                                                   />
                                                 </div>
                                                 <div>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
-                                                    <i className="fa-solid fa-x-ray"></i> Scan / Imaging Referral
-                                                  </span>
-                                                  <input 
-                                                    type="text"
-                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
-                                                    placeholder="e.g. Pelvic ultrasound, Chest X-ray..."
-                                                    value={docNotesState[apt.id]?.scans !== undefined ? docNotesState[apt.id].scans : (apt.scans || '')}
-                                                    onChange={(e) => handleDocNoteChange(apt.id, 'scans', e.target.value)}
+                                                  <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                                                    <i className="fa-solid fa-prescription"></i> Pharmacy Prescription & Drug Instructions
+                                                  </label>
+                                                  <textarea 
+                                                    rows={3}
+                                                    style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
+                                                    placeholder="Write specific items/dosage (e.g. Paracetamol 500mg - 2x daily)..."
+                                                    value={docNotesState[apt.id]?.prescription !== undefined ? docNotesState[apt.id].prescription : (apt.prescription || '')}
+                                                    onChange={(e) => handleDocNoteChange(apt.id, 'prescription', e.target.value)}
                                                   />
                                                 </div>
-                                                <div>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
-                                                    <i className="fa-solid fa-hospital-user"></i> Clinical Office Referral
-                                                  </span>
-                                                  <input 
-                                                    type="text"
-                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
-                                                    placeholder="e.g. Return in 2 weeks..."
-                                                    value={docNotesState[apt.id]?.officeReferral !== undefined ? docNotesState[apt.id].officeReferral : (apt.officeReferral || '')}
-                                                    onChange={(e) => handleDocNoteChange(apt.id, 'officeReferral', e.target.value)}
-                                                  />
+
+                                                <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', background: 'rgba(28,43,73,0.02)', padding: '0.75rem', borderRadius: '6px' }}>
+                                                  <div>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                      <i className="fa-solid fa-vials"></i> Prescribe Laboratory Diagnostics
+                                                    </span>
+                                                    <input 
+                                                      type="text"
+                                                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
+                                                      placeholder="e.g. Malaria smear, FBC..."
+                                                      value={docNotesState[apt.id]?.labTests !== undefined ? docNotesState[apt.id].labTests : (apt.labTests || '')}
+                                                      onChange={(e) => handleDocNoteChange(apt.id, 'labTests', e.target.value)}
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                      <i className="fa-solid fa-x-ray"></i> Prescribe Imaging Scans
+                                                    </span>
+                                                    <input 
+                                                      type="text"
+                                                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
+                                                      placeholder="e.g. Pelvic ultrasound, Chest X-ray..."
+                                                      value={docNotesState[apt.id]?.scans !== undefined ? docNotesState[apt.id].scans : (apt.scans || '')}
+                                                      onChange={(e) => handleDocNoteChange(apt.id, 'scans', e.target.value)}
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                      <i className="fa-solid fa-hospital-user"></i> Clinical Office Referral
+                                                    </span>
+                                                    <input 
+                                                      type="text"
+                                                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
+                                                      placeholder="e.g. Return in 2 weeks..."
+                                                      value={docNotesState[apt.id]?.officeReferral !== undefined ? docNotesState[apt.id].officeReferral : (apt.officeReferral || '')}
+                                                      onChange={(e) => handleDocNoteChange(apt.id, 'officeReferral', e.target.value)}
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                                      <i className="fa-solid fa-square-check"></i> Consultation Status
+                                                    </span>
+                                                    <select
+                                                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem', height: '37px', backgroundColor: '#fff', color: 'var(--color-text)' }}
+                                                      value={docNotesState[apt.id]?.status !== undefined ? docNotesState[apt.id].status : (apt.status || 'Approved')}
+                                                      onChange={(e) => handleDocNoteChange(apt.id, 'status', e.target.value)}
+                                                    >
+                                                      <option value="Pending">Pending</option>
+                                                      <option value="Approved">Approved</option>
+                                                      <option value="Completed">Completed</option>
+                                                      <option value="Awaiting Lab">Awaiting Lab Results</option>
+                                                      <option value="Awaiting Scan">Awaiting Scan Results</option>
+                                                      <option value="Cancelled">Cancelled</option>
+                                                      <option value="Rejected">Rejected</option>
+                                                    </select>
+                                                  </div>
                                                 </div>
-                                                <div>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
-                                                    <i className="fa-solid fa-square-check"></i> Consultation Status
+
+                                                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '0.25rem' }}>
+                                                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                                    <i className="fa-solid fa-circle-info"></i> Submit compiles notes into the official portal record.
                                                   </span>
-                                                  <select
-                                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem', height: '37px', backgroundColor: '#fff', color: 'var(--color-text)' }}
-                                                    value={docNotesState[apt.id]?.status !== undefined ? docNotesState[apt.id].status : (apt.status || 'Approved')}
-                                                    onChange={(e) => handleDocNoteChange(apt.id, 'status', e.target.value)}
+                                                  <button 
+                                                    type="button"
+                                                    className="btn btn-primary"
+                                                    style={{ padding: '0.45rem 1.15rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}
+                                                    onClick={() => handleSubmitDocNotes(apt.id)}
                                                   >
-                                                    <option value="Pending">Pending</option>
-                                                    <option value="Approved">Approved</option>
-                                                    <option value="Completed">Completed</option>
-                                                    <option value="Awaiting Lab">Awaiting Lab Results</option>
-                                                    <option value="Awaiting Scan">Awaiting Scan Results</option>
-                                                    <option value="Cancelled">Cancelled</option>
-                                                    <option value="Rejected">Rejected</option>
-                                                  </select>
+                                                    <i className="fa-solid fa-cloud-arrow-up"></i> Submit Consultation Record
+                                                  </button>
                                                 </div>
                                               </div>
-                                            </div>
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </React.Fragment>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <div className="empty-state">
+                                <p>You have no scheduled virtual patient consultation requests at this time.</p>
+                              </div>
+                            )}
+                          </div>
 
-                                            <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '0.25rem' }}>
-                                              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                                                <i className="fa-solid fa-circle-info"></i> Submit compiles notes into the patient's official portal record.
-                                              </span>
-                                              <button 
-                                                type="button"
-                                                className="btn btn-primary"
-                                                style={{ padding: '0.45rem 1.15rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}
-                                                onClick={() => handleSubmitDocNotes(apt.id)}
-                                              >
-                                                <i className="fa-solid fa-cloud-arrow-up"></i> Submit Consultation Record
-                                              </button>
-                                            </div>
+                          {/* Right Column: Staff Availability */}
+                          <div style={{ flex: '1 1 320px', minWidth: '300px' }}>
+                            <div className="glassmorphic" style={{ padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                              <h4 style={{ margin: '0 0 0.75rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', color: 'var(--color-accent)' }}>
+                                <i className="fa-solid fa-signal"></i> Staff Availability Tracker
+                              </h4>
+                              <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                Verify pharmacist, laboratory, and rider availability before routing tasks.
+                              </p>
+                              
+                              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                                <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}></i>
+                                <input 
+                                  type="text" 
+                                  placeholder="Search staff, role, status..."
+                                  value={availabilitySearchQuery}
+                                  onChange={(e) => setAvailabilitySearchQuery(e.target.value)}
+                                  style={{ 
+                                    width: '100%', 
+                                    padding: '0.4rem 0.75rem 0.4rem 2rem', 
+                                    borderRadius: '6px', 
+                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                    background: 'rgba(0,0,0,0.2)',
+                                    color: '#fff',
+                                    fontSize: '0.8rem',
+                                    outline: 'none'
+                                  }}
+                                />
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '350px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                                {(() => {
+                                  const query = availabilitySearchQuery.toLowerCase();
+                                  const staffList = [
+                                    { name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmycare.com' },
+                                    { name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
+                                    { name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
+                                    ...doctors.map(d => ({ 
+                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`, 
+                                      role: d.specialty, 
+                                      available: d.active !== false, 
+                                      icon: 'fa-user-doctor', 
+                                      email: d.email, 
+                                      phone: d.phone 
+                                    }))
+                                  ];
+
+                                  const filtered = staffList.filter(s => 
+                                    s.name.toLowerCase().includes(query) || 
+                                    s.role.toLowerCase().includes(query) ||
+                                    (s.available ? 'online available' : 'offline unavailable').includes(query)
+                                  );
+
+                                  if (filtered.length === 0) {
+                                    return <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>No matching staff found</div>;
+                                  }
+
+                                  return filtered.map((staff, idx) => (
+                                    <div key={idx} style={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center', 
+                                      justifyContent: 'space-between', 
+                                      padding: '0.6rem 0.75rem', 
+                                      background: 'rgba(255,255,255,0.02)', 
+                                      borderRadius: '8px',
+                                      border: '1px solid rgba(255,255,255,0.04)',
+                                      gap: '0.5rem'
+                                    }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+                                        <div style={{ 
+                                          width: '28px', 
+                                          height: '28px', 
+                                          borderRadius: '50%', 
+                                          background: 'rgba(28, 43, 73, 0.2)', 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          justifyContent: 'center',
+                                          color: 'var(--color-accent)',
+                                          flexShrink: 0
+                                        }}>
+                                          <i className={`fa-solid ${staff.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                                        </div>
+                                        <div style={{ minWidth: 0 }}>
+                                          <div style={{ fontSize: '0.8rem', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>
+                                            {staff.name}
                                           </div>
-                                        </td>
-                                      </tr>
-                                    )}
-                                  </React.Fragment>
-                                ))}
-                              </tbody>
-                            </table>
+                                          <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.05rem' }}>
+                                            <span>{staff.role}</span>
+                                            {staff.email && (
+                                              <a href={`mailto:${staff.email}`} title={`Email: ${staff.email}`} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
+                                                <i className="fa-solid fa-envelope" style={{ fontSize: '0.75rem' }}></i>
+                                              </a>
+                                            )}
+                                            {staff.phone && (
+                                              <a href={`tel:${staff.phone}`} title={`Call: ${staff.phone}`} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
+                                                <i className="fa-solid fa-phone" style={{ fontSize: '0.75rem' }}></i>
+                                              </a>
+                                            )}
+                                            {staff.phone && (
+                                              <a 
+                                                href={`https://wa.me/${staff.phone.replace(/[^0-9]/g, '')}`} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                title="Chat on WhatsApp" 
+                                                style={{ color: '#10B981', textDecoration: 'none' }}
+                                              >
+                                                <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.8rem' }}></i>
+                                              </a>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div style={{ 
+                                        display: 'inline-flex', 
+                                        alignItems: 'center', 
+                                        gap: '0.3rem', 
+                                        background: staff.available ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                        border: `1px solid ${staff.available ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        flexShrink: 0
+                                      }}>
+                                        <span style={{ 
+                                          width: '5px', 
+                                          height: '5px', 
+                                          borderRadius: '50%', 
+                                          background: staff.available ? '#10b981' : '#ef4444',
+                                          boxShadow: staff.available ? '0 0 6px #10b981' : 'none'
+                                        }}></span>
+                                        <span style={{ 
+                                          fontSize: '0.7rem', 
+                                          fontWeight: 'bold', 
+                                          color: staff.available ? '#10b981' : '#ef4444',
+                                          textTransform: 'uppercase',
+                                          letterSpacing: '0.5px'
+                                        }}>
+                                          {staff.available ? 'Online' : 'Offline'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ));
+                                })()}
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="empty-state">
-                            <p>You have no scheduled virtual patient consultation requests at this time.</p>
-                          </div>
-                        )}
+                        </div>
                       </div>
                     )}
 
@@ -5184,14 +5645,13 @@ export default function App() {
                                   <input 
                                     type="file" 
                                     accept="image/*"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                       const file = e.target.files[0];
                                       if (file) {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                          setDocSelfData({ ...docSelfData, image: reader.result });
-                                        };
-                                        reader.readAsDataURL(file);
+                                        const compressed = await compressImageFile(file, 400, 0.7);
+                                        if (compressed) {
+                                          setDocSelfData({ ...docSelfData, image: compressed });
+                                        }
                                       }
                                     }}
                                     style={{ flexGrow: 1 }}
@@ -5212,14 +5672,13 @@ export default function App() {
                                   <input 
                                     type="file" 
                                     accept="image/*,application/pdf"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                       const file = e.target.files[0];
                                       if (file) {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                          setDocSelfData({ ...docSelfData, license: reader.result });
-                                        };
-                                        reader.readAsDataURL(file);
+                                        const compressed = await compressImageFile(file, 600, 0.75);
+                                        if (compressed) {
+                                          setDocSelfData({ ...docSelfData, license: compressed });
+                                        }
                                       }
                                     }}
                                     style={{ flexGrow: 1 }}
@@ -5262,7 +5721,37 @@ export default function App() {
                     <h2>Pharmacy Dispense Hub</h2>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-accent)' }}>Logged in as: {loggedInPharmacist.name}</p>
                   </div>
-                  <div className="dashboard-header-actions">
+                  <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span style={{ 
+                        width: '8px', 
+                        height: '8px', 
+                        borderRadius: '50%', 
+                        background: isPharmacistAvailable ? '#10b981' : '#ef4444', 
+                        display: 'inline-block',
+                        boxShadow: isPharmacistAvailable ? '0 0 8px #10b981' : 'none'
+                      }}></span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isPharmacistAvailable ? '#10b981' : 'var(--color-text-muted)' }}>
+                        {isPharmacistAvailable ? 'Available' : 'Offline'}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setIsPharmacistAvailable(!isPharmacistAvailable)}
+                        style={{ 
+                          marginLeft: '0.5rem',
+                          background: isPharmacistAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)', 
+                          color: isPharmacistAvailable ? 'var(--color-text)' : '#000',
+                          border: 'none', 
+                          padding: '0.2rem 0.6rem', 
+                          borderRadius: '12px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 'bold',
+                          cursor: 'pointer' 
+                        }}
+                      >
+                        {isPharmacistAvailable ? 'Go Offline' : 'Go Online'}
+                      </button>
+                    </div>
                     <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
                   </div>
                 </div>
@@ -5463,7 +5952,37 @@ export default function App() {
                     <h2>Laboratory Diagnostics Console</h2>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-accent)' }}>Logged in as: {loggedInLab.name}</p>
                   </div>
-                  <div className="dashboard-header-actions">
+                  <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span style={{ 
+                        width: '8px', 
+                        height: '8px', 
+                        borderRadius: '50%', 
+                        background: isLabTechAvailable ? '#10b981' : '#ef4444', 
+                        display: 'inline-block',
+                        boxShadow: isLabTechAvailable ? '0 0 8px #10b981' : 'none'
+                      }}></span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isLabTechAvailable ? '#10b981' : 'var(--color-text-muted)' }}>
+                        {isLabTechAvailable ? 'Available' : 'Offline'}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setIsLabTechAvailable(!isLabTechAvailable)}
+                        style={{ 
+                          marginLeft: '0.5rem',
+                          background: isLabTechAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)', 
+                          color: isLabTechAvailable ? 'var(--color-text)' : '#000',
+                          border: 'none', 
+                          padding: '0.2rem 0.6rem', 
+                          borderRadius: '12px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 'bold',
+                          cursor: 'pointer' 
+                        }}
+                      >
+                        {isLabTechAvailable ? 'Go Offline' : 'Go Online'}
+                      </button>
+                    </div>
                     <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
                   </div>
                 </div>
@@ -5656,7 +6175,37 @@ export default function App() {
                     <h2>Logistics & Dispatch Control</h2>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-accent)' }}>Logged in as: {loggedInLogistics.name}</p>
                   </div>
-                  <div className="dashboard-header-actions">
+                  <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span style={{ 
+                        width: '8px', 
+                        height: '8px', 
+                        borderRadius: '50%', 
+                        background: isLogisticsAvailable ? '#10b981' : '#ef4444', 
+                        display: 'inline-block',
+                        boxShadow: isLogisticsAvailable ? '0 0 8px #10b981' : 'none'
+                      }}></span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isLogisticsAvailable ? '#10b981' : 'var(--color-text-muted)' }}>
+                        {isLogisticsAvailable ? 'Available' : 'Offline'}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setIsLogisticsAvailable(!isLogisticsAvailable)}
+                        style={{ 
+                          marginLeft: '0.5rem',
+                          background: isLogisticsAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)', 
+                          color: isLogisticsAvailable ? 'var(--color-text)' : '#000',
+                          border: 'none', 
+                          padding: '0.2rem 0.6rem', 
+                          borderRadius: '12px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 'bold',
+                          cursor: 'pointer' 
+                        }}
+                      >
+                        {isLogisticsAvailable ? 'Go Offline' : 'Go Online'}
+                      </button>
+                    </div>
                     <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
                   </div>
                 </div>
@@ -5726,101 +6275,128 @@ export default function App() {
                     {logisticsNavView === 'deliveries' && (
                       <div>
                         <h3>Pharmacy Package Deliveries</h3>
-                        {(() => {
-                          const shipments = inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Awaiting Dispatch' || inq.status === 'Out for Delivery' || inq.status === 'Delivered'));
-                          if (shipments.length === 0) {
-                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy packages assigned for delivery.</p>;
-                          }
-                          return (
-                            <div className="table-responsive">
-                              <table className="admin-table">
-                                <thead>
-                                  <tr>
-                                    <th>Order ID</th>
-                                    <th>Recipient</th>
-                                    <th>Address</th>
-                                    <th>Status</th>
-                                    <th>Assigned Rider</th>
-                                    <th style={{ textAlign: 'right' }}>Actions</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {shipments.map(ship => {
-                                    // Extract address from message
-                                    let address = "Contact client";
-                                    const msg = ship.message || '';
-                                    if (msg.includes('Shipping Address: [')) {
-                                      address = msg.split('Shipping Address: [')[1].split(']. Rx Notes')[0] || address;
-                                    }
-                                    return (
-                                      <tr key={ship.id}>
-                                        <td><strong>{ship.id}</strong></td>
-                                        <td>{ship.name}</td>
-                                        <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
-                                        <td>
-                                          <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: ship.status === 'Delivered' ? 'rgba(34, 197, 94, 0.15)' : ship.status === 'Out for Delivery' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: ship.status === 'Delivered' ? '#166534' : ship.status === 'Out for Delivery' ? '#1d4ed8' : '#854d0e' }}>
-                                            {ship.status}
-                                          </span>
-                                        </td>
-                                        <td>
-                                          {ship.status === 'Delivered' ? (
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                              <i className="fa-solid fa-motorcycle" style={{ color: 'var(--color-success)' }}></i> {ship.assignedRider || 'Default Courier'}
-                                            </span>
-                                          ) : (
-                                            <select
-                                              value={ship.assignedRider || ''}
-                                              onChange={(e) => {
-                                                const riderName = e.target.value;
-                                                const updated = inquiries.map(i => i.id === ship.id ? { 
-                                                  ...i, 
-                                                  assignedRider: riderName,
-                                                  status: riderName ? 'Out for Delivery' : 'Awaiting Dispatch'
-                                                } : i);
-                                                setInquiries(updated);
-                                              }}
-                                              style={{ 
-                                                padding: '0.25rem 0.5rem', 
-                                                borderRadius: 'var(--radius-sm)', 
-                                                border: '1px solid rgba(24, 43, 73, 0.12)', 
-                                                fontSize: '0.82rem',
-                                                background: 'var(--color-bg)',
-                                                color: 'var(--color-text)',
-                                                cursor: 'pointer'
-                                              }}
-                                            >
-                                              <option value="">-- Unassigned --</option>
-                                              {logistics.map(rider => (
-                                                <option key={rider.email} value={rider.name}>
-                                                  {rider.name} ({rider.vehicleType})
-                                                </option>
-                                              ))}
-                                            </select>
-                                          )}
-                                        </td>
-                                        <td>
-                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
-                                            {ship.status === 'Out for Delivery' && (
-                                              <button className="btn btn-accent btn-sm" onClick={() => {
-                                                const updated = inquiries.map(i => i.id === ship.id ? { ...i, status: 'Delivered' } : i);
-                                                setInquiries(updated);
-                                              }}>
-                                                Mark Delivered
-                                              </button>
-                                            )}
-                                            <button className="btn btn-outline btn-sm" onClick={() => setLogisticsSelectedShipment(ship)}>
-                                              <i className="fa-solid fa-eye"></i> Details
-                                            </button>
-                                          </div>
-                                        </td>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem', alignItems: 'start' }}>
+                          {/* Left Column: Shipment Table */}
+                          <div>
+                            {(() => {
+                              const shipments = inquiries.filter(inq => inq.id.startsWith('ORD-') && (inq.status === 'Awaiting Dispatch' || inq.status === 'Out for Delivery' || inq.status === 'Delivered'));
+                              if (shipments.length === 0) {
+                                return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy packages assigned for delivery.</p>;
+                              }
+                              return (
+                                <div className="table-responsive">
+                                  <table className="admin-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Order ID</th>
+                                        <th>Recipient</th>
+                                        <th>Address</th>
+                                        <th>Status</th>
+                                        <th>Assigned Rider</th>
+                                        <th style={{ textAlign: 'right' }}>Actions</th>
                                       </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          );
-                        })()}
+                                    </thead>
+                                    <tbody>
+                                      {shipments.map(ship => {
+                                        let address = "Contact client";
+                                        const msg = ship.message || '';
+                                        if (msg.includes('Shipping Address: [')) {
+                                          address = msg.split('Shipping Address: [')[1].split(']. Rx Notes')[0] || address;
+                                        }
+                                        const isTrackingThis = mapTrackedTripId === ship.id;
+                                        return (
+                                          <tr key={ship.id} style={{ background: isTrackingThis ? 'rgba(6, 182, 212, 0.04)' : 'transparent' }}>
+                                            <td><strong>{ship.id}</strong></td>
+                                            <td>{ship.name}</td>
+                                            <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
+                                            <td>
+                                              <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: ship.status === 'Delivered' ? 'rgba(34, 197, 94, 0.15)' : ship.status === 'Out for Delivery' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: ship.status === 'Delivered' ? '#166534' : ship.status === 'Out for Delivery' ? '#1d4ed8' : '#854d0e' }}>
+                                                {ship.status}
+                                              </span>
+                                            </td>
+                                            <td>
+                                              {ship.status === 'Delivered' ? (
+                                                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                  <i className="fa-solid fa-motorcycle" style={{ color: 'var(--color-success)' }}></i> {ship.assignedRider || 'Default Courier'}
+                                                </span>
+                                              ) : (
+                                                <select
+                                                  value={ship.assignedRider || ''}
+                                                  onChange={(e) => {
+                                                    const riderName = e.target.value;
+                                                    const updated = inquiries.map(i => i.id === ship.id ? { 
+                                                      ...i, 
+                                                      assignedRider: riderName,
+                                                      status: riderName ? 'Out for Delivery' : 'Awaiting Dispatch'
+                                                    } : i);
+                                                    setInquiries(updated);
+                                                  }}
+                                                  style={{ 
+                                                    padding: '0.25rem 0.5rem', 
+                                                    borderRadius: 'var(--radius-sm)', 
+                                                    border: '1px solid rgba(24, 43, 73, 0.12)', 
+                                                    fontSize: '0.82rem',
+                                                    background: 'var(--color-bg)',
+                                                    color: 'var(--color-text)',
+                                                    cursor: 'pointer'
+                                                  }}
+                                                >
+                                                  <option value="">-- Unassigned --</option>
+                                                  {logistics.map(rider => (
+                                                    <option key={rider.email} value={rider.name}>
+                                                      {rider.name} ({rider.vehicleType})
+                                                    </option>
+                                                  ))}
+                                                </select>
+                                              )}
+                                            </td>
+                                            <td>
+                                              <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                {ship.status !== 'Delivered' && (
+                                                  <button 
+                                                    className="action-btn" 
+                                                    style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
+                                                    onClick={() => { 
+                                                      setMapTrackedTripId(ship.id); 
+                                                      setMapSimulationProgress(0); 
+                                                      setIsMapSimulating(true); 
+                                                    }}
+                                                    title="Track Live on Map"
+                                                  >
+                                                    <i className="fa-solid fa-map-location-dot"></i> Track
+                                                  </button>
+                                                )}
+
+                                                {ship.status === 'Out for Delivery' && (
+                                                  <button className="btn btn-accent btn-sm" onClick={() => {
+                                                    const updated = inquiries.map(i => i.id === ship.id ? { ...i, status: 'Delivered' } : i);
+                                                    setInquiries(updated);
+                                                  }}>
+                                                    Mark Delivered
+                                                  </button>
+                                                )}
+                                                <button className="btn btn-outline btn-sm" onClick={() => setLogisticsSelectedShipment(ship)}>
+                                                  <i className="fa-solid fa-eye"></i> Details
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Right Column: Live Dispatch Telemetry map */}
+                          <div>
+                            <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-accent)', fontSize: '0.95rem' }}>Live Routing Telemetry</h4>
+                            {renderLiveTrackingMap(false)}
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -5828,99 +6404,127 @@ export default function App() {
                     {logisticsNavView === 'lab-trips' && (
                       <div>
                         <h3>Lab Sample Collection Trips</h3>
-                        {(() => {
-                          const trips = appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Pending' || apt.status === 'Sample Collected'));
-                          if (trips.length === 0) {
-                            return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active sample collections pending.</p>;
-                          }
-                          return (
-                            <div className="table-responsive">
-                              <table className="admin-table">
-                                <thead>
-                                  <tr>
-                                    <th>Ticket ID</th>
-                                    <th>Scheduled Date</th>
-                                    <th>Patient</th>
-                                    <th>Address</th>
-                                    <th>Status</th>
-                                    <th>Assigned Rider</th>
-                                    <th style={{ textAlign: 'right' }}>Actions</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {trips.map(trip => {
-                                    let address = "Contact patient";
-                                    const rawSymp = trip.symptoms || '';
-                                    if (rawSymp.includes('Home collection address: ')) {
-                                      address = rawSymp.split('Home collection address: ')[1].split('. Patient Instructions')[0] || address;
-                                    }
-                                    return (
-                                      <tr key={trip.id}>
-                                        <td><strong>{trip.id}</strong></td>
-                                        <td>{trip.date}</td>
-                                        <td>{trip.patientName}</td>
-                                        <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
-                                        <td>
-                                          <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: trip.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: trip.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e' }}>
-                                            {trip.status === 'Pending' ? 'Collection Pending' : 'Sample Collected'}
-                                          </span>
-                                        </td>
-                                        <td>
-                                          {trip.status === 'Completed' ? (
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                                              {trip.assignedRider || 'Default Courier'}
-                                            </span>
-                                          ) : (
-                                            <select
-                                              value={trip.assignedRider || ''}
-                                              onChange={(e) => {
-                                                const riderName = e.target.value;
-                                                const updated = appointments.map(a => a.id === trip.id ? { 
-                                                  ...a, 
-                                                  assignedRider: riderName,
-                                                  status: riderName ? 'Sample Collected' : 'Pending'
-                                                } : a);
-                                                setAppointments(updated);
-                                              }}
-                                              style={{ 
-                                                padding: '0.25rem 0.5rem', 
-                                                borderRadius: 'var(--radius-sm)', 
-                                                border: '1px solid rgba(24, 43, 73, 0.12)', 
-                                                fontSize: '0.82rem',
-                                                background: 'var(--color-bg)',
-                                                color: 'var(--color-text)',
-                                                cursor: 'pointer'
-                                              }}
-                                            >
-                                              <option value="">-- Unassigned --</option>
-                                              {logistics.map(rider => (
-                                                <option key={rider.email} value={rider.name}>
-                                                  {rider.name} ({rider.vehicleType})
-                                                </option>
-                                              ))}
-                                            </select>
-                                          )}
-                                        </td>
-                                        <td>
-                                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
-                                            {trip.status === 'Sample Collected' && (
-                                              <button className="btn btn-accent btn-sm" onClick={() => {
-                                                const updated = appointments.map(a => a.id === trip.id ? { ...a, status: 'Completed' } : a);
-                                                setAppointments(updated);
-                                              }}>
-                                                Deliver to Lab
-                                              </button>
-                                            )}
-                                          </div>
-                                        </td>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem', alignItems: 'start' }}>
+                          {/* Left Column: Trips Table */}
+                          <div>
+                            {(() => {
+                              const trips = appointments.filter(apt => apt.id.startsWith('LAB-') && (apt.status === 'Pending' || apt.status === 'Sample Collected'));
+                              if (trips.length === 0) {
+                                return <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No active sample collections pending.</p>;
+                              }
+                              return (
+                                <div className="table-responsive">
+                                  <table className="admin-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Ticket ID</th>
+                                        <th>Scheduled Date</th>
+                                        <th>Patient</th>
+                                        <th>Address</th>
+                                        <th>Status</th>
+                                        <th>Assigned Rider</th>
+                                        <th style={{ textAlign: 'right' }}>Actions</th>
                                       </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          );
-                        })()}
+                                    </thead>
+                                    <tbody>
+                                      {trips.map(trip => {
+                                        let address = "Contact patient";
+                                        const rawSymp = trip.symptoms || '';
+                                        if (rawSymp.includes('Home collection address: ')) {
+                                          address = rawSymp.split('Home collection address: ')[1].split('. Patient Instructions')[0] || address;
+                                        }
+                                        const isTrackingThis = mapTrackedTripId === trip.id;
+                                        return (
+                                          <tr key={trip.id} style={{ background: isTrackingThis ? 'rgba(6, 182, 212, 0.04)' : 'transparent' }}>
+                                            <td><strong>{trip.id}</strong></td>
+                                            <td>{trip.date}</td>
+                                            <td>{trip.patientName}</td>
+                                            <td><span style={{ fontSize: '0.85rem' }}>{address}</span></td>
+                                            <td>
+                                              <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: trip.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', color: trip.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e' }}>
+                                                {trip.status === 'Pending' ? 'Collection Pending' : 'Sample Collected'}
+                                              </span>
+                                            </td>
+                                            <td>
+                                              {trip.status === 'Completed' ? (
+                                                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                                  {trip.assignedRider || 'Default Courier'}
+                                                </span>
+                                              ) : (
+                                                <select
+                                                  value={trip.assignedRider || ''}
+                                                  onChange={(e) => {
+                                                    const riderName = e.target.value;
+                                                    const updated = appointments.map(a => a.id === trip.id ? { 
+                                                      ...a, 
+                                                      assignedRider: riderName,
+                                                      status: riderName ? 'Sample Collected' : 'Pending'
+                                                    } : a);
+                                                    setAppointments(updated);
+                                                  }}
+                                                  style={{ 
+                                                    padding: '0.25rem 0.5rem', 
+                                                    borderRadius: 'var(--radius-sm)', 
+                                                    border: '1px solid rgba(24, 43, 73, 0.12)', 
+                                                    fontSize: '0.82rem',
+                                                    background: 'var(--color-bg)',
+                                                    color: 'var(--color-text)',
+                                                    cursor: 'pointer'
+                                                  }}
+                                                >
+                                                  <option value="">-- Unassigned --</option>
+                                                  {logistics.map(rider => (
+                                                    <option key={rider.email} value={rider.name}>
+                                                      {rider.name} ({rider.vehicleType})
+                                                    </option>
+                                                  ))}
+                                                </select>
+                                              )}
+                                            </td>
+                                            <td>
+                                              <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                {trip.status !== 'Completed' && (
+                                                  <button 
+                                                    className="action-btn" 
+                                                    style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
+                                                    onClick={() => { 
+                                                      setMapTrackedTripId(trip.id); 
+                                                      setMapSimulationProgress(0); 
+                                                      setIsMapSimulating(true); 
+                                                    }}
+                                                    title="Track Live on Map"
+                                                  >
+                                                    <i className="fa-solid fa-map-location-dot"></i> Track
+                                                  </button>
+                                                )}
+
+                                                {trip.status === 'Sample Collected' && (
+                                                  <button className="btn btn-accent btn-sm" onClick={() => {
+                                                    const updated = appointments.map(a => a.id === trip.id ? { ...a, status: 'Completed' } : a);
+                                                    setAppointments(updated);
+                                                  }}>
+                                                    Deliver to Lab
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Right Column: Live Tracking Map */}
+                          <div>
+                            <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-accent)', fontSize: '0.95rem' }}>Live Routing Telemetry</h4>
+                            {renderLiveTrackingMap(false)}
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -6604,80 +7208,281 @@ export default function App() {
                     {adminNavView === 'appointments' && (
                       <div>
                         <h3>Appointments Registry</h3>
-                        {appointments.length > 0 ? (
-                          <div className="table-responsive">
-                            <table className="admin-table">
-                              <thead>
-                                <tr>
-                                  <th>Ticket ID</th>
-                                  <th>Patient</th>
-                                  <th>Specialist</th>
-                                  <th>Date</th>
-                                  <th>Symptoms</th>
-                                  <th>Status</th>
-                                  <th>Actions</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {appointments.map(apt => (
-                                  <tr key={apt.id}>
-                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
-                                    <td>
-                                      <strong>{apt.patientName}</strong>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.email}</div>
-                                    </td>
-                                    <td>{apt.doctor}</td>
-                                    <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
-                                    <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={apt.symptoms}>
-                                      {apt.symptoms}
-                                    </td>
-                                    <td>
-                                      <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                                        {apt.status}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <div className="actions-wrapper">
-                                        {apt.status === 'Pending' && (
-                                          <>
-                                            <button className="action-btn btn-approve" onClick={() => handleApproveAppointment(apt.id)} title="Approve Booking">
-                                              Approve
-                                            </button>
+                        
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
+                          {/* Left Column: Appointments List */}
+                          <div style={{ flex: '1 1 650px', minWidth: 0 }}>
+                            {appointments.length > 0 ? (
+                              <div className="table-responsive">
+                                <table className="admin-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Ticket ID</th>
+                                      <th>Patient</th>
+                                      <th>Specialist</th>
+                                      <th>Date</th>
+                                      <th>Symptoms</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {appointments.map(apt => (
+                                      <tr key={apt.id}>
+                                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{apt.id}</td>
+                                        <td>
+                                          <strong>{apt.patientName}</strong>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.email}</div>
+                                        </td>
+                                        <td>{apt.doctor}</td>
+                                        <td>{apt.date} <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>({apt.time})</span></td>
+                                        <td style={{ maxWidth: '200px', overflow: 'hidden', textOpacity: '0.7', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={apt.symptoms}>
+                                          {apt.symptoms}
+                                        </td>
+                                        <td>
+                                          <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                                            {apt.status}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                             <button 
                                               className="action-btn" 
-                                              style={{ backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }}
-                                              onClick={() => handleAutoRouteSpecialist(apt.id)} 
-                                              title="Auto-Route to Most Available Doctor"
+                                              style={{ background: 'transparent', color: 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', padding: '0.25rem 0.5rem', border: 'none', cursor: 'pointer' }} 
+                                              onClick={() => setAdminSelectedApt(apt)} 
+                                              title="View Details"
                                             >
-                                              <i className="fa-solid fa-route"></i> Route
+                                              <i className="fa-solid fa-eye"></i> View
                                             </button>
-                                            <button className="action-btn btn-cancel" onClick={() => handleCancelAppointment(apt.id)} title="Cancel Booking">
-                                              Cancel
+
+                                            {apt.status === 'Pending' && (
+                                              <>
+                                                <button 
+                                                  style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                  onClick={() => handleApproveAppointment(apt.id)} 
+                                                  title="Approve Booking"
+                                                >
+                                                  <i className="fa-solid fa-circle-check"></i> Approve
+                                                </button>
+                                                
+                                                <button 
+                                                  style={{ backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem' }}
+                                                  onClick={() => handleAutoRouteSpecialist(apt.id)} 
+                                                  title="Auto-Route to Most Available Doctor"
+                                                >
+                                                  <i className="fa-solid fa-route"></i> Route
+                                                </button>
+
+                                                <button 
+                                                  style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                  onClick={() => handleCancelAppointment(apt.id)} 
+                                                  title="Cancel/Reject Booking"
+                                                >
+                                                  <i className="fa-solid fa-circle-xmark"></i> Reject
+                                                </button>
+                                              </>
+                                            )}
+
+                                            <button 
+                                              style={{ background: 'transparent', color: 'var(--color-text)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                              onClick={() => startEditApt(apt)} 
+                                              title="Modify Ticket"
+                                            >
+                                              <i className="fa-solid fa-pen-to-square"></i> Reschedule
                                             </button>
-                                          </>
-                                        )}
-                                        <button className="action-btn" style={{ color: 'var(--color-indigo)', marginRight: '0.5rem' }} onClick={() => setAdminSelectedApt(apt)} title="View Details">
-                                          <i className="fa-solid fa-eye"></i> View
-                                        </button>
-                                        <button className="action-btn" style={{ color: 'var(--color-accent)', marginRight: '0.5rem' }} onClick={() => startEditApt(apt)} title="Modify Ticket">
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit
-                                        </button>
-                                        <button className="action-btn" style={{ color: '#EF4444' }} onClick={() => handleDeleteAppointment(apt.id)} title="Delete Record">
-                                          <i className="fa-solid fa-trash"></i>
+
+                                            <button 
+                                              className="action-btn" 
+                                              style={{ color: '#EF4444', padding: '0.25rem' }} 
+                                              onClick={() => handleDeleteAppointment(apt.id)} 
+                                              title="Delete Record"
+                                            >
+                                              <i className="fa-solid fa-trash"></i>
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <div className="empty-state">
+                                <p>No bookings exist in the records database.</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right Column: Staff Availability Search & Tracker */}
+                          <div style={{ flex: '1 1 320px', minWidth: '300px' }}>
+                            <div className="glassmorphic" style={{ padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                              <h4 style={{ margin: '0 0 0.75rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', color: 'var(--color-accent)' }}>
+                                <i className="fa-solid fa-signal"></i> Staff Availability Tracker
+                              </h4>
+                              <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                Verify pharmacist, laboratory, and rider availability status before routing.
+                              </p>
+                              
+                              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                                <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}></i>
+                                <input 
+                                  type="text" 
+                                  placeholder="Search staff, role, status..."
+                                  value={availabilitySearchQuery}
+                                  onChange={(e) => setAvailabilitySearchQuery(e.target.value)}
+                                  style={{ 
+                                    width: '100%', 
+                                    padding: '0.4rem 0.75rem 0.4rem 2rem', 
+                                    borderRadius: '6px', 
+                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                    background: 'rgba(0,0,0,0.2)',
+                                    color: '#fff',
+                                    fontSize: '0.8rem',
+                                    outline: 'none'
+                                  }}
+                                />
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '350px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                                {(() => {
+                                  const query = availabilitySearchQuery.toLowerCase();
+                                  const staffList = [
+                                    { type: 'pharmacist', name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmycare.com' },
+                                    { type: 'lab', name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
+                                    { type: 'logistics', name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
+                                    ...doctors.map(d => ({ 
+                                      type: 'doctor', 
+                                      id: d.id,
+                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`, 
+                                      role: d.specialty, 
+                                      available: d.active !== false, 
+                                      icon: 'fa-user-doctor', 
+                                      email: d.email, 
+                                      phone: d.phone 
+                                    }))
+                                  ];
+
+                                  const filtered = staffList.filter(s => 
+                                    s.name.toLowerCase().includes(query) || 
+                                    s.role.toLowerCase().includes(query) ||
+                                    (s.available ? 'online available' : 'offline unavailable').includes(query)
+                                  );
+
+                                  if (filtered.length === 0) {
+                                    return <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>No matching staff found</div>;
+                                  }
+
+                                  return filtered.map((staff, idx) => {
+                                    const handleToggle = () => {
+                                      if (staff.type === 'doctor') {
+                                        handleToggleDoctorActive(staff.id);
+                                      } else if (staff.type === 'pharmacist') {
+                                        setIsPharmacistAvailable(!isPharmacistAvailable);
+                                      } else if (staff.type === 'lab') {
+                                        setIsLabTechAvailable(!isLabTechAvailable);
+                                      } else if (staff.type === 'logistics') {
+                                        setIsLogisticsAvailable(!isLogisticsAvailable);
+                                      }
+                                    };
+
+                                    return (
+                                      <div key={idx} style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'space-between', 
+                                        padding: '0.6rem 0.75rem', 
+                                        background: 'rgba(255,255,255,0.02)', 
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(255,255,255,0.04)',
+                                        gap: '0.5rem'
+                                      }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+                                          <div style={{ 
+                                            width: '28px', 
+                                            height: '28px', 
+                                            borderRadius: '50%', 
+                                            background: 'rgba(28, 43, 73, 0.2)', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            color: 'var(--color-accent)',
+                                            flexShrink: 0
+                                          }}>
+                                            <i className={`fa-solid ${staff.icon}`} style={{ fontSize: '0.85rem' }}></i>
+                                          </div>
+                                          <div style={{ minWidth: 0 }}>
+                                            <div style={{ fontSize: '0.8rem', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>
+                                              {staff.name}
+                                            </div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.05rem' }}>
+                                              <span>{staff.role}</span>
+                                              {staff.email && (
+                                                <a href={`mailto:${staff.email}`} title={`Email: ${staff.email}`} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
+                                                  <i className="fa-solid fa-envelope" style={{ fontSize: '0.75rem' }}></i>
+                                                </a>
+                                              )}
+                                              {staff.phone && (
+                                                <a href={`tel:${staff.phone}`} title={`Call: ${staff.phone}`} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
+                                                  <i className="fa-solid fa-phone" style={{ fontSize: '0.75rem' }}></i>
+                                                </a>
+                                              )}
+                                              {staff.phone && (
+                                                <a 
+                                                  href={`https://wa.me/${staff.phone.replace(/[^0-9]/g, '')}`} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer" 
+                                                  title="Chat on WhatsApp" 
+                                                  style={{ color: '#10B981', textDecoration: 'none' }}
+                                                >
+                                                  <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.8rem' }}></i>
+                                                </a>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <button 
+                                          onClick={handleToggle}
+                                          title="Click to toggle availability directly"
+                                          style={{ 
+                                            display: 'inline-flex', 
+                                            alignItems: 'center', 
+                                            gap: '0.3rem', 
+                                            background: staff.available ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                            border: `1px solid ${staff.available ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                                            padding: '2px 8px',
+                                            borderRadius: '12px',
+                                            cursor: 'pointer',
+                                            outline: 'none',
+                                            transition: 'all 0.2s ease',
+                                            flexShrink: 0
+                                          }}
+                                        >
+                                          <span style={{ 
+                                            width: '5px', 
+                                            height: '5px', 
+                                            borderRadius: '50%', 
+                                            background: staff.available ? '#10b981' : '#ef4444',
+                                            boxShadow: staff.available ? '0 0 6px #10b981' : 'none'
+                                          }}></span>
+                                          <span style={{ 
+                                            fontSize: '0.7rem', 
+                                            fontWeight: 'bold', 
+                                            color: staff.available ? '#10b981' : '#ef4444',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                          }}>
+                                            {staff.available ? 'Online' : 'Offline'}
+                                          </span>
                                         </button>
                                       </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="empty-state">
-                            <p>No bookings exist in the records database.</p>
-                          </div>
-                        )}
+                        </div>
                       </div>
                     )}
 
@@ -6868,14 +7673,13 @@ export default function App() {
                                 <input 
                                   type="file" 
                                   accept="image/*"
-                                  onChange={(e) => {
+                                  onChange={async (e) => {
                                     const file = e.target.files[0];
                                     if (file) {
-                                      const reader = new FileReader();
-                                      reader.onloadend = () => {
-                                        setNewDoctorData({ ...newDoctorData, image: reader.result });
-                                      };
-                                      reader.readAsDataURL(file);
+                                      const compressed = await compressImageFile(file, 400, 0.7);
+                                      if (compressed) {
+                                        setNewDoctorData({ ...newDoctorData, image: compressed });
+                                      }
                                     }
                                   }}
                                   style={{ flexGrow: 1 }}
@@ -6896,14 +7700,13 @@ export default function App() {
                                 <input 
                                   type="file" 
                                   accept="image/*,application/pdf"
-                                  onChange={(e) => {
+                                  onChange={async (e) => {
                                     const file = e.target.files[0];
                                     if (file) {
-                                      const reader = new FileReader();
-                                      reader.onloadend = () => {
-                                        setNewDoctorData({ ...newDoctorData, license: reader.result });
-                                      };
-                                      reader.readAsDataURL(file);
+                                      const compressed = await compressImageFile(file, 600, 0.75);
+                                      if (compressed) {
+                                        setNewDoctorData({ ...newDoctorData, license: compressed });
+                                      }
                                     }
                                   }}
                                   style={{ flexGrow: 1 }}
@@ -7006,8 +7809,31 @@ export default function App() {
                                     </td>
                                     <td>
                                       <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
-                                        <div>Email: <code>{d.email || 'N/A'}</code></div>
-                                        <div>Password: <code>{d.password || 'N/A'}</code></div>
+                                        <div>Email: {d.email ? <a href={`mailto:${d.email}`} style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>{d.email}</a> : <code>N/A</code>}</div>
+                                        {d.phone && (
+                                          <div>Phone: <a href={`tel:${d.phone}`} style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>{d.phone}</a></div>
+                                        )}
+                                        {d.phone && (
+                                          <div style={{ marginTop: '0.15rem' }}>
+                                            <a 
+                                              href={`https://wa.me/${d.phone.replace(/[^0-9]/g, '')}`} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              style={{ 
+                                                display: 'inline-flex', 
+                                                alignItems: 'center', 
+                                                gap: '0.2rem', 
+                                                color: '#10B981', 
+                                                fontWeight: '600',
+                                                fontSize: '0.72rem',
+                                                textDecoration: 'none'
+                                              }}
+                                            >
+                                              <i className="fa-brands fa-whatsapp"></i> Chat WhatsApp
+                                            </a>
+                                          </div>
+                                        )}
+                                        <div style={{ marginTop: '0.15rem', color: 'var(--color-text-muted)' }}>Password: <code>{d.password || 'N/A'}</code></div>
                                       </div>
                                     </td>
                                     <td>
@@ -7818,7 +8644,24 @@ export default function App() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Phone Number</strong>
-                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem' }}>{adminSelectedDoctor.phone || 'N/A'}</div>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {adminSelectedDoctor.phone ? (
+                      <>
+                        <a href={`tel:${adminSelectedDoctor.phone}`} style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
+                          {adminSelectedDoctor.phone}
+                        </a>
+                        <a 
+                          href={`https://wa.me/${adminSelectedDoctor.phone.replace(/[^0-9]/g, '')}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center' }}
+                          title="Chat on WhatsApp"
+                        >
+                          <i className="fa-brands fa-whatsapp" style={{ fontSize: '1rem' }}></i>
+                        </a>
+                      </>
+                    ) : 'N/A'}
+                  </div>
                 </div>
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Weekly Schedule</strong>
@@ -7866,7 +8709,7 @@ export default function App() {
               <div>
                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Portal Login Credentials</strong>
                 <div style={{ fontSize: '0.88rem', marginTop: '0.15rem', padding: '0.65rem 0.85rem', background: 'rgba(28,43,73,0.06)', borderRadius: '6px', fontFamily: 'monospace' }}>
-                  <div>Email: <strong>{adminSelectedDoctor.email || 'N/A'}</strong></div>
+                  <div>Email: {adminSelectedDoctor.email ? <a href={`mailto:${adminSelectedDoctor.email}`} style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>{adminSelectedDoctor.email}</a> : <strong>N/A</strong>}</div>
                   <div style={{ marginTop: '0.25rem' }}>Password: <strong>{adminSelectedDoctor.password || 'N/A'}</strong></div>
                 </div>
               </div>
