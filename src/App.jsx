@@ -9284,20 +9284,46 @@ export default function App() {
               onScroll={handleTermsScroll}
               style={{ fontSize: '0.9rem', lineHeight: '1.5', color: 'var(--color-text)', overflowY: 'auto', maxHeight: '320px', paddingRight: '0.5rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1rem' }}
             >
-              <h4>1. Telehealth Consent & Clinical Scope</h4>
-              <p>By using SimmyCare, you consent to receive remote clinical evaluations, diagnostic advice, and prescriptions from certified healthcare professionals. You acknowledge that telehealth consultations are not a substitute for emergency medical care. In case of a medical emergency, please visit the nearest physical emergency facility immediately.</p>
+              <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '1px double var(--color-border)', paddingBottom: '1rem' }}>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>SIMMYCARE CLINICAL WORKSPACE & TELEMEDICINE AGREEMENT</strong><br />
+                <strong style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>REGULATORY COMPLIANT DOCUMENT: NHA 2014 & NDPA 2023</strong>
+              </div>
 
-              <h4>2. Compliance with Data Protection Regulations (NDPR & GDPR)</h4>
-              <p>SimmyCare complies with the Nigeria Data Protection Regulation (NDPR) and other applicable international data privacy standards. We process your personal and sensitive data (including health status, medical history, and clinical logs) solely with your explicit consent, which you grant by using our services. You retain the right to request access to, correction of, or erasure of your personal data at any time.</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+                <em>LAST REVISED: JULY 15, 2026. Please read this Patient User Agreement, Consent to Telehealth Services, and Privacy Policy (collectively, the "Agreement") carefully before accessing or using the SimmyCare health portal. By signing up, scheduling a consultation, or initiating an order, you agree to be bound by these legal terms.</em>
+              </p>
 
-              <h4>3. Medical Confidentiality (National Health Act, 2014)</h4>
-              <p>In accordance with Section 26 of the National Health Act, 2014, all patient records are strictly confidential. We implement strict Role-Based Access Control (RBAC) and Row-Level Security (RLS) on our servers: only the assigned licensed medical doctor, authorized lab technicians, pharmacists, and logistics dispatchers have access to the specific patient logs required to fulfill their clinical duties.</p>
+              <h4>SECTION 1: CLINICAL SERVICES & TELEHEALTH CONSENT</h4>
+              <p>1.1 <strong>Scope of Service:</strong> SimmyCare (the "Portal", "Platform") facilitates remote medical consultations, laboratory diagnostic requests, pharmacy delivery dispatch, and clinical health services through licensed healthcare providers. By executing this Agreement, you grant consent to our clinical specialists to conduct virtual assessments, order laboratory evaluations, and write digital prescriptions.</p>
+              <p>1.2 <strong>Clinical Limitations:</strong> Telehealth consultations utilize interactive audio, video, and electronic communications. You acknowledge and accept that a virtual consultation has inherent limitations compared to an in-person clinical examination (such as the inability to perform physical palpation, direct auscultation, or immediate clinical vitals verification). As a result, the accuracy of diagnostic assessments is highly dependent on the information you provide.</p>
+              <p>1.3 <strong>Emergency Disclaimer:</strong> SimmyCare IS NOT AN EMERGENCY MEDICAL PORTAL. Our clinicians do not treat acute, life-threatening medical emergencies. If you are experiencing symptoms of a severe nature (such as severe chest pain, shortness of breath, heavy bleeding, or sudden neurological deficits), you must immediately report to the nearest physical emergency facility or call local emergency services.</p>
 
-              <h4>4. Data Transmission & Messaging Consent</h4>
-              <p>You consent to receive booking updates, health tips, and diagnostic reports via encrypted electronic channels, including email (Simmyclinic@gmail.com) and WhatsApp (+234 901 432 4442). You acknowledge that while we secure our transmission protocols, electronic communications carry inherent networks risks.</p>
+              <h4>SECTION 2: HEALTH DATA CONFIDENTIALITY & LEGAL STANDARDS</h4>
+              <p>2.1 <strong>Statutory Confidentiality:</strong> In accordance with Section 26 and 29 of the National Health Act (NHA), 2014, and the Medical and Dental Practitioners Act, all medical records, diagnostic results, and clinical logs compiled by SimmyCare are treated with the highest degree of confidentiality. No medical records will be disclosed to external parties without your prior written authorization, except where mandated by law or court order.</p>
+              <p>2.2 <strong>Server Access Governance (RBAC & RLS):</strong> To protect patient security, we implement strict Role-Based Access Control (RBAC) and database-level Row-Level Security (RLS) on our servers. Access to clinical records is strictly compartmentalized:
+                <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                  <li><strong>Medical Practitioners:</strong> Can access only their assigned patients' files, clinical logs, and symptom records.</li>
+                  <li><strong>Laboratory Scientists:</strong> Can access only lab requests assigned to their station and submit result sheets.</li>
+                  <li><strong>Pharmacists:</strong> Can access only authorized prescriptions and medication inventories to dispense orders.</li>
+                  <li><strong>Logistics Dispatchers:</strong> Can view only transit delivery addresses, patient contact numbers, and delivery package statuses (clinical histories and diagnoses are hidden).</li>
+                </ul>
+              </p>
 
-              <h4>5. Physical Referrals & Jurisdiction</h4>
-              <p>SimmyCare coordinates physical consultations and emergency diagnostics with fully registered and licensed partner clinics in Abuja, Kaduna, Kano, Bauchi, Gombe, and other approved jurisdictions in Nigeria.</p>
+              <h4>SECTION 3: DATA PRIVACY & COMPLIANCE (NDPA 2023 & GDPR)</h4>
+              <p>3.1 <strong>Consent to Data Processing:</strong> In compliance with the Nigeria Data Protection Act (NDPA) 2023 and the General Data Protection Regulation (GDPR), you explicitly consent to the collection, storage, processing, and transfer of your personal data, including sensitive health records, contact information, and billing details. We act as the Data Controller, and all processing is carried out strictly to execute your medical care.</p>
+              <p>3.2 <strong>Data Subject Rights:</strong> You possess the statutory right to request access to, correction of, and erasure of your personal data stored within our databases. You may withdraw your consent to data processing at any time by contacting our Data Protection Officer at Simmyclinic@gmail.com. Please note that withdrawal of consent may result in the termination of active telemedicine services.</p>
+
+              <h4>SECTION 4: DIGITAL COMMUNICATIONS & SYSTEM TRANSIT</h4>
+              <p>4.1 <strong>Notification Protocols:</strong> You consent to receive patient appointment alerts, lab sample collection notifications, dispatch statuses, and clinical follow-up updates via encrypted email and WhatsApp messaging (+234 901 432 4442). You acknowledge that while we deploy end-to-end data encryption protocols, transit over public telecommunication networks carries inherent risks of latency or third-party interference.</p>
+
+              <h4>SECTION 5: PHARMACY DISPENSING & PARTNER LABS</h4>
+              <p>5.1 <strong>Medication Dispensing:</strong> All pharmacy orders and prescription fulfillment are handled strictly by partner pharmacy outlets duly registered and licensed by the Pharmacy Council of Nigeria (PCN).</p>
+              <p>5.2 <strong>Diagnostics Processing:</strong> All mobile laboratory investigations are processed in collaboration with accredited diagnostic centers registered with the Medical Laboratory Science Council of Nigeria (MLSCN).</p>
+              <p>5.3 <strong>Physical Referrals:</strong> For conditions requiring physical evaluation, requests are routed to fully licensed medical centers and doctor offices in Abuja, Kaduna, Kano, Bauchi, Gombe, and other certified locations in Nigeria.</p>
+
+              <h4>SECTION 6: GOVERNING LAW & DISPUTE RESOLUTION</h4>
+              <p>6.1 <strong>Jurisdiction:</strong> This Agreement is governed by, and construed in accordance with, the laws of the Federal Republic of Nigeria.</p>
+              <p>6.2 <strong>Arbitration:</strong> Any dispute, controversy, or claim arising out of or relating to this agreement, including its validity, invalidity, breach, or termination, shall be settled by arbitration in accordance with the Arbitration and Mediation Act of Nigeria.</p>
 
               <p style={{ fontSize: '0.8rem', fontStyle: 'italic', marginTop: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>- End of Document -</p>
             </div>

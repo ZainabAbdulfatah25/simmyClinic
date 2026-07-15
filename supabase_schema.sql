@@ -45,6 +45,10 @@ CREATE TABLE public.profiles (
   verified BOOLEAN DEFAULT false,
   is_available BOOLEAN DEFAULT true,
   
+  -- Consent & Legal Compliance
+  terms_accepted BOOLEAN DEFAULT false,
+  terms_accepted_at TIMESTAMPTZ,
+  
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

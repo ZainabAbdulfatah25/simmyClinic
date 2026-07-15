@@ -118,7 +118,9 @@ SET
   consultation_duration = '30 mins',
   services = ARRAY['Online Consultation', 'Physical Consultation'],
   level = 'Senior Consultant',
-  verified = true
+  verified = true,
+  terms_accepted = true,
+  terms_accepted_at = NOW()
 WHERE email = 'fatima@simmycare.com';
 
 -- Pharmacist Details
@@ -126,7 +128,9 @@ UPDATE public.profiles
 SET 
   facility_name = 'SimmyCare Central Pharmacy',
   license_no = 'PCN/P/9482',
-  verified = true
+  verified = true,
+  terms_accepted = true,
+  terms_accepted_at = NOW()
 WHERE email = 'pharmacist@simmycare.com';
 
 -- Lab Tech Details
@@ -134,7 +138,9 @@ UPDATE public.profiles
 SET 
   facility_name = 'SimmyCare Diagnostics',
   license_no = 'MLSCN/L/3821',
-  verified = true
+  verified = true,
+  terms_accepted = true,
+  terms_accepted_at = NOW()
 WHERE email = 'lab@simmycare.com';
 
 -- Logistics Details
@@ -142,10 +148,15 @@ UPDATE public.profiles
 SET 
   vehicle_type = 'Motorbike',
   dispatch_area = 'Abuja Central',
-  verified = true
+  verified = true,
+  terms_accepted = true,
+  terms_accepted_at = NOW()
 WHERE email = 'logistics@simmycare.com';
 
--- Set Patient and Admin to verified
+-- Set Patient and Admin to verified and terms accepted
 UPDATE public.profiles 
-SET verified = true
+SET 
+  verified = true,
+  terms_accepted = true,
+  terms_accepted_at = NOW()
 WHERE email IN ('zainab@example.com', 'admin@simmycare.com');
