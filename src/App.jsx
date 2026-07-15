@@ -9284,17 +9284,20 @@ export default function App() {
               onScroll={handleTermsScroll}
               style={{ fontSize: '0.9rem', lineHeight: '1.5', color: 'var(--color-text)', overflowY: 'auto', maxHeight: '320px', paddingRight: '0.5rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1rem' }}
             >
-              <h4>1. Medical Assessment Consent</h4>
-              <p>By submitting an appointment request, you consent to receive remote clinical evaluations, diagnostic advice, and authorized prescriptions from certified professionals associated with SimmyCare.</p>
+              <h4>1. Telehealth Consent & Clinical Scope</h4>
+              <p>By using SimmyCare, you consent to receive remote clinical evaluations, diagnostic advice, and prescriptions from certified healthcare professionals. You acknowledge that telehealth consultations are not a substitute for emergency medical care. In case of a medical emergency, please visit the nearest physical emergency facility immediately.</p>
 
-              <h4>2. Patient Data Security</h4>
-              <p>We implement role-based access control (RBAC). Only the medical practitioners directly assigned to your consultation and authorised clinic administrators have access to your clinical symptoms and patient files.</p>
+              <h4>2. Compliance with Data Protection Regulations (NDPR & GDPR)</h4>
+              <p>SimmyCare complies with the Nigeria Data Protection Regulation (NDPR) and other applicable international data privacy standards. We process your personal and sensitive data (including health status, medical history, and clinical logs) solely with your explicit consent, which you grant by using our services. You retain the right to request access to, correction of, or erasure of your personal data at any time.</p>
 
-              <h4>3. Communication & Service Setup</h4>
-              <p>Updates, bookings, and remote diagnostic reports will be communicated primarily through email (Simmyclinic@gmail.com) and WhatsApp (+234 901 432 4442).</p>
+              <h4>3. Medical Confidentiality (National Health Act, 2014)</h4>
+              <p>In accordance with Section 26 of the National Health Act, 2014, all patient records are strictly confidential. We implement strict Role-Based Access Control (RBAC) and Row-Level Security (RLS) on our servers: only the assigned licensed medical doctor, authorized lab technicians, pharmacists, and logistics dispatchers have access to the specific patient logs required to fulfill their clinical duties.</p>
 
-              <h4>4. Physical Branches & Jurisdictions</h4>
-              <p>While primary services are digital, physical consultation requests are routed to doctor-contact locations in Abuja, Kaduna, Kano, Bauchi, and Gombe.</p>
+              <h4>4. Data Transmission & Messaging Consent</h4>
+              <p>You consent to receive booking updates, health tips, and diagnostic reports via encrypted electronic channels, including email (Simmyclinic@gmail.com) and WhatsApp (+234 901 432 4442). You acknowledge that while we secure our transmission protocols, electronic communications carry inherent networks risks.</p>
+
+              <h4>5. Physical Referrals & Jurisdiction</h4>
+              <p>SimmyCare coordinates physical consultations and emergency diagnostics with fully registered and licensed partner clinics in Abuja, Kaduna, Kano, Bauchi, Gombe, and other approved jurisdictions in Nigeria.</p>
 
               <p style={{ fontSize: '0.8rem', fontStyle: 'italic', marginTop: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>- End of Document -</p>
             </div>
