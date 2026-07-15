@@ -47,15 +47,15 @@ const getSpecialtyTitle = (specialty) => {
 };
 
 const INITIAL_DOCTORS = [
-  { 
-    id: 1, 
-    name: "Dr. Fatima Yahaya Maiauduga", 
-    specialty: "Gynaecology", 
-    schedule: "Mon - Wed (9am - 2pm)", 
-    experience: "8 Years", 
-    regNo: "MDCN/8431", 
-    image: doctorFatimaImg, 
-    email: "fatima@simmycare.com", 
+  {
+    id: 1,
+    name: "Dr. Fatima Yahaya Maiauduga",
+    specialty: "Gynaecology",
+    schedule: "Mon - Wed (9am - 2pm)",
+    experience: "8 Years",
+    regNo: "MDCN/8431",
+    image: doctorFatimaImg,
+    email: "fatima@simmycare.com",
     password: "password123",
     phone: "08034567890",
     bio: "Senior consultant gynaecologist specializing in maternal care, obstetrics, and female reproductive wellness.",
@@ -67,15 +67,15 @@ const INITIAL_DOCTORS = [
     verified: true,
     level: "Senior Consultant"
   },
-  { 
-    id: 2, 
-    name: "Dr. Adam Zamzam", 
-    specialty: "General Medicine", 
-    schedule: "Mon - Fri (8am - 4pm)", 
-    experience: "10 Years", 
-    regNo: "MDCN/7123", 
-    image: doctorAdamImg, 
-    email: "adam@simmycare.com", 
+  {
+    id: 2,
+    name: "Dr. Adam Zamzam",
+    specialty: "General Medicine",
+    schedule: "Mon - Fri (8am - 4pm)",
+    experience: "10 Years",
+    regNo: "MDCN/7123",
+    image: doctorAdamImg,
+    email: "adam@simmycare.com",
     password: "password123",
     phone: "08051234567",
     bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
@@ -381,7 +381,7 @@ export default function App() {
     return data ? JSON.parse(data) : null;
   });
 
-  const myDoctorAppointments = loggedInDoctor 
+  const myDoctorAppointments = loggedInDoctor
     ? appointments.filter(apt => apt.doctorId === loggedInDoctor.id || apt.doctor === loggedInDoctor.name)
     : [];
 
@@ -390,7 +390,7 @@ export default function App() {
   const [isPatientRegistering, setIsPatientRegistering] = useState(false);
   const [doctorSearch, setDoctorSearch] = useState('');
   const [doctorFilter, setDoctorFilter] = useState('all');
-  
+
   const [patientLoginForm, setPatientLoginForm] = useState({
     email: '',
     name: '',
@@ -457,14 +457,14 @@ export default function App() {
   });
   const [adminSelfData, setAdminSelfData] = useState({ username: '', password: '' });
   const [isEditingAdminSelf, setIsEditingAdminSelf] = useState(false);
-  const [newDoctorData, setNewDoctorData] = useState({ 
-    name: '', 
-    specialty: 'Pediatrics', 
-    schedule: '', 
-    experience: '', 
-    regNo: '', 
-    email: '', 
-    password: '', 
+  const [newDoctorData, setNewDoctorData] = useState({
+    name: '',
+    specialty: 'Pediatrics',
+    schedule: '',
+    experience: '',
+    regNo: '',
+    email: '',
+    password: '',
     image: '',
     phone: '',
     bio: '',
@@ -479,14 +479,14 @@ export default function App() {
   const [editingDoctorId, setEditingDoctorId] = useState(null);
   const [doctorNavView, setDoctorNavView] = useState('backlog'); // 'backlog' | 'profile'
   const [isEditingDocSelf, setIsEditingDocSelf] = useState(false);
-  const [docSelfData, setDocSelfData] = useState({ 
-    name: '', 
-    specialty: 'Pediatrics', 
-    schedule: '', 
-    experience: '', 
-    regNo: '', 
-    email: '', 
-    password: '', 
+  const [docSelfData, setDocSelfData] = useState({
+    name: '',
+    specialty: 'Pediatrics',
+    schedule: '',
+    experience: '',
+    regNo: '',
+    email: '',
+    password: '',
     image: '',
     phone: '',
     bio: '',
@@ -501,7 +501,7 @@ export default function App() {
   const [previewBookingDoc, setPreviewBookingDoc] = useState(null);
   const [editingPatientId, setEditingPatientId] = useState(null);
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
-  
+
   // Patient Profile & Navigation States
   const [patientNavView, setPatientNavView] = useState('bookings'); // 'bookings' | 'profile' | 'orders' | 'labs'
   const [isEditingPatSelf, setIsEditingPatSelf] = useState(false);
@@ -552,24 +552,24 @@ export default function App() {
   const [pharmacistSelectedPrescription, setPharmacistSelectedPrescription] = useState(null);
   const [prescOrderForm, setPrescOrderForm] = useState({ address: '', notes: '', cost: '0' });
   const [selectedDrugs, setSelectedDrugs] = useState([]);
-  
+
   // Route Map Tracking & Simulation States
   const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
   const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
   const [isMapSimulating, setIsMapSimulating] = useState(false);
-  
+
   // Staff Availability States
   const [isPharmacistAvailable, setIsPharmacistAvailable] = useState(true);
   const [isLabTechAvailable, setIsLabTechAvailable] = useState(true);
   const [isLogisticsAvailable, setIsLogisticsAvailable] = useState(true);
-  
+
   // Search state for availability
   const [availabilitySearchQuery, setAvailabilitySearchQuery] = useState('');
-  
+
   // Lab upload states
   const [labUploadedFile, setLabUploadedFile] = useState(null);
   const [labUploadedFileName, setLabUploadedFileName] = useState('');
-  
+
   const [labSelectedRequest, setLabSelectedRequest] = useState(null);
   const [labResultsText, setLabResultsText] = useState('');
   const [logisticsSelectedShipment, setLogisticsSelectedShipment] = useState(null);
@@ -957,8 +957,8 @@ export default function App() {
     e.preventDefault();
     if (!pharmacistSelectedPrescription) return;
     const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-    const drugsList = selectedDrugs.length > 0 
-      ? selectedDrugs.map(d => `${d.name} (₦${d.price.toLocaleString()})`).join(', ') 
+    const drugsList = selectedDrugs.length > 0
+      ? selectedDrugs.map(d => `${d.name} (₦${d.price.toLocaleString()})`).join(', ')
       : 'None';
     const newOrder = {
       id: orderId,
@@ -1089,8 +1089,8 @@ export default function App() {
       if (candidates.length > 0) {
         // Choose candidate with lowest active workload
         const candidateWorkloads = candidates.map(doc => {
-          const activeCount = appointments.filter(a => 
-            (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) && 
+          const activeCount = appointments.filter(a =>
+            (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) &&
             (a.status === 'Pending' || a.status === 'Approved')
           ).length;
           return { doc, activeCount };
@@ -1103,8 +1103,8 @@ export default function App() {
         const generalCandidates = doctors.filter(d => d.active !== false && d.verified !== false && d.id !== selectedDoc.id);
         if (generalCandidates.length > 0) {
           const candidateWorkloads = generalCandidates.map(doc => {
-            const activeCount = appointments.filter(a => 
-              (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) && 
+            const activeCount = appointments.filter(a =>
+              (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) &&
               (a.status === 'Pending' || a.status === 'Approved')
             ).length;
             return { doc, activeCount };
@@ -1148,7 +1148,7 @@ export default function App() {
 
     setSuccessModal({
       title: routed ? "Appointment Auto-Routed" : "Booking Submitted Successfully",
-      message: routed 
+      message: routed
         ? `Your requested specialist (${originalDocName}) is currently offline or unverified. Your appointment has been automatically routed to Dr. ${selectedDoc.name} (${getSpecialtyTitle(selectedDoc.specialty)} - ${selectedDoc.level || 'Specialist'}) to ensure you receive immediate clinical care.`
         : `Your appointment request with ${selectedDoc.name} has been received and is currently under review.`,
       ticket: ticketNumber
@@ -1178,19 +1178,19 @@ export default function App() {
 
   // --- Admin Handlers ---
   const handleApproveAppointment = (id) => {
-    setAppointments(appointments.map(apt => 
+    setAppointments(appointments.map(apt =>
       apt.id === id ? { ...apt, status: 'Approved' } : apt
     ));
   };
 
   const handleRejectAppointment = (id) => {
-    setAppointments(appointments.map(apt => 
+    setAppointments(appointments.map(apt =>
       apt.id === id ? { ...apt, status: 'Rejected' } : apt
     ));
   };
 
   const handleCancelAppointment = (id) => {
-    setAppointments(appointments.map(apt => 
+    setAppointments(appointments.map(apt =>
       apt.id === id ? { ...apt, status: 'Cancelled' } : apt
     ));
   };
@@ -1215,8 +1215,8 @@ export default function App() {
     const targetSpecialty = currentDoc ? currentDoc.specialty : null;
 
     const candidateDoctors = doctors.filter(d => d.active !== false && (!targetSpecialty || d.specialty === targetSpecialty));
-    const finalCandidates = candidateDoctors.length > 0 
-      ? candidateDoctors 
+    const finalCandidates = candidateDoctors.length > 0
+      ? candidateDoctors
       : doctors.filter(d => d.active !== false);
 
     if (finalCandidates.length === 0) {
@@ -1225,8 +1225,8 @@ export default function App() {
     }
 
     const doctorWorkloads = finalCandidates.map(doc => {
-      const activeCount = appointments.filter(a => 
-        (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) && 
+      const activeCount = appointments.filter(a =>
+        (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) &&
         (a.status === 'Pending' || a.status === 'Approved')
       ).length;
       return { doc, activeCount };
@@ -1235,13 +1235,13 @@ export default function App() {
     doctorWorkloads.sort((a, b) => a.activeCount - b.activeCount);
     const mostAvailable = doctorWorkloads[0];
 
-    setAppointments(appointments.map(a => 
-      a.id === id 
-        ? { 
-            ...a, 
-            doctorId: mostAvailable.doc.id, 
-            doctor: mostAvailable.doc.name 
-          } 
+    setAppointments(appointments.map(a =>
+      a.id === id
+        ? {
+          ...a,
+          doctorId: mostAvailable.doc.id,
+          doctor: mostAvailable.doc.name
+        }
         : a
     ));
 
@@ -1249,7 +1249,7 @@ export default function App() {
   };
 
   const handleToggleDoctorActive = (docId) => {
-    setDoctors(doctors.map(d => 
+    setDoctors(doctors.map(d =>
       d.id === docId ? { ...d, active: d.active === false ? true : false } : d
     ));
     if (loggedInDoctor && loggedInDoctor.id === docId) {
@@ -1258,7 +1258,7 @@ export default function App() {
   };
 
   const handleToggleDoctorVerify = (docId) => {
-    setDoctors(doctors.map(d => 
+    setDoctors(doctors.map(d =>
       d.id === docId ? { ...d, verified: d.verified === true ? false : true } : d
     ));
     if (loggedInDoctor && loggedInDoctor.id === docId) {
@@ -1383,43 +1383,43 @@ export default function App() {
   };
 
   const handleSaveDocSelf = (e) => {
-      e.preventDefault();
-      const oldName = loggedInDoctor.name;
-      const newName = docSelfData.name.startsWith("Dr. ") ? docSelfData.name : `Dr. ${docSelfData.name}`;
-  
-      const updatedDoc = {
-        ...loggedInDoctor,
-        name: newName,
-        specialty: docSelfData.specialty,
-        schedule: docSelfData.schedule,
-        experience: docSelfData.experience,
-        regNo: docSelfData.regNo,
-        email: docSelfData.email,
-        password: docSelfData.password,
-        image: docSelfData.image,
-        phone: docSelfData.phone,
-        bio: docSelfData.bio,
-        clinicRoom: docSelfData.clinicRoom,
-        license: docSelfData.license,
-        consultationRate: docSelfData.consultationRate,
-        consultationDuration: docSelfData.consultationDuration,
-        services: docSelfData.services
-      };
-  
-      setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
-  
-      if (oldName.toLowerCase() !== newName.toLowerCase()) {
-        setAppointments(appointments.map(apt => {
-          if (apt.doctor.toLowerCase() === oldName.toLowerCase()) {
-            return { ...apt, doctor: newName };
-          }
-          return apt;
-        }));
-      }
-  
-      setLoggedInDoctor(updatedDoc);
-      setIsEditingDocSelf(false);
-      alert("Your profile has been updated successfully!");
+    e.preventDefault();
+    const oldName = loggedInDoctor.name;
+    const newName = docSelfData.name.startsWith("Dr. ") ? docSelfData.name : `Dr. ${docSelfData.name}`;
+
+    const updatedDoc = {
+      ...loggedInDoctor,
+      name: newName,
+      specialty: docSelfData.specialty,
+      schedule: docSelfData.schedule,
+      experience: docSelfData.experience,
+      regNo: docSelfData.regNo,
+      email: docSelfData.email,
+      password: docSelfData.password,
+      image: docSelfData.image,
+      phone: docSelfData.phone,
+      bio: docSelfData.bio,
+      clinicRoom: docSelfData.clinicRoom,
+      license: docSelfData.license,
+      consultationRate: docSelfData.consultationRate,
+      consultationDuration: docSelfData.consultationDuration,
+      services: docSelfData.services
+    };
+
+    setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
+
+    if (oldName.toLowerCase() !== newName.toLowerCase()) {
+      setAppointments(appointments.map(apt => {
+        if (apt.doctor.toLowerCase() === oldName.toLowerCase()) {
+          return { ...apt, doctor: newName };
+        }
+        return apt;
+      }));
+    }
+
+    setLoggedInDoctor(updatedDoc);
+    setIsEditingDocSelf(false);
+    alert("Your profile has been updated successfully!");
   };
 
   const handleSavePatSelf = (e) => {
@@ -1442,9 +1442,9 @@ export default function App() {
       phone: newPhone,
       password: patSelfData.password
     };
-    
+
     setPatients(patients.map(p => p.email.toLowerCase() === oldEmail.toLowerCase() ? updatedPat : p));
-    
+
     setAppointments(appointments.map(apt => {
       if (apt.email.toLowerCase() === oldEmail.toLowerCase()) {
         return {
@@ -1546,9 +1546,9 @@ export default function App() {
 
   const saveConsultationNotesSubmit = (e) => {
     e.preventDefault();
-    setAppointments(appointments.map(apt => 
-      apt.id === activeConsultationApt.id 
-        ? { ...apt, notes: consultationNotes.notes, prescription: consultationNotes.prescription, status: 'Approved' } 
+    setAppointments(appointments.map(apt =>
+      apt.id === activeConsultationApt.id
+        ? { ...apt, notes: consultationNotes.notes, prescription: consultationNotes.prescription, status: 'Approved' }
         : apt
     ));
     setActiveConsultationApt(null);
@@ -1574,19 +1574,19 @@ export default function App() {
     const pharmacyOrderVal = docNotesState[aptId]?.pharmacyOrder !== undefined ? docNotesState[aptId].pharmacyOrder : (currentApt?.pharmacyOrder || '');
     const officeReferralVal = docNotesState[aptId]?.officeReferral !== undefined ? docNotesState[aptId].officeReferral : (currentApt?.officeReferral || '');
     const statusVal = docNotesState[aptId]?.status !== undefined ? docNotesState[aptId].status : 'Completed';
-    
-    setAppointments(appointments.map(apt => 
-      apt.id === aptId 
-        ? { 
-            ...apt, 
-            notes: notesVal, 
-            prescription: rxVal,
-            labTests: labTestsVal,
-            scans: scansVal,
-            pharmacyOrder: pharmacyOrderVal,
-            officeReferral: officeReferralVal,
-            status: statusVal
-          } 
+
+    setAppointments(appointments.map(apt =>
+      apt.id === aptId
+        ? {
+          ...apt,
+          notes: notesVal,
+          prescription: rxVal,
+          labTests: labTestsVal,
+          scans: scansVal,
+          pharmacyOrder: pharmacyOrderVal,
+          officeReferral: officeReferralVal,
+          status: statusVal
+        }
         : apt
     ));
     alert("Consultation record and status updated successfully!");
@@ -1598,7 +1598,7 @@ export default function App() {
 
   const handleModalFieldSave = (aptId, field) => {
     const newValue = modalTempValues[field] !== undefined ? modalTempValues[field] : '';
-    setAppointments(appointments.map(apt => 
+    setAppointments(appointments.map(apt =>
       apt.id === aptId ? { ...apt, [field]: newValue } : apt
     ));
     setAdminSelectedApt(prev => ({ ...prev, [field]: newValue }));
@@ -1607,7 +1607,7 @@ export default function App() {
 
   const handleModalFieldDelete = (aptId, field) => {
     if (window.confirm(`Are you sure you want to delete the ${field} details?`)) {
-      setAppointments(appointments.map(apt => 
+      setAppointments(appointments.map(apt =>
         apt.id === aptId ? { ...apt, [field]: '' } : apt
       ));
       setAdminSelectedApt(prev => ({ ...prev, [field]: '' }));
@@ -1639,23 +1639,23 @@ export default function App() {
 
   // --- Filtering ---
   const filteredDoctors = doctors.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(doctorSearch.toLowerCase()) || 
-                          doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
-                          (doc.services && doc.services.some(srv => srv.toLowerCase().includes(doctorSearch.toLowerCase())));
+    const matchesSearch = doc.name.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+      doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+      (doc.services && doc.services.some(srv => srv.toLowerCase().includes(doctorSearch.toLowerCase())));
     const matchesFilter = doctorFilter === 'all' || doc.specialty === doctorFilter;
     return matchesSearch && matchesFilter && doc.active !== false;
   });
 
   // Filter Appointments for the currently logged in patient/doctor
-  const myPatientAppointments = appointments.filter(apt => 
+  const myPatientAppointments = appointments.filter(apt =>
     loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase() && !apt.id.startsWith('LAB-')
   );
 
-  const myPatientLabRequests = appointments.filter(apt => 
+  const myPatientLabRequests = appointments.filter(apt =>
     loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase() && apt.id.startsWith('LAB-')
   );
 
-  const myPatientPharmacyOrders = inquiries.filter(inq => 
+  const myPatientPharmacyOrders = inquiries.filter(inq =>
     loggedInPatient && inq.email && inq.email.toLowerCase() === loggedInPatient.email.toLowerCase() && inq.id.startsWith('ORD-')
   );
 
@@ -1664,7 +1664,7 @@ export default function App() {
     let address = "Contact client";
     let notes = "None";
     let total = "N/A";
-    
+
     if (msg.includes('Pharmacy Purchase Order: [')) {
       items = msg.split('Pharmacy Purchase Order: [')[1].split(']. Selected Stock Drugs:')[0] || items;
     }
@@ -1690,7 +1690,7 @@ export default function App() {
     let tests = "Standard Diagnostic Panel";
     let address = "Contact patient";
     let instructions = "None";
-    
+
     if (symptoms.includes('Mobile Lab Booking: ')) {
       tests = symptoms.split('Mobile Lab Booking: ')[1].split('. Home collection')[0] || tests;
     }
@@ -1725,7 +1725,7 @@ export default function App() {
   const renderLiveTrackingMap = (showDropdown = true) => {
     const activeOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
     const activeTrip = appointments.find(apt => apt.id === mapTrackedTripId);
-    
+
     let clientName = "N/A";
     let phone = "N/A";
     let address = "Central Hub Area";
@@ -1832,16 +1832,16 @@ export default function App() {
             {/* Target Route */}
             {mapTrackedTripId && (
               <>
-                <line 
-                  x1="250" 
-                  y1="150" 
-                  x2={dest.x} 
-                  y2={dest.y} 
-                  stroke="rgba(6, 182, 212, 0.4)" 
-                  strokeWidth="2.5" 
-                  strokeDasharray="5,5" 
+                <line
+                  x1="250"
+                  y1="150"
+                  x2={dest.x}
+                  y2={dest.y}
+                  stroke="rgba(6, 182, 212, 0.4)"
+                  strokeWidth="2.5"
+                  strokeDasharray="5,5"
                 />
-                
+
                 <g transform={`translate(${dest.x}, ${dest.y})`}>
                   <circle r="7" fill="#ec4899" />
                   <circle r="14" fill="#ec4899" fillOpacity="0.2" className="ping-ring" />
@@ -1864,23 +1864,23 @@ export default function App() {
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Progress:</span>
               <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)' }}>{mapSimulationProgress}%</strong>
             </div>
-            
+
             <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
               <div style={{ width: `${mapSimulationProgress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #06b6d4)', transition: 'width 0.3s' }}></div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <button 
+              <button
                 type="button"
-                className="btn btn-primary btn-sm" 
+                className="btn btn-primary btn-sm"
                 onClick={() => setIsMapSimulating(!isMapSimulating)}
                 style={{ flex: 1, padding: '0.35rem', fontSize: '0.75rem' }}
               >
                 <i className={isMapSimulating ? "fa-solid fa-pause" : "fa-solid fa-play"}></i> {isMapSimulating ? 'Pause' : 'Start Simulation'}
               </button>
-              <button 
+              <button
                 type="button"
-                className="btn btn-outline btn-sm" 
+                className="btn btn-outline btn-sm"
                 onClick={() => { setMapSimulationProgress(0); setIsMapSimulating(false); }}
                 style={{ padding: '0.35rem', fontSize: '0.75rem' }}
               >
@@ -1895,18 +1895,18 @@ export default function App() {
               <div><strong>Route destination:</strong> {address}</div>
             </div>
 
-            <button 
+            <button
               type="button"
               className="btn btn-success btn-sm"
               style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.45rem', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
               onClick={() => {
                 const isOrder = mapTrackedTripId.startsWith('ORD-');
                 if (isOrder) {
-                  setInquiries(inquiries.map(inq => 
+                  setInquiries(inquiries.map(inq =>
                     inq.id === mapTrackedTripId ? { ...inq, status: 'Delivered' } : inq
                   ));
                 } else {
-                  setAppointments(appointments.map(apt => 
+                  setAppointments(appointments.map(apt =>
                     apt.id === mapTrackedTripId ? { ...apt, status: 'Sample Collected' } : apt
                   ));
                 }
@@ -1979,7 +1979,7 @@ export default function App() {
 
       {/* --- 2. Main Content Routing --- */}
       <main className="main-content">
-        
+
         {/* --- VIEW: HOME --- */}
         {currentView === 'home' && (
           <section id="home-view" className="view-section animate-fade">
@@ -2016,7 +2016,7 @@ export default function App() {
                 <div className="hero-image-wrapper">
                   <div className="hero-shape-bg"></div>
                   <img className="hero-main-img" src={heroPng} alt="SimmyCare Family Clinic Center" />
-                  
+
                   {/* Floating badges */}
                   <div className="floating-badge badge-top-right glassmorphic">
                     <div className="badge-icon"><i className="fa-solid fa-bolt"></i></div>
@@ -2025,7 +2025,7 @@ export default function App() {
                       <span>Response Time</span>
                     </div>
                   </div>
-                  
+
                   <div className="floating-badge badge-bottom-left glassmorphic">
                     <div className="badge-icon" style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
                       <i className="fa-solid fa-user-shield"></i>
@@ -2044,7 +2044,7 @@ export default function App() {
               <div className="med-categories-tag">
                 <i className="fa-solid fa-stethoscope"></i> Consult With Any Medical Professional
               </div>
-              
+
               <div className="med-categories-content">
                 <div className="med-categories-grid">
                   <div className="med-cat-card" onClick={() => navigateTo('specialty-general-medicine')}>
@@ -2122,10 +2122,10 @@ export default function App() {
                   <span><i className="fa-solid fa-check"></i> Ask medical questions</span>
                   <span><i className="fa-solid fa-check"></i> Community support</span>
                 </div>
-                <a 
-                  href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" 
-                  className="btn-whatsapp-group" 
-                  target="_blank" 
+                <a
+                  href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK"
+                  className="btn-whatsapp-group"
+                  target="_blank"
                   rel="noopener noreferrer"
                 >
                   <i className="fa-brands fa-whatsapp"></i> Join Group
@@ -2239,7 +2239,7 @@ export default function App() {
                   </div>
                   <p className="testimonial-quote">"I consulted a doctor from my home in Kaduna. Got my prescription and medicines delivered same day. Incredible."</p>
                   <div className="testimonial-author">
-                    <div className="testimonial-avatar" style={{background: 'linear-gradient(135deg, #182B49, #2C5D88)'}}>HA</div>
+                    <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg, #182B49, #2C5D88)' }}>HA</div>
                     <div className="testimonial-author-info">
                       <strong>Halima Abubakar</strong>
                       <span><i className="fa-solid fa-location-dot"></i> Kaduna</span>
@@ -2252,7 +2252,7 @@ export default function App() {
                   </div>
                   <p className="testimonial-quote">"As a busy mum, the online consultations save me hours. The doctors are wonderful with my kids."</p>
                   <div className="testimonial-author">
-                    <div className="testimonial-avatar" style={{background: 'linear-gradient(135deg, #2C5D88, #E2ECF5)'}}>AM</div>
+                    <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg, #2C5D88, #E2ECF5)' }}>AM</div>
                     <div className="testimonial-author-info">
                       <strong>Amina Musa</strong>
                       <span><i className="fa-solid fa-location-dot"></i> Abuja</span>
@@ -2265,7 +2265,7 @@ export default function App() {
                   </div>
                   <p className="testimonial-quote">"Living far from specialist hospitals, SimmyCare changed everything. My follow-ups happen from home."</p>
                   <div className="testimonial-author">
-                    <div className="testimonial-avatar" style={{background: 'linear-gradient(135deg, #1F4A6F, #182B49)'}}>YI</div>
+                    <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg, #1F4A6F, #182B49)' }}>YI</div>
                     <div className="testimonial-author-info">
                       <strong>Yusuf Ibrahim</strong>
                       <span><i className="fa-solid fa-location-dot"></i> Kano</span>
@@ -2704,7 +2704,7 @@ export default function App() {
                       const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
                       const itemsString = pharmacyCart.map(i => `${i.name} (x${i.qty})`).join(', ');
                       const totalCost = pharmacyCart.reduce((sum, i) => sum + (i.price * i.qty), 0) + 1500;
-                      
+
                       const newInquiry = {
                         id: orderId,
                         name: pharmacyCheckout.name,
@@ -3100,7 +3100,7 @@ export default function App() {
                             )}
                             <div className="doctor-badge">{doc.experience}</div>
                           </div>
-                          
+
                           <div className="doctor-info">
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               {doc.name}
@@ -3138,7 +3138,7 @@ export default function App() {
                     const name = target.elements.namedItem('inqName').value;
                     const email = target.elements.namedItem('inqEmail').value;
                     const msg = target.elements.namedItem('inqMsg').value;
-                    
+
                     const newInquiry = {
                       id: `INQ-${Math.floor(1000 + Math.random() * 9000)}`,
                       name,
@@ -3185,9 +3185,9 @@ export default function App() {
             <div className="filter-bar glassmorphic">
               <div className="search-box">
                 <i className="fa-solid fa-magnifying-glass"></i>
-                <input 
-                  type="text" 
-                  placeholder="Search doctor names, clinical focus..." 
+                <input
+                  type="text"
+                  placeholder="Search doctor names, clinical focus..."
                   value={doctorSearch}
                   onChange={(e) => setDoctorSearch(e.target.value)}
                 />
@@ -3195,7 +3195,7 @@ export default function App() {
 
               <div className="specialty-filters">
                 {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Public Health', 'Laboratory', 'Pharmacy'].map(spec => (
-                  <button 
+                  <button
                     key={spec}
                     className={`filter-btn ${doctorFilter === spec ? 'active' : ''}`}
                     onClick={() => setDoctorFilter(spec)}
@@ -3232,7 +3232,7 @@ export default function App() {
                         )}
                         <div className="doctor-badge">{doc.experience}</div>
                       </div>
-                      
+
                       <div className="doctor-info">
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           {doc.name}
@@ -3291,7 +3291,7 @@ export default function App() {
               <div className="booking-info-panel">
                 <h2>Schedule a Virtual Consultation Slot</h2>
                 <p>Fill out the form below to request a virtual consultation slot. Once submitted, our administrative team will review and confirm your slot.</p>
-                
+
                 <div className="info-bullets">
                   <div className="bullet-item">
                     <div className="bullet-icon"><i className="fa-solid fa-circle-check"></i></div>
@@ -3315,10 +3315,10 @@ export default function App() {
                 <form onSubmit={handleBookingSubmit}>
                   <div className="form-group">
                     <label htmlFor="patientName">Patient Name</label>
-                    <input 
-                      type="text" 
-                      id="patientName" 
-                      required 
+                    <input
+                      type="text"
+                      id="patientName"
+                      required
                       placeholder="e.g. Zainab Abdulfatah"
                       value={bookingFormData.patientName}
                       onChange={(e) => setBookingFormData({ ...bookingFormData, patientName: e.target.value })}
@@ -3328,10 +3328,10 @@ export default function App() {
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="phone">Phone Number</label>
-                      <input 
-                        type="tel" 
-                        id="phone" 
-                        required 
+                      <input
+                        type="tel"
+                        id="phone"
+                        required
                         placeholder="08012345678"
                         value={bookingFormData.phone}
                         onChange={(e) => setBookingFormData({ ...bookingFormData, phone: e.target.value })}
@@ -3339,10 +3339,10 @@ export default function App() {
                     </div>
                     <div className="form-group">
                       <label htmlFor="email">Email Address</label>
-                      <input 
-                        type="email" 
-                        id="email" 
-                        required 
+                      <input
+                        type="email"
+                        id="email"
+                        required
                         placeholder="zainab@example.com"
                         value={bookingFormData.email}
                         onChange={(e) => setBookingFormData({ ...bookingFormData, email: e.target.value })}
@@ -3353,8 +3353,8 @@ export default function App() {
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="bookingDoctor">Select Medical Specialist</label>
-                      <select 
-                        id="bookingDoctor" 
+                      <select
+                        id="bookingDoctor"
                         required
                         value={bookingFormData.doctorId}
                         onChange={(e) => setBookingFormData({ ...bookingFormData, doctorId: e.target.value })}
@@ -3368,9 +3368,9 @@ export default function App() {
 
                     <div className="form-group">
                       <label htmlFor="bookingDate">Preferred Date</label>
-                      <input 
-                        type="date" 
-                        id="bookingDate" 
+                      <input
+                        type="date"
+                        id="bookingDate"
                         required
                         value={bookingFormData.date}
                         onChange={(e) => setBookingFormData({ ...bookingFormData, date: e.target.value })}
@@ -3380,9 +3380,9 @@ export default function App() {
 
                   <div className="form-group">
                     <label htmlFor="symptoms">Brief Description of Symptoms</label>
-                    <textarea 
-                      id="symptoms" 
-                      rows="4" 
+                    <textarea
+                      id="symptoms"
+                      rows="4"
                       placeholder="Explain symptoms, diagnostic questions..."
                       value={bookingFormData.symptoms}
                       onChange={(e) => setBookingFormData({ ...bookingFormData, symptoms: e.target.value })}
@@ -3391,9 +3391,9 @@ export default function App() {
 
                   <div className="form-group consent-checkbox-group" style={{ marginBottom: '1.25rem' }}>
                     <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                      <input 
-                        type="checkbox" 
-                        required 
+                      <input
+                        type="checkbox"
+                        required
                         checked={bookingConsent}
                         onChange={(e) => {
                           if (e.target.checked) {
@@ -3442,10 +3442,10 @@ export default function App() {
                 <form onSubmit={handleContactSubmit}>
                   <div className="form-group">
                     <label htmlFor="contactName">Name</label>
-                    <input 
-                      type="text" 
-                      id="contactName" 
-                      required 
+                    <input
+                      type="text"
+                      id="contactName"
+                      required
                       placeholder="e.g. John Doe"
                       value={contactFormData.name}
                       onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
@@ -3453,10 +3453,10 @@ export default function App() {
                   </div>
                   <div className="form-group">
                     <label htmlFor="contactEmail">Email</label>
-                    <input 
-                      type="email" 
-                      id="contactEmail" 
-                      required 
+                    <input
+                      type="email"
+                      id="contactEmail"
+                      required
                       placeholder="john.doe@gmail.com"
                       value={contactFormData.email}
                       onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
@@ -3464,10 +3464,10 @@ export default function App() {
                   </div>
                   <div className="form-group">
                     <label htmlFor="contactMessage">Message</label>
-                    <textarea 
-                      id="contactMessage" 
-                      rows="5" 
-                      required 
+                    <textarea
+                      id="contactMessage"
+                      rows="5"
+                      required
                       placeholder="Type your message here..."
                       value={contactFormData.message}
                       onChange={(e) => setContactFormData({ ...contactFormData, message: e.target.value })}
@@ -3496,26 +3496,26 @@ export default function App() {
                     </div>
                     <span className="login-logo-text">SimmyCare</span>
                   </div>
-                  <h1 className="login-left-title">Connecting Nigeria to World-Class Medical Expertise.</h1>
+                  <h1 className="login-left-title">Connecting Patients to World-Class Medical Expertise.</h1>
                   <p className="login-left-desc">
                     Schedule certified virtual consultations, order home lab tests, and track your pharmacy prescriptions directly to your door.
                   </p>
-                  
+
                   <div className="login-stats-row">
                     <div className="login-stat-col">
-                      <h3>12k+</h3>
+                      <h3>10k+</h3>
                       <p>Patients served</p>
                     </div>
                     <div className="login-stat-col">
-                      <h3>180+</h3>
+                      <h3>10+</h3>
                       <p>Verified doctors</p>
                     </div>
                     <div className="login-stat-col">
-                      <h3>64</h3>
+                      <h3>6</h3>
                       <p>Pharmacy partners</p>
                     </div>
                   </div>
-                  
+
                   <div className="login-left-footer">
                     <p>&copy; 2026 SimmyCare. All rights reserved.</p>
                   </div>
@@ -3542,7 +3542,7 @@ export default function App() {
                           <label>Registration Role</label>
                           <div className="input-with-icon">
                             <i className="fa-solid fa-user-tag" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
-                            <select 
+                            <select
                               required
                               value={registerRole}
                               onChange={(e) => setRegisterRole(e.target.value)}
@@ -3560,28 +3560,28 @@ export default function App() {
                           <label>Full Name</label>
                           <div className="input-with-icon">
                             <i className="fa-regular fa-user"></i>
-                            <input 
-                              type="text" 
-                              required 
+                            <input
+                              type="text"
+                              required
                               placeholder=""
                               value={patientLoginForm.name}
                               onChange={(e) => setPatientLoginForm({ ...patientLoginForm, name: e.target.value })}
                             />
                           </div>
                         </div>
-                          <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label>Phone Number</label>
-                            <div className="input-with-icon">
-                              <i className="fa-solid fa-phone"></i>
-                              <input 
-                                type="tel" 
-                                required 
-                                placeholder=""
-                                value={patientLoginForm.phone}
-                                onChange={(e) => setPatientLoginForm({ ...patientLoginForm, phone: e.target.value })}
-                              />
-                            </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label>Phone Number</label>
+                          <div className="input-with-icon">
+                            <i className="fa-solid fa-phone"></i>
+                            <input
+                              type="tel"
+                              required
+                              placeholder=""
+                              value={patientLoginForm.phone}
+                              onChange={(e) => setPatientLoginForm({ ...patientLoginForm, phone: e.target.value })}
+                            />
                           </div>
+                        </div>
 
                         {/* Dynamic Role-specific details */}
                         {registerRole === 'doctor' && (
@@ -3591,8 +3591,8 @@ export default function App() {
                                 <label>Specialty</label>
                                 <div className="input-with-icon">
                                   <i className="fa-solid fa-stethoscope" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
-                                  <select 
-                                    required 
+                                  <select
+                                    required
                                     value={patientLoginForm.specialty}
                                     onChange={(e) => setPatientLoginForm({ ...patientLoginForm, specialty: e.target.value })}
                                     style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
@@ -3610,9 +3610,9 @@ export default function App() {
                                 <label>MDCN License Number</label>
                                 <div className="input-with-icon">
                                   <i className="fa-solid fa-id-card"></i>
-                                  <input 
-                                    type="text" 
-                                    required 
+                                  <input
+                                    type="text"
+                                    required
                                     placeholder=""
                                     value={patientLoginForm.regNo}
                                     onChange={(e) => setPatientLoginForm({ ...patientLoginForm, regNo: e.target.value })}
@@ -3625,8 +3625,8 @@ export default function App() {
                                 <label>Professional Level / Role</label>
                                 <div className="input-with-icon">
                                   <i className="fa-solid fa-award" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
-                                  <select 
-                                    required 
+                                  <select
+                                    required
                                     value={patientLoginForm.level || 'Junior Doctor'}
                                     onChange={(e) => setPatientLoginForm({ ...patientLoginForm, level: e.target.value })}
                                     style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
@@ -3648,9 +3648,9 @@ export default function App() {
                               <label>Pharmacy Name</label>
                               <div className="input-with-icon">
                                 <i className="fa-solid fa-prescription-bottle-medical"></i>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   placeholder=""
                                   value={patientLoginForm.pharmacyName}
                                   onChange={(e) => setPatientLoginForm({ ...patientLoginForm, pharmacyName: e.target.value })}
@@ -3661,9 +3661,9 @@ export default function App() {
                               <label>PCN License Number</label>
                               <div className="input-with-icon">
                                 <i className="fa-solid fa-id-card"></i>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   placeholder=""
                                   value={patientLoginForm.pharmacyLicense}
                                   onChange={(e) => setPatientLoginForm({ ...patientLoginForm, pharmacyLicense: e.target.value })}
@@ -3679,9 +3679,9 @@ export default function App() {
                               <label>Facility Name</label>
                               <div className="input-with-icon">
                                 <i className="fa-solid fa-house-medical"></i>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   placeholder=""
                                   value={patientLoginForm.facilityName}
                                   onChange={(e) => setPatientLoginForm({ ...patientLoginForm, facilityName: e.target.value })}
@@ -3692,9 +3692,9 @@ export default function App() {
                               <label>MLSCN License Number</label>
                               <div className="input-with-icon">
                                 <i className="fa-solid fa-id-card"></i>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   placeholder=""
                                   value={patientLoginForm.labLicense}
                                   onChange={(e) => setPatientLoginForm({ ...patientLoginForm, labLicense: e.target.value })}
@@ -3710,8 +3710,8 @@ export default function App() {
                               <label>Vehicle Type</label>
                               <div className="input-with-icon">
                                 <i className="fa-solid fa-motorcycle" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}></i>
-                                <select 
-                                  required 
+                                <select
+                                  required
                                   value={patientLoginForm.vehicleType}
                                   onChange={(e) => setPatientLoginForm({ ...patientLoginForm, vehicleType: e.target.value })}
                                   style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
@@ -3727,9 +3727,9 @@ export default function App() {
                               <label>Coverage Area</label>
                               <div className="input-with-icon">
                                 <i className="fa-solid fa-map-location-dot"></i>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   placeholder=""
                                   value={patientLoginForm.dispatchArea}
                                   onChange={(e) => setPatientLoginForm({ ...patientLoginForm, dispatchArea: e.target.value })}
@@ -3744,23 +3744,23 @@ export default function App() {
                             <label>Email address</label>
                             <div className="input-with-icon">
                               <i className="fa-regular fa-envelope"></i>
-                              <input 
-                                type="email" 
-                                required 
+                              <input
+                                type="email"
+                                required
                                 placeholder=""
                                 value={patientLoginForm.email}
                                 onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
                               />
                             </div>
                           </div>
-                          
+
                           <div className="form-group" style={{ marginBottom: 0 }}>
                             <label>Password</label>
                             <div className="input-with-icon">
                               <i className="fa-solid fa-lock"></i>
-                              <input 
-                                type={showPasswords.patient ? 'text' : 'password'} 
-                                required 
+                              <input
+                                type={showPasswords.patient ? 'text' : 'password'}
+                                required
                                 placeholder=""
                                 value={patientLoginForm.password}
                                 onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
@@ -3778,23 +3778,23 @@ export default function App() {
                           <label>Email address</label>
                           <div className="input-with-icon">
                             <i className="fa-regular fa-envelope"></i>
-                            <input 
-                              type="email" 
-                              required 
+                            <input
+                              type="email"
+                              required
                               placeholder=""
                               value={patientLoginForm.email}
                               onChange={(e) => setPatientLoginForm({ ...patientLoginForm, email: e.target.value })}
                             />
                           </div>
                         </div>
-                        
+
                         <div className="form-group">
                           <label>Password</label>
                           <div className="input-with-icon">
                             <i className="fa-solid fa-lock"></i>
-                            <input 
-                              type={showPasswords.patient ? 'text' : 'password'} 
-                              required 
+                            <input
+                              type={showPasswords.patient ? 'text' : 'password'}
+                              required
                               placeholder=""
                               value={patientLoginForm.password}
                               onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
@@ -3810,9 +3810,9 @@ export default function App() {
                     {isPatientRegistering && (
                       <div className="form-group consent-checkbox-group" style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
                         <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                          <input 
-                            type="checkbox" 
-                            required 
+                          <input
+                            type="checkbox"
+                            required
                             checked={registerConsent}
                             onChange={(e) => {
                               if (e.target.checked) {
@@ -3837,10 +3837,10 @@ export default function App() {
                       </div>
                     )}
 
-                    <div className="demo-credentials-box" style={{ 
-                      background: 'rgba(24, 43, 73, 0.04)', 
-                      padding: '0.75rem', 
-                      borderRadius: 'var(--radius-sm)', 
+                    <div className="demo-credentials-box" style={{
+                      background: 'rgba(24, 43, 73, 0.04)',
+                      padding: '0.75rem',
+                      borderRadius: 'var(--radius-sm)',
                       border: '1px solid rgba(24, 43, 73, 0.08)',
                       fontSize: '0.78rem',
                       color: 'var(--color-text-muted)',
@@ -3866,17 +3866,17 @@ export default function App() {
                         </>
                       )}
                     </div>
-                    
+
                     <button type="submit" className="btn btn-primary btn-block">
                       {isPatientRegistering ? "Sign Up" : "Sign In"}
                     </button>
-                    
+
                     <div className="signup-toggle">
                       {isPatientRegistering ? (
                         <span>
                           Already have an account?{' '}
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             className="toggle-link-btn"
                             onClick={() => { setIsPatientRegistering(false); setLoginError(''); }}
                           >
@@ -3886,8 +3886,8 @@ export default function App() {
                       ) : (
                         <span>
                           Don't have an account?{' '}
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             className="toggle-link-btn"
                             onClick={() => { setIsPatientRegistering(true); setLoginError(''); }}
                           >
@@ -3910,7 +3910,7 @@ export default function App() {
         {/* --- VIEW: INTEGRATED ROLE DASHBOARDS --- */}
         {currentView === 'dashboard' && (
           <section id="dashboard-view" className="view-section animate-fade">
-            
+
             {/* Guard: redirect to login if no role */}
             {!authRole && (() => { navigateTo('portal-login'); return null; })()}
 
@@ -3927,7 +3927,7 @@ export default function App() {
                   </div>
                 </div>
 
-                 <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
+                <div className="stats-row glassmorphic" style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
                   <div className="stat-item">
                     <h3>{myPatientAppointments.length}</h3>
                     <p>CLINICAL CONSULTATIONS</p>
@@ -3947,13 +3947,13 @@ export default function App() {
                 <div className="dashboard-layout">
                   {/* Sidebar Navigation */}
                   <div className="dashboard-sidebar glassmorphic">
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${patientNavView === 'bookings' ? 'active' : ''}`}
                       onClick={() => setPatientNavView('bookings')}
                     >
                       <i className="fa-solid fa-calendar-check"></i> Consultation Bookings
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${patientNavView === 'orders' ? 'active' : ''}`}
                       onClick={() => {
                         setPatientNavView('orders');
@@ -3963,7 +3963,7 @@ export default function App() {
                     >
                       <i className="fa-solid fa-prescription-bottle-medical"></i> Pharmacy Deliveries
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${patientNavView === 'labs' ? 'active' : ''}`}
                       onClick={() => {
                         setPatientNavView('labs');
@@ -3973,7 +3973,7 @@ export default function App() {
                     >
                       <i className="fa-solid fa-vial"></i> Lab Collection Trips
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${patientNavView === 'profile' ? 'active' : ''}`}
                       onClick={() => {
                         setPatientNavView('profile');
@@ -4070,14 +4070,14 @@ export default function App() {
                             <input type="hidden" value={loggedInPatient.name} />
                             <input type="hidden" value={loggedInPatient.email} />
                             <input type="hidden" value={loggedInPatient.phone} />
-                            
+
                             <div className="form-group">
                               <label>Select Specialist</label>
-                              <select 
+                              <select
                                 required
                                 value={bookingFormData.doctorId}
-                                onChange={(e) => setBookingFormData({ 
-                                  ...bookingFormData, 
+                                onChange={(e) => setBookingFormData({
+                                  ...bookingFormData,
                                   doctorId: e.target.value,
                                   patientName: loggedInPatient.name,
                                   email: loggedInPatient.email,
@@ -4093,8 +4093,8 @@ export default function App() {
 
                             <div className="form-group">
                               <label>Preferred Date</label>
-                              <input 
-                                type="date" 
+                              <input
+                                type="date"
                                 required
                                 value={bookingFormData.date}
                                 onChange={(e) => setBookingFormData({ ...bookingFormData, date: e.target.value })}
@@ -4103,8 +4103,8 @@ export default function App() {
 
                             <div className="form-group">
                               <label>Explain Symptoms</label>
-                              <textarea 
-                                rows="3" 
+                              <textarea
+                                rows="3"
                                 placeholder="Brief diagnostic explanation..."
                                 value={bookingFormData.symptoms}
                                 onChange={(e) => setBookingFormData({ ...bookingFormData, symptoms: e.target.value })}
@@ -4153,8 +4153,8 @@ export default function App() {
                                 const { items, total } = parseOrderMessage(order.message);
                                 const isSelected = selectedPharmacyOrder && selectedPharmacyOrder.id === order.id;
                                 return (
-                                  <div 
-                                    key={order.id} 
+                                  <div
+                                    key={order.id}
                                     onClick={() => {
                                       setSelectedPharmacyOrder(order);
                                       if (order.status === 'Out for Delivery') {
@@ -4174,14 +4174,14 @@ export default function App() {
                                   >
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                       <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '0.9rem' }}>{order.id}</span>
-                                      <span style={{ 
-                                        display: 'inline-block', 
-                                        padding: '0.2rem 0.5rem', 
-                                        borderRadius: '4px', 
-                                        fontSize: '0.7rem', 
-                                        fontWeight: 'bold', 
-                                        backgroundColor: order.status === 'Delivered' ? 'rgba(34, 197, 94, 0.15)' : order.status === 'Out for Delivery' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', 
-                                        color: order.status === 'Delivered' ? '#166534' : order.status === 'Out for Delivery' ? '#1d4ed8' : '#854d0e' 
+                                      <span style={{
+                                        display: 'inline-block',
+                                        padding: '0.2rem 0.5rem',
+                                        borderRadius: '4px',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 'bold',
+                                        backgroundColor: order.status === 'Delivered' ? 'rgba(34, 197, 94, 0.15)' : order.status === 'Out for Delivery' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                                        color: order.status === 'Delivered' ? '#166534' : order.status === 'Out for Delivery' ? '#1d4ed8' : '#854d0e'
                                       }}>
                                         {order.status || 'Pending Review'}
                                       </span>
@@ -4209,11 +4209,11 @@ export default function App() {
                           {selectedPharmacyOrder ? (() => {
                             const { items, address, notes, total } = parseOrderMessage(selectedPharmacyOrder.message);
                             const status = selectedPharmacyOrder.status || 'Pending Review';
-                            
+
                             // Determine stage indices
                             const stages = ['Pending Review', 'Processing & Packaging', 'Awaiting Dispatch', 'Out for Delivery', 'Delivered'];
                             const currentStageIndex = stages.indexOf(status) !== -1 ? stages.indexOf(status) : 0;
-                            
+
                             return (
                               <div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
@@ -4227,7 +4227,7 @@ export default function App() {
                                     {/* Connecting Line */}
                                     <div style={{ position: 'absolute', top: '15px', left: '5%', right: '5%', height: '3px', backgroundColor: 'var(--color-border)', zIndex: 1 }}></div>
                                     <div style={{ position: 'absolute', top: '15px', left: '5%', width: `${(currentStageIndex / 4) * 90}%`, height: '3px', backgroundColor: 'var(--color-accent)', zIndex: 2, transition: 'all 0.5s ease' }}></div>
-                                    
+
                                     {/* Timeline Nodes */}
                                     {[
                                       { label: 'Ordered', icon: 'fa-file-medical' },
@@ -4239,12 +4239,12 @@ export default function App() {
                                       const isActive = idx <= currentStageIndex;
                                       return (
                                         <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 3, width: '18%' }}>
-                                          <div 
-                                            style={{ 
-                                              width: '32px', 
-                                              height: '32px', 
-                                              borderRadius: '50%', 
-                                              backgroundColor: isActive ? 'var(--color-accent)' : '#f1f5f9', 
+                                          <div
+                                            style={{
+                                              width: '32px',
+                                              height: '32px',
+                                              borderRadius: '50%',
+                                              backgroundColor: isActive ? 'var(--color-accent)' : '#f1f5f9',
                                               border: `2px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border)'}`,
                                               color: isActive ? '#fff' : 'var(--color-text-muted)',
                                               display: 'flex',
@@ -4258,10 +4258,10 @@ export default function App() {
                                           >
                                             <i className={`fa-solid ${stage.icon}`}></i>
                                           </div>
-                                          <span 
-                                            style={{ 
-                                              fontSize: '0.72rem', 
-                                              color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)', 
+                                          <span
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)',
                                               fontWeight: isActive ? 'bold' : 'normal',
                                               textAlign: 'center',
                                               marginTop: '0.4rem',
@@ -4305,7 +4305,7 @@ export default function App() {
                                     <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
                                       Live Courier Tracking (Capsule Integration)
                                     </strong>
-                                    
+
                                     <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
                                       <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#10b981', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
@@ -4314,15 +4314,15 @@ export default function App() {
                                       <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
                                         ETA: {Math.max(1, Math.round(15 * (1 - simulatedProgress / 100)))} MINS
                                       </div>
-                                      
+
                                       <svg viewBox="0 0 400 200" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
                                         {/* Roads Map Background Grid */}
                                         <path d="M 0,100 L 400,100 M 100,0 L 100,200 M 300,0 L 300,200 M 0,50 L 400,50 M 0,150 L 400,150" stroke="rgba(255,255,255,0.04)" strokeWidth="6" fill="none" />
                                         <path d="M 200,0 L 200,200" stroke="rgba(255,255,255,0.04)" strokeWidth="9" fill="none" />
-                                        
+
                                         {/* Route path */}
                                         <path id="delivery-route" d="M 100,100 Q 200,40 200,160 T 300,100" stroke="#0ea5e9" strokeWidth="3" strokeDasharray="6,4" fill="none" />
-                                        
+
                                         {/* Start Hub Pin */}
                                         <circle cx="100" cy="100" r="7" fill="#10b981" />
                                         <circle cx="100" cy="100" r="13" fill="#10b981" fillOpacity="0.15" />
@@ -4356,7 +4356,7 @@ export default function App() {
                                           );
                                         })()}
                                       </svg>
-                                      
+
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
                                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
                                           {(selectedPharmacyOrder.assignedRider || 'Rider').charAt(0).toUpperCase()}
@@ -4426,8 +4426,8 @@ export default function App() {
                                 const { tests } = parseLabRequest(req.symptoms);
                                 const isSelected = selectedLabRequest && selectedLabRequest.id === req.id;
                                 return (
-                                  <div 
-                                    key={req.id} 
+                                  <div
+                                    key={req.id}
                                     onClick={() => {
                                       setSelectedLabRequest(req);
                                       if (req.status === 'Sample Collected') {
@@ -4447,14 +4447,14 @@ export default function App() {
                                   >
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                       <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '0.9rem' }}>{req.id}</span>
-                                      <span style={{ 
-                                        display: 'inline-block', 
-                                        padding: '0.2rem 0.5rem', 
-                                        borderRadius: '4px', 
-                                        fontSize: '0.7rem', 
-                                        fontWeight: 'bold', 
-                                        backgroundColor: req.status === 'Completed' || req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : req.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)', 
-                                        color: req.status === 'Completed' || req.status === 'Approved' ? '#166534' : req.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e' 
+                                      <span style={{
+                                        display: 'inline-block',
+                                        padding: '0.2rem 0.5rem',
+                                        borderRadius: '4px',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 'bold',
+                                        backgroundColor: req.status === 'Completed' || req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : req.status === 'Sample Collected' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                                        color: req.status === 'Completed' || req.status === 'Approved' ? '#166534' : req.status === 'Sample Collected' ? '#1d4ed8' : '#854d0e'
                                       }}>
                                         {req.status === 'Completed' || req.status === 'Approved' ? 'Results Ready' : req.status === 'Sample Collected' ? 'Sample Transit' : 'Pending Collection'}
                                       </span>
@@ -4484,7 +4484,7 @@ export default function App() {
                             const status = selectedLabRequest.status || 'Pending';
                             const isDone = status === 'Completed' || status === 'Approved';
                             const currentStageIndex = status === 'Completed' || status === 'Approved' ? 2 : status === 'Sample Collected' ? 1 : 0;
-                            
+
                             return (
                               <div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
@@ -4497,7 +4497,7 @@ export default function App() {
                                   <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', marginTop: '1.5rem', marginBottom: '0.5rem' }}>
                                     <div style={{ position: 'absolute', top: '15px', left: '15%', right: '15%', height: '3px', backgroundColor: 'var(--color-border)', zIndex: 1 }}></div>
                                     <div style={{ position: 'absolute', top: '15px', left: '15%', width: `${(currentStageIndex / 2) * 70}%`, height: '3px', backgroundColor: 'var(--color-accent)', zIndex: 2, transition: 'all 0.5s ease' }}></div>
-                                    
+
                                     {[
                                       { label: 'Collection Scheduled', icon: 'fa-calendar-day' },
                                       { label: 'Sample in Transit', icon: 'fa-vial-circle-check' },
@@ -4506,12 +4506,12 @@ export default function App() {
                                       const isActive = idx <= currentStageIndex;
                                       return (
                                         <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 3, width: '30%' }}>
-                                          <div 
-                                            style={{ 
-                                              width: '32px', 
-                                              height: '32px', 
-                                              borderRadius: '50%', 
-                                              backgroundColor: isActive ? 'var(--color-accent)' : '#f1f5f9', 
+                                          <div
+                                            style={{
+                                              width: '32px',
+                                              height: '32px',
+                                              borderRadius: '50%',
+                                              backgroundColor: isActive ? 'var(--color-accent)' : '#f1f5f9',
                                               border: `2px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border)'}`,
                                               color: isActive ? '#fff' : 'var(--color-text-muted)',
                                               display: 'flex',
@@ -4524,10 +4524,10 @@ export default function App() {
                                           >
                                             <i className={`fa-solid ${stage.icon}`}></i>
                                           </div>
-                                          <span 
-                                            style={{ 
-                                              fontSize: '0.72rem', 
-                                              color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)', 
+                                          <span
+                                            style={{
+                                              fontSize: '0.72rem',
+                                              color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)',
                                               fontWeight: isActive ? 'bold' : 'normal',
                                               textAlign: 'center',
                                               marginTop: '0.4rem',
@@ -4573,7 +4573,7 @@ export default function App() {
                                       </div>
 
                                       <strong style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-accent)', display: 'block', marginBottom: '0.5rem' }}>Analyte Findings</strong>
-                                      
+
                                       <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse', textAlign: 'left' }}>
                                         <thead>
                                           <tr style={{ borderBottom: '1px solid #cbd5e1', color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>
@@ -4626,8 +4626,8 @@ export default function App() {
                                           <strong>Verified By:</strong> MLS Wasila Goranduma <br />
                                           <span style={{ color: 'var(--color-text-muted)' }}>Chief Medical Laboratory Scientist</span>
                                         </div>
-                                        <button 
-                                          className="btn btn-primary btn-sm" 
+                                        <button
+                                          className="btn btn-primary btn-sm"
                                           style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
                                           onClick={() => alert("Report downloaded successfully to medical records file folder!")}
                                         >
@@ -4650,14 +4650,14 @@ export default function App() {
                                       <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
                                         ETA: {Math.max(1, Math.round(15 * (1 - simulatedProgress / 100)))} MINS
                                       </div>
-                                      
+
                                       <svg viewBox="0 0 400 200" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
                                         <path d="M 0,100 L 400,100 M 100,0 L 100,200 M 300,0 L 300,200 M 0,50 L 400,50 M 0,150 L 400,150" stroke="rgba(255,255,255,0.04)" strokeWidth="6" fill="none" />
                                         <path d="M 200,0 L 200,200" stroke="rgba(255,255,255,0.04)" strokeWidth="9" fill="none" />
-                                        
+
                                         {/* Route path */}
                                         <path id="lab-route" d="M 300,100 Q 200,150 200,50 T 100,100" stroke="#f59e0b" strokeWidth="3" strokeDasharray="6,4" fill="none" />
-                                        
+
                                         {/* Diagnostic Hub Pin */}
                                         <circle cx="100" cy="100" r="7" fill="#10b981" />
                                         <circle cx="100" cy="100" r="13" fill="#10b981" fillOpacity="0.15" />
@@ -4691,7 +4691,7 @@ export default function App() {
                                           );
                                         })()}
                                       </svg>
-                                      
+
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
                                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
                                           {(selectedLabRequest.assignedRider || 'Rider').charAt(0).toUpperCase()}
@@ -4709,7 +4709,7 @@ export default function App() {
                                         </a>
                                       </div>
                                     </div>
-                                    
+
                                     <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }}>
                                       <i className="fa-solid fa-truck" style={{ color: '#d97706', fontSize: '1.5rem' }}></i>
                                       <div>
@@ -4791,21 +4791,21 @@ export default function App() {
                         ) : (
                           <form onSubmit={handleSavePatSelf} className="add-doctor-form glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px' }}>
                             <h4 style={{ marginTop: 0, marginBottom: '1.5rem' }}>Modify Account Settings</h4>
-                            
+
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Full Name</label>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   value={patSelfData.name}
                                   onChange={(e) => setPatSelfData({ ...patSelfData, name: e.target.value })}
                                 />
                               </div>
                               <div className="form-group">
                                 <label>Contact Phone Number</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="e.g. 08012345678"
                                   value={patSelfData.phone}
                                   onChange={(e) => setPatSelfData({ ...patSelfData, phone: e.target.value })}
@@ -4816,9 +4816,9 @@ export default function App() {
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Email Address</label>
-                                <input 
-                                  type="email" 
-                                  required 
+                                <input
+                                  type="email"
+                                  required
                                   value={patSelfData.email}
                                   onChange={(e) => setPatSelfData({ ...patSelfData, email: e.target.value })}
                                 />
@@ -4826,9 +4826,9 @@ export default function App() {
                               <div className="form-group">
                                 <label>Account Password</label>
                                 <div className="password-input-wrapper">
-                                  <input 
-                                    type={showPasswords.patientForm ? 'text' : 'password'} 
-                                    required 
+                                  <input
+                                    type={showPasswords.patientForm ? 'text' : 'password'}
+                                    required
                                     value={patSelfData.password}
                                     onChange={(e) => setPatSelfData({ ...patSelfData, password: e.target.value })}
                                   />
@@ -4895,13 +4895,13 @@ export default function App() {
                 <div className="dashboard-layout">
                   {/* Sidebar Navigation */}
                   <div className="dashboard-sidebar glassmorphic">
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${doctorNavView === 'backlog' ? 'active' : ''}`}
                       onClick={() => setDoctorNavView('backlog')}
                     >
                       <i className="fa-solid fa-list-check"></i> Consultation Backlog
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${doctorNavView === 'profile' ? 'active' : ''}`}
                       onClick={() => {
                         setDoctorNavView('profile');
@@ -4937,7 +4937,7 @@ export default function App() {
                           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: (loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? '#10B981' : '#9CA3AF', display: 'inline-block' }}></span>
                           <strong>{(loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? 'Available' : 'Unavailable'}</strong>
                         </span>
-                        <button 
+                        <button
                           className={`btn ${(loggedInDoctor.active !== false && loggedInDoctor.verified !== false) ? 'btn-danger' : 'btn-success'} btn-xs`}
                           onClick={() => {
                             if (loggedInDoctor.verified === false) {
@@ -4993,7 +4993,7 @@ export default function App() {
                     {doctorNavView === 'backlog' && (
                       <div>
                         <h3>My Consultation Backlog ({myDoctorAppointments.length})</h3>
-                        
+
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
                           {/* Left Column: Appointments */}
                           <div style={{ flex: '1 1 650px', minWidth: 0 }}>
@@ -5044,25 +5044,25 @@ export default function App() {
                                           </td>
                                           <td>
                                             <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                              <button 
-                                                className="action-btn" 
-                                                style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
-                                                onClick={() => setAdminSelectedApt(apt)} 
+                                              <button
+                                                className="action-btn"
+                                                style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                                onClick={() => setAdminSelectedApt(apt)}
                                                 title="View / Edit Medical Record"
                                               >
                                                 <i className="fa-solid fa-eye"></i> View
                                               </button>
-                                              
-                                              <button 
+
+                                              <button
                                                 style={{ background: 'transparent', color: 'var(--color-text)', border: '1px solid rgba(0,0,0,0.15)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                                onClick={() => startEditApt(apt)} 
+                                                onClick={() => startEditApt(apt)}
                                                 title="Reschedule Appointment"
                                               >
                                                 <i className="fa-solid fa-pen-to-square"></i> Reschedule
                                               </button>
 
                                               {apt.status === 'Approved' && (
-                                                <button 
+                                                <button
                                                   style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
                                                   onClick={() => {
                                                     setFollowUpApt(apt);
@@ -5092,7 +5092,7 @@ export default function App() {
                                                   <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
                                                     <i className="fa-solid fa-notes-medical"></i> Clinical Consultation Notes (Plain Text)
                                                   </label>
-                                                  <textarea 
+                                                  <textarea
                                                     rows={3}
                                                     style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
                                                     placeholder="Write patient clinical findings and consultation details..."
@@ -5104,7 +5104,7 @@ export default function App() {
                                                   <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--color-primary)', display: 'block', marginBottom: '0.5rem' }}>
                                                     <i className="fa-solid fa-prescription"></i> Pharmacy Prescription & Drug Instructions
                                                   </label>
-                                                  <textarea 
+                                                  <textarea
                                                     rows={3}
                                                     style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical' }}
                                                     placeholder="Write specific items/dosage (e.g. Paracetamol 500mg - 2x daily)..."
@@ -5118,7 +5118,7 @@ export default function App() {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
                                                       <i className="fa-solid fa-vials"></i> Prescribe Laboratory Diagnostics
                                                     </span>
-                                                    <input 
+                                                    <input
                                                       type="text"
                                                       style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
                                                       placeholder="e.g. Malaria smear, FBC..."
@@ -5130,7 +5130,7 @@ export default function App() {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
                                                       <i className="fa-solid fa-x-ray"></i> Prescribe Imaging Scans
                                                     </span>
-                                                    <input 
+                                                    <input
                                                       type="text"
                                                       style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
                                                       placeholder="e.g. Pelvic ultrasound, Chest X-ray..."
@@ -5142,7 +5142,7 @@ export default function App() {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
                                                       <i className="fa-solid fa-hospital-user"></i> Clinical Office Referral
                                                     </span>
-                                                    <input 
+                                                    <input
                                                       type="text"
                                                       style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.85rem', marginTop: '0.25rem' }}
                                                       placeholder="e.g. Return in 2 weeks..."
@@ -5174,7 +5174,7 @@ export default function App() {
                                                   <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                                                     <i className="fa-solid fa-circle-info"></i> Submit compiles notes into the official portal record.
                                                   </span>
-                                                  <button 
+                                                  <button
                                                     type="button"
                                                     className="btn btn-primary"
                                                     style={{ padding: '0.45rem 1.15rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}
@@ -5208,19 +5208,19 @@ export default function App() {
                               <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                                 Verify pharmacist, laboratory, and rider availability before routing tasks.
                               </p>
-                              
+
                               <div style={{ position: 'relative', marginBottom: '1rem' }}>
                                 <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}></i>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="Search staff, role, status..."
                                   value={availabilitySearchQuery}
                                   onChange={(e) => setAvailabilitySearchQuery(e.target.value)}
-                                  style={{ 
-                                    width: '100%', 
-                                    padding: '0.4rem 0.75rem 0.4rem 2rem', 
-                                    borderRadius: '6px', 
-                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.4rem 0.75rem 0.4rem 2rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(255,255,255,0.1)',
                                     background: 'rgba(0,0,0,0.2)',
                                     color: '#fff',
                                     fontSize: '0.8rem',
@@ -5236,18 +5236,18 @@ export default function App() {
                                     { name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmycare.com' },
                                     { name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
                                     { name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
-                                    ...doctors.map(d => ({ 
-                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`, 
-                                      role: d.specialty, 
-                                      available: d.active !== false, 
-                                      icon: 'fa-user-doctor', 
-                                      email: d.email, 
-                                      phone: d.phone 
+                                    ...doctors.map(d => ({
+                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`,
+                                      role: d.specialty,
+                                      available: d.active !== false,
+                                      icon: 'fa-user-doctor',
+                                      email: d.email,
+                                      phone: d.phone
                                     }))
                                   ];
 
-                                  const filtered = staffList.filter(s => 
-                                    s.name.toLowerCase().includes(query) || 
+                                  const filtered = staffList.filter(s =>
+                                    s.name.toLowerCase().includes(query) ||
                                     s.role.toLowerCase().includes(query) ||
                                     (s.available ? 'online available' : 'offline unavailable').includes(query)
                                   );
@@ -5257,24 +5257,24 @@ export default function App() {
                                   }
 
                                   return filtered.map((staff, idx) => (
-                                    <div key={idx} style={{ 
-                                      display: 'flex', 
-                                      alignItems: 'center', 
-                                      justifyContent: 'space-between', 
-                                      padding: '0.6rem 0.75rem', 
-                                      background: 'rgba(255,255,255,0.02)', 
+                                    <div key={idx} style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      padding: '0.6rem 0.75rem',
+                                      background: 'rgba(255,255,255,0.02)',
                                       borderRadius: '8px',
                                       border: '1px solid rgba(255,255,255,0.04)',
                                       gap: '0.5rem'
                                     }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
-                                        <div style={{ 
-                                          width: '28px', 
-                                          height: '28px', 
-                                          borderRadius: '50%', 
-                                          background: 'rgba(28, 43, 73, 0.2)', 
-                                          display: 'flex', 
-                                          alignItems: 'center', 
+                                        <div style={{
+                                          width: '28px',
+                                          height: '28px',
+                                          borderRadius: '50%',
+                                          background: 'rgba(28, 43, 73, 0.2)',
+                                          display: 'flex',
+                                          alignItems: 'center',
                                           justifyContent: 'center',
                                           color: 'var(--color-accent)',
                                           flexShrink: 0
@@ -5298,11 +5298,11 @@ export default function App() {
                                               </a>
                                             )}
                                             {staff.phone && (
-                                              <a 
-                                                href={`https://wa.me/${staff.phone.replace(/[^0-9]/g, '')}`} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                title="Chat on WhatsApp" 
+                                              <a
+                                                href={`https://wa.me/${staff.phone.replace(/[^0-9]/g, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="Chat on WhatsApp"
                                                 style={{ color: '#10B981', textDecoration: 'none' }}
                                               >
                                                 <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.8rem' }}></i>
@@ -5311,26 +5311,26 @@ export default function App() {
                                           </div>
                                         </div>
                                       </div>
-                                      <div style={{ 
-                                        display: 'inline-flex', 
-                                        alignItems: 'center', 
-                                        gap: '0.3rem', 
+                                      <div style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.3rem',
                                         background: staff.available ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
                                         border: `1px solid ${staff.available ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
                                         padding: '2px 8px',
                                         borderRadius: '12px',
                                         flexShrink: 0
                                       }}>
-                                        <span style={{ 
-                                          width: '5px', 
-                                          height: '5px', 
-                                          borderRadius: '50%', 
+                                        <span style={{
+                                          width: '5px',
+                                          height: '5px',
+                                          borderRadius: '50%',
                                           background: staff.available ? '#10b981' : '#ef4444',
                                           boxShadow: staff.available ? '0 0 6px #10b981' : 'none'
                                         }}></span>
-                                        <span style={{ 
-                                          fontSize: '0.7rem', 
-                                          fontWeight: 'bold', 
+                                        <span style={{
+                                          fontSize: '0.7rem',
+                                          fontWeight: 'bold',
                                           color: staff.available ? '#10b981' : '#ef4444',
                                           textTransform: 'uppercase',
                                           letterSpacing: '0.5px'
@@ -5468,20 +5468,20 @@ export default function App() {
                         ) : (
                           <form onSubmit={handleSaveDocSelf} className="add-doctor-form glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px' }}>
                             <h4 style={{ marginTop: 0, marginBottom: '1.5rem' }}>Modify Professional Profile</h4>
-                            
+
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Doctor Name (Exclude "Dr.")</label>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   value={docSelfData.name}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, name: e.target.value })}
                                 />
                               </div>
                               <div className="form-group">
                                 <label>Specialty Department</label>
-                                <select 
+                                <select
                                   value={docSelfData.specialty}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, specialty: e.target.value })}
                                 >
@@ -5498,8 +5498,8 @@ export default function App() {
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Weekly Schedule Hours</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   required
                                   value={docSelfData.schedule}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, schedule: e.target.value })}
@@ -5507,8 +5507,8 @@ export default function App() {
                               </div>
                               <div className="form-group">
                                 <label>Clinical Experience (Years)</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   required
                                   value={docSelfData.experience}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, experience: e.target.value })}
@@ -5516,8 +5516,8 @@ export default function App() {
                               </div>
                               <div className="form-group">
                                 <label>MDCN Register Code</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   required
                                   value={docSelfData.regNo}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, regNo: e.target.value })}
@@ -5525,10 +5525,10 @@ export default function App() {
                               </div>
                               <div className="form-group">
                                 <label>Professional Level (Admin Managed)</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   disabled
-                                  value={docSelfData.level || 'Junior Doctor'} 
+                                  value={docSelfData.level || 'Junior Doctor'}
                                   style={{ background: 'rgba(28,43,73,0.08)', cursor: 'not-allowed', color: 'var(--color-text-muted)' }}
                                 />
                               </div>
@@ -5537,9 +5537,9 @@ export default function App() {
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Email Address</label>
-                                <input 
-                                  type="email" 
-                                  required 
+                                <input
+                                  type="email"
+                                  required
                                   value={docSelfData.email}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, email: e.target.value })}
                                 />
@@ -5547,9 +5547,9 @@ export default function App() {
                               <div className="form-group">
                                 <label>Password</label>
                                 <div className="password-input-wrapper">
-                                  <input 
-                                    type={showPasswords.doctorForm ? 'text' : 'password'} 
-                                    required 
+                                  <input
+                                    type={showPasswords.doctorForm ? 'text' : 'password'}
+                                    required
                                     value={docSelfData.password}
                                     onChange={(e) => setDocSelfData({ ...docSelfData, password: e.target.value })}
                                   />
@@ -5563,8 +5563,8 @@ export default function App() {
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Contact Phone Number</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="e.g. 08034567890"
                                   value={docSelfData.phone || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, phone: e.target.value })}
@@ -5572,8 +5572,8 @@ export default function App() {
                               </div>
                               <div className="form-group">
                                 <label>Clinic Room / Location</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="e.g. Room 102, West Wing"
                                   value={docSelfData.clinicRoom || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, clinicRoom: e.target.value })}
@@ -5584,8 +5584,8 @@ export default function App() {
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Consultation Rate</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="e.g. ₦5,000"
                                   value={docSelfData.consultationRate || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, consultationRate: e.target.value })}
@@ -5593,8 +5593,8 @@ export default function App() {
                               </div>
                               <div className="form-group">
                                 <label>Consultation Duration</label>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="e.g. 30 mins"
                                   value={docSelfData.consultationDuration || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, consultationDuration: e.target.value })}
@@ -5608,8 +5608,8 @@ export default function App() {
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', background: 'rgba(255,255,255,0.4)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(24, 43, 73, 0.15)' }}>
                                   {ALL_SERVICES.map(srv => (
                                     <label key={srv} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textTransform: 'none', fontSize: '0.85rem', color: 'var(--color-indigo)', cursor: 'pointer', fontWeight: '500' }}>
-                                      <input 
-                                        type="checkbox" 
+                                      <input
+                                        type="checkbox"
                                         checked={(docSelfData.services || []).includes(srv)}
                                         onChange={(e) => {
                                           const currentServices = docSelfData.services || [];
@@ -5630,7 +5630,7 @@ export default function App() {
 
                             <div className="form-group">
                               <label>Professional Biography / Clinical Summary</label>
-                              <textarea 
+                              <textarea
                                 rows="3"
                                 placeholder="Write a summary of your professional background, clinical interest areas, and care approach..."
                                 value={docSelfData.bio || ''}
@@ -5642,8 +5642,8 @@ export default function App() {
                               <div className="form-group">
                                 <label>Profile Image (File Upload)</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                  <input 
-                                    type="file" 
+                                  <input
+                                    type="file"
                                     accept="image/*"
                                     onChange={async (e) => {
                                       const file = e.target.files[0];
@@ -5657,10 +5657,10 @@ export default function App() {
                                     style={{ flexGrow: 1 }}
                                   />
                                   {docSelfData.image && (
-                                    <img 
-                                      src={docSelfData.image} 
-                                      alt="Preview" 
-                                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }} 
+                                    <img
+                                      src={docSelfData.image}
+                                      alt="Preview"
+                                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }}
                                     />
                                   )}
                                 </div>
@@ -5669,8 +5669,8 @@ export default function App() {
                               <div className="form-group">
                                 <label>Upload Medical License / Credentials</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                  <input 
-                                    type="file" 
+                                  <input
+                                    type="file"
                                     accept="image/*,application/pdf"
                                     onChange={async (e) => {
                                       const file = e.target.files[0];
@@ -5686,9 +5686,9 @@ export default function App() {
                                   {docSelfData.license && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                       <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>✓ Uploaded</span>
-                                      <button 
-                                        type="button" 
-                                        onClick={() => setDocSelfData({ ...docSelfData, license: '' })} 
+                                      <button
+                                        type="button"
+                                        onClick={() => setDocSelfData({ ...docSelfData, license: '' })}
                                         style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }}
                                         title="Remove License"
                                       >
@@ -5723,30 +5723,30 @@ export default function App() {
                   </div>
                   <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <span style={{ 
-                        width: '8px', 
-                        height: '8px', 
-                        borderRadius: '50%', 
-                        background: isPharmacistAvailable ? '#10b981' : '#ef4444', 
+                      <span style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: isPharmacistAvailable ? '#10b981' : '#ef4444',
                         display: 'inline-block',
                         boxShadow: isPharmacistAvailable ? '0 0 8px #10b981' : 'none'
                       }}></span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isPharmacistAvailable ? '#10b981' : 'var(--color-text-muted)' }}>
                         {isPharmacistAvailable ? 'Available' : 'Offline'}
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setIsPharmacistAvailable(!isPharmacistAvailable)}
-                        style={{ 
+                        style={{
                           marginLeft: '0.5rem',
-                          background: isPharmacistAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)', 
+                          background: isPharmacistAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)',
                           color: isPharmacistAvailable ? 'var(--color-text)' : '#000',
-                          border: 'none', 
-                          padding: '0.2rem 0.6rem', 
-                          borderRadius: '12px', 
-                          fontSize: '0.75rem', 
+                          border: 'none',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
                           fontWeight: 'bold',
-                          cursor: 'pointer' 
+                          cursor: 'pointer'
                         }}
                       >
                         {isPharmacistAvailable ? 'Go Offline' : 'Go Online'}
@@ -5792,13 +5792,13 @@ export default function App() {
                 <div className="dashboard-layout">
                   {/* Left Column: Sidebar Menu */}
                   <div className="dashboard-sidebar glassmorphic">
-                    <button 
+                    <button
                       className={`sidebar-link ${pharmacistNavView === 'orders' ? 'active' : ''}`}
                       onClick={() => setPharmacistNavView('orders')}
                     >
                       <i className="fa-solid fa-boxes-stacked"></i> Medication Orders
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-link ${pharmacistNavView === 'prescriptions' ? 'active' : ''}`}
                       onClick={() => setPharmacistNavView('prescriptions')}
                     >
@@ -5808,7 +5808,7 @@ export default function App() {
 
                   {/* Right Column: Workspaces */}
                   <div className="dashboard-workspace glassmorphic">
-                    
+
                     {/* Workspace: Orders */}
                     {pharmacistNavView === 'orders' && (
                       <div>
@@ -5917,8 +5917,8 @@ export default function App() {
                                       </td>
                                       <td>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                          <button 
-                                            className="btn btn-accent btn-sm" 
+                                          <button
+                                            className="btn btn-accent btn-sm"
                                             onClick={() => {
                                               setPharmacistSelectedPrescription(apt);
                                               setPrescOrderForm({ address: '', notes: `Dispensing Rx from doctor ${apt.doctor}`, cost: '0' });
@@ -5954,30 +5954,30 @@ export default function App() {
                   </div>
                   <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <span style={{ 
-                        width: '8px', 
-                        height: '8px', 
-                        borderRadius: '50%', 
-                        background: isLabTechAvailable ? '#10b981' : '#ef4444', 
+                      <span style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: isLabTechAvailable ? '#10b981' : '#ef4444',
                         display: 'inline-block',
                         boxShadow: isLabTechAvailable ? '0 0 8px #10b981' : 'none'
                       }}></span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isLabTechAvailable ? '#10b981' : 'var(--color-text-muted)' }}>
                         {isLabTechAvailable ? 'Available' : 'Offline'}
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setIsLabTechAvailable(!isLabTechAvailable)}
-                        style={{ 
+                        style={{
                           marginLeft: '0.5rem',
-                          background: isLabTechAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)', 
+                          background: isLabTechAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)',
                           color: isLabTechAvailable ? 'var(--color-text)' : '#000',
-                          border: 'none', 
-                          padding: '0.2rem 0.6rem', 
-                          borderRadius: '12px', 
-                          fontSize: '0.75rem', 
+                          border: 'none',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
                           fontWeight: 'bold',
-                          cursor: 'pointer' 
+                          cursor: 'pointer'
                         }}
                       >
                         {isLabTechAvailable ? 'Go Offline' : 'Go Online'}
@@ -6022,13 +6022,13 @@ export default function App() {
                 <div className="dashboard-layout">
                   {/* Left Column: Sidebar Menu */}
                   <div className="dashboard-sidebar glassmorphic">
-                    <button 
+                    <button
                       className={`sidebar-link ${labNavView === 'requests' ? 'active' : ''}`}
                       onClick={() => setLabNavView('requests')}
                     >
                       <i className="fa-solid fa-microscope"></i> Active Lab Bookings
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-link ${labNavView === 'history' ? 'active' : ''}`}
                       onClick={() => setLabNavView('history')}
                     >
@@ -6038,7 +6038,7 @@ export default function App() {
 
                   {/* Right Column: Workspaces */}
                   <div className="dashboard-workspace glassmorphic">
-                    
+
                     {/* Workspace: Active Requests */}
                     {labNavView === 'requests' && (
                       <div>
@@ -6177,30 +6177,30 @@ export default function App() {
                   </div>
                   <div className="dashboard-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <span style={{ 
-                        width: '8px', 
-                        height: '8px', 
-                        borderRadius: '50%', 
-                        background: isLogisticsAvailable ? '#10b981' : '#ef4444', 
+                      <span style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: isLogisticsAvailable ? '#10b981' : '#ef4444',
                         display: 'inline-block',
                         boxShadow: isLogisticsAvailable ? '0 0 8px #10b981' : 'none'
                       }}></span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isLogisticsAvailable ? '#10b981' : 'var(--color-text-muted)' }}>
                         {isLogisticsAvailable ? 'Available' : 'Offline'}
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setIsLogisticsAvailable(!isLogisticsAvailable)}
-                        style={{ 
+                        style={{
                           marginLeft: '0.5rem',
-                          background: isLogisticsAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)', 
+                          background: isLogisticsAvailable ? 'rgba(255,255,255,0.1)' : 'var(--color-accent)',
                           color: isLogisticsAvailable ? 'var(--color-text)' : '#000',
-                          border: 'none', 
-                          padding: '0.2rem 0.6rem', 
-                          borderRadius: '12px', 
-                          fontSize: '0.75rem', 
+                          border: 'none',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
                           fontWeight: 'bold',
-                          cursor: 'pointer' 
+                          cursor: 'pointer'
                         }}
                       >
                         {isLogisticsAvailable ? 'Go Offline' : 'Go Online'}
@@ -6242,25 +6242,25 @@ export default function App() {
                 <div className="dashboard-layout">
                   {/* Left Column: Sidebar Menu */}
                   <div className="dashboard-sidebar glassmorphic">
-                    <button 
+                    <button
                       className={`sidebar-link ${logisticsNavView === 'deliveries' ? 'active' : ''}`}
                       onClick={() => { setLogisticsNavView('deliveries'); setLogisticsSelectedRider(null); }}
                     >
                       <i className="fa-solid fa-truck-drop-off"></i> Pharmacy Deliveries
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-link ${logisticsNavView === 'lab-trips' ? 'active' : ''}`}
                       onClick={() => { setLogisticsNavView('lab-trips'); setLogisticsSelectedRider(null); }}
                     >
                       <i className="fa-solid fa-vial"></i> Lab Collection Trips
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-link ${logisticsNavView === 'control-room' ? 'active' : ''}`}
                       onClick={() => { setLogisticsNavView('control-room'); setLogisticsSelectedRider(null); }}
                     >
                       <i className="fa-solid fa-earth-africa"></i> Live Dispatch Map
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-link ${logisticsNavView === 'riders' ? 'active' : ''}`}
                       onClick={() => { setLogisticsNavView('riders'); setLogisticsSelectedRider(null); }}
                     >
@@ -6270,12 +6270,12 @@ export default function App() {
 
                   {/* Right Column: Workspaces */}
                   <div className="dashboard-workspace glassmorphic">
-                    
+
                     {/* Workspace: Deliveries */}
                     {logisticsNavView === 'deliveries' && (
                       <div>
                         <h3>Pharmacy Package Deliveries</h3>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem', alignItems: 'start' }}>
                           {/* Left Column: Shipment Table */}
                           <div>
@@ -6325,17 +6325,17 @@ export default function App() {
                                                   value={ship.assignedRider || ''}
                                                   onChange={(e) => {
                                                     const riderName = e.target.value;
-                                                    const updated = inquiries.map(i => i.id === ship.id ? { 
-                                                      ...i, 
+                                                    const updated = inquiries.map(i => i.id === ship.id ? {
+                                                      ...i,
                                                       assignedRider: riderName,
                                                       status: riderName ? 'Out for Delivery' : 'Awaiting Dispatch'
                                                     } : i);
                                                     setInquiries(updated);
                                                   }}
-                                                  style={{ 
-                                                    padding: '0.25rem 0.5rem', 
-                                                    borderRadius: 'var(--radius-sm)', 
-                                                    border: '1px solid rgba(24, 43, 73, 0.12)', 
+                                                  style={{
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    border: '1px solid rgba(24, 43, 73, 0.12)',
                                                     fontSize: '0.82rem',
                                                     background: 'var(--color-bg)',
                                                     color: 'var(--color-text)',
@@ -6354,13 +6354,13 @@ export default function App() {
                                             <td>
                                               <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                                                 {ship.status !== 'Delivered' && (
-                                                  <button 
-                                                    className="action-btn" 
-                                                    style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
-                                                    onClick={() => { 
-                                                      setMapTrackedTripId(ship.id); 
-                                                      setMapSimulationProgress(0); 
-                                                      setIsMapSimulating(true); 
+                                                  <button
+                                                    className="action-btn"
+                                                    style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                                    onClick={() => {
+                                                      setMapTrackedTripId(ship.id);
+                                                      setMapSimulationProgress(0);
+                                                      setIsMapSimulating(true);
                                                     }}
                                                     title="Track Live on Map"
                                                   >
@@ -6404,7 +6404,7 @@ export default function App() {
                     {logisticsNavView === 'lab-trips' && (
                       <div>
                         <h3>Lab Sample Collection Trips</h3>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem', alignItems: 'start' }}>
                           {/* Left Column: Trips Table */}
                           <div>
@@ -6456,17 +6456,17 @@ export default function App() {
                                                   value={trip.assignedRider || ''}
                                                   onChange={(e) => {
                                                     const riderName = e.target.value;
-                                                    const updated = appointments.map(a => a.id === trip.id ? { 
-                                                      ...a, 
+                                                    const updated = appointments.map(a => a.id === trip.id ? {
+                                                      ...a,
                                                       assignedRider: riderName,
                                                       status: riderName ? 'Sample Collected' : 'Pending'
                                                     } : a);
                                                     setAppointments(updated);
                                                   }}
-                                                  style={{ 
-                                                    padding: '0.25rem 0.5rem', 
-                                                    borderRadius: 'var(--radius-sm)', 
-                                                    border: '1px solid rgba(24, 43, 73, 0.12)', 
+                                                  style={{
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    border: '1px solid rgba(24, 43, 73, 0.12)',
                                                     fontSize: '0.82rem',
                                                     background: 'var(--color-bg)',
                                                     color: 'var(--color-text)',
@@ -6485,13 +6485,13 @@ export default function App() {
                                             <td>
                                               <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                                                 {trip.status !== 'Completed' && (
-                                                  <button 
-                                                    className="action-btn" 
-                                                    style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} 
-                                                    onClick={() => { 
-                                                      setMapTrackedTripId(trip.id); 
-                                                      setMapSimulationProgress(0); 
-                                                      setIsMapSimulating(true); 
+                                                  <button
+                                                    className="action-btn"
+                                                    style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                                    onClick={() => {
+                                                      setMapTrackedTripId(trip.id);
+                                                      setMapSimulationProgress(0);
+                                                      setIsMapSimulating(true);
                                                     }}
                                                     title="Track Live on Map"
                                                   >
@@ -6535,7 +6535,7 @@ export default function App() {
                         <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
                           Real-time geographic status of active courier riders and delivery drone payloads across Abuja metropolitan sectors. Select a task to simulate routing.
                         </p>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1.3fr', gap: '1.5rem' }}>
                           {/* Map container */}
                           <div style={{ background: '#0b1329', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem', position: 'relative', minHeight: '400px' }}>
@@ -6574,15 +6574,15 @@ export default function App() {
                                   { x: 220, y: 90 },   // Rider 5
                                 ];
                                 const coord = coords[idx % coords.length];
-                                
+
                                 const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
                                 const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
                                 const isBusy = !!(activeOrder || activeTrip);
                                 const isSelected = logisticsSelectedRider && logisticsSelectedRider.email === rider.email;
 
                                 return (
-                                  <g 
-                                    key={rider.email} 
+                                  <g
+                                    key={rider.email}
                                     transform={`translate(${coord.x}, ${coord.y})`}
                                     onClick={() => setLogisticsSelectedRider(rider)}
                                     style={{ cursor: 'pointer' }}
@@ -6607,15 +6607,15 @@ export default function App() {
                                 return (
                                   <g>
                                     {/* Dotted path to client destination */}
-                                    <line 
-                                      x1="250" 
-                                      y1="150" 
-                                      x2={dest.x} 
-                                      y2={dest.y} 
-                                      stroke="var(--color-accent)" 
-                                      strokeWidth="2.5" 
-                                      strokeDasharray="5,5" 
-                                      opacity="0.8" 
+                                    <line
+                                      x1="250"
+                                      y1="150"
+                                      x2={dest.x}
+                                      y2={dest.y}
+                                      stroke="var(--color-accent)"
+                                      strokeWidth="2.5"
+                                      strokeDasharray="5,5"
+                                      opacity="0.8"
                                     />
                                     {/* Destination target */}
                                     <g transform={`translate(${dest.x}, ${dest.y})`}>
@@ -6642,8 +6642,8 @@ export default function App() {
                             {/* Route Selector Dropdown */}
                             <div>
                               <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem' }}>Select Live Dispatch to Track</strong>
-                              <select 
-                                value={mapTrackedTripId || ''} 
+                              <select
+                                value={mapTrackedTripId || ''}
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   setMapTrackedTripId(val);
@@ -6683,7 +6683,7 @@ export default function App() {
                             {mapTrackedTripId ? (() => {
                               const activeOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
                               const activeTrip = appointments.find(apt => apt.id === mapTrackedTripId);
-                              
+
                               let clientName = "N/A";
                               let phone = "N/A";
                               let address = "Central Hub Area";
@@ -6715,10 +6715,10 @@ export default function App() {
                                         {isMapSimulating ? '● ON THE ROAD' : '● PAUSED'}
                                       </span>
                                     </div>
-                                    
+
                                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                      <button 
-                                        type="button" 
+                                      <button
+                                        type="button"
                                         className="btn btn-xs btn-primary"
                                         onClick={() => setIsMapSimulating(true)}
                                         disabled={isMapSimulating || mapSimulationProgress >= 100}
@@ -6726,8 +6726,8 @@ export default function App() {
                                       >
                                         <i className="fa-solid fa-play"></i> Start Track
                                       </button>
-                                      <button 
-                                        type="button" 
+                                      <button
+                                        type="button"
                                         className="btn btn-xs btn-outline"
                                         onClick={() => setIsMapSimulating(false)}
                                         disabled={!isMapSimulating}
@@ -6735,8 +6735,8 @@ export default function App() {
                                       >
                                         <i className="fa-solid fa-pause"></i> Pause
                                       </button>
-                                      <button 
-                                        type="button" 
+                                      <button
+                                        type="button"
                                         className="btn btn-xs btn-outline"
                                         onClick={() => {
                                           setIsMapSimulating(false);
@@ -6761,7 +6761,7 @@ export default function App() {
                                   {/* Route Checkpoints */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '8px' }}>
                                     <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'block' }}>Route Checkpoints</strong>
-                                    
+
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
                                       <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
                                       <span>Departed SimmyCare Central Depot</span>
@@ -6803,9 +6803,9 @@ export default function App() {
                                   {/* Manual actions */}
                                   <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                     {mapSimulationProgress < 100 ? (
-                                      <button 
-                                        type="button" 
-                                        className="btn btn-accent btn-sm" 
+                                      <button
+                                        type="button"
+                                        className="btn btn-accent btn-sm"
                                         style={{ flex: 1 }}
                                         onClick={() => {
                                           if (mapTrackedTripId.startsWith('ORD-')) {
@@ -6823,9 +6823,9 @@ export default function App() {
                                         <i className="fa-solid fa-clipboard-check"></i> Complete Delivery
                                       </button>
                                     ) : (
-                                      <button 
-                                        type="button" 
-                                        className="btn btn-outline btn-sm" 
+                                      <button
+                                        type="button"
+                                        className="btn btn-outline btn-sm"
                                         style={{ flex: 1 }}
                                         onClick={() => {
                                           setMapTrackedTripId(null);
@@ -6844,12 +6844,12 @@ export default function App() {
                                   const rider = logisticsSelectedRider;
                                   const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
                                   const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
-                                  
+
                                   let cargo = "Idle / No Active Payload";
                                   let route = "At dispatch station";
                                   let statusLabel = "Available";
                                   let statusColor = "#3b82f6";
-                                  
+
                                   if (activeOrder) {
                                     const parsed = parseOrderMessage(activeOrder.message);
                                     cargo = `Cardiovascular Drugs (Rx: ${activeOrder.id})`;
@@ -6866,7 +6866,7 @@ export default function App() {
 
                                   const hashVal = rider.name.charCodeAt(0) + (rider.name.charCodeAt(1) || 0);
                                   const battery = (hashVal % 30) + 70;
-                                  
+
                                   return (
                                     <div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
@@ -6908,7 +6908,7 @@ export default function App() {
                                           <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{route}</span>
                                         </div>
                                       </div>
-                                      
+
                                       <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', marginTop: '1.25rem', display: 'flex', gap: '0.5rem' }}>
                                         <a href={`tel:${rider.phone}`} className="btn btn-outline btn-sm" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.35rem' }}>
                                           <i className="fa-solid fa-phone"></i> Call Courier
@@ -6942,7 +6942,7 @@ export default function App() {
                               Onboard new riders, monitor their active transit tasks, and manage coverage regions.
                             </p>
                           </div>
-                          <button 
+                          <button
                             className="btn btn-primary"
                             onClick={() => {
                               const name = prompt("Enter Dispatch Rider's Full Name:");
@@ -6985,13 +6985,13 @@ export default function App() {
                               // Rider is idle if they have no active deliveries in progress
                               count = logistics.filter(r => {
                                 const hasActive = inquiries.some(i => i.assignedRider === r.name && i.status === 'Out for Delivery') ||
-                                                  appointments.some(a => a.assignedRider === r.name && a.status === 'Sample Collected');
+                                  appointments.some(a => a.assignedRider === r.name && a.status === 'Sample Collected');
                                 return !hasActive;
                               }).length;
                             } else if (status === 'Active / In Transit') {
                               count = logistics.filter(r => {
                                 const hasActive = inquiries.some(i => i.assignedRider === r.name && i.status === 'Out for Delivery') ||
-                                                  appointments.some(a => a.assignedRider === r.name && a.status === 'Sample Collected');
+                                  appointments.some(a => a.assignedRider === r.name && a.status === 'Sample Collected');
                                 return hasActive;
                               }).length;
                             } else if (status === 'Offline') {
@@ -7025,7 +7025,7 @@ export default function App() {
                         {(() => {
                           const filteredRiders = logistics.filter(rider => {
                             const hasActive = inquiries.some(i => i.assignedRider === rider.name && i.status === 'Out for Delivery') ||
-                                              appointments.some(a => a.assignedRider === rider.name && a.status === 'Sample Collected');
+                              appointments.some(a => a.assignedRider === rider.name && a.status === 'Sample Collected');
                             if (riderStatusFilter === 'Idle') return !hasActive;
                             if (riderStatusFilter === 'Active / In Transit') return hasActive;
                             return true;
@@ -7081,21 +7081,21 @@ export default function App() {
                                           )}
                                         </td>
                                         <td>
-                                          <span style={{ 
-                                            display: 'inline-block', 
-                                            padding: '0.25rem 0.5rem', 
-                                            borderRadius: '4px', 
-                                            fontSize: '0.75rem', 
-                                            fontWeight: 'bold', 
-                                            backgroundColor: isTransit ? 'rgba(59, 130, 246, 0.15)' : 'rgba(34, 197, 94, 0.15)', 
-                                            color: isTransit ? '#1d4ed8' : '#166534' 
+                                          <span style={{
+                                            display: 'inline-block',
+                                            padding: '0.25rem 0.5rem',
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 'bold',
+                                            backgroundColor: isTransit ? 'rgba(59, 130, 246, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                                            color: isTransit ? '#1d4ed8' : '#166534'
                                           }}>
                                             {isTransit ? 'Active / In Transit' : 'Idle'}
                                           </span>
                                         </td>
                                         <td>
                                           <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
-                                            <button 
+                                            <button
                                               className="btn btn-outline btn-sm"
                                               onClick={() => {
                                                 if (confirm(`Are you sure you want to offboard Rider "${rider.name}"?`)) {
@@ -7162,31 +7162,31 @@ export default function App() {
                 <div className="dashboard-layout">
                   {/* Sidebar Navigation */}
                   <div className="dashboard-sidebar glassmorphic">
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'appointments' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('appointments')}
                     >
                       <i className="fa-regular fa-calendar-check"></i> Appointments
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'doctors' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('doctors')}
                     >
                       <i className="fa-solid fa-user-doctor"></i> Doctor Profiles
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'patients' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('patients')}
                     >
                       <i className="fa-solid fa-users"></i> Patient Profiles
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'inquiries' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('inquiries')}
                     >
                       <i className="fa-solid fa-inbox"></i> Patient Inquiries
                     </button>
-                    <button 
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'profile' ? 'active' : ''}`}
                       onClick={() => {
                         setAdminNavView('profile');
@@ -7203,12 +7203,12 @@ export default function App() {
 
                   {/* Console Workspace */}
                   <div className="dashboard-workspace glassmorphic">
-                    
+
                     {/* Workspace: Appointments */}
                     {adminNavView === 'appointments' && (
                       <div>
                         <h3>Appointments Registry</h3>
-                        
+
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'start' }}>
                           {/* Left Column: Appointments List */}
                           <div style={{ flex: '1 1 650px', minWidth: 0 }}>
@@ -7247,10 +7247,10 @@ export default function App() {
                                         </td>
                                         <td>
                                           <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                                            <button 
-                                              className="action-btn" 
-                                              style={{ background: 'transparent', color: 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', padding: '0.25rem 0.5rem', border: 'none', cursor: 'pointer' }} 
-                                              onClick={() => setAdminSelectedApt(apt)} 
+                                            <button
+                                              className="action-btn"
+                                              style={{ background: 'transparent', color: 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', padding: '0.25rem 0.5rem', border: 'none', cursor: 'pointer' }}
+                                              onClick={() => setAdminSelectedApt(apt)}
                                               title="View Details"
                                             >
                                               <i className="fa-solid fa-eye"></i> View
@@ -7258,25 +7258,25 @@ export default function App() {
 
                                             {apt.status === 'Pending' && (
                                               <>
-                                                <button 
+                                                <button
                                                   style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                                  onClick={() => handleApproveAppointment(apt.id)} 
+                                                  onClick={() => handleApproveAppointment(apt.id)}
                                                   title="Approve Booking"
                                                 >
                                                   <i className="fa-solid fa-circle-check"></i> Approve
                                                 </button>
-                                                
-                                                <button 
+
+                                                <button
                                                   style={{ backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem' }}
-                                                  onClick={() => handleAutoRouteSpecialist(apt.id)} 
+                                                  onClick={() => handleAutoRouteSpecialist(apt.id)}
                                                   title="Auto-Route to Most Available Doctor"
                                                 >
                                                   <i className="fa-solid fa-route"></i> Route
                                                 </button>
 
-                                                <button 
+                                                <button
                                                   style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                                  onClick={() => handleCancelAppointment(apt.id)} 
+                                                  onClick={() => handleCancelAppointment(apt.id)}
                                                   title="Cancel/Reject Booking"
                                                 >
                                                   <i className="fa-solid fa-circle-xmark"></i> Reject
@@ -7284,18 +7284,18 @@ export default function App() {
                                               </>
                                             )}
 
-                                            <button 
+                                            <button
                                               style={{ background: 'transparent', color: 'var(--color-text)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                                              onClick={() => startEditApt(apt)} 
+                                              onClick={() => startEditApt(apt)}
                                               title="Modify Ticket"
                                             >
                                               <i className="fa-solid fa-pen-to-square"></i> Reschedule
                                             </button>
 
-                                            <button 
-                                              className="action-btn" 
-                                              style={{ color: '#EF4444', padding: '0.25rem' }} 
-                                              onClick={() => handleDeleteAppointment(apt.id)} 
+                                            <button
+                                              className="action-btn"
+                                              style={{ color: '#EF4444', padding: '0.25rem' }}
+                                              onClick={() => handleDeleteAppointment(apt.id)}
                                               title="Delete Record"
                                             >
                                               <i className="fa-solid fa-trash"></i>
@@ -7323,19 +7323,19 @@ export default function App() {
                               <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                                 Verify pharmacist, laboratory, and rider availability status before routing.
                               </p>
-                              
+
                               <div style={{ position: 'relative', marginBottom: '1rem' }}>
                                 <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}></i>
-                                <input 
-                                  type="text" 
+                                <input
+                                  type="text"
                                   placeholder="Search staff, role, status..."
                                   value={availabilitySearchQuery}
                                   onChange={(e) => setAvailabilitySearchQuery(e.target.value)}
-                                  style={{ 
-                                    width: '100%', 
-                                    padding: '0.4rem 0.75rem 0.4rem 2rem', 
-                                    borderRadius: '6px', 
-                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.4rem 0.75rem 0.4rem 2rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(255,255,255,0.1)',
                                     background: 'rgba(0,0,0,0.2)',
                                     color: '#fff',
                                     fontSize: '0.8rem',
@@ -7351,20 +7351,20 @@ export default function App() {
                                     { type: 'pharmacist', name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmycare.com' },
                                     { type: 'lab', name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
                                     { type: 'logistics', name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
-                                    ...doctors.map(d => ({ 
-                                      type: 'doctor', 
+                                    ...doctors.map(d => ({
+                                      type: 'doctor',
                                       id: d.id,
-                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`, 
-                                      role: d.specialty, 
-                                      available: d.active !== false, 
-                                      icon: 'fa-user-doctor', 
-                                      email: d.email, 
-                                      phone: d.phone 
+                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`,
+                                      role: d.specialty,
+                                      available: d.active !== false,
+                                      icon: 'fa-user-doctor',
+                                      email: d.email,
+                                      phone: d.phone
                                     }))
                                   ];
 
-                                  const filtered = staffList.filter(s => 
-                                    s.name.toLowerCase().includes(query) || 
+                                  const filtered = staffList.filter(s =>
+                                    s.name.toLowerCase().includes(query) ||
                                     s.role.toLowerCase().includes(query) ||
                                     (s.available ? 'online available' : 'offline unavailable').includes(query)
                                   );
@@ -7387,24 +7387,24 @@ export default function App() {
                                     };
 
                                     return (
-                                      <div key={idx} style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        justifyContent: 'space-between', 
-                                        padding: '0.6rem 0.75rem', 
-                                        background: 'rgba(255,255,255,0.02)', 
+                                      <div key={idx} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '0.6rem 0.75rem',
+                                        background: 'rgba(255,255,255,0.02)',
                                         borderRadius: '8px',
                                         border: '1px solid rgba(255,255,255,0.04)',
                                         gap: '0.5rem'
                                       }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
-                                          <div style={{ 
-                                            width: '28px', 
-                                            height: '28px', 
-                                            borderRadius: '50%', 
-                                            background: 'rgba(28, 43, 73, 0.2)', 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
+                                          <div style={{
+                                            width: '28px',
+                                            height: '28px',
+                                            borderRadius: '50%',
+                                            background: 'rgba(28, 43, 73, 0.2)',
+                                            display: 'flex',
+                                            alignItems: 'center',
                                             justifyContent: 'center',
                                             color: 'var(--color-accent)',
                                             flexShrink: 0
@@ -7428,11 +7428,11 @@ export default function App() {
                                                 </a>
                                               )}
                                               {staff.phone && (
-                                                <a 
-                                                  href={`https://wa.me/${staff.phone.replace(/[^0-9]/g, '')}`} 
-                                                  target="_blank" 
-                                                  rel="noopener noreferrer" 
-                                                  title="Chat on WhatsApp" 
+                                                <a
+                                                  href={`https://wa.me/${staff.phone.replace(/[^0-9]/g, '')}`}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  title="Chat on WhatsApp"
                                                   style={{ color: '#10B981', textDecoration: 'none' }}
                                                 >
                                                   <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.8rem' }}></i>
@@ -7441,13 +7441,13 @@ export default function App() {
                                             </div>
                                           </div>
                                         </div>
-                                        <button 
+                                        <button
                                           onClick={handleToggle}
                                           title="Click to toggle availability directly"
-                                          style={{ 
-                                            display: 'inline-flex', 
-                                            alignItems: 'center', 
-                                            gap: '0.3rem', 
+                                          style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.3rem',
                                             background: staff.available ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
                                             border: `1px solid ${staff.available ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
                                             padding: '2px 8px',
@@ -7458,16 +7458,16 @@ export default function App() {
                                             flexShrink: 0
                                           }}
                                         >
-                                          <span style={{ 
-                                            width: '5px', 
-                                            height: '5px', 
-                                            borderRadius: '50%', 
+                                          <span style={{
+                                            width: '5px',
+                                            height: '5px',
+                                            borderRadius: '50%',
                                             background: staff.available ? '#10b981' : '#ef4444',
                                             boxShadow: staff.available ? '0 0 6px #10b981' : 'none'
                                           }}></span>
-                                          <span style={{ 
-                                            fontSize: '0.7rem', 
-                                            fontWeight: 'bold', 
+                                          <span style={{
+                                            fontSize: '0.7rem',
+                                            fontWeight: 'bold',
                                             color: staff.available ? '#10b981' : '#ef4444',
                                             textTransform: 'uppercase',
                                             letterSpacing: '0.5px'
@@ -7489,15 +7489,15 @@ export default function App() {
                     {adminNavView === 'doctors' && (
                       <div>
                         <h3>Manage Doctor Directory</h3>
-                        
+
                         <form className="add-doctor-form glassmorphic" onSubmit={handleAddDoctor}>
                           <h4>{editingDoctorId ? "Edit Specialist Profile" : "Register New Specialist Profile"}</h4>
                           <div className="form-row">
                             <div className="form-group">
                               <label>Doctor Name (Exclude "Dr.")</label>
-                              <input 
-                                type="text" 
-                                required 
+                              <input
+                                type="text"
+                                required
                                 placeholder="e.g. Amina Yusuf"
                                 value={newDoctorData.name}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, name: e.target.value })}
@@ -7505,7 +7505,7 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Specialty Department</label>
-                              <select 
+                              <select
                                 value={newDoctorData.specialty}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, specialty: e.target.value })}
                               >
@@ -7519,7 +7519,7 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Professional Level</label>
-                              <select 
+                              <select
                                 value={newDoctorData.level || 'Junior Doctor'}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, level: e.target.value })}
                               >
@@ -7530,12 +7530,12 @@ export default function App() {
                               </select>
                             </div>
                           </div>
-                          
+
                           <div className="form-row">
                             <div className="form-group">
                               <label>Weekly Schedule Hours</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. Mon - Wed (9am - 2pm)"
                                 value={newDoctorData.schedule}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, schedule: e.target.value })}
@@ -7543,8 +7543,8 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Clinical Experience (Years)</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. 8 Years"
                                 value={newDoctorData.experience}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, experience: e.target.value })}
@@ -7552,8 +7552,8 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>MDCN Register Code</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. MDCN/8431"
                                 value={newDoctorData.regNo}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, regNo: e.target.value })}
@@ -7564,9 +7564,9 @@ export default function App() {
                           <div className="form-row">
                             <div className="form-group">
                               <label>Email Address</label>
-                              <input 
-                                type="email" 
-                                required 
+                              <input
+                                type="email"
+                                required
                                 placeholder="doctor@simmycare.com"
                                 value={newDoctorData.email}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, email: e.target.value })}
@@ -7575,9 +7575,9 @@ export default function App() {
                             <div className="form-group">
                               <label>Password</label>
                               <div className="password-input-wrapper">
-                                <input 
-                                  type={showPasswords.doctorForm ? 'text' : 'password'} 
-                                  required 
+                                <input
+                                  type={showPasswords.doctorForm ? 'text' : 'password'}
+                                  required
                                   placeholder="••••••••"
                                   value={newDoctorData.password}
                                   onChange={(e) => setNewDoctorData({ ...newDoctorData, password: e.target.value })}
@@ -7591,8 +7591,8 @@ export default function App() {
                           <div className="form-row">
                             <div className="form-group">
                               <label>Phone Number</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. 08034567890"
                                 value={newDoctorData.phone || ''}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, phone: e.target.value })}
@@ -7600,8 +7600,8 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Clinic Room / Location</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. Room 102, West Wing"
                                 value={newDoctorData.clinicRoom || ''}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, clinicRoom: e.target.value })}
@@ -7612,8 +7612,8 @@ export default function App() {
                           <div className="form-row">
                             <div className="form-group">
                               <label>Consultation Rate</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. ₦5,000"
                                 value={newDoctorData.consultationRate || ''}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, consultationRate: e.target.value })}
@@ -7621,8 +7621,8 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Consultation Duration</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. 30 mins"
                                 value={newDoctorData.consultationDuration || ''}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, consultationDuration: e.target.value })}
@@ -7636,8 +7636,8 @@ export default function App() {
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', background: 'rgba(255,255,255,0.4)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(24, 43, 73, 0.15)' }}>
                                 {ALL_SERVICES.map(srv => (
                                   <label key={srv} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textTransform: 'none', fontSize: '0.85rem', color: 'var(--color-indigo)', cursor: 'pointer', fontWeight: '500' }}>
-                                    <input 
-                                      type="checkbox" 
+                                    <input
+                                      type="checkbox"
                                       checked={(newDoctorData.services || []).includes(srv)}
                                       onChange={(e) => {
                                         const currentServices = newDoctorData.services || [];
@@ -7658,7 +7658,7 @@ export default function App() {
 
                           <div className="form-group">
                             <label>Professional Biography / Clinical Summary</label>
-                            <textarea 
+                            <textarea
                               rows="3"
                               placeholder="Brief professional background, clinical specialties, and patient care philosophy..."
                               value={newDoctorData.bio || ''}
@@ -7670,8 +7670,8 @@ export default function App() {
                             <div className="form-group">
                               <label>Profile Image (File Upload)</label>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <input 
-                                  type="file" 
+                                <input
+                                  type="file"
                                   accept="image/*"
                                   onChange={async (e) => {
                                     const file = e.target.files[0];
@@ -7685,10 +7685,10 @@ export default function App() {
                                   style={{ flexGrow: 1 }}
                                 />
                                 {newDoctorData.image && (
-                                  <img 
-                                    src={newDoctorData.image} 
-                                    alt="Preview" 
-                                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }} 
+                                  <img
+                                    src={newDoctorData.image}
+                                    alt="Preview"
+                                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }}
                                   />
                                 )}
                               </div>
@@ -7697,8 +7697,8 @@ export default function App() {
                             <div className="form-group">
                               <label>Medical License / Credentials (PDF or Image)</label>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <input 
-                                  type="file" 
+                                <input
+                                  type="file"
                                   accept="image/*,application/pdf"
                                   onChange={async (e) => {
                                     const file = e.target.files[0];
@@ -7714,9 +7714,9 @@ export default function App() {
                                 {newDoctorData.license && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                     <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>✓ Uploaded</span>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => setNewDoctorData({ ...newDoctorData, license: '' })} 
+                                    <button
+                                      type="button"
+                                      onClick={() => setNewDoctorData({ ...newDoctorData, license: '' })}
                                       style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }}
                                       title="Remove License"
                                     >
@@ -7726,9 +7726,9 @@ export default function App() {
                                 )}
                               </div>
                             </div>
-                            
+
                             <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem' }}>
-                              <input 
+                              <input
                                 type="checkbox"
                                 id="admin-verify-checkbox"
                                 checked={newDoctorData.verified === true}
@@ -7744,15 +7744,15 @@ export default function App() {
                           <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                             <button type="submit" className="btn btn-primary">{editingDoctorId ? "Update Profile" : "Save Profile to Board"}</button>
                             {editingDoctorId && (
-                              <button 
-                                type="button" 
-                                className="btn btn-outline" 
+                              <button
+                                type="button"
+                                className="btn btn-outline"
                                 onClick={() => {
                                   setEditingDoctorId(null);
                                   setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', services: [], level: 'Junior Doctor', verified: false });
                                 }}
                               >
-                                  Cancel Edit
+                                Cancel Edit
                               </button>
                             )}
                           </div>
@@ -7815,15 +7815,15 @@ export default function App() {
                                         )}
                                         {d.phone && (
                                           <div style={{ marginTop: '0.15rem' }}>
-                                            <a 
-                                              href={`https://wa.me/${d.phone.replace(/[^0-9]/g, '')}`} 
-                                              target="_blank" 
+                                            <a
+                                              href={`https://wa.me/${d.phone.replace(/[^0-9]/g, '')}`}
+                                              target="_blank"
                                               rel="noopener noreferrer"
-                                              style={{ 
-                                                display: 'inline-flex', 
-                                                alignItems: 'center', 
-                                                gap: '0.2rem', 
-                                                color: '#10B981', 
+                                              style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.2rem',
+                                                color: '#10B981',
                                                 fontWeight: '600',
                                                 fontSize: '0.72rem',
                                                 textDecoration: 'none'
@@ -7854,28 +7854,28 @@ export default function App() {
                                     </td>
                                     <td>
                                       <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                        <button 
-                                          className="delete-doctor-btn" 
-                                          onClick={() => handleToggleDoctorVerify(d.id)} 
-                                          title={d.verified !== false ? "Revoke Verification" : "Approve & Verify Credentials"} 
-                                          style={{ 
-                                            padding: '4px 8px', 
-                                            borderRadius: '4px', 
-                                            backgroundColor: d.verified !== false ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', 
-                                            color: d.verified !== false ? '#EF4444' : '#10B981' 
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => handleToggleDoctorVerify(d.id)}
+                                          title={d.verified !== false ? "Revoke Verification" : "Approve & Verify Credentials"}
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            backgroundColor: d.verified !== false ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                                            color: d.verified !== false ? '#EF4444' : '#10B981'
                                           }}
                                         >
                                           <i className={`fa-solid ${d.verified !== false ? 'fa-user-xmark' : 'fa-user-check'}`}></i>
                                         </button>
-                                        <button 
-                                          className="delete-doctor-btn" 
-                                          onClick={() => handleToggleDoctorActive(d.id)} 
-                                          title={d.active === false ? "Activate Profile" : "Deactivate Profile"} 
-                                          style={{ 
-                                            padding: '4px 8px', 
-                                            borderRadius: '4px', 
-                                            backgroundColor: d.active === false ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)', 
-                                            color: d.active === false ? '#10B981' : '#EF4444' 
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => handleToggleDoctorActive(d.id)}
+                                          title={d.active === false ? "Activate Profile" : "Deactivate Profile"}
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            backgroundColor: d.active === false ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                            color: d.active === false ? '#10B981' : '#EF4444'
                                           }}
                                         >
                                           <i className={`fa-solid ${d.active === false ? 'fa-toggle-off' : 'fa-toggle-on'}`}></i>
@@ -7904,15 +7904,15 @@ export default function App() {
                     {adminNavView === 'patients' && (
                       <div>
                         <h3>Manage Patient Accounts</h3>
-                        
+
                         <form className="add-doctor-form glassmorphic" onSubmit={handleAddPatient}>
                           <h4>{editingPatientId ? "Edit Patient Account" : "Register New Patient Account"}</h4>
                           <div className="form-row">
                             <div className="form-group">
                               <label>Full Name</label>
-                              <input 
-                                type="text" 
-                                required 
+                              <input
+                                type="text"
+                                required
                                 placeholder="e.g. Zainab Abdulfatah"
                                 value={newPatientData.name}
                                 onChange={(e) => setNewPatientData({ ...newPatientData, name: e.target.value })}
@@ -7920,22 +7920,22 @@ export default function App() {
                             </div>
                             <div className="form-group">
                               <label>Phone Number</label>
-                              <input 
-                                type="tel" 
-                                required 
+                              <input
+                                type="tel"
+                                required
                                 placeholder="e.g. 08012345678"
                                 value={newPatientData.phone}
                                 onChange={(e) => setNewPatientData({ ...newPatientData, phone: e.target.value })}
                               />
                             </div>
                           </div>
-                          
+
                           <div className="form-row">
                             <div className="form-group">
                               <label>Email Address</label>
-                              <input 
-                                type="email" 
-                                required 
+                              <input
+                                type="email"
+                                required
                                 disabled={editingPatientId !== null}
                                 placeholder="patient@example.com"
                                 value={newPatientData.email}
@@ -7945,9 +7945,9 @@ export default function App() {
                             <div className="form-group">
                               <label>Password</label>
                               <div className="password-input-wrapper">
-                                <input 
-                                  type={showPasswords.patientForm ? 'text' : 'password'} 
-                                  required 
+                                <input
+                                  type={showPasswords.patientForm ? 'text' : 'password'}
+                                  required
                                   placeholder="••••••••"
                                   value={newPatientData.password}
                                   onChange={(e) => setNewPatientData({ ...newPatientData, password: e.target.value })}
@@ -7962,9 +7962,9 @@ export default function App() {
                           <div style={{ display: 'flex', gap: '1rem' }}>
                             <button type="submit" className="btn btn-primary">{editingPatientId ? "Update Account" : "Save Patient Account"}</button>
                             {editingPatientId && (
-                              <button 
-                                type="button" 
-                                className="btn btn-outline" 
+                              <button
+                                type="button"
+                                className="btn btn-outline"
                                 onClick={() => {
                                   setEditingPatientId(null);
                                   setNewPatientData({ name: '', email: '', phone: '', password: '' });
@@ -8123,13 +8123,13 @@ export default function App() {
                         ) : (
                           <form onSubmit={handleSaveAdminSelf} className="add-doctor-form glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px' }}>
                             <h4 style={{ marginTop: 0, marginBottom: '1.5rem' }}>Modify Administrator Credentials</h4>
-                            
+
                             <div className="form-row">
                               <div className="form-group">
                                 <label>Admin Username</label>
-                                <input 
-                                  type="text" 
-                                  required 
+                                <input
+                                  type="text"
+                                  required
                                   value={adminSelfData.username}
                                   onChange={(e) => setAdminSelfData({ ...adminSelfData, username: e.target.value })}
                                 />
@@ -8137,9 +8137,9 @@ export default function App() {
                               <div className="form-group">
                                 <label>Admin Password</label>
                                 <div className="password-input-wrapper">
-                                  <input 
-                                    type={showPasswords.adminForm ? 'text' : 'password'} 
-                                    required 
+                                  <input
+                                    type={showPasswords.adminForm ? 'text' : 'password'}
+                                    required
                                     value={adminSelfData.password}
                                     onChange={(e) => setAdminSelfData({ ...adminSelfData, password: e.target.value })}
                                   />
@@ -8251,12 +8251,12 @@ export default function App() {
               Patient: <strong>{activeConsultationApt.patientName}</strong> <br />
               Symptoms: <em>{activeConsultationApt.symptoms}</em>
             </p>
-            
+
             <form onSubmit={saveConsultationNotesSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1rem' }}>
               <div className="form-group">
                 <label>Clinical Consultation Notes</label>
-                <textarea 
-                  rows="3" 
+                <textarea
+                  rows="3"
                   required
                   placeholder="Record patient medical evaluation notes..."
                   value={consultationNotes.notes}
@@ -8266,7 +8266,7 @@ export default function App() {
 
               <div className="form-group">
                 <label>Digital Prescription (Rx)</label>
-                <input 
+                <input
                   type="text"
                   required
                   placeholder="e.g. Amoxicillin 500mg - 3 times daily for 7 days"
@@ -8292,7 +8292,7 @@ export default function App() {
               <h3 style={{ margin: 0 }}>Consultation Ticket: {adminSelectedApt.id}</h3>
               <button onClick={() => setAdminSelectedApt(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Patient Information</strong>
@@ -8317,7 +8317,7 @@ export default function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Status</strong>
                   {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.status && (
-                    <button 
+                    <button
                       onClick={() => {
                         setModalEditingFields(prev => ({ ...prev, status: true }));
                         setModalTempValues(prev => ({ ...prev, status: adminSelectedApt.status }));
@@ -8331,7 +8331,7 @@ export default function App() {
                 </div>
                 {modalEditingFields.status ? (
                   <div style={{ marginTop: '0.25rem' }}>
-                    <select 
+                    <select
                       style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}
                       value={modalTempValues.status || ''}
                       onChange={(e) => handleModalFieldEdit('status', e.target.value)}
@@ -8369,7 +8369,7 @@ export default function App() {
                   <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Clinical Consultation Notes</strong>
                   {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.notes && (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button 
+                      <button
                         onClick={() => {
                           setModalEditingFields(prev => ({ ...prev, notes: true }));
                           setModalTempValues(prev => ({ ...prev, notes: adminSelectedApt.notes || '' }));
@@ -8380,7 +8380,7 @@ export default function App() {
                         <i className="fa-solid fa-pen-to-square"></i>
                       </button>
                       {adminSelectedApt.notes && (
-                        <button 
+                        <button
                           onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'notes')}
                           style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.9rem' }}
                           title="Delete Notes"
@@ -8393,7 +8393,7 @@ export default function App() {
                 </div>
                 {modalEditingFields.notes ? (
                   <div style={{ marginTop: '0.25rem' }}>
-                    <textarea 
+                    <textarea
                       rows="3"
                       style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'inherit', fontSize: '0.9rem' }}
                       value={modalTempValues.notes || ''}
@@ -8417,7 +8417,7 @@ export default function App() {
                   <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Prescribed Medication (Rx)</strong>
                   {(authRole === 'doctor' || authRole === 'admin') && !modalEditingFields.prescription && (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button 
+                      <button
                         onClick={() => {
                           setModalEditingFields(prev => ({ ...prev, prescription: true }));
                           setModalTempValues(prev => ({ ...prev, prescription: adminSelectedApt.prescription || '' }));
@@ -8428,7 +8428,7 @@ export default function App() {
                         <i className="fa-solid fa-pen-to-square"></i>
                       </button>
                       {adminSelectedApt.prescription && (
-                        <button 
+                        <button
                           onClick={() => handleModalFieldDelete(adminSelectedApt.id, 'prescription')}
                           style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.9rem' }}
                           title="Delete Rx"
@@ -8441,7 +8441,7 @@ export default function App() {
                 </div>
                 {modalEditingFields.prescription ? (
                   <div style={{ marginTop: '0.25rem' }}>
-                    <textarea 
+                    <textarea
                       rows="2"
                       style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'inherit', fontSize: '0.9rem' }}
                       value={modalTempValues.prescription || ''}
@@ -8471,7 +8471,7 @@ export default function App() {
                 <strong style={{ fontSize: '0.9rem', color: 'var(--color-primary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
                   <i className="fa-solid fa-network-wired"></i> Department Referrals & Pushes
                 </strong>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {/* Lab Referral */}
                   <div>
@@ -8553,7 +8553,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-            
+
             <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn btn-primary" onClick={() => setAdminSelectedApt(null)}>Close Details</button>
             </div>
@@ -8569,7 +8569,7 @@ export default function App() {
               <h3 style={{ margin: 0 }}>Inquiry Ticket: {adminSelectedInquiry.id}</h3>
               <button onClick={() => setAdminSelectedInquiry(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Contact Information</strong>
@@ -8593,7 +8593,7 @@ export default function App() {
                 </p>
               </div>
             </div>
-            
+
             <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <button className="btn btn-outline" onClick={() => {
                 handleDeleteInquiry(adminSelectedInquiry.id);
@@ -8630,7 +8630,7 @@ export default function App() {
               </div>
             </div>
 
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>MDCN Registration</strong>
@@ -8650,10 +8650,10 @@ export default function App() {
                         <a href={`tel:${adminSelectedDoctor.phone}`} style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
                           {adminSelectedDoctor.phone}
                         </a>
-                        <a 
-                          href={`https://wa.me/${adminSelectedDoctor.phone.replace(/[^0-9]/g, '')}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href={`https://wa.me/${adminSelectedDoctor.phone.replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center' }}
                           title="Chat on WhatsApp"
                         >
@@ -8733,11 +8733,11 @@ export default function App() {
               <h3 style={{ margin: 0 }}>Modify Ticket: {editingApt.id}</h3>
               <button onClick={() => setEditingApt(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
             </div>
-            
+
             <form onSubmit={handleSaveEditApt} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
                 <label>Assigned Specialist</label>
-                <select 
+                <select
                   value={editAptData.doctorId}
                   onChange={(e) => setEditAptData({ ...editAptData, doctorId: e.target.value })}
                   required
@@ -8752,8 +8752,8 @@ export default function App() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Scheduled Date</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     required
                     value={editAptData.date}
                     onChange={(e) => setEditAptData({ ...editAptData, date: e.target.value })}
@@ -8761,8 +8761,8 @@ export default function App() {
                 </div>
                 <div className="form-group">
                   <label>Time Slot</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     placeholder="e.g. 10:00 AM"
                     value={editAptData.time}
@@ -8773,8 +8773,8 @@ export default function App() {
 
               <div className="form-group">
                 <label>Reported Symptoms</label>
-                <textarea 
-                  rows="3" 
+                <textarea
+                  rows="3"
                   required
                   placeholder="Describe details of medical symptoms..."
                   value={editAptData.symptoms}
@@ -8786,7 +8786,7 @@ export default function App() {
               {authRole === 'admin' ? (
                 <div className="form-group">
                   <label>Ticket Status</label>
-                  <select 
+                  <select
                     value={editAptData.status}
                     onChange={(e) => setEditAptData({ ...editAptData, status: e.target.value })}
                   >
@@ -8798,10 +8798,10 @@ export default function App() {
               ) : (
                 <div className="form-group">
                   <label>Ticket Status</label>
-                  <input 
-                    type="text" 
-                    disabled 
-                    value={editAptData.status} 
+                  <input
+                    type="text"
+                    disabled
+                    value={editAptData.status}
                     style={{ backgroundColor: 'rgba(28, 43, 73, 0.05)', color: 'var(--color-text-muted)' }}
                   />
                 </div>
@@ -8824,14 +8824,14 @@ export default function App() {
               <h3 style={{ margin: 0 }}>Schedule Return / Follow-up Booking</h3>
               <button onClick={() => setFollowUpApt(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
             </div>
-            
+
             <form onSubmit={handleCreateFollowUp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
                 <label>Patient Name (Locked)</label>
-                <input 
-                  type="text" 
-                  disabled 
-                  value={followUpApt.patientName} 
+                <input
+                  type="text"
+                  disabled
+                  value={followUpApt.patientName}
                   style={{ backgroundColor: 'rgba(28, 43, 73, 0.05)', color: 'var(--color-text-muted)' }}
                 />
               </div>
@@ -8839,8 +8839,8 @@ export default function App() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Scheduled Return Date</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     required
                     value={followUpData.date}
                     onChange={(e) => setFollowUpData({ ...followUpData, date: e.target.value })}
@@ -8848,8 +8848,8 @@ export default function App() {
                 </div>
                 <div className="form-group">
                   <label>Time Slot</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     placeholder="e.g. 10:00 AM"
                     value={followUpData.time}
@@ -8860,8 +8860,8 @@ export default function App() {
 
               <div className="form-group">
                 <label>Symptoms / Return Reason Statement</label>
-                <textarea 
-                  rows="3" 
+                <textarea
+                  rows="3"
                   required
                   placeholder="Describe reasons for follow-up/return checkup..."
                   value={followUpData.reason}
@@ -8888,7 +8888,7 @@ export default function App() {
               <h3>Order details: {pharmacistSelectedOrder.id}</h3>
               <button className="close-btn" onClick={() => setPharmacistSelectedOrder(null)}>×</button>
             </div>
-            
+
             <div style={{ padding: '1rem 0' }}>
               <div className="detail-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 <div>
@@ -8925,8 +8925,8 @@ export default function App() {
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   onClick={() => {
                     const updated = inquiries.map(i => i.id === pharmacistSelectedOrder.id ? { ...i, status: 'Processing & Packaging' } : i);
                     setInquiries(updated);
@@ -8935,8 +8935,8 @@ export default function App() {
                 >
                   Process Order
                 </button>
-                <button 
-                  className="btn btn-accent" 
+                <button
+                  className="btn btn-accent"
                   onClick={() => {
                     const updated = inquiries.map(i => i.id === pharmacistSelectedOrder.id ? { ...i, status: 'Awaiting Dispatch' } : i);
                     setInquiries(updated);
@@ -8945,8 +8945,8 @@ export default function App() {
                 >
                   Send to Logistics
                 </button>
-                <button 
-                  className="btn btn-outline" 
+                <button
+                  className="btn btn-outline"
                   onClick={() => {
                     const updated = inquiries.map(i => i.id === pharmacistSelectedOrder.id ? { ...i, status: 'Cancelled' } : i);
                     setInquiries(updated);
@@ -8982,11 +8982,11 @@ export default function App() {
               {/* Drug inventory stock selector */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <strong style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>Inventory Stock Matcher (Tick to add):</strong>
-                <div style={{ 
-                  maxHeight: '160px', 
-                  overflowY: 'auto', 
-                  background: 'rgba(0,0,0,0.2)', 
-                  padding: '0.75rem', 
+                <div style={{
+                  maxHeight: '160px',
+                  overflowY: 'auto',
+                  background: 'rgba(0,0,0,0.2)',
+                  padding: '0.75rem',
                   borderRadius: '6px',
                   border: '1px solid rgba(255,255,255,0.06)',
                   display: 'flex',
@@ -8997,7 +8997,7 @@ export default function App() {
                     const isChecked = selectedDrugs.some(d => d.id === drug.id);
                     return (
                       <label key={drug.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', userSelect: 'none' }}>
-                        <input 
+                        <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => {
@@ -9035,9 +9035,9 @@ export default function App() {
 
               <div className="form-group">
                 <label>Shipping / Delivery Address *</label>
-                <input 
-                  type="text" 
-                  required 
+                <input
+                  type="text"
+                  required
                   placeholder="Street Address, City, State"
                   value={prescOrderForm.address}
                   onChange={(e) => setPrescOrderForm({ ...prescOrderForm, address: e.target.value })}
@@ -9046,7 +9046,7 @@ export default function App() {
 
               <div className="form-group">
                 <label>Dispensing Notes & Instructions</label>
-                <textarea 
+                <textarea
                   rows="2"
                   placeholder="Dosage instructions, substitute details..."
                   value={prescOrderForm.notes}
@@ -9056,8 +9056,8 @@ export default function App() {
 
               <div className="form-group">
                 <label>Finalize Amount (₦) *</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   required
                   value={prescOrderForm.cost}
                   onChange={(e) => setPrescOrderForm({ ...prescOrderForm, cost: e.target.value })}
@@ -9089,7 +9089,7 @@ export default function App() {
 
               <div className="form-group">
                 <label>Laboratory Findings & Report Findings *</label>
-                <textarea 
+                <textarea
                   rows="5"
                   required
                   placeholder="Enter detailed clinical findings, blood values, ranges..."
@@ -9126,7 +9126,7 @@ export default function App() {
               <form onSubmit={handleSaveDeliveryIssue} style={{ marginTop: '1.5rem' }}>
                 <div className="form-group">
                   <label>Log Delivery Issue or Custom Alert Note</label>
-                  <textarea 
+                  <textarea
                     rows="2"
                     required
                     placeholder="e.g. Recipient phone switched off, gates locked..."
@@ -9150,10 +9150,10 @@ export default function App() {
           <div className="whatsapp-popup-header">
             <i className="fa-brands fa-whatsapp"></i> SimmyCare WhatsApp
           </div>
-          <a 
-            href="https://wa.me/2349014324442?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation." 
+          <a
+            href="https://wa.me/2349014324442?text=Hello%20SimmyCare%21%20I%20would%20like%20to%20make%20an%20inquiry%20about%20booking%20a%20consultation."
             className="whatsapp-popup-option"
-            target="_blank" 
+            target="_blank"
             rel="noopener noreferrer"
             onClick={() => setWhatsappPopupOpen(false)}
           >
@@ -9163,10 +9163,10 @@ export default function App() {
               <span>Chat with our team directly</span>
             </div>
           </a>
-          <a 
-            href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK" 
+          <a
+            href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK"
             className="whatsapp-popup-option"
-            target="_blank" 
+            target="_blank"
             rel="noopener noreferrer"
             onClick={() => setWhatsappPopupOpen(false)}
           >
@@ -9177,8 +9177,8 @@ export default function App() {
             </div>
           </a>
         </div>
-        <button 
-          className="whatsapp-widget" 
+        <button
+          className="whatsapp-widget"
           onClick={() => setWhatsappPopupOpen(!whatsappPopupOpen)}
           title="WhatsApp Options"
         >
@@ -9262,8 +9262,8 @@ export default function App() {
             <div style={{ marginTop: '1.75rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button className="btn btn-outline" onClick={() => setPreviewBookingDoc(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => {
-                setBookingFormData({ 
-                  ...bookingFormData, 
+                setBookingFormData({
+                  ...bookingFormData,
                   doctorId: previewBookingDoc.id.toString(),
                   patientName: loggedInPatient ? loggedInPatient.name : '',
                   email: loggedInPatient ? loggedInPatient.email : '',
@@ -9286,36 +9286,36 @@ export default function App() {
           <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '600px', textAlign: 'left', alignItems: 'stretch', maxHeight: '90vh' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
               <h3 style={{ margin: 0 }}>Terms of Service & Privacy Policy</h3>
-              <button 
+              <button
                 onClick={() => setShowTermsModal(null)}
                 style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
-            
-            <div 
+
+            <div
               onScroll={handleTermsScroll}
               style={{ fontSize: '0.9rem', lineHeight: '1.5', color: 'var(--color-text)', overflowY: 'auto', maxHeight: '320px', paddingRight: '0.5rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1rem' }}
             >
               <h4>1. Medical Assessment Consent</h4>
               <p>By submitting an appointment request, you consent to receive remote clinical evaluations, diagnostic advice, and authorized prescriptions from certified professionals associated with SimmyCare.</p>
-              
+
               <h4>2. Patient Data Security</h4>
               <p>We implement role-based access control (RBAC). Only the medical practitioners directly assigned to your consultation and authorised clinic administrators have access to your clinical symptoms and patient files.</p>
-              
+
               <h4>3. Communication & Service Setup</h4>
               <p>Updates, bookings, and remote diagnostic reports will be communicated primarily through email (Simmyclinic@gmail.com) and WhatsApp (+234 901 432 4442).</p>
-              
+
               <h4>4. Physical Branches & Jurisdictions</h4>
               <p>While primary services are digital, physical consultation requests are routed to doctor-contact locations in Abuja, Kaduna, Kano, Bauchi, and Gombe.</p>
 
               <p style={{ fontSize: '0.8rem', fontStyle: 'italic', marginTop: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>- End of Document -</p>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 disabled={!hasReadTerms}
                 onClick={() => {
                   if (showTermsModal === 'booking') {

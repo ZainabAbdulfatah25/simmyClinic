@@ -39,9 +39,9 @@ This proposal presents the development of a hospital consultation website design
 ---
 
 ## 3. Deliverables
-- [ ] Fully functional web application (Frontend & Admin Dashboard)
+- [x] Fully functional web application (Frontend & Admin Dashboard)
 - [ ] Live hosting deployment & domain configuration
-- [ ] Basic handover guide & developer documentation
+- [x] Basic handover guide & developer documentation
 - [ ] 6 months of technical support after delivery
 
 ---
