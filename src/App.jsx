@@ -509,6 +509,59 @@ export default function App() {
   const [editingPatientId, setEditingPatientId] = useState(null);
   const [newPatientData, setNewPatientData] = useState({ name: '', email: '', phone: '', password: '' });
 
+  // Admin Staff Control States
+  const [admins, setAdmins] = useState(() => {
+    const stored = localStorage.getItem("simmy_admins");
+    if (stored) {
+      return JSON.parse(stored);
+    } else {
+      const storedCreds = localStorage.getItem("simmy_admin_credentials");
+      const creds = storedCreds ? JSON.parse(storedCreds) : { username: 'admin', password: 'admin' };
+      return [
+        { staffId: 'ADM-0001', name: 'System Administrator', username: creds.username, email: 'admin@simmycare.com', password: creds.password }
+      ];
+    }
+  });
+
+  const [editingPharmacistId, setEditingPharmacistId] = useState(null);
+  const [newPharmacistData, setNewPharmacistData] = useState({
+    name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true
+  });
+
+  const [editingLabId, setEditingLabId] = useState(null);
+  const [newLabData, setNewLabData] = useState({
+    name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true
+  });
+
+  const [editingLogisticsId, setEditingLogisticsId] = useState(null);
+  const [newLogisticsData, setNewLogisticsData] = useState({
+    name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true
+  });
+
+  const [editingAdminId, setEditingAdminId] = useState(null);
+  const [newAdminData, setNewAdminData] = useState({
+    name: '', username: '', email: '', password: ''
+  });
+
+  const generateStaffId = (role, list) => {
+    const prefixMap = {
+      doctor: 'DOC',
+      pharmacist: 'PHM',
+      lab: 'LAB',
+      logistics: 'LGT',
+      admin: 'ADM'
+    };
+    const prefix = prefixMap[role] || 'STF';
+    let isUnique = false;
+    let staffId = '';
+    while (!isUnique) {
+      const randNum = Math.floor(1000 + Math.random() * 9000);
+      staffId = `${prefix}-${randNum}`;
+      isUnique = !list.some(item => item.staffId === staffId);
+    }
+    return staffId;
+  };
+
   // Patient Profile & Navigation States
   const [patientNavView, setPatientNavView] = useState('bookings'); // 'bookings' | 'profile' | 'orders' | 'labs'
   const [isEditingPatSelf, setIsEditingPatSelf] = useState(false);
@@ -597,42 +650,72 @@ export default function App() {
     dispatchArea: ''
   });
 
-  // Live Route Map Simulation progress timer
+  // Shared Real-Time GPS Simulation background timer
   useEffect(() => {
-    let interval = null;
+    const interval = setInterval(() => {
+      // 1. Update Pharmacy Orders (inquiries) in transit
+      setInquiries(prev => {
+        let changed = false;
+        const next = prev.map(inq => {
+          if (inq.id.startsWith('ORD-') && (inq.status === 'Out for Delivery' || inq.isSimulating)) {
+            const currentProg = inq.deliveryProgress !== undefined ? inq.deliveryProgress : 0;
+            if (currentProg < 100) {
+              changed = true;
+              return { ...inq, deliveryProgress: Math.min(100, currentProg + 5) };
+            }
+          }
+          return inq;
+        });
+        return changed ? next : prev;
+      });
+
+      // 2. Update Lab Trips (appointments) in transit
+      setAppointments(prev => {
+        let changed = false;
+        const next = prev.map(apt => {
+          if (apt.id.startsWith('LAB-') && (apt.isSimulating || (apt.status === 'Pending' && apt.assignedRider) || apt.status === 'Sample Collected')) {
+            const currentProg = apt.deliveryProgress !== undefined ? apt.deliveryProgress : 0;
+            if (currentProg < 100) {
+              changed = true;
+              return { ...apt, deliveryProgress: Math.min(100, currentProg + 5) };
+            }
+          }
+          return apt;
+        });
+        return changed ? next : prev;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Control Room Live Tracking Map Simulation Progress timer
+  useEffect(() => {
+    let timer;
     if (isMapSimulating) {
-      interval = setInterval(() => {
+      timer = setInterval(() => {
         setMapSimulationProgress(prev => {
           if (prev >= 100) {
             setIsMapSimulating(false);
+            if (mapTrackedTripId) {
+              const isOrder = mapTrackedTripId.startsWith('ORD-');
+              const setList = isOrder ? setInquiries : setAppointments;
+              setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
+            }
             return 100;
           }
-          return prev + 5;
-        });
-      }, 500);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isMapSimulating]);
-
-  // Simulated Real-Time Logistics Tracking progress
-  useEffect(() => {
-    let interval;
-    if (activeTrackingId) {
-      interval = setInterval(() => {
-        setSimulatedProgress(p => {
-          if (p >= 95) {
-            return 15;
+          const nextVal = Math.min(100, prev + 5);
+          if (mapTrackedTripId) {
+            const isOrder = mapTrackedTripId.startsWith('ORD-');
+            const setList = isOrder ? setInquiries : setAppointments;
+            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: nextVal } : x));
           }
-          return p + 5;
+          return nextVal;
         });
-      }, 1800);
-    } else {
-      setSimulatedProgress(25);
+      }, 1000);
     }
-    return () => clearInterval(interval);
-  }, [activeTrackingId]);
+    return () => clearInterval(timer);
+  }, [isMapSimulating, mapTrackedTripId]);
 
   // Sync to local storage
   useEffect(() => {
@@ -666,6 +749,68 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("simmy_admin_credentials", JSON.stringify(adminCredentials));
   }, [adminCredentials]);
+
+  useEffect(() => {
+    localStorage.setItem("simmy_admins", JSON.stringify(admins));
+  }, [admins]);
+
+  // Migration to ensure all staff members have a unique staffId
+  useEffect(() => {
+    let updated = false;
+
+    // 1. Doctors
+    const updatedDoctors = doctors.map((d, index) => {
+      if (!d.staffId) {
+        updated = true;
+        return { ...d, staffId: `DOC-${String(d.id || index + 1).padStart(4, '0')}` };
+      }
+      return d;
+    });
+
+    // 2. Pharmacists
+    const updatedPharmacists = pharmacists.map((p, index) => {
+      if (!p.staffId) {
+        updated = true;
+        return { ...p, staffId: `PHM-${String(index + 1).padStart(4, '0')}` };
+      }
+      return p;
+    });
+
+    // 3. Labs
+    const updatedLabs = labs.map((l, index) => {
+      if (!l.staffId) {
+        updated = true;
+        return { ...l, staffId: `LAB-${String(index + 1).padStart(4, '0')}` };
+      }
+      return l;
+    });
+
+    // 4. Logistics
+    const updatedLogistics = logistics.map((l, index) => {
+      if (!l.staffId) {
+        updated = true;
+        return { ...l, staffId: `LGT-${String(index + 1).padStart(4, '0')}` };
+      }
+      return l;
+    });
+
+    // 5. Admins
+    const updatedAdmins = admins.map((a, index) => {
+      if (!a.staffId) {
+        updated = true;
+        return { ...a, staffId: `ADM-${String(index + 1).padStart(4, '0')}` };
+      }
+      return a;
+    });
+
+    if (updated) {
+      setDoctors(updatedDoctors);
+      setPharmacists(updatedPharmacists);
+      setLabs(updatedLabs);
+      setLogistics(updatedLogistics);
+      setAdmins(updatedAdmins);
+    }
+  }, [doctors, pharmacists, labs, logistics, admins]);
 
   // Migrate older appointments containing non-existent doctors to current active doctors
   useEffect(() => {
@@ -834,6 +979,13 @@ export default function App() {
 
             if (profileErr) throw profileErr;
 
+            if (profile.role !== 'patient' && profile.role !== 'admin' && !profile.verified) {
+              alert("Account created successfully! Your staff profile is pending administrator approval before you can sign in.");
+              clearForm();
+              setIsPatientRegistering(false);
+              return;
+            }
+
             setAuthRole(profile.role);
             if (profile.role === 'patient') {
               setLoggedInPatient(profile);
@@ -886,79 +1038,82 @@ export default function App() {
           setLoggedInPatient(newPatient);
           sessionStorage.setItem("simmy_auth_role", "patient");
           sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPatient));
-        } else if (registerRole === 'doctor') {
-          const newDoc = {
-            id: doctors.length + 1,
-            email,
-            name: patientLoginForm.name.startsWith("Dr. ") ? patientLoginForm.name : `Dr. ${patientLoginForm.name}`,
-            phone: patientLoginForm.phone || "",
-            password: password,
-            specialty: patientLoginForm.specialty || "General Medicine",
-            regNo: patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
-            schedule: "Mon - Fri (9am - 4pm)",
-            experience: "1 Year",
-            bio: "Registered Medical Professional Committed to Excellence",
-            clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Main Block`,
-            license: "",
-            consultationRate: "₦5,000",
-            consultationDuration: "30 mins",
-            services: ["Online Consultation"],
-            verified: false,
-            active: false,
-            level: patientLoginForm.level || "Junior Doctor"
-          };
-          setDoctors([...doctors, newDoc]);
-          setAuthRole('doctor');
-          setLoggedInDoctor(newDoc);
-          sessionStorage.setItem("simmy_auth_role", "doctor");
-          sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(newDoc));
-        } else if (registerRole === 'pharmacist') {
-          const newPharm = {
-            email,
-            name: patientLoginForm.name || "Pharm. Specialist",
-            phone: patientLoginForm.phone || "",
-            password: password,
-            pharmacyName: patientLoginForm.pharmacyName || "SimmyCare Pharmacy Partner",
-            pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`
-          };
-          setPharmacists([...pharmacists, newPharm]);
-          setAuthRole('pharmacist');
-          setLoggedInPharmacist(newPharm);
-          sessionStorage.setItem("simmy_auth_role", "pharmacist");
-          sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(newPharm));
-        } else if (registerRole === 'lab') {
-          const newLab = {
-            email,
-            name: patientLoginForm.name || "MLS Specialist",
-            phone: patientLoginForm.phone || "",
-            password: password,
-            facilityName: patientLoginForm.facilityName || "SimmyCare Diagnostic Lab",
-            labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`
-          };
-          setLabs([...labs, newLab]);
-          setAuthRole('lab');
-          setLoggedInLab(newLab);
-          sessionStorage.setItem("simmy_auth_role", "lab");
-          sessionStorage.setItem("simmy_auth_lab", JSON.stringify(newLab));
-        } else if (registerRole === 'logistics') {
-          const newLog = {
-            email,
-            name: patientLoginForm.name || "Logistics Dispatcher",
-            phone: patientLoginForm.phone || "",
-            password: password,
-            vehicleType: patientLoginForm.vehicleType || "Motorbike",
-            dispatchArea: patientLoginForm.dispatchArea || "Lagos Metro"
-          };
-          setLogistics([...logistics, newLog]);
-          setAuthRole('logistics');
-          setLoggedInLogistics(newLog);
-          sessionStorage.setItem("simmy_auth_role", "logistics");
-          sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(newLog));
+          clearForm();
+          setIsPatientRegistering(false);
+          navigateTo('dashboard');
+        } else {
+          // Staff roles registration - set active: false, verified: false and show approval alert
+          if (registerRole === 'doctor') {
+            const staffId = generateStaffId('doctor', doctors);
+            const newDoc = {
+              id: doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1,
+              staffId,
+              email,
+              name: patientLoginForm.name.startsWith("Dr. ") ? patientLoginForm.name : `Dr. ${patientLoginForm.name}`,
+              phone: patientLoginForm.phone || "",
+              password: password,
+              specialty: patientLoginForm.specialty || "General Medicine",
+              regNo: patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
+              schedule: "Mon - Fri (9am - 4pm)",
+              experience: "1 Year",
+              bio: "Registered Medical Professional Committed to Excellence",
+              clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Main Block`,
+              license: "",
+              consultationRate: "₦5,000",
+              consultationDuration: "30 mins",
+              services: ["Online Consultation"],
+              verified: false,
+              active: false,
+              level: patientLoginForm.level || "Junior Doctor"
+            };
+            setDoctors([...doctors, newDoc]);
+          } else if (registerRole === 'pharmacist') {
+            const staffId = generateStaffId('pharmacist', pharmacists);
+            const newPharm = {
+              staffId,
+              email,
+              name: patientLoginForm.name || "Pharm. Specialist",
+              phone: patientLoginForm.phone || "",
+              password: password,
+              pharmacyName: patientLoginForm.pharmacyName || "SimmyCare Pharmacy Partner",
+              pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
+              verified: false,
+              active: false
+            };
+            setPharmacists([...pharmacists, newPharm]);
+          } else if (registerRole === 'lab') {
+            const staffId = generateStaffId('lab', labs);
+            const newLab = {
+              staffId,
+              email,
+              name: patientLoginForm.name || "MLS Specialist",
+              phone: patientLoginForm.phone || "",
+              password: password,
+              facilityName: patientLoginForm.facilityName || "SimmyCare Diagnostic Lab",
+              labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
+              verified: false,
+              active: false
+            };
+            setLabs([...labs, newLab]);
+          } else if (registerRole === 'logistics') {
+            const staffId = generateStaffId('logistics', logistics);
+            const newLog = {
+              staffId,
+              email,
+              name: patientLoginForm.name || "Logistics Dispatcher",
+              phone: patientLoginForm.phone || "",
+              password: password,
+              vehicleType: patientLoginForm.vehicleType || "Motorbike",
+              dispatchArea: patientLoginForm.dispatchArea || "Lagos Metro",
+              verified: false,
+              active: false
+            };
+            setLogistics([...logistics, newLog]);
+          }
+          alert("Account created successfully! Your staff profile is pending administrator approval before you can sign in.");
+          clearForm();
+          setIsPatientRegistering(false);
         }
-
-        clearForm();
-        setIsPatientRegistering(false);
-        navigateTo('dashboard');
       }
     } else {
       if (isSupabaseReady()) {
@@ -1014,12 +1169,19 @@ export default function App() {
       } else {
         // Fallback local memory login
         // 1. Check Admin
-        const isMainMatch = email === adminCredentials.username && password === adminCredentials.password;
-        const isFallbackMatch = email === 'admin' && password === 'admin';
-        const isAltMatch = email === 'admin@simmycare.com' && password === 'password123';
-        if (isMainMatch || isFallbackMatch || isAltMatch) {
+        const matchedAdmin = admins.find(a => 
+          (email.toLowerCase().trim() === a.email.toLowerCase().trim() || 
+           email.toLowerCase().trim() === a.username.toLowerCase().trim()) && 
+          password === a.password
+        );
+        if (matchedAdmin || (email === 'admin' && password === 'admin') || (email === 'admin@simmycare.com' && password === 'password123')) {
           setAuthRole('admin');
           sessionStorage.setItem("simmy_auth_role", "admin");
+          if (matchedAdmin) {
+            sessionStorage.setItem("simmy_auth_admin", JSON.stringify(matchedAdmin));
+          } else {
+            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({ username: 'admin', name: 'System Administrator', email: 'admin@simmycare.com' }));
+          }
           clearForm();
           navigateTo('dashboard');
           return;
@@ -1028,6 +1190,10 @@ export default function App() {
         // 2. Check Pharmacist
         const pharm = pharmacists.find(p => p.email.toLowerCase().trim() === email);
         if (pharm && pharm.password === password) {
+          if (pharm.active === false || pharm.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return;
+          }
           setAuthRole('pharmacist');
           setLoggedInPharmacist(pharm);
           sessionStorage.setItem("simmy_auth_role", "pharmacist");
@@ -1040,6 +1206,10 @@ export default function App() {
         // 3. Check Lab Tech
         const labUser = labs.find(l => l.email.toLowerCase().trim() === email);
         if (labUser && labUser.password === password) {
+          if (labUser.active === false || labUser.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return;
+          }
           setAuthRole('lab');
           setLoggedInLab(labUser);
           sessionStorage.setItem("simmy_auth_role", "lab");
@@ -1052,6 +1222,10 @@ export default function App() {
         // 4. Check Logistics
         const logUser = logistics.find(l => l.email.toLowerCase().trim() === email);
         if (logUser && logUser.password === password) {
+          if (logUser.active === false || logUser.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return;
+          }
           setAuthRole('logistics');
           setLoggedInLogistics(logUser);
           sessionStorage.setItem("simmy_auth_role", "logistics");
@@ -1064,6 +1238,10 @@ export default function App() {
         // 5. Check Doctor
         const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === email);
         if (doc && doc.password && doc.password === password) {
+          if (doc.active === false || doc.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return;
+          }
           setAuthRole('doctor');
           setLoggedInDoctor(doc);
           sessionStorage.setItem("simmy_auth_role", "doctor");
@@ -1480,9 +1658,167 @@ export default function App() {
         consultationDuration: newDoctorData.consultationDuration || '30 mins',
         services: newDoctorData.services || []
       };
-      setDoctors([...doctors, newDoc]);
+      const staffId = generateStaffId('doctor', doctors);
+      const newDocWithId = { ...newDoc, staffId };
+      setDoctors([...doctors, newDocWithId]);
       setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
-      alert("Doctor profile added successfully!");
+      alert(`Doctor profile added successfully! Staff ID: ${staffId}`);
+    }
+  };
+
+  const handleAddPharmacist = (e) => {
+    e.preventDefault();
+    if (editingPharmacistId) {
+      setPharmacists(pharmacists.map(p => {
+        if (p.email === editingPharmacistId) {
+          return {
+            ...p,
+            name: newPharmacistData.name,
+            email: newPharmacistData.email,
+            password: newPharmacistData.password,
+            phone: newPharmacistData.phone,
+            pharmacyName: newPharmacistData.pharmacyName,
+            pharmacyLicense: newPharmacistData.pharmacyLicense,
+            verified: newPharmacistData.verified !== undefined ? newPharmacistData.verified : true,
+            active: newPharmacistData.active !== undefined ? newPharmacistData.active : true
+          };
+        }
+        return p;
+      }));
+      setEditingPharmacistId(null);
+      setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
+      alert("Pharmacist profile updated successfully!");
+    } else {
+      const staffId = generateStaffId('pharmacist', pharmacists);
+      const newPharm = {
+        staffId,
+        name: newPharmacistData.name,
+        email: newPharmacistData.email,
+        password: newPharmacistData.password,
+        phone: newPharmacistData.phone,
+        pharmacyName: newPharmacistData.pharmacyName || "SimmyCare Central Pharmacy",
+        pharmacyLicense: newPharmacistData.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
+        verified: true,
+        active: true
+      };
+      setPharmacists([...pharmacists, newPharm]);
+      setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
+      alert(`Pharmacist registered successfully! Staff ID: ${staffId}`);
+    }
+  };
+
+  const handleAddLab = (e) => {
+    e.preventDefault();
+    if (editingLabId) {
+      setLabs(labs.map(l => {
+        if (l.email === editingLabId) {
+          return {
+            ...l,
+            name: newLabData.name,
+            email: newLabData.email,
+            password: newLabData.password,
+            phone: newLabData.phone,
+            facilityName: newLabData.facilityName,
+            labLicense: newLabData.labLicense,
+            verified: newLabData.verified !== undefined ? newLabData.verified : true,
+            active: newLabData.active !== undefined ? newLabData.active : true
+          };
+        }
+        return l;
+      }));
+      setEditingLabId(null);
+      setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
+      alert("Laboratory profile updated successfully!");
+    } else {
+      const staffId = generateStaffId('lab', labs);
+      const newL = {
+        staffId,
+        name: newLabData.name,
+        email: newLabData.email,
+        password: newLabData.password,
+        phone: newLabData.phone,
+        facilityName: newLabData.facilityName || "SimmyCare Lab Partner",
+        labLicense: newLabData.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
+        verified: true,
+        active: true
+      };
+      setLabs([...labs, newL]);
+      setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
+      alert(`Laboratory Technician registered successfully! Staff ID: ${staffId}`);
+    }
+  };
+
+  const handleAddLogistics = (e) => {
+    e.preventDefault();
+    if (editingLogisticsId) {
+      setLogistics(logistics.map(l => {
+        if (l.email === editingLogisticsId) {
+          return {
+            ...l,
+            name: newLogisticsData.name,
+            email: newLogisticsData.email,
+            password: newLogisticsData.password,
+            phone: newLogisticsData.phone,
+            vehicleType: newLogisticsData.vehicleType,
+            dispatchArea: newLogisticsData.dispatchArea,
+            verified: newLogisticsData.verified !== undefined ? newLogisticsData.verified : true,
+            active: newLogisticsData.active !== undefined ? newLogisticsData.active : true
+          };
+        }
+        return l;
+      }));
+      setEditingLogisticsId(null);
+      setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
+      alert("Logistics profile updated successfully!");
+    } else {
+      const staffId = generateStaffId('logistics', logistics);
+      const newLg = {
+        staffId,
+        name: newLogisticsData.name,
+        email: newLogisticsData.email,
+        password: newLogisticsData.password,
+        phone: newLogisticsData.phone,
+        vehicleType: newLogisticsData.vehicleType || "Motorbike",
+        dispatchArea: newLogisticsData.dispatchArea || "Lagos Metro",
+        verified: true,
+        active: true
+      };
+      setLogistics([...logistics, newLg]);
+      setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
+      alert(`Logistics Rider registered successfully! Staff ID: ${staffId}`);
+    }
+  };
+
+  const handleAddAdmin = (e) => {
+    e.preventDefault();
+    if (editingAdminId) {
+      setAdmins(admins.map(a => {
+        if (a.email === editingAdminId) {
+          return {
+            ...a,
+            name: newAdminData.name,
+            username: newAdminData.username,
+            email: newAdminData.email,
+            password: newAdminData.password
+          };
+        }
+        return a;
+      }));
+      setEditingAdminId(null);
+      setNewAdminData({ name: '', username: '', email: '', password: '' });
+      alert("Administrator profile updated successfully!");
+    } else {
+      const staffId = generateStaffId('admin', admins);
+      const newAd = {
+        staffId,
+        name: newAdminData.name,
+        username: newAdminData.username,
+        email: newAdminData.email,
+        password: newAdminData.password
+      };
+      setAdmins([...admins, newAd]);
+      setNewAdminData({ name: '', username: '', email: '', password: '' });
+      alert(`Administrator registered successfully! Staff ID: ${staffId}`);
     }
   };
 
@@ -1839,6 +2175,19 @@ export default function App() {
     return { tests, address, instructions };
   };
 
+  const getRiderCoords = (riderName) => {
+    if (!riderName) return { x: 120, y: 80 };
+    const idx = logistics.findIndex(r => r.name === riderName);
+    const coords = [
+      { x: 100, y: 80 },
+      { x: 380, y: 70 },
+      { x: 80, y: 220 },
+      { x: 420, y: 260 },
+      { x: 180, y: 280 },
+    ];
+    return coords[idx !== -1 ? idx % coords.length : 0];
+  };
+
   const getTripCoords = (tripId) => {
     if (!tripId) return { x: 250, y: 150 };
     let hash = 0;
@@ -1850,12 +2199,62 @@ export default function App() {
     return { x, y };
   };
 
-  const getInterpolatedCoords = (progress, dest) => {
-    const startX = 250;
-    const startY = 150;
-    const currentX = startX + (dest.x - startX) * (progress / 100);
-    const currentY = startY + (dest.y - startY) * (progress / 100);
-    return { x: currentX, y: currentY };
+  const getInterpolatedCoords = (progress, dest, riderName, tripId) => {
+    const riderCoords = getRiderCoords(riderName);
+    const hubCoords = { x: 250, y: 150 };
+    const destCoords = dest || { x: 250, y: 150 };
+
+    if (progress <= 40) {
+      const factor = progress / 40;
+      return {
+        x: riderCoords.x + (hubCoords.x - riderCoords.x) * factor,
+        y: riderCoords.y + (hubCoords.y - riderCoords.y) * factor
+      };
+    } else {
+      const factor = (progress - 40) / 60;
+      return {
+        x: hubCoords.x + (destCoords.x - hubCoords.x) * factor,
+        y: hubCoords.y + (destCoords.y - hubCoords.y) * factor
+      };
+    }
+  };
+
+  const getLogisticsTelemetry = (riderName, tripId = '') => {
+    if (!riderName) {
+      return {
+        plate: 'RV-UNASSIGNED',
+        speed: '0 km/h',
+        rating: '5.0 ★',
+        otp: '0000',
+        temp: '4.0°C',
+        coldChainStatus: 'Optimal',
+        helmetVerified: true,
+        insulationSeals: true,
+        totalCompleted: '0'
+      };
+    }
+    const hash = (riderName + tripId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const plateId = 100 + (hash % 899);
+    const speed = 35 + (hash % 20); // 35 - 55 km/h
+    const rating = (4.6 + (hash % 4) / 10).toFixed(1); // 4.6 - 4.9 rating
+    const otp = 1000 + (hash % 9000); // 4-digit secure delivery PIN
+    const plateLetters = ["ABJ", "DT", "LA", "KD", "PH"][hash % 5];
+    const plate = `RV-${plateId}-${plateLetters}`;
+    
+    // Medical logistics specific metrics (Cold-chain)
+    const tempDecimal = (3.5 + (hash % 35) / 10).toFixed(1); // 3.5°C to 7.0°C (standard cold-chain for drugs/blood/samples is 2°C to 8°C)
+    
+    return {
+      plate,
+      speed: `${speed} km/h`,
+      rating: `${rating} ★`,
+      otp,
+      temp: `${tempDecimal}°C`,
+      coldChainStatus: 'Optimal (2.0°C - 8.0°C)',
+      helmetVerified: true,
+      insulationSeals: true,
+      totalCompleted: `${240 + (hash % 800)}`
+    };
   };
 
   const renderLiveTrackingMap = (showDropdown = true) => {
@@ -1885,7 +2284,11 @@ export default function App() {
     }
 
     const dest = getTripCoords(mapTrackedTripId);
-    const currentCoords = getInterpolatedCoords(mapSimulationProgress, dest);
+    const activeItem = activeOrder || activeTrip;
+    const currentProgress = activeItem ? (activeItem.deliveryProgress !== undefined ? activeItem.deliveryProgress : 0) : 0;
+    const isItemSimulating = activeItem ? (activeItem.isSimulating !== false) : false;
+    const currentCoords = getInterpolatedCoords(currentProgress, dest, courier, mapTrackedTripId);
+    const riderCoords = getRiderCoords(courier);
 
     return (
       <div style={{ background: '#0b1329', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1896,8 +2299,6 @@ export default function App() {
               value={mapTrackedTripId || ''}
               onChange={(e) => {
                 setMapTrackedTripId(e.target.value || null);
-                setMapSimulationProgress(0);
-                setIsMapSimulating(false);
               }}
               style={{
                 width: '100%',
@@ -1924,7 +2325,7 @@ export default function App() {
         <div style={{ position: 'relative', minHeight: '220px', background: '#070d1e', borderRadius: '8px', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.3rem', zIndex: 10 }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
-            {isMapSimulating ? 'SIMULATION ACTIVE' : 'TELEMETRY IDLE'}
+            {currentProgress > 0 && currentProgress < 100 ? 'RIDER IN TRANSIT' : currentProgress === 100 ? 'RIDER ARRIVED' : 'TELEMETRY IDLE'}
           </div>
 
           <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e' }}>
@@ -1935,8 +2336,31 @@ export default function App() {
             </defs>
             <rect width="500" height="300" fill="url(#mapGridMini)" />
 
-            {/* Roads */}
-            <path d="M 50,50 L 450,50 M 50,150 L 450,150 M 50,250 L 450,250 M 150,50 L 150,300 M 350,50 L 350,300 M 50,50 Q 250,180 450,250" stroke="rgba(255,255,255,0.03)" strokeWidth="4" fill="none" />
+            {/* Soft background elements simulating water/parks */}
+            <path d="M 0,220 C 150,230 300,180 500,210 L 500,300 L 0,300 Z" fill="#0d1b3e" opacity="0.4" />
+            <path d="M 0,220 C 150,230 300,180 500,210" stroke="#1b3b6f" strokeWidth="4" fill="none" opacity="0.6" />
+            <text x="350" y="255" fill="#3a6073" fontSize="8" style={{ fontStyle: 'italic', letterSpacing: '1px' }}>Jabi River</text>
+
+            <rect x="50" y="60" width="80" height="60" rx="8" fill="#14362d" opacity="0.3" />
+            <text x="65" y="95" fill="#1d6f42" fontSize="7" fontWeight="600" opacity="0.7">Millennium Park</text>
+            <rect x="360" y="40" width="90" height="50" rx="8" fill="#14362d" opacity="0.3" />
+            <text x="380" y="70" fill="#1d6f42" fontSize="7" fontWeight="600" opacity="0.7">Maitama Park</text>
+
+            {/* Realistic Road Grid (Google Maps style) */}
+            <path d="M 20,40 L 480,40 M 20,260 L 480,260 M 70,20 L 70,280 M 430,20 L 430,280" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
+            
+            {/* Main Highways / Expressways */}
+            <path d="M 0,150 L 500,150" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
+            <path d="M 0,150 L 500,150" stroke="#0f172a" strokeWidth="6" fill="none" />
+            <text x="20" y="146" fill="rgba(255,255,255,0.3)" fontSize="6" fontWeight="bold">CONSTITUTION EXPRESSWAY</text>
+
+            <path d="M 250,0 L 250,300" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
+            <path d="M 250,0 L 250,300" stroke="#0f172a" strokeWidth="6" fill="none" />
+            <text x="254" y="20" fill="rgba(255,255,255,0.3)" fontSize="6" fontWeight="bold" transform="rotate(90, 254, 20)">HERBERT MACAULAY WAY</text>
+
+            <path d="M 20,20 L 480,280" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+            <path d="M 20,20 L 480,280" stroke="#0f172a" strokeWidth="4" fill="none" />
+            <text x="120" y="90" fill="rgba(255,255,255,0.2)" fontSize="6" fontWeight="bold" transform="rotate(29, 120, 90)">AMBASE BYPASS</text>
 
             {/* Central Hub */}
             <g transform="translate(250, 150)">
@@ -1945,8 +2369,8 @@ export default function App() {
               <text x="10" y="3" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
             </g>
 
-            {/* Riders */}
-            {logistics.map((rider, idx) => {
+            {/* Other riders */}
+            {logistics.filter(r => r.name !== courier).map((rider, idx) => {
               const coords = [
                 { x: 120, y: 80 },
                 { x: 380, y: 110 },
@@ -1957,10 +2381,9 @@ export default function App() {
               const pt = coords[idx % coords.length];
               const isRiderOnline = rider.active !== false;
               return (
-                <g key={rider.id} transform={`translate(${pt.x}, ${pt.y})`} style={{ cursor: 'pointer' }}>
+                <g key={rider.id} transform={`translate(${pt.x}, ${pt.y})`} style={{ cursor: 'pointer', opacity: 0.4 }}>
                   <circle r="5" fill={isRiderOnline ? 'var(--color-accent)' : '#ef4444'} />
-                  <circle r="10" fill={isRiderOnline ? 'var(--color-accent)' : '#ef4444'} fillOpacity="0.1" />
-                  <text x="8" y="3" fill="rgba(255,255,255,0.7)" fontSize="7">{rider.name}</text>
+                  <text x="8" y="3" fill="rgba(255,255,255,0.4)" fontSize="7">{rider.name}</text>
                 </g>
               );
             })}
@@ -1968,26 +2391,43 @@ export default function App() {
             {/* Target Route */}
             {mapTrackedTripId && (
               <>
+                {/* Leg 1: Rider -> Central Hub */}
+                <line
+                  x1={riderCoords.x}
+                  y1={riderCoords.y}
+                  x2="250"
+                  y2="150"
+                  stroke="#f59e0b"
+                  strokeWidth="2.5"
+                  strokeDasharray="4,4"
+                  opacity={currentProgress <= 40 ? 1 : 0.3}
+                />
+
+                {/* Leg 2: Central Hub -> Client Location */}
                 <line
                   x1="250"
                   y1="150"
                   x2={dest.x}
                   y2={dest.y}
-                  stroke="rgba(6, 182, 212, 0.4)"
-                  strokeWidth="2.5"
-                  strokeDasharray="5,5"
+                  stroke="#10b981"
+                  strokeWidth="3"
+                  strokeDasharray={currentProgress < 40 ? "5,5" : "none"}
+                  opacity={currentProgress >= 40 ? 1 : 0.4}
                 />
 
+                {/* Client Location Pin */}
                 <g transform={`translate(${dest.x}, ${dest.y})`}>
                   <circle r="7" fill="#ec4899" />
                   <circle r="14" fill="#ec4899" fillOpacity="0.2" className="ping-ring" />
-                  <text x="10" y="3" fill="#ec4899" fontSize="8" fontWeight="bold">Client Location</text>
+                  <text x="10" y="3" fill="#ec4899" fontSize="9" fontWeight="bold">{clientName}</text>
                 </g>
 
+                {/* Current Moving Courier */}
                 <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
                   <circle r="8" fill="#06b6d4" />
                   <circle r="15" fill="#06b6d4" fillOpacity="0.25" />
-                  <text x="-4" y="3" fill="#fff" fontSize="9">📦</text>
+                  <text textAnchor="middle" y="3" fill="#fff" fontSize="8">{currentProgress < 40 ? '🏍️' : '📦'}</text>
+                  <text x="10" y="-3" fill="#06b6d4" fontSize="8" fontWeight="bold">{courier}</text>
                 </g>
               </>
             )}
@@ -1998,11 +2438,11 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Progress:</span>
-              <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)' }}>{mapSimulationProgress}%</strong>
+              <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)' }}>{currentProgress}%</strong>
             </div>
 
             <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-              <div style={{ width: `${mapSimulationProgress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #06b6d4)', transition: 'width 0.3s' }}></div>
+              <div style={{ width: `${currentProgress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #06b6d4)', transition: 'width 0.3s' }}></div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
@@ -2010,53 +2450,164 @@ export default function App() {
                 type="button"
                 className="btn btn-primary btn-sm"
                 onClick={() => {
-                  if (mapSimulationProgress >= 100) {
-                    setMapSimulationProgress(0);
-                  }
-                  setIsMapSimulating(!isMapSimulating);
+                  const isOrder = mapTrackedTripId.startsWith('ORD-');
+                  let targetList = isOrder ? inquiries : appointments;
+                  let setList = isOrder ? setInquiries : setAppointments;
+                  
+                  setList(targetList.map(x => {
+                    if (x.id === mapTrackedTripId) {
+                      const currentProg = x.deliveryProgress || 0;
+                      return { 
+                        ...x, 
+                        isSimulating: !x.isSimulating, 
+                        deliveryProgress: currentProg >= 100 ? 0 : currentProg 
+                      };
+                    }
+                    return x;
+                  }));
                 }}
                 style={{ flex: 1, padding: '0.35rem', fontSize: '0.75rem' }}
               >
-                <i className={isMapSimulating ? "fa-solid fa-pause" : "fa-solid fa-play"}></i> {isMapSimulating ? 'Pause' : 'Start Simulation'}
+                <i className={activeItem && activeItem.isSimulating ? "fa-solid fa-pause" : "fa-solid fa-play"}></i> {activeItem && activeItem.isSimulating ? 'Pause Simulation' : 'Start Simulation'}
               </button>
               <button
                 type="button"
                 className="btn btn-outline btn-sm"
-                onClick={() => { setMapSimulationProgress(0); setIsMapSimulating(false); }}
+                onClick={() => {
+                  const isOrder = mapTrackedTripId.startsWith('ORD-');
+                  let targetList = isOrder ? inquiries : appointments;
+                  let setList = isOrder ? setInquiries : setAppointments;
+                  setList(targetList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 0, isSimulating: false } : x));
+                }}
                 style={{ padding: '0.35rem', fontSize: '0.75rem' }}
               >
                 <i className="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
-              <div style={{ marginBottom: '0.25rem' }}><strong>Cargo:</strong> {cargoType}</div>
-              <div style={{ marginBottom: '0.25rem' }}><strong>Rider:</strong> {courier}</div>
-              <div style={{ marginBottom: '0.25rem' }}><strong>Recipient:</strong> {clientName} ({phone})</div>
-              <div><strong>Route destination:</strong> {address}</div>
+            {/* Route Checkpoints with Manual Logging */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'block' }}>Transit Checkpoint Logger</strong>
+
+              {/* Checkpoint 1: Depot Departure */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
+                  <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                  <span>Departed SimmyCare Depot</span>
+                </div>
+                {currentProgress === 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-accent"
+                    onClick={() => {
+                      const isOrder = mapTrackedTripId.startsWith('ORD-');
+                      const setList = isOrder ? setInquiries : setAppointments;
+                      setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
+                    }}
+                    style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    Log Depart
+                  </button>
+                )}
+              </div>
+
+              {/* Checkpoint 2: Abuja Ring Expressway */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
+                  <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                  <span>Transiting Expressway</span>
+                </div>
+                {currentProgress === 30 && (
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-accent"
+                    onClick={() => {
+                      const isOrder = mapTrackedTripId.startsWith('ORD-');
+                      const setList = isOrder ? setInquiries : setAppointments;
+                      setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 70 } : x));
+                    }}
+                    style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    Log Transit
+                  </button>
+                )}
+              </div>
+
+              {/* Checkpoint 3: Destination Ward */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
+                  <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                  <span>Entering Destination Area</span>
+                </div>
+                {currentProgress === 70 && (
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-accent"
+                    onClick={() => {
+                      const isOrder = mapTrackedTripId.startsWith('ORD-');
+                      const setList = isOrder ? setInquiries : setAppointments;
+                      setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
+                    }}
+                    style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    Log Arrival
+                  </button>
+                )}
+              </div>
+
+              {/* Checkpoint 4: Delivered */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: currentProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
+                <i className="fa-solid fa-circle-check" style={{ color: currentProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                <span>Delivered & Handed Over</span>
+              </div>
             </div>
+
+            {(() => {
+              const telemetry = getLogisticsTelemetry(courier, mapTrackedTripId);
+              return (
+                <div style={{ background: 'rgba(255,255,255,0.06)', padding: '0.85rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem', color: '#f1f5f9', lineHeight: '1.4' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                    <div><span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 'bold', textTransform: 'uppercase' }}>Courier Dispatch Details</span></div>
+                    <div style={{ textAlign: 'right' }}><span style={{ background: '#10b981', color: '#000', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>{telemetry.plate}</span></div>
+                  </div>
+                  
+                  <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: 'var(--color-accent)' }}>Cargo Type:</strong> {cargoType}</div>
+                  <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: 'var(--color-accent)' }}>Assigned Courier:</strong> {courier} ({telemetry.rating} • {telemetry.totalCompleted} deliveries)</div>
+                  <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: 'var(--color-accent)' }}>Live Telemetry:</strong> {currentProgress > 0 && currentProgress < 100 ? telemetry.speed : '0 km/h'} • Cold-Chain Temp: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{telemetry.temp}</span></div>
+                  <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: 'var(--color-accent)' }}>Secure Handover PIN (OTP):</strong> <strong style={{ color: '#f59e0b', fontSize: '0.95rem' }}>{telemetry.otp}</strong></div>
+                  <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: 'var(--color-accent)' }}>Compliance Check:</strong> <span style={{ color: '#10b981' }}><i className="fa-solid fa-circle-check"></i> Helmet Compliant & Insulation Sealed ({telemetry.coldChainStatus})</span></div>
+                  <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: 'var(--color-accent)' }}>Recipient Patient:</strong> <span style={{ color: '#fff', fontWeight: 'bold' }}>{clientName}</span> ({phone})</div>
+                  <div><strong style={{ color: 'var(--color-accent)' }}>Destination Address:</strong> {address}</div>
+                </div>
+              );
+            })()}
+
+            {currentProgress === 100 && (
+              <div style={{ padding: '0.5rem', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)', borderRadius: '6px', fontSize: '0.75rem', color: '#eab308', textAlign: 'center', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#eab308', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+                Awaiting Patient Receipt Confirmation...
+              </div>
+            )}
 
             <button
               type="button"
               className="btn btn-success btn-sm"
-              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.45rem', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer' }}
+              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.45rem', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer', marginTop: '0.25rem' }}
               onClick={() => {
                 const isOrder = mapTrackedTripId.startsWith('ORD-');
                 if (isOrder) {
                   setInquiries(inquiries.map(inq =>
-                    inq.id === mapTrackedTripId ? { ...inq, status: 'Delivered' } : inq
+                    inq.id === mapTrackedTripId ? { ...inq, status: 'Delivered', deliveryProgress: 100 } : inq
                   ));
                 } else {
                   setAppointments(appointments.map(apt =>
-                    apt.id === mapTrackedTripId ? { ...apt, status: 'Sample Collected' } : apt
+                    apt.id === mapTrackedTripId ? { ...apt, status: 'Completed', deliveryProgress: 100 } : apt
                   ));
                 }
-                setMapSimulationProgress(100);
-                setIsMapSimulating(false);
-                alert(`Delivery status marked as completed for dispatch task: ${mapTrackedTripId}`);
+                alert(`Admin Override: Delivery status marked as completed for dispatch task: ${mapTrackedTripId}`);
               }}
             >
-              <i className="fa-solid fa-circle-check"></i> Complete Route Delivery
+              <i className="fa-solid fa-shield-halved"></i> Administrative Override: Mark Delivered
             </button>
           </div>
         ) : (
@@ -4444,82 +4995,139 @@ export default function App() {
                                 </div>
 
                                 {/* Logistics Live Tracking Map for In Transit */}
-                                {status === 'Out for Delivery' && (
-                                  <div>
-                                    <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
-                                      Live Courier Tracking (Capsule Integration)
-                                    </strong>
+                                 {status === 'Out for Delivery' && (() => {
+                                   const progressVal = selectedPharmacyOrder.deliveryProgress || 0;
+                                   const courierName = selectedPharmacyOrder.assignedRider || 'Default Courier';
+                                   const destCoords = getTripCoords(selectedPharmacyOrder.id);
+                                   const currentCoords = getInterpolatedCoords(progressVal, destCoords, courierName, selectedPharmacyOrder.id);
+                                   const riderCoords = getRiderCoords(courierName);
+                                   
+                                   return (
+                                     <div>
+                                       <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
+                                         Live Courier Tracking (Capsule Integration)
+                                       </strong>
 
-                                    <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                      <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#10b981', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
-                                        LIVE GPS ROUTE
-                                      </div>
-                                      <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
-                                        ETA: {Math.max(1, Math.round(15 * (1 - simulatedProgress / 100)))} MINS
-                                      </div>
+                                       <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                         <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#10b981', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+                                           LIVE GPS ROUTE
+                                         </div>
+                                         <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
+                                           ETA: {Math.max(1, Math.round(15 * (1 - progressVal / 100)))} MINS
+                                         </div>
 
-                                      <svg viewBox="0 0 400 200" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
-                                        {/* Roads Map Background Grid */}
-                                        <path d="M 0,100 L 400,100 M 100,0 L 100,200 M 300,0 L 300,200 M 0,50 L 400,50 M 0,150 L 400,150" stroke="rgba(255,255,255,0.04)" strokeWidth="6" fill="none" />
-                                        <path d="M 200,0 L 200,200" stroke="rgba(255,255,255,0.04)" strokeWidth="9" fill="none" />
+                                         <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
+                                           {/* Road Map Grid */}
+                                           <defs>
+                                             <pattern id="mapGridMini2" width="20" height="20" patternUnits="userSpaceOnUse">
+                                               <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
+                                             </pattern>
+                                           </defs>
+                                           <rect width="500" height="300" fill="url(#mapGridMini2)" />
 
-                                        {/* Route path */}
-                                        <path id="delivery-route" d="M 100,100 Q 200,40 200,160 T 300,100" stroke="#0ea5e9" strokeWidth="3" strokeDasharray="6,4" fill="none" />
+                                           {/* Water / Parks */}
+                                           <path d="M 0,220 C 150,230 300,180 500,210 L 500,300 L 0,300 Z" fill="#0d1b3e" opacity="0.4" />
+                                           <path d="M 0,220 C 150,230 300,180 500,210" stroke="#1b3b6f" strokeWidth="4" fill="none" opacity="0.6" />
+                                           <rect x="50" y="60" width="80" height="60" rx="8" fill="#14362d" opacity="0.3" />
+                                           <rect x="360" y="40" width="90" height="50" rx="8" fill="#14362d" opacity="0.3" />
 
-                                        {/* Start Hub Pin */}
-                                        <circle cx="100" cy="100" r="7" fill="#10b981" />
-                                        <circle cx="100" cy="100" r="13" fill="#10b981" fillOpacity="0.15" />
-                                        <text x="85" y="85" fill="#10b981" fontSize="8" fontWeight="bold">SimmyCare Hub</text>
+                                           {/* Streets */}
+                                           <path d="M 20,40 L 480,40 M 20,260 L 480,260 M 70,20 L 70,280 M 430,20 L 430,280" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
+                                           <path d="M 0,150 L 500,150" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
+                                           <path d="M 0,150 L 500,150" stroke="#0f172a" strokeWidth="6" fill="none" />
+                                           <path d="M 250,0 L 250,300" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
+                                           <path d="M 250,0 L 250,300" stroke="#0f172a" strokeWidth="6" fill="none" />
+                                           <path d="M 20,20 L 480,280" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+                                           <path d="M 20,20 L 480,280" stroke="#0f172a" strokeWidth="4" fill="none" />
 
-                                        {/* Destination Pin */}
-                                        <circle cx="300" cy="100" r="7" fill="#ef4444" />
-                                        <circle cx="300" cy="100" r="13" fill="#ef4444" fillOpacity="0.15" />
-                                        <text x="270" y="85" fill="#ef4444" fontSize="8" fontWeight="bold">Your Home</text>
+                                           {/* Central Hub Pin */}
+                                           <circle cx="250" cy="150" r="6" fill="#10b981" />
+                                           <circle cx="250" cy="150" r="12" fill="#10b981" fillOpacity="0.15" />
+                                           <text x="260" y="154" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
 
-                                        {/* Moving Courier */}
-                                        {(() => {
-                                          const t = simulatedProgress / 100;
-                                          let courierX = 100;
-                                          let courierY = 100;
-                                          if (t < 0.5) {
-                                            const tSeg = t / 0.5;
-                                            courierX = 100 + (200 - 100) * tSeg;
-                                            courierY = 100 + (160 - 100) * tSeg;
-                                          } else {
-                                            const tSeg = (t - 0.5) / 0.5;
-                                            courierX = 200 + (300 - 200) * tSeg;
-                                            courierY = 160 + (100 - 160) * tSeg;
-                                          }
-                                          return (
-                                            <g transform={`translate(${courierX}, ${courierY})`}>
-                                              <circle r="9" fill="var(--color-accent)" />
-                                              <circle r="16" fill="var(--color-accent)" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
-                                              <text textAnchor="middle" y="3" fill="#fff" fontSize="9">🏍️</text>
-                                            </g>
-                                          );
-                                        })()}
-                                      </svg>
+                                           {/* Leg 1 Path */}
+                                           <line
+                                             x1={riderCoords.x}
+                                             y1={riderCoords.y}
+                                             x2="250"
+                                             y2="150"
+                                             stroke="#f59e0b"
+                                             strokeWidth="2.5"
+                                             strokeDasharray="4,4"
+                                             opacity={progressVal <= 40 ? 1 : 0.3}
+                                           />
 
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                                          {(selectedPharmacyOrder.assignedRider || 'Rider').charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                          <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
-                                            {selectedPharmacyOrder.assignedRider || 'Default Courier'}
-                                          </div>
-                                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                                            SimmyCare Dispatcher • Motorbike
-                                          </div>
-                                        </div>
-                                        <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                                          <i className="fa-solid fa-phone" style={{ fontSize: '0.8rem' }}></i>
-                                        </a>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
+                                           {/* Leg 2 Path */}
+                                           <line
+                                             x1="250"
+                                             y1="150"
+                                             x2={destCoords.x}
+                                             y2={destCoords.y}
+                                             stroke="#10b981"
+                                             strokeWidth="3"
+                                             strokeDasharray={progressVal < 40 ? "5,5" : "none"}
+                                             opacity={progressVal >= 40 ? 1 : 0.4}
+                                           />
+
+                                           {/* Destination Pin */}
+                                           <g transform={`translate(${destCoords.x}, ${destCoords.y})`}>
+                                             <circle r="7" fill="#ef4444" />
+                                             <circle r="13" fill="#ef4444" fillOpacity="0.15" />
+                                             <text x="10" y="3" fill="#ef4444" fontSize="9" fontWeight="bold">{selectedPharmacyOrder.name || loggedInPatient.name}</text>
+                                           </g>
+
+                                           {/* Moving Courier */}
+                                           <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
+                                             <circle r="9" fill="var(--color-accent)" />
+                                             <circle r="16" fill="var(--color-accent)" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
+                                             <text textAnchor="middle" y="3" fill="#fff" fontSize="9">{progressVal < 40 ? '🏍️' : '📦'}</text>
+                                           </g>
+                                         </svg>
+
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
+                                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                             {courierName.charAt(0).toUpperCase()}
+                                           </div>
+                                           <div>
+                                             <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
+                                               {courierName}
+                                             </div>
+                                             <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                               SimmyCare Dispatcher • Motorbike
+                                             </div>
+                                           </div>
+                                           <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                             <i className="fa-solid fa-phone" style={{ fontSize: '0.8rem' }}></i>
+                                           </a>
+                                         </div>
+
+                                         {progressVal === 100 ? (
+                                           <button
+                                             type="button"
+                                             className="btn btn-success"
+                                             onClick={() => {
+                                               const updatedOrders = inquiries.map(inq =>
+                                                 inq.id === selectedPharmacyOrder.id ? { ...inq, status: 'Delivered' } : inq
+                                               );
+                                               setInquiries(updatedOrders);
+                                               setSelectedPharmacyOrder({ ...selectedPharmacyOrder, status: 'Delivered' });
+                                               alert("Thank you! You have confirmed receipt of your drugs. Your order status is now 'Delivered'.");
+                                             }}
+                                             style={{ width: '100%', marginTop: '0.75rem', padding: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#22c55e', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
+                                           >
+                                             <i className="fa-solid fa-circle-check"></i> Confirm Receipt of Drugs
+                                           </button>
+                                         ) : (
+                                           <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '6px', fontSize: '0.75rem', color: '#93c5fd', textAlign: 'center' }}>
+                                             <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.35rem' }}></i>
+                                             Courier is en route. Please confirm receipt here once the rider arrives.
+                                           </div>
+                                         )}
+                                       </div>
+                                     </div>
+                                   );
+                                 })()}
 
                                 {status === 'Delivered' && (
                                   <div style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -4781,91 +5389,185 @@ export default function App() {
                                     </div>
                                   </div>
                                 ) : (
-                                  <div>
-                                    <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
-                                      Logistics Courier & Trip Progress (Zipline Integration)
-                                    </strong>
+                                  (() => {
+                                    const progressVal = selectedLabRequest.deliveryProgress || 0;
+                                    const courierName = selectedLabRequest.assignedRider || 'Default Courier';
+                                    const destCoords = getTripCoords(selectedLabRequest.id);
+                                    const riderCoords = getRiderCoords(courierName);
+                                    
+                                    let currentCoords;
+                                    if (status === 'Sample Collected') {
+                                      // Return leg: Client -> Hub
+                                      const factor = progressVal / 100;
+                                      currentCoords = {
+                                        x: destCoords.x + (250 - destCoords.x) * factor,
+                                        y: destCoords.y + (150 - destCoords.y) * factor
+                                      };
+                                    } else {
+                                      // Collection leg: Rider -> Hub -> Client
+                                      currentCoords = getInterpolatedCoords(progressVal, destCoords, courierName, selectedLabRequest.id);
+                                    }
 
-                                    <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                      <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#eab308', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#eab308', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
-                                        {status === 'Sample Collected' ? 'RETURNING SAMPLES' : 'TECHNICIAN EN ROUTE'}
-                                      </div>
-                                      <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
-                                        ETA: {Math.max(1, Math.round(15 * (1 - simulatedProgress / 100)))} MINS
-                                      </div>
+                                    return (
+                                      <div>
+                                        <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
+                                          Logistics Courier & Trip Progress (Zipline Integration)
+                                        </strong>
 
-                                      <svg viewBox="0 0 400 200" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
-                                        <path d="M 0,100 L 400,100 M 100,0 L 100,200 M 300,0 L 300,200 M 0,50 L 400,50 M 0,150 L 400,150" stroke="rgba(255,255,255,0.04)" strokeWidth="6" fill="none" />
-                                        <path d="M 200,0 L 200,200" stroke="rgba(255,255,255,0.04)" strokeWidth="9" fill="none" />
+                                        <div className="tracking-map-container" style={{ background: '#0b1329', borderRadius: '12px', padding: '1rem', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                          <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15, 23, 42, 0.85)', color: '#eab308', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5, display: 'flex', alignItems: 'center', gap: '0.35rem', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#eab308', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
+                                            {status === 'Sample Collected' ? 'RETURNING SAMPLES' : 'TECHNICIAN EN ROUTE'}
+                                          </div>
+                                          <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--color-accent)', color: '#fff', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', zIndex: 5 }}>
+                                            ETA: {Math.max(1, Math.round(15 * (1 - progressVal / 100)))} MINS
+                                          </div>
 
-                                        {/* Route path */}
-                                        <path id="lab-route" d="M 300,100 Q 200,150 200,50 T 100,100" stroke="#f59e0b" strokeWidth="3" strokeDasharray="6,4" fill="none" />
+                                          <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
+                                            {/* Road Map Grid */}
+                                            <defs>
+                                              <pattern id="mapGridMini3" width="20" height="20" patternUnits="userSpaceOnUse">
+                                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
+                                              </pattern>
+                                            </defs>
+                                            <rect width="500" height="300" fill="url(#mapGridMini3)" />
 
-                                        {/* Diagnostic Hub Pin */}
-                                        <circle cx="100" cy="100" r="7" fill="#10b981" />
-                                        <circle cx="100" cy="100" r="13" fill="#10b981" fillOpacity="0.15" />
-                                        <text x="85" y="85" fill="#10b981" fontSize="8" fontWeight="bold">Simmy Diagnostics Hub</text>
+                                            {/* Water / Parks */}
+                                            <path d="M 0,220 C 150,230 300,180 500,210 L 500,300 L 0,300 Z" fill="#0d1b3e" opacity="0.4" />
+                                            <path d="M 0,220 C 150,230 300,180 500,210" stroke="#1b3b6f" strokeWidth="4" fill="none" opacity="0.6" />
+                                            <rect x="50" y="60" width="80" height="60" rx="8" fill="#14362d" opacity="0.3" />
+                                            <rect x="360" y="40" width="90" height="50" rx="8" fill="#14362d" opacity="0.3" />
 
-                                        {/* Patient address Pin */}
-                                        <circle cx="300" cy="100" r="7" fill="#ef4444" />
-                                        <circle cx="300" cy="100" r="13" fill="#ef4444" fillOpacity="0.15" />
-                                        <text x="270" y="85" fill="#ef4444" fontSize="8" fontWeight="bold">Your Home</text>
+                                            {/* Streets */}
+                                            <path d="M 20,40 L 480,40 M 20,260 L 480,260 M 70,20 L 70,280 M 430,20 L 430,280" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
+                                            <path d="M 0,150 L 500,150" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
+                                            <path d="M 0,150 L 500,150" stroke="#0f172a" strokeWidth="6" fill="none" />
+                                            <path d="M 250,0 L 250,300" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
+                                            <path d="M 250,0 L 250,300" stroke="#0f172a" strokeWidth="6" fill="none" />
+                                            <path d="M 20,20 L 480,280" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+                                            <path d="M 20,20 L 480,280" stroke="#0f172a" strokeWidth="4" fill="none" />
 
-                                        {/* Moving Courier */}
-                                        {(() => {
-                                          const t = status === 'Sample Collected' ? (simulatedProgress / 100) : (1 - simulatedProgress / 100);
-                                          let courierX = 300;
-                                          let courierY = 100;
-                                          if (t < 0.5) {
-                                            const tSeg = t / 0.5;
-                                            courierX = 300 - (300 - 200) * tSeg;
-                                            courierY = 100 - (100 - 150) * tSeg;
-                                          } else {
-                                            const tSeg = (t - 0.5) / 0.5;
-                                            courierX = 200 - (200 - 100) * tSeg;
-                                            courierY = 150 - (150 - 50) * tSeg;
-                                          }
-                                          return (
-                                            <g transform={`translate(${courierX}, ${courierY})`}>
+                                            {/* Central Hub Pin */}
+                                            <circle cx="250" cy="150" r="6" fill="#10b981" />
+                                            <circle cx="250" cy="150" r="12" fill="#10b981" fillOpacity="0.15" />
+                                            <text x="260" y="154" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
+
+                                            {/* Route path Leg 1 (dashed or active depending on stage) */}
+                                            {status !== 'Sample Collected' && (
+                                              <line
+                                                x1={riderCoords.x}
+                                                y1={riderCoords.y}
+                                                x2="250"
+                                                y2="150"
+                                                stroke="#f59e0b"
+                                                strokeWidth="2.5"
+                                                strokeDasharray="4,4"
+                                                opacity={progressVal <= 40 ? 1 : 0.3}
+                                              />
+                                            )}
+
+                                            {/* Leg 2 path: Hub -> Patient */}
+                                            <line
+                                              x1="250"
+                                              y1="150"
+                                              x2={destCoords.x}
+                                              y2={destCoords.y}
+                                              stroke="#10b981"
+                                              strokeWidth="3"
+                                              strokeDasharray={progressVal < 40 && status !== 'Sample Collected' ? "5,5" : "none"}
+                                              opacity={progressVal >= 40 || status === 'Sample Collected' ? 1 : 0.4}
+                                            />
+
+                                            {/* Patient Location Pin */}
+                                            <g transform={`translate(${destCoords.x}, ${destCoords.y})`}>
+                                              <circle r="7" fill="#ef4444" />
+                                              <circle r="13" fill="#ef4444" fillOpacity="0.15" />
+                                              <text x="10" y="3" fill="#ef4444" fontSize="9" fontWeight="bold">{selectedLabRequest.patientName || loggedInPatient.name}</text>
+                                            </g>
+
+                                            {/* Moving Courier */}
+                                            <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
                                               <circle r="9" fill="#f59e0b" />
                                               <circle r="16" fill="#f59e0b" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
-                                              <text textAnchor="middle" y="3" fill="#fff" fontSize="9">🚁</text>
+                                              <text textAnchor="middle" y="3" fill="#fff" fontSize="9">{status === 'Sample Collected' ? '🧪' : '🚁'}</text>
                                             </g>
-                                          );
-                                        })()}
-                                      </svg>
+                                          </svg>
 
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                                          {(selectedLabRequest.assignedRider || 'Rider').charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                          <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
-                                            {selectedLabRequest.assignedRider || 'Default Courier'}
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
+                                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                              {courierName.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                              <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
+                                                {courierName}
+                                              </div>
+                                              <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                                Simmy Diagnostics Specialist • Mobile Lab Unit
+                                              </div>
+                                            </div>
+                                            <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                              <i className="fa-solid fa-phone" style={{ fontSize: '0.8rem' }}></i>
+                                            </a>
                                           </div>
-                                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                                            Simmy Diagnostics Specialist • Mobile Lab Unit
-                                          </div>
-                                        </div>
-                                        <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                                          <i className="fa-solid fa-phone" style={{ fontSize: '0.8rem' }}></i>
-                                        </a>
-                                      </div>
-                                    </div>
 
-                                    <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }}>
-                                      <i className="fa-solid fa-truck" style={{ color: '#d97706', fontSize: '1.5rem' }}></i>
-                                      <div>
-                                        <strong style={{ color: '#b45309', display: 'block', fontSize: '0.9rem' }}>
-                                          {status === 'Sample Collected' ? "Sample Collection Complete" : "Technician Dispatched"}
-                                        </strong>
-                                        <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
-                                          {status === 'Sample Collected' ? "The technician is safely returning your diagnostic samples to the central lab for pathology check." : "The technician is carrying a temperature-regulated sterile cold-chain collection kit."}
-                                        </span>
+                                          {status === 'Pending' && progressVal === 100 && (
+                                            <button
+                                              type="button"
+                                              className="btn btn-warning"
+                                              onClick={() => {
+                                                const updatedApts = appointments.map(apt =>
+                                                  apt.id === selectedLabRequest.id ? { ...apt, status: 'Sample Collected', deliveryProgress: 0, isSimulating: true } : apt
+                                                );
+                                                setAppointments(updatedApts);
+                                                setSelectedLabRequest({ ...selectedLabRequest, status: 'Sample Collected', deliveryProgress: 0, isSimulating: true });
+                                                alert("Thank you! You have confirmed technician arrival and sample collection. The technician is now returning to the laboratory.");
+                                              }}
+                                              style={{ width: '100%', marginTop: '0.75rem', padding: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#f59e0b', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
+                                            >
+                                              <i className="fa-solid fa-vial-circle-check"></i> Confirm Sample Collection
+                                            </button>
+                                          )}
+
+                                          {status === 'Sample Collected' && progressVal === 100 && (
+                                            <button
+                                              type="button"
+                                              className="btn btn-success"
+                                              onClick={() => {
+                                                const updatedApts = appointments.map(apt =>
+                                                  apt.id === selectedLabRequest.id ? { ...apt, status: 'Completed', deliveryProgress: 100 } : apt
+                                                );
+                                                setAppointments(updatedApts);
+                                                setSelectedLabRequest({ ...selectedLabRequest, status: 'Completed', deliveryProgress: 100 });
+                                                alert("Thank you! You have confirmed safe delivery of laboratory samples to the pathology laboratory. Clinical diagnostics will begin immediately.");
+                                              }}
+                                              style={{ width: '100%', marginTop: '0.75rem', padding: '0.6rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: '#22c55e', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}
+                                            >
+                                              <i className="fa-solid fa-circle-check"></i> Confirm Lab Delivery Completion
+                                            </button>
+                                          )}
+
+                                          {progressVal < 100 && (
+                                            <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '6px', fontSize: '0.75rem', color: '#fcd34d', textAlign: 'center' }}>
+                                              <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '0.35rem' }}></i>
+                                              {status === 'Sample Collected' ? 'Technician is returning samples to pathology lab. Please confirm final delivery once they arrive.' : 'Technician is en route to your location. Please confirm collection here when they arrive.'}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }}>
+                                          <i className="fa-solid fa-truck" style={{ color: '#d97706', fontSize: '1.5rem' }}></i>
+                                          <div>
+                                            <strong style={{ color: '#b45309', display: 'block', fontSize: '0.9rem' }}>
+                                              {status === 'Sample Collected' ? "Sample Collection Complete" : "Technician Dispatched"}
+                                            </strong>
+                                            <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
+                                              {status === 'Sample Collected' ? "The technician is safely returning your diagnostic samples to the central lab for pathology check." : "The technician is carrying a temperature-regulated sterile cold-chain collection kit."}
+                                            </span>
+                                          </div>
+                                        </div>
                                       </div>
-                                    </div>
-                                  </div>
+                                    );
+                                  })()
                                 )}
                               </div>
                             );
@@ -5537,7 +6239,8 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                    ))()}
+                    );
+                  })()}
 
                     {doctorNavView === 'profile' && (
                       <div>
@@ -7086,25 +7789,83 @@ export default function App() {
                                     </div>
                                   </div>
 
-                                  {/* Route Checkpoints */}
+                                   {/* Route Checkpoints with Manual Logging */}
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '8px' }}>
                                     <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'block' }}>Route Checkpoints</strong>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
-                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                      <span>Departed SimmyCare Central Depot</span>
+                                    {/* Checkpoint 1: Depot Departure */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
+                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <span>Departed SimmyCare Depot</span>
+                                      </div>
+                                      {mapSimulationProgress === 0 && (
+                                        <button
+                                          type="button"
+                                          className="btn btn-xs btn-accent"
+                                          onClick={() => {
+                                            setMapSimulationProgress(30);
+                                            const isOrder = mapTrackedTripId.startsWith('ORD-');
+                                            const setList = isOrder ? setInquiries : setAppointments;
+                                            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
+                                          }}
+                                          style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                        >
+                                          Log Depart
+                                        </button>
+                                      )}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
-                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                      <span>Transiting Abuja Ring Expressway</span>
+
+                                    {/* Checkpoint 2: Abuja Ring Expressway */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
+                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <span>Transiting Expressway</span>
+                                      </div>
+                                      {mapSimulationProgress === 30 && (
+                                        <button
+                                          type="button"
+                                          className="btn btn-xs btn-accent"
+                                          onClick={() => {
+                                            setMapSimulationProgress(70);
+                                            const isOrder = mapTrackedTripId.startsWith('ORD-');
+                                            const setList = isOrder ? setInquiries : setAppointments;
+                                            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 70 } : x));
+                                          }}
+                                          style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                        >
+                                          Log Transit
+                                        </button>
+                                      )}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
-                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                      <span>Entering Destination Area Ward</span>
+
+                                    {/* Checkpoint 3: Destination Ward */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
+                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <span>Entering Destination Area</span>
+                                      </div>
+                                      {mapSimulationProgress === 70 && (
+                                        <button
+                                          type="button"
+                                          className="btn btn-xs btn-accent"
+                                          onClick={() => {
+                                            setMapSimulationProgress(100);
+                                            const isOrder = mapTrackedTripId.startsWith('ORD-');
+                                            const setList = isOrder ? setInquiries : setAppointments;
+                                            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
+                                          }}
+                                          style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                        >
+                                          Log Arrival
+                                        </button>
+                                      )}
                                     </div>
+
+                                    {/* Checkpoint 4: Delivered */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
                                       <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                      <span>Delivered & Handed Over to Client</span>
+                                      <span>Delivered & Handed Over</span>
                                     </div>
                                   </div>
 
@@ -7503,6 +8264,30 @@ export default function App() {
                     <h3>{patients.length}</h3>
                     <p>REGISTERED PATIENTS</p>
                   </div>
+                  <div className="stat-divider"></div>
+                  <div
+                    className={`stat-item clickable ${adminNavView === 'pharmacists' ? 'active' : ''}`}
+                    onClick={() => setAdminNavView('pharmacists')}
+                  >
+                    <h3>{pharmacists.length}</h3>
+                    <p>PHARMACISTS</p>
+                  </div>
+                  <div className="stat-divider"></div>
+                  <div
+                    className={`stat-item clickable ${adminNavView === 'labs' ? 'active' : ''}`}
+                    onClick={() => setAdminNavView('labs')}
+                  >
+                    <h3>{labs.length}</h3>
+                    <p>LAB TECHS</p>
+                  </div>
+                  <div className="stat-divider"></div>
+                  <div
+                    className={`stat-item clickable ${adminNavView === 'logistics' ? 'active' : ''}`}
+                    onClick={() => setAdminNavView('logistics')}
+                  >
+                    <h3>{logistics.length}</h3>
+                    <p>LOGISTICS STAFF</p>
+                  </div>
                 </div>
 
                 <div className="dashboard-layout">
@@ -7521,6 +8306,24 @@ export default function App() {
                       <i className="fa-solid fa-user-doctor"></i> Doctor Profiles
                     </button>
                     <button
+                      className={`sidebar-nav-btn ${adminNavView === 'pharmacists' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('pharmacists')}
+                    >
+                      <i className="fa-solid fa-prescription-bottle-medical"></i> Pharmacists
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${adminNavView === 'labs' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('labs')}
+                    >
+                      <i className="fa-solid fa-vials"></i> Lab Technicians
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${adminNavView === 'logistics' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('logistics')}
+                    >
+                      <i className="fa-solid fa-motorcycle"></i> Logistics Dispatch
+                    </button>
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'patients' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('patients')}
                     >
@@ -7531,6 +8334,12 @@ export default function App() {
                       onClick={() => setAdminNavView('inquiries')}
                     >
                       <i className="fa-solid fa-inbox"></i> Patient Inquiries
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${adminNavView === 'admins' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('admins')}
+                    >
+                      <i className="fa-solid fa-user-shield"></i> Admins Directory
                     </button>
                     <button
                       className={`sidebar-nav-btn ${adminNavView === 'profile' ? 'active' : ''}`}
@@ -7841,7 +8650,8 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                    ))()}
+                    );
+                  })()}
 
                     {adminNavView === 'doctors' && (
                       <div>
@@ -8145,6 +8955,7 @@ export default function App() {
                                         <div>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                                             <strong style={{ color: 'var(--color-indigo)' }}>{d.name}</strong>
+                                            <span style={{ fontSize: '0.65rem', background: 'rgba(24, 43, 73, 0.08)', color: 'var(--color-text-muted)', padding: '1px 5px', borderRadius: '4px', fontWeight: 'bold', fontFamily: 'monospace' }}>{d.staffId || 'N/A'}</span>
                                             {d.verified !== false ? (
                                               <i className="fa-solid fa-circle-check" style={{ color: '#10B981', fontSize: '0.85rem' }} title="Verified by board"></i>
                                             ) : (
@@ -8513,6 +9324,762 @@ export default function App() {
                             </div>
                           </form>
                         )}
+                      </div>
+                    )}
+
+                    {adminNavView === 'pharmacists' && (
+                      <div>
+                        <h3>Manage Pharmacy Directory</h3>
+
+                        <form className="add-doctor-form glassmorphic" onSubmit={handleAddPharmacist}>
+                          <h4>{editingPharmacistId ? "Edit Pharmacist Profile" : "Register New Pharmacist Profile"}</h4>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Pharmacist Name</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Bello Ibrahim"
+                                value={newPharmacistData.name}
+                                onChange={(e) => setNewPharmacistData({ ...newPharmacistData, name: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Pharmacy Facility Name</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. SimmyCare Central Pharmacy"
+                                value={newPharmacistData.pharmacyName}
+                                onChange={(e) => setNewPharmacistData({ ...newPharmacistData, pharmacyName: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>PCN License Number</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. PCN/P/9482"
+                                value={newPharmacistData.pharmacyLicense}
+                                onChange={(e) => setNewPharmacistData({ ...newPharmacistData, pharmacyLicense: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Email Address</label>
+                              <input
+                                type="email"
+                                required
+                                placeholder="pharmacist@simmycare.com"
+                                value={newPharmacistData.email}
+                                onChange={(e) => setNewPharmacistData({ ...newPharmacistData, email: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Contact Phone</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 08012345678"
+                                value={newPharmacistData.phone}
+                                onChange={(e) => setNewPharmacistData({ ...newPharmacistData, phone: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Login Password</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="password123"
+                                value={newPharmacistData.password}
+                                onChange={(e) => setNewPharmacistData({ ...newPharmacistData, password: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <button type="submit" className="btn btn-primary">{editingPharmacistId ? "Update Profile" : "Save Profile to Board"}</button>
+                            {editingPharmacistId && (
+                              <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={() => {
+                                  setEditingPharmacistId(null);
+                                  setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
+                                }}
+                              >
+                                Cancel Edit
+                              </button>
+                            )}
+                          </div>
+                        </form>
+
+                        <div style={{ marginTop: '2rem' }}>
+                          <h4>Registered Pharmacists ({pharmacists.length})</h4>
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Staff ID</th>
+                                  <th>Pharmacist</th>
+                                  <th>Pharmacy Facility</th>
+                                  <th>PCN License</th>
+                                  <th>Contact Details</th>
+                                  <th>Status</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {pharmacists.map(p => (
+                                  <tr key={p.email}>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{p.staffId || 'N/A'}</td>
+                                    <td>
+                                      <strong>{p.name}</strong>
+                                    </td>
+                                    <td>{p.pharmacyName}</td>
+                                    <td><code>{p.pharmacyLicense}</code></td>
+                                    <td>
+                                      <div style={{ fontSize: '0.8rem' }}>
+                                        <div>Email: {p.email}</div>
+                                        {p.phone && <div>Phone: {p.phone}</div>}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <span className={`status-badge ${p.active === false ? 'status-cancelled' : 'status-approved'}`} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px' }}>
+                                        {p.active === false ? 'Offline' : 'Online'}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setPharmacists(pharmacists.map(x => x.email === p.email ? { ...x, active: !x.active } : x));
+                                          }}
+                                          title={p.active === false ? "Go Online" : "Go Offline"}
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            backgroundColor: p.active === false ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                            color: p.active === false ? '#10B981' : '#EF4444'
+                                          }}
+                                        >
+                                          <i className={`fa-solid ${p.active === false ? 'fa-toggle-off' : 'fa-toggle-on'}`}></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setEditingPharmacistId(p.email);
+                                            setNewPharmacistData({
+                                              name: p.name,
+                                              email: p.email,
+                                              password: p.password,
+                                              phone: p.phone || '',
+                                              pharmacyName: p.pharmacyName,
+                                              pharmacyLicense: p.pharmacyLicense,
+                                              verified: p.verified !== undefined ? p.verified : true,
+                                              active: p.active !== undefined ? p.active : true
+                                            });
+                                          }}
+                                          title="Edit Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            if (confirm(`Are you sure you want to offboard Pharmacist ${p.name}?`)) {
+                                              setPharmacists(pharmacists.filter(x => x.email !== p.email));
+                                            }
+                                          }}
+                                          title="Delete Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}
+                                        >
+                                          <i className="fa-solid fa-trash-can"></i>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {adminNavView === 'labs' && (
+                      <div>
+                        <h3>Manage Laboratory Directory</h3>
+
+                        <form className="add-doctor-form glassmorphic" onSubmit={handleAddLab}>
+                          <h4>{editingLabId ? "Edit Lab Technician Profile" : "Register New Lab Technician Profile"}</h4>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Technician Name</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Wasila Goranduma"
+                                value={newLabData.name}
+                                onChange={(e) => setNewLabData({ ...newLabData, name: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Lab Facility Name</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. SimmyCare Diagnostics"
+                                value={newLabData.facilityName}
+                                onChange={(e) => setNewLabData({ ...newLabData, facilityName: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>MLSCN License Number</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. MLSCN/L/3821"
+                                value={newLabData.labLicense}
+                                onChange={(e) => setNewLabData({ ...newLabData, labLicense: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Email Address</label>
+                              <input
+                                type="email"
+                                required
+                                placeholder="lab@simmycare.com"
+                                value={newLabData.email}
+                                onChange={(e) => setNewLabData({ ...newLabData, email: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Contact Phone</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 08023456789"
+                                value={newLabData.phone}
+                                onChange={(e) => setNewLabData({ ...newLabData, phone: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Login Password</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="password123"
+                                value={newLabData.password}
+                                onChange={(e) => setNewLabData({ ...newLabData, password: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <button type="submit" className="btn btn-primary">{editingLabId ? "Update Profile" : "Save Profile to Board"}</button>
+                            {editingLabId && (
+                              <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={() => {
+                                  setEditingLabId(null);
+                                  setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
+                                }}
+                              >
+                                Cancel Edit
+                              </button>
+                            )}
+                          </div>
+                        </form>
+
+                        <div style={{ marginTop: '2rem' }}>
+                          <h4>Registered Lab Technicians ({labs.length})</h4>
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Staff ID</th>
+                                  <th>Technician</th>
+                                  <th>Diagnostic Facility</th>
+                                  <th>MLSCN License</th>
+                                  <th>Contact Details</th>
+                                  <th>Status</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {labs.map(l => (
+                                  <tr key={l.email}>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.staffId || 'N/A'}</td>
+                                    <td>
+                                      <strong>{l.name}</strong>
+                                    </td>
+                                    <td>{l.facilityName}</td>
+                                    <td><code>{l.labLicense}</code></td>
+                                    <td>
+                                      <div style={{ fontSize: '0.8rem' }}>
+                                        <div>Email: {l.email}</div>
+                                        {l.phone && <div>Phone: {l.phone}</div>}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <span className={`status-badge ${l.active === false ? 'status-cancelled' : 'status-approved'}`} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px' }}>
+                                        {l.active === false ? 'Offline' : 'Online'}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setLabs(labs.map(x => x.email === l.email ? { ...x, active: !x.active } : x));
+                                          }}
+                                          title={l.active === false ? "Go Online" : "Go Offline"}
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            backgroundColor: l.active === false ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                            color: l.active === false ? '#10B981' : '#EF4444'
+                                          }}
+                                        >
+                                          <i className={`fa-solid ${l.active === false ? 'fa-toggle-off' : 'fa-toggle-on'}`}></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setEditingLabId(l.email);
+                                            setNewLabData({
+                                              name: l.name,
+                                              email: l.email,
+                                              password: l.password,
+                                              phone: l.phone || '',
+                                              facilityName: l.facilityName,
+                                              labLicense: l.labLicense,
+                                              verified: l.verified !== undefined ? l.verified : true,
+                                              active: l.active !== undefined ? l.active : true
+                                            });
+                                          }}
+                                          title="Edit Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            if (confirm(`Are you sure you want to offboard Lab Tech ${l.name}?`)) {
+                                              setLabs(labs.filter(x => x.email !== l.email));
+                                            }
+                                          }}
+                                          title="Delete Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}
+                                        >
+                                          <i className="fa-solid fa-trash-can"></i>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {adminNavView === 'logistics' && (
+                      <div>
+                        <h3>Manage Logistics & Dispatch Directory</h3>
+
+                        <form className="add-doctor-form glassmorphic" onSubmit={handleAddLogistics}>
+                          <h4>{editingLogisticsId ? "Edit Logistics Rider Profile" : "Register New Logistics Rider Profile"}</h4>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Rider / Dispatcher Name</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Chinedu Okeke"
+                                value={newLogisticsData.name}
+                                onChange={(e) => setNewLogisticsData({ ...newLogisticsData, name: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Vehicle Type</label>
+                              <select
+                                value={newLogisticsData.vehicleType}
+                                onChange={(e) => setNewLogisticsData({ ...newLogisticsData, vehicleType: e.target.value })}
+                              >
+                                <option value="Motorbike">Motorbike</option>
+                                <option value="Bicycle">Bicycle</option>
+                                <option value="Van">Delivery Van</option>
+                                <option value="Drone">Autonomous Drone</option>
+                              </select>
+                            </div>
+                            <div className="form-group">
+                              <label>Dispatch Hub Area</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Abuja Central"
+                                value={newLogisticsData.dispatchArea}
+                                onChange={(e) => setNewLogisticsData({ ...newLogisticsData, dispatchArea: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Email Address</label>
+                              <input
+                                type="email"
+                                required
+                                placeholder="rider@simmycare.com"
+                                value={newLogisticsData.email}
+                                onChange={(e) => setNewLogisticsData({ ...newLogisticsData, email: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Contact Phone</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 08034567890"
+                                value={newLogisticsData.phone}
+                                onChange={(e) => setNewLogisticsData({ ...newLogisticsData, phone: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Login Password</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="password123"
+                                value={newLogisticsData.password}
+                                onChange={(e) => setNewLogisticsData({ ...newLogisticsData, password: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <button type="submit" className="btn btn-primary">{editingLogisticsId ? "Update Profile" : "Save Profile to Board"}</button>
+                            {editingLogisticsId && (
+                              <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={() => {
+                                  setEditingLogisticsId(null);
+                                  setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
+                                }}
+                              >
+                                Cancel Edit
+                              </button>
+                            )}
+                          </div>
+                        </form>
+
+                        <div style={{ marginTop: '2rem' }}>
+                          <h4>Registered Logistics Dispatchers ({logistics.length})</h4>
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Staff ID</th>
+                                  <th>Rider Name</th>
+                                  <th>Vehicle</th>
+                                  <th>Dispatch Area</th>
+                                  <th>Contact Details</th>
+                                  <th>Status</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {logistics.map(l => (
+                                  <tr key={l.email}>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.staffId || 'N/A'}</td>
+                                    <td>
+                                      <strong>{l.name}</strong>
+                                    </td>
+                                    <td>{l.vehicleType}</td>
+                                    <td>{l.dispatchArea}</td>
+                                    <td>
+                                      <div style={{ fontSize: '0.8rem' }}>
+                                        <div>Email: {l.email}</div>
+                                        {l.phone && <div>Phone: {l.phone}</div>}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <span className={`status-badge ${l.active === false ? 'status-cancelled' : 'status-approved'}`} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px' }}>
+                                        {l.active === false ? 'Offline' : 'Online'}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setLogistics(logistics.map(x => x.email === l.email ? { ...x, active: !x.active } : x));
+                                          }}
+                                          title={l.active === false ? "Go Online" : "Go Offline"}
+                                          style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            backgroundColor: l.active === false ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                                            color: l.active === false ? '#10B981' : '#EF4444'
+                                          }}
+                                        >
+                                          <i className={`fa-solid ${l.active === false ? 'fa-toggle-off' : 'fa-toggle-on'}`}></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setEditingLogisticsId(l.email);
+                                            setNewLogisticsData({
+                                              name: l.name,
+                                              email: l.email,
+                                              password: l.password,
+                                              phone: l.phone || '',
+                                              vehicleType: l.vehicleType,
+                                              dispatchArea: l.dispatchArea,
+                                              verified: l.verified !== undefined ? l.verified : true,
+                                              active: l.active !== undefined ? l.active : true
+                                            });
+                                          }}
+                                          title="Edit Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            if (confirm(`Are you sure you want to offboard Logistics Rider ${l.name}?`)) {
+                                              setLogistics(logistics.filter(x => x.email !== l.email));
+                                            }
+                                          }}
+                                          title="Delete Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}
+                                        >
+                                          <i className="fa-solid fa-trash-can"></i>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {adminNavView === 'admins' && (
+                      <div>
+                        <h3>Manage Administrator Directory & Access</h3>
+
+                        <form className="add-doctor-form glassmorphic" onSubmit={handleAddAdmin}>
+                          <h4>{editingAdminId ? "Edit Admin Credentials" : "Register New Administrator Profile"}</h4>
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Administrator Name</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Zainab Abdulfatah"
+                                value={newAdminData.name}
+                                onChange={(e) => setNewAdminData({ ...newAdminData, name: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Admin Username (for Sign-In)</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. zainab_admin"
+                                value={newAdminData.username}
+                                onChange={(e) => setNewAdminData({ ...newAdminData, username: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Email Address</label>
+                              <input
+                                type="email"
+                                required
+                                placeholder="zainab@simmycare.com"
+                                value={newAdminData.email}
+                                onChange={(e) => setNewAdminData({ ...newAdminData, email: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Admin Sign-In Password</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="password123"
+                                value={newAdminData.password}
+                                onChange={(e) => setNewAdminData({ ...newAdminData, password: e.target.value })}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <button type="submit" className="btn btn-primary">{editingAdminId ? "Update Profile" : "Save Profile to Board"}</button>
+                            {editingAdminId && (
+                              <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={() => {
+                                  setEditingAdminId(null);
+                                  setNewAdminData({ name: '', username: '', email: '', password: '' });
+                                }}
+                              >
+                                Cancel Edit
+                              </button>
+                            )}
+                          </div>
+                        </form>
+
+                        <div style={{ marginTop: '2rem' }}>
+                          <h4>Registered Administrators ({admins.length})</h4>
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Staff ID</th>
+                                  <th>Admin Name</th>
+                                  <th>Username</th>
+                                  <th>Email</th>
+                                  <th>Credentials Preview</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {admins.map(a => (
+                                  <tr key={a.email}>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{a.staffId || 'N/A'}</td>
+                                    <td>
+                                      <strong>{a.name}</strong>
+                                    </td>
+                                    <td><code>{a.username}</code></td>
+                                    <td>{a.email}</td>
+                                    <td>Password: <code>{a.password}</code></td>
+                                    <td>
+                                      <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            setEditingAdminId(a.email);
+                                            setNewAdminData({
+                                              name: a.name,
+                                              username: a.username,
+                                              email: a.email,
+                                              password: a.password
+                                            });
+                                          }}
+                                          title="Edit Profile"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(28, 43, 73, 0.08)', color: 'var(--color-indigo)' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <button
+                                          className="delete-doctor-btn"
+                                          onClick={() => {
+                                            if (a.username === 'admin') {
+                                              alert("Cannot revoke access from the primary system administrator account.");
+                                              return;
+                                            }
+                                            if (confirm(`Are you sure you want to revoke admin access from ${a.name}?`)) {
+                                              setAdmins(admins.filter(x => x.email !== a.email));
+                                            }
+                                          }}
+                                          title="Revoke Admin Access"
+                                          style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#EF4444' }}
+                                        >
+                                          <i className="fa-solid fa-user-slash"></i>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: '3rem', borderTop: '2px dashed rgba(255,255,255,0.1)', paddingTop: '2rem' }}>
+                          <h4 style={{ color: 'var(--color-accent)' }}>Grant Admin Access to Existing Staff</h4>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+                            You can promote existing staff members (Doctors, Pharmacists, Lab Techs, and Logistics) to have Administrator privileges. This allows them to log in and manage the clinic dashboard.
+                          </p>
+
+                          <div className="table-responsive">
+                            <table className="admin-table">
+                              <thead>
+                                <tr>
+                                  <th>Staff ID</th>
+                                  <th>Staff Member</th>
+                                  <th>Role / Specialty</th>
+                                  <th>Email</th>
+                                  <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {[
+                                  ...doctors.map(d => ({ ...d, roleLabel: `Doctor (${d.specialty})`, rawRole: 'doctor' })),
+                                  ...pharmacists.map(p => ({ ...p, roleLabel: 'Pharmacist', rawRole: 'pharmacist' })),
+                                  ...labs.map(l => ({ ...l, roleLabel: 'Lab Tech', rawRole: 'lab' })),
+                                  ...logistics.map(l => ({ ...l, roleLabel: 'Logistics Rider', rawRole: 'logistics' }))
+                                ].map(staff => {
+                                  const alreadyAdmin = admins.some(a => a.email.toLowerCase() === staff.email.toLowerCase());
+                                  return (
+                                    <tr key={staff.email}>
+                                      <td style={{ fontFamily: 'monospace' }}>{staff.staffId || 'N/A'}</td>
+                                      <td><strong>{staff.name}</strong></td>
+                                      <td>{staff.roleLabel}</td>
+                                      <td>{staff.email}</td>
+                                      <td>
+                                        <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                          {alreadyAdmin ? (
+                                            <span style={{ fontSize: '0.8rem', color: '#10B981', fontWeight: 'bold' }}>✓ Already Admin</span>
+                                          ) : (
+                                            <button
+                                              className="btn btn-outline btn-xs"
+                                              onClick={() => {
+                                                if (confirm(`Are you sure you want to grant Administrator access to ${staff.name}?`)) {
+                                                  const staffId = generateStaffId('admin', admins);
+                                                  const newAd = {
+                                                    staffId,
+                                                    name: staff.name,
+                                                    username: staff.email.split('@')[0],
+                                                    email: staff.email,
+                                                    password: staff.password || 'password123'
+                                                  };
+                                                  setAdmins([...admins, newAd]);
+                                                  alert(`Admin access successfully granted to ${staff.name}!`);
+                                                }
+                                              }}
+                                              style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                                            >
+                                              <i className="fa-solid fa-user-shield"></i> Grant Admin Access
+                                            </button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       </div>
                     )}
 
