@@ -434,6 +434,17 @@ export default function App() {
   const [bookingConsent, setBookingConsent] = useState(false);
   const [registerConsent, setRegisterConsent] = useState(false);
 
+  // Rider Onboarding Modal states
+  const [showRiderOnboardModal, setShowRiderOnboardModal] = useState(false);
+  const [riderForm, setRiderForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    vehicleType: 'Motorbike',
+    dispatchArea: 'Abuja Central',
+    password: 'password123'
+  });
+
   // --- Cart & Checkout States for Service Pages ---
   const [labCart, setLabCart] = useState([]);
   const [pharmacyCart, setPharmacyCart] = useState([]);
@@ -8034,30 +8045,15 @@ export default function App() {
                           <button
                             className="btn btn-primary"
                             onClick={() => {
-                              const name = prompt("Enter Dispatch Rider's Full Name:");
-                              if (!name) return;
-                              const email = prompt("Enter Rider's Email Address:");
-                              if (!email) return;
-                              const phone = prompt("Enter Rider's Phone Number:");
-                              if (!phone) return;
-                              const vehicleType = prompt("Enter Vehicle Type (Motorbike, Bicycle, Delivery Van, Electric Scooter):", "Motorbike");
-                              if (!vehicleType) return;
-                              const dispatchArea = prompt("Enter Primary Coverage / Dispatch Area:", "Lagos Central");
-                              if (!dispatchArea) return;
-                              const password = prompt("Create Rider Account Password:", "password123");
-                              if (!password) return;
-
-                              const newRider = {
-                                name,
-                                email,
-                                phone,
-                                vehicleType,
-                                dispatchArea,
-                                password,
-                                status: 'Idle'
-                              };
-                              setLogistics([...logistics, newRider]);
-                              alert(`Rider "${name}" successfully onboarded into SimmyCare Logistics network!`);
+                              setRiderForm({
+                                name: '',
+                                email: '',
+                                phone: '',
+                                vehicleType: 'Motorbike',
+                                dispatchArea: 'Abuja Central',
+                                password: 'password123'
+                              });
+                              setShowRiderOnboardModal(true);
                             }}
                           >
                             <i className="fa-solid fa-user-plus" style={{ marginRight: '6px' }}></i> Onboard Rider
@@ -11282,6 +11278,137 @@ export default function App() {
                 I Understand & Agree
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- 8. Onboard Rider Modal Form --- */}
+      {showRiderOnboardModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content glassmorphic animate-fade" style={{ maxWidth: '500px', textAlign: 'left', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, color: 'var(--color-indigo)', fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>
+                <i className="fa-solid fa-user-plus" style={{ marginRight: '8px', color: 'var(--color-accent)' }}></i>
+                Onboard Dispatch Rider
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowRiderOnboardModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!riderForm.name || !riderForm.email || !riderForm.phone) {
+                  alert('Please fill out all required fields.');
+                  return;
+                }
+                const newRider = {
+                  ...riderForm,
+                  status: 'Idle'
+                };
+                setLogistics([...logistics, newRider]);
+                setShowRiderOnboardModal(false);
+                alert(`Rider "${riderForm.name}" successfully onboarded into SimmyCare Logistics network!`);
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            >
+              <div className="form-group">
+                <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>FULL NAME *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Salim Sani"
+                  value={riderForm.name}
+                  onChange={(e) => setRiderForm({ ...riderForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>EMAIL ADDRESS *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@simmycare.com"
+                    value={riderForm.email}
+                    onChange={(e) => setRiderForm({ ...riderForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>PHONE NUMBER *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="08034567890"
+                    value={riderForm.phone}
+                    onChange={(e) => setRiderForm({ ...riderForm, phone: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>VEHICLE TYPE</label>
+                  <select
+                    value={riderForm.vehicleType}
+                    onChange={(e) => setRiderForm({ ...riderForm, vehicleType: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', height: '38px', outline: 'none' }}
+                  >
+                    <option value="Motorbike">🏍️ Motorbike</option>
+                    <option value="Bicycle">🚲 Bicycle</option>
+                    <option value="Delivery Van">🚐 Delivery Van</option>
+                    <option value="Electric Scooter">🛴 Electric Scooter</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>COVERAGE REGION</label>
+                  <input
+                    type="text"
+                    placeholder="Abuja Central"
+                    value={riderForm.dispatchArea}
+                    onChange={(e) => setRiderForm({ ...riderForm, dispatchArea: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>CREATE ACCOUNT PASSWORD *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="password123"
+                  value={riderForm.password}
+                  onChange={(e) => setRiderForm({ ...riderForm, password: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                >
+                  Onboard Rider Account
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowRiderOnboardModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
