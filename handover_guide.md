@@ -1,4 +1,4 @@
-# SimmyCare Online Clinic — Developer Handover Guide & Systems Documentation
+# SimmyCare Online Clinic  Developer Handover Guide & Systems Documentation
 
 This document serves as the official developer handover guide and comprehensive technical documentation for the **SimmyCare Online Clinic** platform. It provides an overview of the system architecture, styling conventions, key functional workflows, user credentials, local development commands, and production deployment procedures.
 
