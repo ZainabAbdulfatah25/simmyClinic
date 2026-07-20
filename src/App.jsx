@@ -150,7 +150,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_wasila_1784542084696.png",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551520790.jpg",
     email: "wasilagoranduma@gmail.com",
     password: "password123",
     phone: "+234 803 133 8534",
@@ -172,7 +172,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MNCP/9821",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_hadiza_1784542144416.png",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551557869.jpg",
     email: "kadykubra@gmail.com",
     password: "password123",
     phone: "+234 706 665 0730",
@@ -194,7 +194,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "10 Years",
     regNo: "CHO/7812",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_asmau_1784542412307.png",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551541609.png",
     email: "ridwanasmau901@gmail.com",
     password: "password123",
     phone: "+234 916 652 1888",
@@ -216,7 +216,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "15 Years",
     regNo: "MDCN/4521",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_saima_1784542836987.png",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551578306.jpg",
     email: "mohammedrealsaemaj@gmail.com",
     password: "password123",
     phone: "+234 901 432 4442",
@@ -362,7 +362,7 @@ export default function App() {
   const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorAdamImg, 3: doctorTijjaniImg, 4: doctorBamalliImg };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v9_onboarded_all_doctors_3000_negotiable_google_auth";
+  const DATA_VERSION = "v11_real_uploaded_doctor_photos";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
