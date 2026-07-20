@@ -4,6 +4,10 @@ import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
 import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
 import doctorBamalliImg from './assets/doctor_bamalli.jpg';
+import doctorWasilaImg from './assets/doctor_wasila.jpg';
+import doctorHadizaImg from './assets/doctor_hadiza.jpg';
+import doctorAsmauImg from './assets/doctor_asmau.png';
+import doctorSaimaImg from './assets/doctor_saima.jpg';
 import heroPng from './assets/hero.png';
 import logoSvg from './assets/logo.svg';
 
@@ -150,7 +154,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551520790.jpg",
+    image: doctorWasilaImg,
     email: "wasilagoranduma@gmail.com",
     password: "password123",
     phone: "+234 803 133 8534",
@@ -172,7 +176,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MNCP/9821",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551557869.jpg",
+    image: doctorHadizaImg,
     email: "kadykubra@gmail.com",
     password: "password123",
     phone: "+234 706 665 0730",
@@ -194,7 +198,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "10 Years",
     regNo: "CHO/7812",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551541609.png",
+    image: doctorAsmauImg,
     email: "ridwanasmau901@gmail.com",
     password: "password123",
     phone: "+234 916 652 1888",
@@ -216,7 +220,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "15 Years",
     regNo: "MDCN/4521",
-    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/media__1784551578306.jpg",
+    image: doctorSaimaImg,
     email: "mohammedrealsaemaj@gmail.com",
     password: "password123",
     phone: "+234 901 432 4442",
@@ -359,10 +363,19 @@ export default function App() {
   });
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
-  const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorAdamImg, 3: doctorTijjaniImg, 4: doctorBamalliImg };
+  const BUNDLED_IMAGES = { 
+    1: doctorFatimaImg, 
+    2: doctorAdamImg, 
+    3: doctorTijjaniImg, 
+    4: doctorBamalliImg,
+    5: doctorWasilaImg,
+    6: doctorHadizaImg,
+    7: doctorAsmauImg,
+    8: doctorSaimaImg 
+  };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v11_real_uploaded_doctor_photos";
+  const DATA_VERSION = "v12_public_bundled_doctor_assets";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");

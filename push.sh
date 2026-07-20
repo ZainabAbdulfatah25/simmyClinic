@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 0. Copy real doctor photos into src/assets and public folders for public web hosting
+python3 copy_assets.py || true
+
 # 1. Stage all changes (new assets, code edits, configuration changes)
 git add .
 
