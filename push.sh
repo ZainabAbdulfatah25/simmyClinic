@@ -12,8 +12,13 @@ fi
 # 3. Commit local changes first
 git commit -m "$COMMIT_MSG" || true
 
-# 4. Rebase with remote changes and push to GitHub
-git pull --rebase origin main
+# 4. Fetch latest remote and rebase cleanly
+git rebase --abort 2>/dev/null || true
+git fetch origin main
+git rebase origin/main || git rebase --skip || true
+
+# 5. Push to GitHub
 git push origin main
+
 
 
