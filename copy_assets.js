@@ -12,9 +12,5 @@ fs.copyFileSync(sources.hadiza, 'src/assets/doctor_hadiza.jpg');
 fs.copyFileSync(sources.asmau, 'src/assets/doctor_asmau.png');
 fs.copyFileSync(sources.saima, 'src/assets/doctor_saima.jpg');
 
-fs.copyFileSync(sources.wasila, 'public/doctor_wasila.jpg');
-fs.copyFileSync(sources.hadiza, 'public/doctor_hadiza.jpg');
-fs.copyFileSync(sources.asmau, 'public/doctor_asmau.png');
-fs.copyFileSync(sources.saima, 'public/doctor_saima.jpg');
+console.log('Copied all doctor images to src/assets successfully!');
 
-console.log('Copied all doctor images to src/assets and public successfully!');

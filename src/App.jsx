@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase, uploadAvatarToSupabase } from './supabaseClient';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
 import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
@@ -350,6 +350,67 @@ function getAvatarGradient(index) {
   return gradients[index % gradients.length];
 }
 
+// Reusable Doctor Avatar Component with stateful error fallback
+function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-accent)', className = '' }) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [image]);
+
+  const initials = (name || '')
+    .replace(/^Dr\.\s*/i, '')
+    .split(' ')
+    .filter(Boolean)
+    .map(n => n.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'DR';
+
+  const hasImage = image && typeof image === 'string' && image.length > 5 && !imgError;
+
+  if (hasImage) {
+    return (
+      <img
+        className={className}
+        src={image}
+        alt={name || 'Doctor'}
+        onError={() => setImgError(true)}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          border,
+          flexShrink: 0
+        }}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={className}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: '50%',
+        background: 'linear-gradient(135deg, #182B49, #2C5D88)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: size <= 40 ? '0.8rem' : size <= 70 ? '1.25rem' : '1.75rem',
+        color: '#fff',
+        fontWeight: 'bold',
+        flexShrink: 0,
+        border
+      }}
+    >
+      {initials}
+    </div>
+  );
+}
+
 export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
@@ -375,7 +436,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v12_public_bundled_doctor_assets";
+  const DATA_VERSION = "v13_supabase_storage_avatar_fix";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -393,7 +454,7 @@ export default function App() {
       const seedIds = INITIAL_DOCTORS.map(sd => sd.id);
       // Only keep doctors that exist in INITIAL_DOCTORS (removes any stale dummy entries)
       const validDoctors = parsed.filter(doc => seedIds.includes(doc.id));
-      // Re-apply bundled images for seed doctors unless they have a user-uploaded base64 image
+      // Re-apply bundled images for seed doctors unless they have a user-uploaded base64/http image
       const merged = validDoctors.map(doc => {
         const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
         const updatedDoc = {
@@ -402,7 +463,7 @@ export default function App() {
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
         };
-        if (BUNDLED_IMAGES[doc.id] && (!doc.image || !doc.image.startsWith('data:'))) {
+        if (BUNDLED_IMAGES[doc.id] && (!doc.image || (!doc.image.startsWith('data:') && !doc.image.startsWith('http')))) {
           updatedDoc.image = BUNDLED_IMAGES[doc.id];
         }
         return updatedDoc;
@@ -959,26 +1020,135 @@ export default function App() {
     }
   }, [patients, loggedInPatient]);
 
-  // Router Hash Changes
+  // Router Hash & Navigation Persistence
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash) {
-        const storedRole = sessionStorage.getItem("simmy_auth_role");
-        if (hash === 'dashboard' && !storedRole) {
+    // Scroll listener for scroll persistence across refreshes
+    const handleScroll = () => {
+      sessionStorage.setItem("simmy_scroll_y", window.scrollY.toString());
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Restore scroll position after view or modal changes
+  useEffect(() => {
+    const savedY = sessionStorage.getItem("simmy_scroll_y");
+    if (savedY) {
+      const yPos = parseInt(savedY, 10);
+      if (!isNaN(yPos) && yPos > 0) {
+        const timer = setTimeout(() => {
+          window.scrollTo({ top: yPos, behavior: 'instant' });
+        }, 80);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentView, adminNavView, doctorNavView, previewBookingDoc, adminSelectedDoctor]);
+
+  // Sync state variables to sessionStorage and URL hash/query
+  useEffect(() => {
+    sessionStorage.setItem("simmy_current_view", currentView);
+    sessionStorage.setItem("simmy_admin_nav_view", adminNavView);
+    sessionStorage.setItem("simmy_doctor_nav_view", doctorNavView);
+
+    let queryParts = [];
+    if (previewBookingDoc) {
+      queryParts.push(`doc=${previewBookingDoc.id}`);
+      sessionStorage.setItem("simmy_preview_doc_id", previewBookingDoc.id.toString());
+    } else {
+      sessionStorage.removeItem("simmy_preview_doc_id");
+    }
+
+    if (adminSelectedDoctor) {
+      queryParts.push(`adminDoc=${adminSelectedDoctor.id}`);
+      sessionStorage.setItem("simmy_admin_doc_id", adminSelectedDoctor.id.toString());
+    } else {
+      sessionStorage.removeItem("simmy_admin_doc_id");
+    }
+
+    if (currentView === 'dashboard' && authRole === 'admin') {
+      queryParts.push(`adminTab=${adminNavView}`);
+    } else if (currentView === 'dashboard' && authRole === 'doctor') {
+      queryParts.push(`doctorTab=${doctorNavView}`);
+    }
+
+    const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+    const newHash = `${currentView}${queryString}`;
+    if (window.location.hash.replace('#', '') !== newHash) {
+      window.history.replaceState(null, '', `#${newHash}`);
+    }
+  }, [currentView, adminNavView, doctorNavView, previewBookingDoc, adminSelectedDoctor, authRole]);
+
+  // Restore modals or nested tabs from URL/session on initial load or doctors change
+  useEffect(() => {
+    const fullHash = window.location.hash.replace('#', '');
+    const [, queryPart] = fullHash.split('?');
+    const params = new URLSearchParams(queryPart || '');
+
+    const docId = params.get('doc') || sessionStorage.getItem("simmy_preview_doc_id");
+    if (docId && doctors.length > 0) {
+      const found = doctors.find(d => d.id.toString() === docId.toString());
+      if (found) setPreviewBookingDoc(found);
+    }
+
+    const adminDocId = params.get('adminDoc') || sessionStorage.getItem("simmy_admin_doc_id");
+    if (adminDocId && doctors.length > 0) {
+      const found = doctors.find(d => d.id.toString() === adminDocId.toString());
+      if (found) setAdminSelectedDoctor(found);
+    }
+  }, [doctors]);
+
+  // PopState & HashChange Event Handler (Browser Back / Forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const fullHash = window.location.hash.replace('#', '');
+      const [viewPart, queryPart] = fullHash.split('?');
+      const params = new URLSearchParams(queryPart || '');
+
+      const validViews = [
+        'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard',
+        'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
+        'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
+      ];
+
+      if (viewPart && validViews.includes(viewPart)) {
+        const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
+        if (viewPart === 'dashboard' && !storedRole) {
           setCurrentView('portal-login');
         } else {
-          setCurrentView(hash);
+          setCurrentView(viewPart);
         }
-      } else {
-        setCurrentView('home');
       }
+
+      const docId = params.get('doc');
+      if (docId) {
+        const found = doctors.find(d => d.id.toString() === docId);
+        if (found) setPreviewBookingDoc(found);
+      } else {
+        setPreviewBookingDoc(null);
+      }
+
+      const adminDocId = params.get('adminDoc');
+      if (adminDocId) {
+        const found = doctors.find(d => d.id.toString() === adminDocId);
+        if (found) setAdminSelectedDoctor(found);
+      } else {
+        setAdminSelectedDoctor(null);
+      }
+
+      const adminTab = params.get('adminTab');
+      if (adminTab) setAdminNavView(adminTab);
+
+      const doctorTab = params.get('doctorTab');
+      if (doctorTab) setDoctorNavView(doctorTab);
     };
-    window.addEventListener('hashchange', handleHashChange);
-    // Trigger initial check
-    handleHashChange();
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [authRole]);
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, [authRole, doctors]);
 
   const [viewHistory, setViewHistory] = useState(['home']);
 
@@ -989,24 +1159,32 @@ export default function App() {
     });
     const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
     if (view === 'dashboard' && !storedRole) {
-      window.location.hash = 'portal-login';
+      window.history.pushState(null, '', '#portal-login');
       setCurrentView('portal-login');
     } else {
-      window.location.hash = view;
+      window.history.pushState(null, '', `#${view}`);
       setCurrentView(view);
     }
   };
 
   const navigateBack = () => {
+    if (previewBookingDoc) {
+      setPreviewBookingDoc(null);
+      return;
+    }
+    if (adminSelectedDoctor) {
+      setAdminSelectedDoctor(null);
+      return;
+    }
     setViewHistory(prev => {
       if (prev.length <= 1) {
-        window.location.hash = 'home';
+        window.history.pushState(null, '', '#home');
         setCurrentView('home');
         return ['home'];
       }
       const newHist = prev.slice(0, -1);
       const prevView = newHist[newHist.length - 1];
-      window.location.hash = prevView;
+      window.history.pushState(null, '', `#${prevView}`);
       setCurrentView(prevView);
       return newHist;
     });
@@ -3947,22 +4125,7 @@ export default function App() {
                       return (
                         <div className="doctor-card glassmorphic" key={doc.id}>
                           <div className="doctor-image-container">
-                            {doc.image ? (
-                              <img className="doctor-avatar-img" src={doc.image} alt={doc.name} />
-                            ) : (
-                              <svg className="doctor-avatar-svg" width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                  <linearGradient id={`docGradSpecialty-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style={{ stopColor: grad.from, stopOpacity: 1 }} />
-                                    <stop offset="100%" style={{ stopColor: grad.to, stopOpacity: 1 }} />
-                                  </linearGradient>
-                                </defs>
-                                <rect width="100%" height="100%" fill={`url(#docGradSpecialty-${idx})`} />
-                                <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontFamily="'Lora', serif" fontSize="28" fontWeight="600" fill="#FAF6EE">
-                                  {doc.name.split(" ").map(n => n.charAt(0)).slice(1).join("").toUpperCase()}
-                                </text>
-                              </svg>
-                            )}
+                            <DoctorAvatar image={doc.image} name={doc.name} size={110} border="none" className="doctor-avatar-img" />
                             <div className="doctor-badge">{doc.experience}</div>
                           </div>
 
@@ -4079,22 +4242,7 @@ export default function App() {
                   return (
                     <div className="doctor-card glassmorphic" key={doc.id}>
                       <div className="doctor-image-container">
-                        {doc.image ? (
-                          <img className="doctor-avatar-img" src={doc.image} alt={doc.name} />
-                        ) : (
-                          <svg className="doctor-avatar-svg" width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                              <linearGradient id={`doctorGrad-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style={{ stopColor: grad.from, stopOpacity: 1 }} />
-                                <stop offset="100%" style={{ stopColor: grad.to, stopOpacity: 1 }} />
-                              </linearGradient>
-                            </defs>
-                            <rect width="100%" height="100%" fill={`url(#doctorGrad-${idx})`} />
-                            <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fontFamily="'Lora', serif" fontSize="28" fontWeight="600" fill="#FAF6EE">
-                              {doc.name.split(" ").map(n => n.charAt(0)).slice(1).join("").toUpperCase()}
-                            </text>
-                          </svg>
-                        )}
+                        <DoctorAvatar image={doc.image} name={doc.name} size={110} border="none" className="doctor-avatar-img" />
                         <div className="doctor-badge">{doc.experience}</div>
                       </div>
 
@@ -5916,13 +6064,7 @@ export default function App() {
               <div>
                 <div className="dashboard-header glassmorphic">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    {loggedInDoctor.image ? (
-                      <img src={loggedInDoctor.image} alt={loggedInDoctor.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)' }} />
-                    ) : (
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', color: '#fff', fontWeight: 'bold' }}>
-                        {loggedInDoctor.name.charAt(loggedInDoctor.name.indexOf(' ') + 1) || loggedInDoctor.name.charAt(0)}
-                      </div>
-                    )}
+                    <DoctorAvatar image={loggedInDoctor.image} name={loggedInDoctor.name} size={48} />
                     <div>
                       <h2>{loggedInDoctor.name}</h2>
                       <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Clinical Focus: {loggedInDoctor.specialty} | MDCN ID: {loggedInDoctor.regNo}</p>
@@ -6460,13 +6602,7 @@ export default function App() {
                         {!isEditingDocSelf ? (
                           <div className="doctor-profile-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
-                              {loggedInDoctor.image ? (
-                                <img src={loggedInDoctor.image} alt={loggedInDoctor.name} style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent)' }} />
-                              ) : (
-                                <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#fff', fontWeight: 'bold' }}>
-                                  {loggedInDoctor.name.charAt(loggedInDoctor.name.indexOf(' ') + 1) || loggedInDoctor.name.charAt(0)}
-                                </div>
-                              )}
+                              <DoctorAvatar image={loggedInDoctor.image} name={loggedInDoctor.name} size={96} border="3px solid var(--color-accent)" />
                               <div>
                                 <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{loggedInDoctor.name}</h3>
                                 <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '1rem', marginTop: '0.25rem' }}>{loggedInDoctor.specialty} Department</div>
@@ -6755,9 +6891,11 @@ export default function App() {
                                     onChange={async (e) => {
                                       const file = e.target.files[0];
                                       if (file) {
+                                        const uploadedUrl = await uploadAvatarToSupabase(file, 'doc_profile');
                                         const compressed = await compressImageFile(file, 400, 0.7);
-                                        if (compressed) {
-                                          setDocSelfData({ ...docSelfData, image: compressed });
+                                        const finalImg = uploadedUrl || compressed;
+                                        if (finalImg) {
+                                          setDocSelfData({ ...docSelfData, image: finalImg });
                                         }
                                       }
                                     }}
@@ -9041,9 +9179,11 @@ export default function App() {
                                   onChange={async (e) => {
                                     const file = e.target.files[0];
                                     if (file) {
+                                      const uploadedUrl = await uploadAvatarToSupabase(file, 'doc_profile');
                                       const compressed = await compressImageFile(file, 400, 0.7);
-                                      if (compressed) {
-                                        setNewDoctorData({ ...newDoctorData, image: compressed });
+                                      const finalImg = uploadedUrl || compressed;
+                                      if (finalImg) {
+                                        setNewDoctorData({ ...newDoctorData, image: finalImg });
                                       }
                                     }
                                   }}
@@ -9143,13 +9283,7 @@ export default function App() {
                                   <tr key={d.id}>
                                     <td>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        {d.image ? (
-                                          <img src={d.image} alt={d.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-accent)', flexShrink: 0 }} />
-                                        ) : (
-                                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
-                                            {d.name.charAt(d.name.indexOf(' ') + 1) || d.name.charAt(0)}
-                                          </div>
-                                        )}
+                                        <DoctorAvatar image={d.image} name={d.name} size={36} />
                                         <div>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                                             <strong style={{ color: 'var(--color-indigo)' }}>{d.name}</strong>
@@ -10738,13 +10872,7 @@ export default function App() {
 
             {/* Doctor Avatar / Image */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'rgba(28,43,73,0.05)', borderRadius: '8px' }}>
-              {adminSelectedDoctor.image ? (
-                <img src={adminSelectedDoctor.image} alt={adminSelectedDoctor.name} style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent)' }} />
-              ) : (
-                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
-                  {adminSelectedDoctor.name.charAt(adminSelectedDoctor.name.indexOf(' ') + 1) || adminSelectedDoctor.name.charAt(0)}
-                </div>
-              )}
+              <DoctorAvatar image={adminSelectedDoctor.image} name={adminSelectedDoctor.name} size={72} border="3px solid var(--color-accent)" />
               <div>
                 <strong style={{ fontSize: '1.1rem' }}>{adminSelectedDoctor.name}</strong>
                 <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>{adminSelectedDoctor.specialty}</div>
@@ -11333,13 +11461,7 @@ export default function App() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
-              {previewBookingDoc.image ? (
-                <img src={previewBookingDoc.image} alt={previewBookingDoc.name} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-accent)' }} />
-              ) : (
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #182B49, #2C5D88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#fff', fontWeight: 'bold' }}>
-                  {previewBookingDoc.name.charAt(previewBookingDoc.name.indexOf(' ') + 1) || previewBookingDoc.name.charAt(0)}
-                </div>
-              )}
+              <DoctorAvatar image={previewBookingDoc.image} name={previewBookingDoc.name} size={64} border="3px solid var(--color-accent)" />
               <div>
                 <strong style={{ fontSize: '1.1rem', color: 'var(--color-indigo)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   {previewBookingDoc.name}

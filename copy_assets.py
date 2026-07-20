@@ -12,9 +12,5 @@ shutil.copyfile(sources['hadiza'], 'src/assets/doctor_hadiza.jpg')
 shutil.copyfile(sources['asmau'], 'src/assets/doctor_asmau.png')
 shutil.copyfile(sources['saima'], 'src/assets/doctor_saima.jpg')
 
-shutil.copyfile(sources['wasila'], 'public/doctor_wasila.jpg')
-shutil.copyfile(sources['hadiza'], 'public/doctor_hadiza.jpg')
-shutil.copyfile(sources['asmau'], 'public/doctor_asmau.png')
-shutil.copyfile(sources['saima'], 'public/doctor_saima.jpg')
+print("Copied specialist photos to src/assets/ successfully!")
 
-print("Copied successfully!")

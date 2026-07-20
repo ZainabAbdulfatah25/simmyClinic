@@ -32,6 +32,7 @@ CREATE TABLE public.profiles (
   consultation_duration TEXT DEFAULT '30 mins',
   services TEXT[],
   level TEXT,
+  image TEXT,
   
   -- Pharmacy / Lab Fields
   facility_name TEXT,
@@ -272,3 +273,36 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ==========================================
+-- 8. SUPABASE STORAGE BUCKETS SETUP
+-- ==========================================
+-- Create 'avatars' storage bucket for doctor photos & profile attachments
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'avatars', 
+  'avatars', 
+  true, 
+  10485760, 
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Storage Row-Level Security Policies for 'avatars' bucket
+CREATE POLICY "Allow public SELECT on avatars bucket" 
+  ON storage.objects FOR SELECT 
+  USING (bucket_id = 'avatars');
+
+CREATE POLICY "Allow public INSERT into avatars bucket" 
+  ON storage.objects FOR INSERT 
+  WITH CHECK (bucket_id = 'avatars');
+
+CREATE POLICY "Allow public UPDATE on avatars bucket" 
+  ON storage.objects FOR UPDATE 
+  USING (bucket_id = 'avatars');
+
+CREATE POLICY "Allow public DELETE on avatars bucket" 
+  ON storage.objects FOR DELETE 
+  USING (bucket_id = 'avatars');
+
