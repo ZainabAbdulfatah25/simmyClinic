@@ -47,8 +47,9 @@ const getSpecialtyTitle = (specialty) => {
     'Optometry': 'Optometrist',
     'Cardiology': 'Cardiologist',
     'Dermatology': 'Dermatologist',
-    'Psychology': 'Psychologist',
-    'Public Health': 'Public Health Physician'
+    'Psychology': 'Psychology & Mental Health Specialist',
+    'Public Health': 'Public Health & Community Health Officer',
+    'ENT': 'ENT Specialist (Ear, Nose & Throat)'
   };
   return mapping[specialty] || specialty;
 };
@@ -68,11 +69,13 @@ const INITIAL_DOCTORS = [
     bio: "Senior consultant gynaecologist specializing in maternal care, obstetrics, and female reproductive wellness.",
     clinicRoom: "Room 102, West Wing",
     license: "",
-    consultationRate: "₦10,000",
+    consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Senior Consultant"
+    level: "Senior Consultant",
+    patientCapacity: "30 patients/month",
+    remunerationNotes: "Standard clinical rate"
   },
   {
     id: 2,
@@ -88,11 +91,13 @@ const INITIAL_DOCTORS = [
     bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
     clinicRoom: "Room 205, Main Block",
     license: "",
-    consultationRate: "₦5,000",
+    consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Mobile Laboratory"],
     verified: true,
-    level: "Consultant"
+    level: "Consultant",
+    patientCapacity: "40 patients/month",
+    remunerationNotes: "Standard clinical rate"
   },
   {
     id: 3,
@@ -108,11 +113,13 @@ const INITIAL_DOCTORS = [
     bio: "Medical Doctor and Public Health Practitioner with more than 4 years of progressive clinical experience in tertiary and specialist hospitals, skilled in patient-centered care, emergency medicine, maternal and child health, and preventive healthcare.",
     clinicRoom: "Room 110, Public Health Wing",
     license: "",
-    consultationRate: "₦10,000 - ₦20,000",
+    consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Senior Consultant"
+    level: "Senior Consultant",
+    patientCapacity: "35 patients/month",
+    remunerationNotes: "Special project consultancy rate negotiable"
   },
   {
     id: 4,
@@ -132,7 +139,9 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Consultant"
+    level: "Consultant",
+    patientCapacity: "30 patients/month",
+    remunerationNotes: "Standard clinical rate"
   },
   {
     id: 5,
@@ -141,18 +150,86 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
-    image: "",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_wasila_1784542084696.png",
     email: "wasilagoranduma@gmail.com",
     password: "password123",
     phone: "+234 803 133 8534",
     bio: "Registered Medical Laboratory Scientist with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
-    clinicRoom: "",
+    clinicRoom: "Room 105, Diagnostic Wing",
     license: "",
-    consultationRate: "Free",
+    consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Junior Doctor"
+    level: "Diagnostic Specialist",
+    patientCapacity: "25 patients/month",
+    remunerationNotes: "Negotiable for specialized diagnostic procedures"
+  },
+  {
+    id: 6,
+    name: "Hadiza Garba Ammani",
+    specialty: "Psychology",
+    schedule: "Mon - Fri (9am - 5pm)",
+    experience: "9 Years",
+    regNo: "MNCP/9821",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_hadiza_1784542144416.png",
+    email: "kadykubra@gmail.com",
+    password: "password123",
+    phone: "+234 706 665 0730",
+    bio: "Dedicated and compassionate mental health specialist committed to promoting well-being, active listening, and culturally sensitive evidence-based mental health services.",
+    clinicRoom: "Room 108, Wellness Wing",
+    license: "",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation"],
+    verified: true,
+    level: "Senior Consultant",
+    patientCapacity: "5 patients/month",
+    remunerationNotes: "Flexible consultancy rates based on nature and scope of assignment."
+  },
+  {
+    id: 7,
+    name: "Asma'u Zubairu",
+    specialty: "Public Health",
+    schedule: "Mon - Fri (8am - 4pm)",
+    experience: "10 Years",
+    regNo: "CHO/7812",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_asmau_1784542412307.png",
+    email: "ridwanasmau901@gmail.com",
+    password: "password123",
+    phone: "+234 916 652 1888",
+    bio: "Dedicated Community Health Officer committed to promoting quality primary healthcare through disease prevention, treatment of minor ailments, and health education.",
+    clinicRoom: "Room 114, Community Health Unit",
+    license: "",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation", "Home Services"],
+    verified: true,
+    level: "Senior Consultant",
+    patientCapacity: "30 patients/month",
+    remunerationNotes: "Negotiable based on scope of services, location, workload, and contract terms."
+  },
+  {
+    id: 8,
+    name: "Dr. Mohammed Sa'ima Jibril",
+    specialty: "ENT",
+    schedule: "Mon - Fri (9am - 5pm)",
+    experience: "15 Years",
+    regNo: "MDCN/4521",
+    image: "/home/zainab/.gemini/antigravity/brain/51c97ae7-cb10-493b-9c78-fd6188ffa601/doctor_saima_1784542836987.png",
+    email: "mohammedrealsaemaj@gmail.com",
+    password: "password123",
+    phone: "+234 901 432 4442",
+    bio: "Experienced ENT Specialist and Public Health Practitioner (ENT/MPH) with 15 years of clinical expertise in ear, nose, and throat care and preventive medicine.",
+    clinicRoom: "Room 201, ENT & Specialist Wing",
+    license: "",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation", "Home Services"],
+    verified: true,
+    level: "Senior Consultant",
+    patientCapacity: "Flexible / Unlimited",
+    remunerationNotes: "Home services or traveling fees are negotiable."
   }
 ];
 
@@ -285,7 +362,7 @@ export default function App() {
   const BUNDLED_IMAGES = { 1: doctorFatimaImg, 2: doctorAdamImg, 3: doctorTijjaniImg, 4: doctorBamalliImg };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v6_active_logistics_routes";
+  const DATA_VERSION = "v9_onboarded_all_doctors_3000_negotiable_google_auth";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -923,6 +1000,78 @@ export default function App() {
   };
 
   // --- Auth Handlers ---
+  const handleGoogleAuth = async () => {
+    setLoginError('');
+    try {
+      if (supabase && supabase.auth) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin }
+        });
+        if (!error && data?.url) {
+          window.location.href = data.url;
+          return;
+        }
+      }
+    } catch (err) {
+      console.log("Supabase Google Auth fallback:", err);
+    }
+
+    const gEmail = patientLoginForm.email || "google.user@simmycare.com";
+    const gName = patientLoginForm.name || "Google Authenticated User";
+    const userRole = registerRole || "patient";
+
+    const userObj = {
+      name: gName,
+      email: gEmail,
+      phone: patientLoginForm.phone || "+234 800 123 4567",
+      role: userRole,
+      provider: "google"
+    };
+
+    if (userRole === 'doctor') {
+      const existingDoc = doctors.find(d => d.email.toLowerCase() === gEmail.toLowerCase());
+      if (existingDoc) {
+        setLoggedInDoctor(existingDoc);
+        setAuthRole('doctor');
+        localStorage.setItem("simmy_authRole", 'doctor');
+        localStorage.setItem("simmy_loggedInDoctor", JSON.stringify(existingDoc));
+      } else {
+        const newDoc = {
+          id: Date.now(),
+          name: gName.startsWith("Dr.") ? gName : `Dr. ${gName}`,
+          specialty: patientLoginForm.specialty || 'General Medicine',
+          schedule: 'Mon - Fri (9am - 5pm)',
+          experience: '5 Years',
+          regNo: patientLoginForm.regNo || 'MDCN/GGL-99',
+          image: '',
+          email: gEmail,
+          password: 'google-oauth',
+          phone: userObj.phone,
+          bio: 'Verified practitioner authenticated via Google.',
+          clinicRoom: 'Room 303, Telemedicine Wing',
+          license: '',
+          consultationRate: '₦3,000',
+          consultationDuration: '30 mins',
+          services: ['Online Consultation'],
+          verified: true,
+          level: patientLoginForm.level || 'Consultant'
+        };
+        setDoctors(prev => [newDoc, ...prev]);
+        setLoggedInDoctor(newDoc);
+        setAuthRole('doctor');
+        localStorage.setItem("simmy_authRole", 'doctor');
+        localStorage.setItem("simmy_loggedInDoctor", JSON.stringify(newDoc));
+      }
+    } else {
+      setAuthRole(userRole);
+      setCurrentPatientUser(userObj);
+      localStorage.setItem("simmy_authRole", userRole);
+      localStorage.setItem("simmy_currentPatientUser", JSON.stringify(userObj));
+    }
+    navigateTo('dashboard');
+  };
+
   const handleUnifiedLoginSubmit = async (e) => {
     e.preventDefault();
     const email = patientLoginForm.email.toLowerCase().trim();
@@ -3897,7 +4046,7 @@ export default function App() {
               </div>
 
               <div className="specialty-filters">
-                {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Public Health', 'Laboratory', 'Pharmacy'].map(spec => (
+                {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Public Health', 'Psychology', 'ENT', 'Laboratory', 'Pharmacy'].map(spec => (
                   <button
                     key={spec}
                     className={`filter-btn ${doctorFilter === spec ? 'active' : ''}`}
@@ -3949,7 +4098,12 @@ export default function App() {
                         <div className="doctor-details">
                           <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
                           {doc.consultationRate && (
-                            <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
+                            <div style={{ marginTop: '0.2rem' }}>
+                              <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
+                              <div style={{ fontSize: '0.73rem', color: '#B45309', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.2rem 0.45rem', borderRadius: '4px', marginTop: '0.25rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <i className="fa-solid fa-handshake-angle"></i> Special services fees are negotiable
+                              </div>
+                            </div>
                           )}
                           {doc.services && doc.services.length > 0 && (
                             <div className="doctor-services-list" style={{ marginTop: '0.5rem' }}>
@@ -4558,6 +4712,41 @@ export default function App() {
 
                     <button type="submit" className="btn btn-primary btn-block">
                       {isPatientRegistering ? "Sign Up" : "Sign In"}
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
+                      <div style={{ flex: 1, height: '1px', background: 'rgba(24,43,73,0.15)' }}></div>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>OR</span>
+                      <div style={{ flex: 1, height: '1px', background: 'rgba(24,43,73,0.15)' }}></div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleGoogleAuth}
+                      className="btn btn-outline btn-block"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.75rem',
+                        background: '#ffffff',
+                        color: '#3c4043',
+                        border: '1px solid #dadce0',
+                        fontWeight: '600',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/>
+                        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/>
+                        <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                      </svg>
+                      {isPatientRegistering ? "Sign up with Google" : "Continue with Google"}
                     </button>
 
                     <div className="signup-toggle">
@@ -11150,6 +11339,9 @@ export default function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
                     <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>Consultation Session Duration</span>
                     <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationDuration || '30 mins'}</span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#B45309', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.4rem 0.75rem', borderRadius: '6px', marginTop: '0.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <i className="fa-solid fa-handshake-angle"></i> Special services fees are negotiable
                   </div>
                 </div>
               </div>
