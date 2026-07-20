@@ -9,8 +9,11 @@ if [ -z "$COMMIT_MSG" ]; then
   COMMIT_MSG="chore: update simmyClinic platform - $(date '+%Y-%m-%d %H:%M:%S')"
 fi
 
-# 3. Pull remote changes with rebase, then commit and push to GitHub
-git pull --rebase origin main
+# 3. Commit local changes first
 git commit -m "$COMMIT_MSG" || true
+
+# 4. Rebase with remote changes and push to GitHub
+git pull --rebase origin main
 git push origin main
+
 

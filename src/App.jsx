@@ -10781,10 +10781,23 @@ export default function App() {
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Consultation Rate</strong>
                   <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontWeight: 'bold' }}>{adminSelectedDoctor.consultationRate || 'N/A'}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#B45309', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.15rem 0.35rem', borderRadius: '4px', marginTop: '0.2rem', fontWeight: '600', display: 'inline-block' }}>
+                    * Special services fees are negotiable
+                  </div>
                 </div>
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Consultation Duration</strong>
                   <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontWeight: 'bold' }}>{adminSelectedDoctor.consultationDuration || '30 mins'}</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Monthly Patient Capacity</strong>
+                  <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontWeight: '600' }}>{adminSelectedDoctor.patientCapacity || 'Standard (30/month)'}</div>
+                </div>
+                <div>
+                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Remuneration Terms</strong>
+                  <div style={{ fontSize: '0.85rem', marginTop: '0.15rem', color: 'var(--color-text-muted)' }}>{adminSelectedDoctor.remunerationNotes || 'Standard clinical terms'}</div>
                 </div>
               </div>
               <div>
