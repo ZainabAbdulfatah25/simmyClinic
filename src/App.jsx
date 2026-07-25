@@ -151,7 +151,7 @@ const INITIAL_DOCTORS = [
   {
     id: 5,
     name: "Dr. Wasila Goranduma",
-    specialty: "Public Health",
+    specialty: "Laboratory",
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
@@ -164,7 +164,7 @@ const INITIAL_DOCTORS = [
     license: "",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"],
+    services: ["Online Consultation", "Mobile Laboratory"],
     verified: true,
     level: "Diagnostic Specialist",
     patientCapacity: "25 patients/month",
@@ -235,6 +235,28 @@ const INITIAL_DOCTORS = [
     level: "Senior Consultant",
     patientCapacity: "Flexible / Unlimited",
     remunerationNotes: "Home services or traveling fees are negotiable."
+  },
+  {
+    id: 9,
+    name: "Pharm. Bello Ibrahim",
+    specialty: "Pharmacy",
+    schedule: "Mon - Sat (8am - 8pm)",
+    experience: "7 Years",
+    regNo: "PCN/P/9482",
+    image: "",
+    email: "pharmacist@simmycare.com",
+    password: "password123",
+    phone: "08012345678",
+    bio: "Senior Clinical Pharmacist managing central pharmacy inventory, prescription verification, pharmaceutical care, and courier dispatch.",
+    clinicRoom: "Central Pharmacy, Ground Floor",
+    license: "PCN/P/9482",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Pharmacy Delivery", "Online Consultation"],
+    verified: true,
+    level: "Head Pharmacist",
+    patientCapacity: "50 patients/month",
+    remunerationNotes: "Standard clinical rate"
   }
 ];
 
@@ -437,7 +459,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v13_supabase_storage_avatar_fix";
+  const DATA_VERSION = "v14_pharmacy_lab_specialist_fix";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
