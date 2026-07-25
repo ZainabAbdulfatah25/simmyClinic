@@ -4155,11 +4155,30 @@ export default function App() {
                           </div>
 
                           <div className="doctor-info">
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                               {doc.name}
                               {doc.verified !== false && (
-                                <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Doctor"></i>
+                                <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Medical Practitioner"></i>
                               )}
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontSize: '0.7rem',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '12px',
+                                fontWeight: '600',
+                                color: doc.active !== false ? '#15803D' : '#6B7280',
+                                background: doc.active !== false ? '#DCFCE7' : '#F3F4F6'
+                              }}>
+                                <span style={{
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  backgroundColor: doc.active !== false ? '#22C55E' : '#9CA3AF'
+                                }}></span>
+                                {doc.active !== false ? 'Online' : 'Offline'}
+                              </span>
                             </h3>
                             <div className="doctor-specialty">
                               <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
@@ -4272,11 +4291,30 @@ export default function App() {
                       </div>
 
                       <div className="doctor-info">
-                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                           {doc.name}
                           {doc.verified !== false && (
-                            <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Doctor"></i>
+                            <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Medical Practitioner"></i>
                           )}
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            fontSize: '0.7rem',
+                            padding: '0.1rem 0.4rem',
+                            borderRadius: '12px',
+                            fontWeight: '600',
+                            color: doc.active !== false ? '#15803D' : '#6B7280',
+                            background: doc.active !== false ? '#DCFCE7' : '#F3F4F6'
+                          }}>
+                            <span style={{
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              backgroundColor: doc.active !== false ? '#22C55E' : '#9CA3AF'
+                            }}></span>
+                            {doc.active !== false ? 'Online' : 'Offline'}
+                          </span>
                         </h3>
                         <div className="doctor-specialty">
                           <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
