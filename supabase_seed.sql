@@ -1,6 +1,6 @@
 -- ==========================================
 -- SimmyClinic Supabase Seed Data
--- Run this in the Supabase SQL Editor to populate all test users
+-- Run this in the Supabase SQL Editor to populate test users
 -- Password for all test users is: password123
 -- ==========================================
 
@@ -10,7 +10,6 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- 2. Insert into auth.users (this triggers public.profiles auto-creation)
 DO $$
 DECLARE
-  -- Encrypt 'password123' using bcrypt (Blowfish)
   hashed_pw TEXT := crypt('password123', gen_salt('bf', 10));
 BEGIN
 
@@ -25,7 +24,7 @@ BEGIN
     '{"name":"Zainab Abdulfatah","role":"patient","phone":"08012345678","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- B. Admin User
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -38,7 +37,7 @@ BEGIN
     '{"name":"Admin Director","role":"admin","phone":"08000000000","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- C. Pharmacist User
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -51,7 +50,7 @@ BEGIN
     '{"name":"Pharm. Bello Ibrahim","role":"pharmacist","phone":"08012345678","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- D. Lab Tech User
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -64,7 +63,7 @@ BEGIN
     '{"name":"MLS Wasila Goranduma","role":"lab","phone":"08023456789","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- E. Logistics Rider User
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -77,7 +76,7 @@ BEGIN
     '{"name":"Chinedu Okeke","role":"logistics","phone":"08034567890","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- F. Doctor 1: Dr. Fatima Yahaya Maiauduga
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -90,7 +89,7 @@ BEGIN
     '{"name":"Dr. Fatima Yahaya Maiauduga","role":"doctor","phone":"08034567890","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- G. Doctor 2: Dr. Adam Zamzam
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -103,7 +102,7 @@ BEGIN
     '{"name":"Dr. Adam Zamzam","role":"doctor","phone":"08051234567","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- H. Doctor 3: Dr. Mato Saddiqa Tijjani
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -116,7 +115,7 @@ BEGIN
     '{"name":"Dr. Mato Saddiqa Tijjani","role":"doctor","phone":"+234 909 677 6797","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- I. Doctor 4: Dr. Abubakar Muhammad Bamalli
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -129,7 +128,7 @@ BEGIN
     '{"name":"Dr. Abubakar Muhammad Bamalli","role":"doctor","phone":"+234 813 870 5738","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- J. Doctor 5: Dr. Wasila Goranduma
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -142,7 +141,7 @@ BEGIN
     '{"name":"Dr. Wasila Goranduma","role":"doctor","phone":"+234 803 133 8534","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- K. Doctor 6: Hadiza Garba Ammani
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -155,7 +154,7 @@ BEGIN
     '{"name":"Hadiza Garba Ammani","role":"doctor","phone":"+234 706 665 0730","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- L. Doctor 7: Asma''u Zubairu
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -168,7 +167,7 @@ BEGIN
     '{"name":"Asma''u Zubairu","role":"doctor","phone":"+234 916 652 1888","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
   -- M. Doctor 8: Dr. Mohammed Sa''ima Jibril
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
@@ -181,66 +180,27 @@ BEGIN
     '{"name":"Dr. Mohammed Sa''ima Jibril","role":"doctor","phone":"+234 901 432 4442","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
-  ) ON CONFLICT (email) DO NOTHING;
+  ) ON CONFLICT (id) DO NOTHING;
 
 END $$;
 
 
 -- 3. Update public.profiles table with role-specific details
--- Doctor 1: Dr. Fatima Yahaya Maiauduga
-UPDATE public.profiles SET 
-  specialty = 'Gynaecology', schedule = 'Mon - Wed (9am - 2pm)', experience = '8 Years', reg_no = 'MDCN/8431', clinic_room = 'Room 102, West Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'fatima@simmycare.com';
+UPDATE public.profiles SET specialty = 'Gynaecology', schedule = 'Mon - Wed (9am - 2pm)', experience = '8 Years', reg_no = 'MDCN/8431', clinic_room = 'Room 102, West Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'fatima@simmycare.com';
+UPDATE public.profiles SET specialty = 'General Medicine', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'MDCN/7123', clinic_room = 'Room 205, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'adam@simmycare.com';
+UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (9am - 4pm)', experience = '4 Years', reg_no = 'MDCN/6203', clinic_room = 'Room 110, Public Health Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'matosaddiqa@gmail.com';
+UPDATE public.profiles SET specialty = 'General Medicine', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MDCN/5890', clinic_room = 'Room 207, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'abubakarbalili79@gmail.com';
+UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (9am - 5pm)', experience = '6 Years', reg_no = 'MLS/REG', clinic_room = 'Room 105, Diagnostic Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Diagnostic Specialist', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'wasilagoranduma@gmail.com';
+UPDATE public.profiles SET specialty = 'Psychology', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MNCP/9821', clinic_room = 'Room 108, Wellness Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'kadykubra@gmail.com';
+UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'CHO/7812', clinic_room = 'Room 114, Community Health Unit', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'ridwanasmau901@gmail.com';
+UPDATE public.profiles SET specialty = 'ENT', schedule = 'Mon - Fri (9am - 5pm)', experience = '15 Years', reg_no = 'MDCN/4521', clinic_room = 'Room 201, ENT & Specialist Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'mohammedrealsaemaj@gmail.com';
 
--- Doctor 2: Dr. Adam Zamzam
-UPDATE public.profiles SET 
-  specialty = 'General Medicine', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'MDCN/7123', clinic_room = 'Room 205, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'adam@simmycare.com';
-
--- Doctor 3: Dr. Mato Saddiqa Tijjani
-UPDATE public.profiles SET 
-  specialty = 'Public Health', schedule = 'Mon - Fri (9am - 4pm)', experience = '4 Years', reg_no = 'MDCN/6203', clinic_room = 'Room 110, Public Health Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'matosaddiqa@gmail.com';
-
--- Doctor 4: Dr. Abubakar Muhammad Bamalli
-UPDATE public.profiles SET 
-  specialty = 'General Medicine', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MDCN/5890', clinic_room = 'Room 207, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'abubakarbalili79@gmail.com';
-
--- Doctor 5: Dr. Wasila Goranduma
-UPDATE public.profiles SET 
-  specialty = 'Public Health', schedule = 'Mon - Fri (9am - 5pm)', experience = '6 Years', reg_no = 'MLS/REG', clinic_room = 'Room 105, Diagnostic Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Diagnostic Specialist', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'wasilagoranduma@gmail.com';
-
--- Doctor 6: Hadiza Garba Ammani
-UPDATE public.profiles SET 
-  specialty = 'Psychology', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MNCP/9821', clinic_room = 'Room 108, Wellness Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'kadykubra@gmail.com';
-
--- Doctor 7: Asma'u Zubairu
-UPDATE public.profiles SET 
-  specialty = 'Public Health', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'CHO/7812', clinic_room = 'Room 114, Community Health Unit', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'ridwanasmau901@gmail.com';
-
--- Doctor 8: Dr. Mohammed Sa'ima Jibril
-UPDATE public.profiles SET 
-  specialty = 'ENT', schedule = 'Mon - Fri (9am - 5pm)', experience = '15 Years', reg_no = 'MDCN/4521', clinic_room = 'Room 201, ENT & Specialist Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() 
-WHERE email = 'mohammedrealsaemaj@gmail.com';
-
--- Pharmacist Details
 UPDATE public.profiles SET facility_name = 'SimmyCare Central Pharmacy', license_no = 'PCN/P/9482', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'pharmacist@simmycare.com';
-
--- Lab Tech Details
 UPDATE public.profiles SET facility_name = 'SimmyCare Diagnostics', license_no = 'MLSCN/L/3821', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'lab@simmycare.com';
-
--- Logistics Details
 UPDATE public.profiles SET vehicle_type = 'Motorbike', dispatch_area = 'Abuja Central', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'logistics@simmycare.com';
-
--- Patient and Admin Details
 UPDATE public.profiles SET verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email IN ('zainab@example.com', 'admin@simmycare.com');
 
-
--- 4. Insert Default Drug Inventory
+-- 4. Insert Default Drug Inventory (using simple INSERT with ON CONFLICT DO NOTHING)
 INSERT INTO public.clinic_drugs (name, price, category, in_stock) VALUES
   ('Paracetamol Syrup 125mg/5ml', 1200, 'Analgesics', true),
   ('Ibuprofen Tablets 400mg', 1500, 'Analgesics', true),
@@ -252,4 +212,4 @@ INSERT INTO public.clinic_drugs (name, price, category, in_stock) VALUES
   ('Multivitamin Capsules (30 Days Pack)', 2800, 'Supplements', true),
   ('Cetirizine Allergy Tablets 10mg', 1800, 'Antihistamines', true),
   ('Cough Expectoral Syrup', 2200, 'Respiratory', true)
-ON CONFLICT (name) DO UPDATE SET price = EXCLUDED.price, category = EXCLUDED.category, in_stock = EXCLUDED.in_stock;
+ON CONFLICT DO NOTHING;
