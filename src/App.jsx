@@ -798,6 +798,24 @@ export default function App() {
   const [prescOrderForm, setPrescOrderForm] = useState({ address: '', notes: '', cost: '0' });
   const [selectedDrugs, setSelectedDrugs] = useState([]);
 
+  // Drug Inventory Stock States
+  const [clinicDrugStock, setClinicDrugStock] = useState(() => {
+    const stored = localStorage.getItem("simmy_clinic_drug_stock");
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return CLINIC_DRUG_STOCK.map((d, index) => ({ ...d, id: d.id || `dg-${index+1}`, in_stock: true }));
+  });
+
+  useEffect(() => {
+    localStorage.setItem("simmy_clinic_drug_stock", JSON.stringify(clinicDrugStock));
+  }, [clinicDrugStock]);
+
+  const [newDrugForm, setNewDrugForm] = useState({ name: '', price: '', category: 'Analgesics', in_stock: true });
+  const [showAddDrugModal, setShowAddDrugModal] = useState(false);
+  const [drugSearchQuery, setDrugSearchQuery] = useState('');
+  const [drugCategoryFilter, setDrugCategoryFilter] = useState('All');
+
   // Route Map Tracking & Simulation States
   const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
   const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
@@ -834,6 +852,269 @@ export default function App() {
     vehicleType: 'Motorbike',
     dispatchArea: ''
   });
+
+  const renderStockInventoryView = () => {
+    const categories = ['All', 'Analgesics', 'Antibiotics', 'Antimalarials', 'Supplements', 'Antihistamines', 'Respiratory', 'Pediatrics', 'Diagnostics'];
+    let filtered = clinicDrugStock;
+    if (drugCategoryFilter !== 'All') {
+      filtered = filtered.filter(d => d.category === drugCategoryFilter);
+    }
+    if (drugSearchQuery.trim()) {
+      const q = drugSearchQuery.toLowerCase();
+      filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+    }
+
+    const inStockCount = clinicDrugStock.filter(d => d.in_stock !== false).length;
+    const outOfStockCount = clinicDrugStock.length - inStockCount;
+
+    return (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>Clinical Drug Inventory & Stock Hub</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Manage available pharmacy inventory, pricing, and stock status across the clinic.</p>
+          </div>
+          <button
+            className="btn btn-accent btn-sm"
+            onClick={() => setShowAddDrugModal(true)}
+          >
+            <i className="fa-solid fa-plus"></i> Add New Medication to Stock
+          </button>
+        </div>
+
+        {/* Stock Summary Cards */}
+        <div className="stats-row glassmorphic" style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px' }}>
+          <div className="stat-item">
+            <h3>{clinicDrugStock.length}</h3>
+            <p>REGISTERED MEDICATIONS</p>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <h3 style={{ color: '#10b981' }}>{inStockCount}</h3>
+            <p>AVAILABLE IN STOCK</p>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <h3 style={{ color: '#ef4444' }}>{outOfStockCount}</h3>
+            <p>OUT OF STOCK</p>
+          </div>
+        </div>
+
+        {/* Search & Category Filter */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="search-box" style={{ flex: '1 1 250px', margin: 0 }}>
+            <i className="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              placeholder="Search drug name or category..."
+              value={drugSearchQuery}
+              onChange={(e) => setDrugSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="specialty-filters" style={{ margin: 0 }}>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                className={`filter-btn ${drugCategoryFilter === cat ? 'active' : ''}`}
+                onClick={() => setDrugCategoryFilter(cat)}
+                style={{ fontSize: '0.78rem', padding: '0.35rem 0.8rem' }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stock Table */}
+        {filtered.length === 0 ? (
+          <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No medications found matching your criteria.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Drug / Medication Name</th>
+                  <th>Category</th>
+                  <th>Unit Price</th>
+                  <th>Stock Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(drug => {
+                  const isInStock = drug.in_stock !== false;
+                  return (
+                    <tr key={drug.id}>
+                      <td><strong>{drug.name}</strong></td>
+                      <td>
+                        <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          {drug.category}
+                        </span>
+                      </td>
+                      <td><strong>₦{Number(drug.price).toLocaleString()}</strong></td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setClinicDrugStock(prev => prev.map(d => d.id === drug.id ? { ...d, in_stock: !isInStock } : d));
+                          }}
+                          style={{
+                            border: 'none',
+                            padding: '0.3rem 0.75rem',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            backgroundColor: isInStock ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: isInStock ? '#047857' : '#b91c1c'
+                          }}
+                          title="Click to toggle availability"
+                        >
+                          <i className={`fa-solid ${isInStock ? 'fa-check-circle' : 'fa-times-circle'}`} style={{ marginRight: '4px' }}></i>
+                          {isInStock ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => {
+                              const newPrice = prompt(`Enter new price for ${drug.name}:`, drug.price);
+                              if (newPrice !== null && !isNaN(Number(newPrice))) {
+                                setClinicDrugStock(prev => prev.map(d => d.id === drug.id ? { ...d, price: Number(newPrice) } : d));
+                              }
+                            }}
+                            title="Update Price"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i> Price
+                          </button>
+                          <button
+                            className="btn btn-sm"
+                            onClick={() => {
+                              if (confirm(`Remove ${drug.name} from clinic inventory?`)) {
+                                setClinicDrugStock(prev => prev.filter(d => d.id !== drug.id));
+                              }
+                            }}
+                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                            title="Remove Drug"
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderAdminPharmacyOrdersView = () => {
+    const orders = inquiries.filter(inq => inq.id && inq.id.startsWith('ORD-'));
+    const totalRevenue = orders.reduce((sum, o) => {
+      const costMatch = o.message && o.message.match(/₦([\d,]+)/);
+      if (costMatch) {
+        return sum + parseInt(costMatch[1].replace(/,/g, ''), 10);
+      }
+      return sum;
+    }, 0);
+
+    return (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>Pharmacy Medication Orders Registry</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Monitor and manage all patient prescription and over-the-counter medicine delivery orders.</p>
+          </div>
+          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+            Total Revenue: ₦{totalRevenue.toLocaleString()}
+          </span>
+        </div>
+
+        {orders.length === 0 ? (
+          <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No pharmacy medication orders logged in the database yet.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date</th>
+                  <th>Customer / Patient</th>
+                  <th>Details & Prescription</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map(order => {
+                  const status = order.status || 'Pending Review';
+                  let badgeColor = '#cbd5e1';
+                  let textColor = '#475569';
+                  if (status === 'Pending Review' || status === 'Pending') {
+                    badgeColor = 'rgba(234, 179, 8, 0.15)'; textColor = '#854d0e';
+                  } else if (status === 'Processing & Packaging') {
+                    badgeColor = 'rgba(59, 130, 246, 0.15)'; textColor = '#1d4ed8';
+                  } else if (status === 'Awaiting Dispatch' || status === 'Out for Delivery') {
+                    badgeColor = 'rgba(147, 51, 234, 0.15)'; textColor = '#6b21a8';
+                  } else if (status === 'Delivered') {
+                    badgeColor = 'rgba(34, 197, 94, 0.15)'; textColor = '#166534';
+                  } else if (status === 'Cancelled') {
+                    badgeColor = 'rgba(239, 68, 68, 0.15)'; textColor = '#991b1b';
+                  }
+                  return (
+                    <tr key={order.id}>
+                      <td><strong>{order.id}</strong></td>
+                      <td>{order.date}</td>
+                      <td>
+                        <strong>{order.name}</strong>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{order.email}</div>
+                      </td>
+                      <td>
+                        <p style={{ margin: 0, fontSize: '0.85rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {order.message}
+                        </p>
+                      </td>
+                      <td>
+                        <span style={{ display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: badgeColor, color: textColor }}>
+                          {status}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                          <select
+                            value={status}
+                            onChange={(e) => {
+                              const newStatus = e.target.value;
+                              setInquiries(prev => prev.map(inq => inq.id === order.id ? { ...inq, status: newStatus } : inq));
+                            }}
+                            style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
+                          >
+                            <option value="Pending Review">Pending Review</option>
+                            <option value="Processing & Packaging">Processing & Packaging</option>
+                            <option value="Out for Delivery">Out for Delivery</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+                          <button className="btn btn-primary btn-sm" onClick={() => setAdminSelectedInquiry(order)}>
+                            <i className="fa-solid fa-eye"></i> Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Shared Real-Time GPS Simulation background timer
   useEffect(() => {
@@ -7151,6 +7432,12 @@ export default function App() {
                     >
                       <i className="fa-solid fa-file-prescription"></i> Doctor Prescriptions (Rx)
                     </button>
+                    <button
+                      className={`sidebar-link ${pharmacistNavView === 'stock' ? 'active' : ''}`}
+                      onClick={() => setPharmacistNavView('stock')}
+                    >
+                      <i className="fa-solid fa-pills"></i> Available Stock & Inventory
+                    </button>
                   </div>
 
                   {/* Right Column: Workspaces */}
@@ -7299,6 +7586,9 @@ export default function App() {
                         })()}
                       </div>
                     )}
+
+                    {/* Workspace: Available Stock & Inventory */}
+                    {pharmacistNavView === 'stock' && renderStockInventoryView()}
 
                   </div>
                 </div>
@@ -8749,6 +9039,18 @@ export default function App() {
                       onClick={() => setAdminNavView('inquiries')}
                     >
                       <i className="fa-solid fa-inbox"></i> Patient Inquiries
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${adminNavView === 'pharmacy_orders' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('pharmacy_orders')}
+                    >
+                      <i className="fa-solid fa-boxes-stacked"></i> Pharmacy Orders
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${adminNavView === 'drug_stock' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('drug_stock')}
+                    >
+                      <i className="fa-solid fa-pills"></i> Available Stock
                     </button>
                     <button
                       className={`sidebar-nav-btn ${adminNavView === 'admins' ? 'active' : ''}`}
@@ -10494,6 +10796,12 @@ export default function App() {
                       </div>
                     )}
 
+                    {/* Workspace: Pharmacy Orders (Admin View) */}
+                    {adminNavView === 'pharmacy_orders' && renderAdminPharmacyOrdersView()}
+
+                    {/* Workspace: Available Stock & Inventory (Admin View) */}
+                    {adminNavView === 'drug_stock' && renderStockInventoryView()}
+
                   </div>
                 </div>
               </div>
@@ -11335,12 +11643,14 @@ export default function App() {
                   flexDirection: 'column',
                   gap: '0.4rem'
                 }}>
-                  {CLINIC_DRUG_STOCK.map(drug => {
+                  {clinicDrugStock.map(drug => {
                     const isChecked = selectedDrugs.some(d => d.id === drug.id);
+                    const isInStock = drug.in_stock !== false;
                     return (
-                      <label key={drug.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', userSelect: 'none' }}>
+                      <label key={drug.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: isInStock ? 'pointer' : 'not-allowed', fontSize: '0.85rem', userSelect: 'none', opacity: isInStock ? 1 : 0.5 }}>
                         <input
                           type="checkbox"
+                          disabled={!isInStock}
                           checked={isChecked}
                           onChange={(e) => {
                             let updated;
@@ -11354,10 +11664,11 @@ export default function App() {
                             const total = updated.reduce((sum, d) => sum + d.price, 0);
                             setPrescOrderForm(prev => ({ ...prev, cost: total.toString() }));
                           }}
-                          style={{ width: 'auto', margin: 0, cursor: 'pointer' }}
+                          style={{ width: 'auto', margin: 0, cursor: isInStock ? 'pointer' : 'not-allowed' }}
                         />
                         <span style={{ color: isChecked ? 'var(--color-accent)' : 'inherit' }}>
-                          {drug.name} <strong style={{ color: 'rgba(255,255,255,0.6)' }}>(₦{drug.price.toLocaleString()})</strong>
+                          {drug.name} <strong style={{ color: 'rgba(255,255,255,0.6)' }}>(₦{Number(drug.price).toLocaleString()})</strong>
+                          {!isInStock && <span style={{ marginLeft: '6px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 'bold' }}>(Out of Stock)</span>}
                         </span>
                       </label>
                     );
@@ -11826,6 +12137,89 @@ export default function App() {
                 >
                   Cancel
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- Add New Medication to Stock Modal --- */}
+      {showAddDrugModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddDrugModal(false)}>
+          <div className="modal-content glassmorphic" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0 }}><i className="fa-solid fa-pills" style={{ color: 'var(--color-accent)', marginRight: '8px' }}></i> Add Medication to Inventory</h3>
+              <button className="modal-close" onClick={() => setShowAddDrugModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newDrugForm.name || !newDrugForm.price) return;
+              const newItem = {
+                id: `dg-${Date.now()}`,
+                name: newDrugForm.name,
+                price: Number(newDrugForm.price),
+                category: newDrugForm.category,
+                in_stock: newDrugForm.in_stock
+              };
+              setClinicDrugStock(prev => [newItem, ...prev]);
+              setShowAddDrugModal(false);
+              setNewDrugForm({ name: '', price: '', category: 'Analgesics', in_stock: true });
+            }}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Drug / Medication Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Omeprazole Capsules 20mg"
+                  value={newDrugForm.name}
+                  onChange={(e) => setNewDrugForm({ ...newDrugForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+              <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Category</label>
+                  <select
+                    value={newDrugForm.category}
+                    onChange={(e) => setNewDrugForm({ ...newDrugForm, category: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  >
+                    <option value="Analgesics">Analgesics</option>
+                    <option value="Antibiotics">Antibiotics</option>
+                    <option value="Antimalarials">Antimalarials</option>
+                    <option value="Supplements">Supplements</option>
+                    <option value="Antihistamines">Antihistamines</option>
+                    <option value="Respiratory">Respiratory</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="Diagnostics">Diagnostics</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Unit Price (₦)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 2500"
+                    value={newDrugForm.price}
+                    onChange={(e) => setNewDrugForm({ ...newDrugForm, price: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  />
+                </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={newDrugForm.in_stock}
+                    onChange={(e) => setNewDrugForm({ ...newDrugForm, in_stock: e.target.checked })}
+                    style={{ width: 'auto', margin: 0 }}
+                  />
+                  Mark as Available in Stock
+                </label>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowAddDrugModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-accent">Add to Inventory</button>
               </div>
             </form>
           </div>
