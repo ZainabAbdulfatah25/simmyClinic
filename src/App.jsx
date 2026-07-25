@@ -892,15 +892,40 @@ export default function App() {
     setShowReceiptModal(true);
   };
 
-  const handleStaffApprovePayment = (item, type = 'appointment', staffRole = 'Admin') => {
+  const getVerifierIdentity = (role) => {
+    // Resolve the actual logged-in staff member's name and role label
+    if (role === 'admin') {
+      return { name: adminCredentials?.username || 'Admin', label: 'System Administrator' };
+    } else if (role === 'pharmacist' && loggedInPharmacist) {
+      return { name: loggedInPharmacist.name, label: 'Licensed Pharmacist' };
+    } else if (role === 'doctor' && loggedInDoctor) {
+      return { name: loggedInDoctor.name, label: 'Medical Doctor' };
+    } else if (role === 'lab' && loggedInLabOfficer) {
+      return { name: loggedInLabOfficer.name, label: 'Lab Officer' };
+    }
+    return { name: role || 'Staff', label: 'Clinic Staff' };
+  };
+
+  const handleStaffApprovePayment = (item, type = 'appointment', staffRole = 'admin') => {
     const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}`;
     const isOrder = type === 'order' || (item.id && item.id.startsWith('ORD-'));
-    if (isOrder) {
-      setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, paymentStatus: 'Paid & Verified', paidApprovedBy: staffRole, receiptNo: receiptId } : inq));
+    const isLab = type === 'lab' || (item.id && item.id.startsWith('LAB-'));
+    const verifier = getVerifierIdentity(staffRole);
+    const verifiedAt = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' });
+    const verifierStamp = `${verifier.name} (${verifier.label})`;
+
+    const updatedFields = {
+      paymentStatus: 'Paid & Verified',
+      paidApprovedBy: verifierStamp,
+      verifiedAt,
+      receiptNo: receiptId
+    };
+
+    if (isOrder || isLab) {
+      setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq));
     } else {
-      setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: 'Paid & Verified', paidApprovedBy: staffRole, receiptNo: receiptId } : apt));
+      setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt));
     }
-    alert(`Payment successfully verified & approved for ${item.id}!\nOfficial Receipt ${receiptId} generated.`);
   };
 
   const renderPaymentStatusBadge = (item, type = 'appointment', role = 'patient') => {
@@ -910,20 +935,30 @@ export default function App() {
 
     if (isPaid) {
       return (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-          <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-            <i className="fa-solid fa-circle-check"></i> Paid & Verified
-          </span>
-          <button
-            type="button"
-            className="btn btn-outline btn-xs"
-            onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
-            style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem', borderColor: '#cbd5e1', color: 'var(--color-indigo)', fontWeight: '600' }}
-          >
-            <i className="fa-solid fa-receipt"></i> Receipt
-          </button>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <i className="fa-solid fa-circle-check"></i> Paid & Verified
+            </span>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
+              style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem', borderColor: '#cbd5e1', color: 'var(--color-indigo)', fontWeight: '600' }}
+            >
+              <i className="fa-solid fa-receipt"></i> Receipt
+            </button>
+          </div>
+          {item.paidApprovedBy && (
+            <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <i className="fa-solid fa-user-shield" style={{ color: '#0284c7', fontSize: '0.65rem' }}></i>
+              by {item.paidApprovedBy}
+              {item.verifiedAt && <span style={{ color: '#94a3b8' }}> · {item.verifiedAt}</span>}
+            </span>
+          )}
         </div>
       );
+
     } else if (isPending) {
       return (
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -1205,19 +1240,42 @@ export default function App() {
                   {isPaid ? 'PAYMENT VERIFIED & APPROVED' : 'PAYMENT AWAITING VERIFICATION'}
                 </strong>
                 <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                  Method: <strong>{item.paymentMethod || 'Bank Transfer'}</strong> {item.paidApprovedBy ? `• Approved by: ${item.paidApprovedBy}` : ''}
+                  Method: <strong>{item.paymentMethod || 'Bank Transfer'}</strong>
+                  {item.paidApprovedBy && (
+                    <>
+                      {' '}&bull;{' '}
+                      <i className="fa-solid fa-user-shield" style={{ color: '#0284c7', marginRight: '3px' }}></i>
+                      <strong style={{ color: '#0f172a' }}>Verified by: {item.paidApprovedBy}</strong>
+                    </>
+                  )}
                 </span>
+                {item.verifiedAt && (
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: '0.15rem' }}>
+                    <i className="fa-solid fa-clock" style={{ marginRight: '3px' }}></i>Verified on: {item.verifiedAt}
+                  </span>
+                )}
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {!isPaid && (
+              {!isPaid && (authRole === 'admin' || authRole === 'pharmacist' || authRole === 'doctor' || authRole === 'lab') && (
                 <button
                   className="btn btn-xs"
                   onClick={() => {
-                    handleStaffApprovePayment(item, type, 'Staff/Admin');
-                    setReceiptData({ ...receiptData, item: { ...item, paymentStatus: 'Paid & Verified', paidApprovedBy: 'Staff/Admin' } });
+                    const verifier = getVerifierIdentity(authRole);
+                    const verifiedAt = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' });
+                    const verifierStamp = `${verifier.name} (${verifier.label})`;
+                    handleStaffApprovePayment(item, type, authRole);
+                    setReceiptData({
+                      ...receiptData,
+                      item: {
+                        ...item,
+                        paymentStatus: 'Paid & Verified',
+                        paidApprovedBy: verifierStamp,
+                        verifiedAt
+                      }
+                    });
                   }}
-                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.65rem', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                 >
                   <i className="fa-solid fa-check"></i> Mark as Paid
                 </button>
@@ -1515,14 +1573,9 @@ export default function App() {
                         {rc.paymentStatus === 'Pending Verification' && (
                           <button
                             className="btn btn-accent btn-sm"
-                            onClick={() => {
-                              if (rc.itemType === 'appointment') {
-                                setAppointments(prev => prev.map(a => a.id === rc.referenceId ? { ...a, paymentStatus: 'Paid & Verified' } : a));
-                              } else {
-                                setInquiries(prev => prev.map(i => i.id === rc.referenceId ? { ...i, paymentStatus: 'Paid & Verified' } : i));
-                              }
-                            }}
-                            title="Mark Payment as Verified"
+                            onClick={() => handleStaffApprovePayment(rc.rawItem, rc.itemType, authRole)}
+                            title="Approve & Verify Payment"
+                            style={{ position: 'relative', zIndex: 3 }}
                           >
                             <i className="fa-solid fa-check"></i> Approve
                           </button>
