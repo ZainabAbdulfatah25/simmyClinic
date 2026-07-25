@@ -4157,9 +4157,6 @@ export default function App() {
                           <div className="doctor-info">
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                               {doc.name}
-                              {doc.verified !== false && (
-                                <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Medical Practitioner"></i>
-                              )}
                               <span style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -4293,9 +4290,6 @@ export default function App() {
                       <div className="doctor-info">
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                           {doc.name}
-                          {doc.verified !== false && (
-                            <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '0.95rem' }} title="Verified Medical Practitioner"></i>
-                          )}
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
