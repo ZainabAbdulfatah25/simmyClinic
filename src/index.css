@@ -1013,23 +1013,30 @@ textarea {
 .input-with-icon input,
 .input-with-icon select {
   padding-left: 2.75rem !important;
+  padding-right: 2.75rem !important;
 }
 
 .pw-toggle-btn {
   position: absolute;
-  right: 1rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: transparent;
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 0;
-  display: flex;
+  padding: 0.4rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  z-index: 5;
+  font-size: 1.05rem;
+  z-index: 10;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.pw-toggle-btn i {
+  pointer-events: none;
 }
 
 .pw-toggle-btn:hover {

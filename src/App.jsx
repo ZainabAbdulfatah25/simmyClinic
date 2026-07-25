@@ -4862,7 +4862,7 @@ export default function App() {
                                 value={patientLoginForm.password}
                                 onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
                               />
-                              <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
+                              <button type="button" className="pw-toggle-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(p => ({ ...p, patient: !p.patient })); }} tabIndex={-1} aria-label="Toggle password visibility">
                                 <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                               </button>
                             </div>
@@ -4896,7 +4896,7 @@ export default function App() {
                               value={patientLoginForm.password}
                               onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
                             />
-                            <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, patient: !p.patient }))} tabIndex={-1}>
+                            <button type="button" className="pw-toggle-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(p => ({ ...p, patient: !p.patient })); }} tabIndex={-1} aria-label="Toggle password visibility">
                               <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                             </button>
                           </div>
