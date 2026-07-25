@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, uploadAvatarToSupabase } from './supabaseClient';
+import { supabase, uploadAvatarToSupabase, isSupabaseConfigured } from './supabaseClient';
+import { appointmentsApi, pharmacyOrdersApi, labRequestsApi, clinicDrugsApi, profilesApi } from './services/api';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
-import doctorTijjaniImg from './assets/doctor_tijjani.jpg';
+import doctorTijjaniImg from './assets/doctor_saddiqa.jpg';
 import doctorBamalliImg from './assets/doctor_bamalli.jpg';
 import doctorWasilaImg from './assets/doctor_wasila.jpg';
 import doctorHadizaImg from './assets/doctor_hadiza.jpg';
@@ -990,6 +991,27 @@ export default function App() {
     }
   }, []);
 
+  // Fetch initial data from Supabase backend if configured
+  useEffect(() => {
+    async function loadSupabaseBackendData() {
+      if (!isSupabaseConfigured()) return;
+      try {
+        const [apts, orders, labReqs, drugsData] = await Promise.all([
+          appointmentsApi.getAll(),
+          pharmacyOrdersApi.getAll(),
+          labRequestsApi.getAll(),
+          clinicDrugsApi.getAll()
+        ]);
+        if (apts && apts.length > 0) setAppointments(apts);
+        if (orders && orders.length > 0) setInquiries(orders);
+        if (drugsData && drugsData.length > 0) setDrugs(drugsData);
+      } catch (err) {
+        console.info('Supabase initial fetch info:', err);
+      }
+    }
+    loadSupabaseBackendData();
+  }, []);
+
   // Sync Auth State
   useEffect(() => {
     sessionStorage.setItem("simmy_auth_role", authRole || '');
@@ -1801,6 +1823,9 @@ export default function App() {
     };
 
     setAppointments([newAppointment, ...appointments]);
+    if (isSupabaseConfigured()) {
+      appointmentsApi.create(newAppointment).catch(err => console.info('Supabase appointment creation sync:', err));
+    }
     setBookingFormData({
       patientName: '',
       phone: '',
@@ -4261,9 +4286,9 @@ export default function App() {
                           {doc.consultationRate && (
                             <div style={{ marginTop: '0.2rem' }}>
                               <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
-                              <div style={{ fontSize: '0.73rem', color: '#B45309', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.2rem 0.45rem', borderRadius: '4px', marginTop: '0.25rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                                <i className="fa-solid fa-handshake-angle"></i> Special services fees are negotiable
-                              </div>
+                              <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.25rem' }}>
+                                * Note: Special services fees are negotiable
+                              </span>
                             </div>
                           )}
                           {doc.services && doc.services.length > 0 && (
@@ -4271,8 +4296,8 @@ export default function App() {
                               <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services:</strong>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                                 {doc.services.map(srv => (
-                                  <span key={srv} style={{ fontSize: '0.7rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
-                                    {srv}
+                                  <span key={srv} style={{ fontSize: '0.78rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    <i className="fa-solid fa-check" style={{ fontSize: '0.7rem', color: 'var(--color-accent)' }}></i> {srv}
                                   </span>
                                 ))}
                               </div>
@@ -6653,8 +6678,8 @@ export default function App() {
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.25rem' }}>
                                   {loggedInDoctor.services && loggedInDoctor.services.length > 0 ? (
                                     loggedInDoctor.services.map(srv => (
-                                      <span key={srv} style={{ fontSize: '0.8rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: '600' }}>
-                                        {srv}
+                                      <span key={srv} style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        <i className="fa-solid fa-check" style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}></i> {srv}
                                       </span>
                                     ))
                                   ) : (
@@ -9343,8 +9368,8 @@ export default function App() {
                                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem', maxWidth: '200px' }}>
                                         {d.services && d.services.length > 0 ? (
                                           d.services.map(srv => (
-                                            <span key={srv} style={{ fontSize: '0.7rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: '600' }}>
-                                              {srv}
+                                            <span key={srv} style={{ fontSize: '0.75rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                                              <i className="fa-solid fa-check" style={{ fontSize: '0.65rem', color: 'var(--color-accent)' }}></i> {srv}
                                             </span>
                                           ))
                                         ) : (
@@ -10922,9 +10947,9 @@ export default function App() {
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Consultation Rate</strong>
                   <div style={{ fontSize: '0.9rem', marginTop: '0.15rem', fontWeight: 'bold' }}>{adminSelectedDoctor.consultationRate || 'N/A'}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#B45309', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.15rem 0.35rem', borderRadius: '4px', marginTop: '0.2rem', fontWeight: '600', display: 'inline-block' }}>
-                    * Special services fees are negotiable
-                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.2rem' }}>
+                    * Note: Special services fees are negotiable
+                  </span>
                 </div>
                 <div>
                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Consultation Duration</strong>
@@ -10946,8 +10971,8 @@ export default function App() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.25rem' }}>
                   {adminSelectedDoctor.services && adminSelectedDoctor.services.length > 0 ? (
                     adminSelectedDoctor.services.map(srv => (
-                      <span key={srv} style={{ fontSize: '0.75rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
-                        {srv}
+                      <span key={srv} style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <i className="fa-solid fa-check" style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}></i> {srv}
                       </span>
                     ))
                   ) : (
@@ -11488,9 +11513,9 @@ export default function App() {
                     <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>Consultation Session Duration</span>
                     <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationDuration || '30 mins'}</span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#B45309', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.4rem 0.75rem', borderRadius: '6px', marginTop: '0.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <i className="fa-solid fa-handshake-angle"></i> Special services fees are negotiable
-                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.35rem' }}>
+                    * Note: Special services fees are negotiable
+                  </span>
                 </div>
               </div>
 
@@ -11499,8 +11524,8 @@ export default function App() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {previewBookingDoc.services && previewBookingDoc.services.length > 0 ? (
                     previewBookingDoc.services.map(srv => (
-                      <div key={srv} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--color-accent-light)', color: 'var(--color-accent-hover)', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '600' }}>
-                        <i className="fa-solid fa-circle-check" style={{ fontSize: '0.8rem' }}></i> {srv}
+                      <div key={srv} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-indigo)', fontSize: '0.85rem', fontWeight: '500' }}>
+                        <i className="fa-solid fa-check" style={{ fontSize: '0.8rem', color: 'var(--color-accent)' }}></i> {srv}
                       </div>
                     ))
                   ) : (

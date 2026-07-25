@@ -3,9 +3,18 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase configuration error: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be defined in your environment variables (.env).'
+export const isSupabaseConfigured = () => {
+  return !!(
+    supabaseUrl &&
+    supabaseAnonKey &&
+    supabaseUrl !== 'https://placeholder.supabase.co' &&
+    !supabaseUrl.includes('placeholder')
+  );
+};
+
+if (!isSupabaseConfigured()) {
+  console.info(
+    'Supabase notice: Running in offline mode (using localStorage fallback). To connect live Supabase database, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.'
   );
 }
 
@@ -15,7 +24,7 @@ export const supabase = createClient(
 );
 
 export async function uploadAvatarToSupabase(file, fileNamePrefix = 'avatar') {
-  if (!supabase || !supabaseUrl || supabaseUrl.includes('placeholder')) {
+  if (!isSupabaseConfigured()) {
     return null;
   }
   try {
@@ -36,4 +45,3 @@ export async function uploadAvatarToSupabase(file, fileNamePrefix = 'avatar') {
     return null;
   }
 }
-
