@@ -271,7 +271,10 @@ const INITIAL_APPOINTMENTS = [
     assignedRider: "Chinedu Okeke",
     date: new Date().toISOString().split('T')[0],
     time: "10:00 AM",
-    doctorName: "Dr. Fatima Ibrahim"
+    doctorName: "Dr. Fatima Ibrahim",
+    isNhis: true,
+    nhisNumber: "NHIS-928415-NG",
+    nhisHmo: "NHIA Primary Scheme"
   },
   {
     id: "LAB-7712",
@@ -283,7 +286,10 @@ const INITIAL_APPOINTMENTS = [
     assignedRider: "",
     date: new Date().toISOString().split('T')[0],
     time: "02:00 PM",
-    doctorName: "Dr. Fatima Ibrahim"
+    doctorName: "Dr. Fatima Ibrahim",
+    isNhis: false,
+    nhisNumber: "",
+    nhisHmo: ""
   }
 ];
 
@@ -459,7 +465,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v14_pharmacy_lab_specialist_fix";
+  const DATA_VERSION = "v15_lab_specialty_filter_fix";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -482,6 +488,7 @@ export default function App() {
         const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
         const updatedDoc = {
           ...doc,
+          specialty: seedDoc ? seedDoc.specialty : doc.specialty,
           consultationRate: doc.consultationRate !== undefined ? doc.consultationRate : (seedDoc ? seedDoc.consultationRate : ''),
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
@@ -598,7 +605,10 @@ export default function App() {
     doctorId: '',
     date: '',
     time: '10:00 AM',
-    symptoms: ''
+    symptoms: '',
+    isNhis: false,
+    nhisNumber: '',
+    nhisHmo: 'NHIA Primary Scheme'
   });
 
   const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
@@ -816,6 +826,16 @@ export default function App() {
   const [drugSearchQuery, setDrugSearchQuery] = useState('');
   const [drugCategoryFilter, setDrugCategoryFilter] = useState('All');
 
+  // Custom Edit Price Modal State
+  const [editPriceModal, setEditPriceModal] = useState(null);
+
+  // Pricing Page & Admin Receipts States
+  const [pricingCategory, setPricingCategory] = useState('consultations');
+  const [pricingSearch, setPricingSearch] = useState('');
+  const [pricingIsNhis, setPricingIsNhis] = useState(false);
+  const [adminReceiptSearch, setAdminReceiptSearch] = useState('');
+  const [adminReceiptFilter, setAdminReceiptFilter] = useState('All');
+
   // Route Map Tracking & Simulation States
   const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
   const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
@@ -852,6 +872,762 @@ export default function App() {
     vehicleType: 'Motorbike',
     dispatchArea: ''
   });
+
+  // Payment & Receipt Management States
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalItem, setPaymentModalItem] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('bank_transfer');
+
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
+
+  const handleOpenPayment = (item, type = 'appointment') => {
+    setPaymentModalItem({ item, type });
+    setSelectedPaymentMethod('bank_transfer');
+    setShowPaymentModal(true);
+  };
+
+  const handleViewReceipt = (item, type = 'appointment') => {
+    setReceiptData({ item, type });
+    setShowReceiptModal(true);
+  };
+
+  const handleStaffApprovePayment = (item, type = 'appointment', staffRole = 'Admin') => {
+    const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+    const isOrder = type === 'order' || (item.id && item.id.startsWith('ORD-'));
+    if (isOrder) {
+      setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, paymentStatus: 'Paid & Verified', paidApprovedBy: staffRole, receiptNo: receiptId } : inq));
+    } else {
+      setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: 'Paid & Verified', paidApprovedBy: staffRole, receiptNo: receiptId } : apt));
+    }
+    alert(`Payment successfully verified & approved for ${item.id}!\nOfficial Receipt ${receiptId} generated.`);
+  };
+
+  const renderPaymentStatusBadge = (item, type = 'appointment', role = 'patient') => {
+    const status = item.paymentStatus || 'Paid & Verified';
+    const isPaid = status === 'Paid & Verified' || status === 'Paid';
+    const isPending = status === 'Payment Pending Approval' || status === 'Pending Verification';
+
+    if (isPaid) {
+      return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <i className="fa-solid fa-circle-check"></i> Paid & Verified
+          </span>
+          <button
+            type="button"
+            className="btn btn-outline btn-xs"
+            onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
+            style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem', borderColor: '#cbd5e1', color: 'var(--color-indigo)', fontWeight: '600' }}
+          >
+            <i className="fa-solid fa-receipt"></i> Receipt
+          </button>
+        </div>
+      );
+    } else if (isPending) {
+      return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <span style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#a16207', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <i className="fa-solid fa-clock"></i> Payment Pending Verification
+          </span>
+          {role !== 'patient' ? (
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
+              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              <i className="fa-solid fa-check-circle"></i> Approve Payment
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
+              style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem' }}
+            >
+              <i className="fa-solid fa-receipt"></i> Receipt
+            </button>
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#b91c1c', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <i className="fa-solid fa-circle-exclamation"></i> Unpaid
+          </span>
+          {role === 'patient' ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-accent btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleOpenPayment(item, type); }}
+                style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 'bold' }}
+              >
+                <i className="fa-solid fa-credit-card"></i> Pay Now
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
+                style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem' }}
+                title="View Pro-Forma Invoice"
+              >
+                <i className="fa-solid fa-file-invoice"></i> Invoice
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
+                style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                <i className="fa-solid fa-check-circle"></i> Approve Payment
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
+                style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem', borderColor: '#cbd5e1', color: 'var(--color-indigo)', fontWeight: '600' }}
+                title="View Official Invoice / Receipt"
+              >
+                <i className="fa-solid fa-receipt"></i> Invoice
+              </button>
+            </>
+          )}
+        </div>
+      );
+    }
+  };
+
+  const renderPaymentModal = () => {
+    if (!showPaymentModal || !paymentModalItem) return null;
+    const { item, type } = paymentModalItem;
+
+    let title = "Clinical Consultation";
+    let amount = "₦3,000";
+    if (type === 'order' || (item.id && item.id.startsWith('ORD-'))) {
+      title = "Pharmacy Medication Order";
+      const parsed = parseOrderMessage(item.message || '');
+      amount = parsed.total !== 'N/A' ? parsed.total : '₦5,500';
+    } else if (type === 'lab' || (item.id && item.id.startsWith('LAB-'))) {
+      title = "Mobile Lab Diagnostics Test";
+      amount = "₦7,500";
+    } else {
+      title = `Doctor Consultation (${item.doctor || item.doctorName || 'Specialist'})`;
+      amount = item.consultationRate || item.cost || "₦3,000";
+    }
+
+    return (
+      <div className="modal-backdrop" onClick={() => setShowPaymentModal(false)}>
+        <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', textAlign: 'left' }}>
+          <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h3 style={{ margin: 0 }}><i className="fa-solid fa-credit-card" style={{ color: 'var(--color-accent)', marginRight: '8px' }}></i> Pay for {title}</h3>
+            <button onClick={() => setShowPaymentModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '10px', marginBottom: '1.25rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontSize: '0.85rem' }}>
+              <span>Item / Reference ID:</span>
+              <strong style={{ fontFamily: 'monospace' }}>{item.id}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <span>Total Payable Amount:</span>
+              <span style={{ color: 'var(--color-accent)' }}>{amount}</span>
+            </div>
+          </div>
+
+          {/* Payment Method Selector */}
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Select Payment Option</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className={`btn ${selectedPaymentMethod === 'bank_transfer' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setSelectedPaymentMethod('bank_transfer')}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.85rem', height: 'auto', gap: '0.35rem' }}
+              >
+                <i className="fa-solid fa-building-columns" style={{ fontSize: '1.3rem' }}></i>
+                <span>Bank Transfer</span>
+              </button>
+              <button
+                type="button"
+                className={`btn ${selectedPaymentMethod === 'card_gateway' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setSelectedPaymentMethod('card_gateway')}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.85rem', height: 'auto', gap: '0.35rem' }}
+              >
+                <i className="fa-solid fa-credit-card" style={{ fontSize: '1.3rem' }}></i>
+                <span>Card Gateway</span>
+              </button>
+              <button
+                type="button"
+                className={`btn ${selectedPaymentMethod === 'nhis_copay' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setSelectedPaymentMethod('nhis_copay')}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.85rem', height: 'auto', gap: '0.35rem', gridColumn: 'span 2' }}
+              >
+                <i className="fa-solid fa-shield-halved" style={{ fontSize: '1.3rem', color: '#0284c7' }}></i>
+                <span>NHIS / HMO Insurance Claim (10% Patient Co-Pay)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Details based on selected payment method */}
+          {selectedPaymentMethod === 'bank_transfer' ? (
+            <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+              <div style={{ fontWeight: 'bold', color: '#60a5fa', marginBottom: '0.5rem' }}>Direct Bank Transfer Account</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '0.35rem' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Bank Name:</span> <strong>Zenith Bank PLC</strong>
+                <span style={{ color: 'var(--color-text-muted)' }}>Account Name:</span> <strong>SimmyCare Digital Health Ltd</strong>
+                <span style={{ color: 'var(--color-text-muted)' }}>Account No:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: '1rem' }}>1029384756</strong>
+              </div>
+              <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                Transfer exact amount <strong>{amount}</strong> and click "Confirm Payment Sent" below. Staff will verify your payment instantly.
+              </p>
+            </div>
+          ) : selectedPaymentMethod === 'nhis_copay' ? (
+            <div style={{ background: 'rgba(2, 132, 199, 0.08)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(2, 132, 199, 0.25)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+              <div style={{ fontWeight: 'bold', color: '#0284c7', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-shield-halved"></i> National Health Insurance (NHIS) Subvention
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>NHIS Covered Benefit (90%):</span>
+                  <strong style={{ color: '#16a34a', fontSize: '1rem' }}>
+                    ₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.9)).toLocaleString()}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>Patient Co-Pay Payable (10%):</span>
+                  <strong style={{ color: '#0284c7', fontSize: '1rem' }}>
+                    ₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.1)).toLocaleString()}
+                  </strong>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                Enrollee ID: <strong>{item.nhisNumber || 'NHIS-VERIFIED'}</strong> | Scheme: <strong>{item.nhisHmo || 'NHIA Primary Scheme'}</strong>
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+              <div style={{ fontWeight: 'bold', color: '#34d399', marginBottom: '0.5rem' }}>Paystack / Instant Card Gateway</div>
+              <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Card Number</label>
+                <input type="text" defaultValue="5399 •••• •••• 4211" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Expiry Date</label>
+                  <input type="text" defaultValue="12/28" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>CVV</label>
+                  <input type="text" defaultValue="842" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
+            <button className="btn btn-outline" onClick={() => setShowPaymentModal(false)}>Cancel</button>
+            <button
+              className="btn btn-accent"
+              onClick={() => {
+                const updatedStatus = selectedPaymentMethod === 'card_gateway' ? 'Paid & Verified' : selectedPaymentMethod === 'nhis_copay' ? 'Paid via NHIS Co-pay' : 'Payment Pending Approval';
+                const methodLabel = selectedPaymentMethod === 'bank_transfer' ? 'Bank Transfer' : selectedPaymentMethod === 'nhis_copay' ? 'NHIS Co-pay Claim' : 'Card Gateway';
+                const receiptId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+
+                if (type === 'order' || (item.id && item.id.startsWith('ORD-'))) {
+                  setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || inq.isNhis } : inq));
+                } else {
+                  setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || apt.isNhis } : apt));
+                }
+                setShowPaymentModal(false);
+                alert(`Payment process completed! Status: ${updatedStatus}`);
+              }}
+            >
+              <i className="fa-solid fa-lock"></i> {selectedPaymentMethod === 'card_gateway' ? `Pay ${amount} Now` : selectedPaymentMethod === 'nhis_copay' ? 'Confirm NHIS Claim & Co-pay' : 'Confirm Payment Sent'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderReceiptModal = () => {
+    if (!showReceiptModal || !receiptData) return null;
+    const { item, type } = receiptData;
+    const isPaid = (item.paymentStatus === 'Paid & Verified' || item.paymentStatus === 'Paid' || (!item.paymentStatus && item.id));
+    const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.abs((item.id || '1').split('').reduce((a,b)=>a+b.charCodeAt(0),0)) * 89) % 900000}`;
+    const dateStr = item.date || new Date().toISOString().split('T')[0];
+
+    let title = "Clinical Service";
+    let patientName = item.patientName || item.name || "Patient";
+    let amount = item.cost || item.consultationRate || "₦3,000";
+    if (type === 'order' || (item.id && item.id.startsWith('ORD-'))) {
+      title = "Pharmacy Medication Order";
+      const parsed = parseOrderMessage(item.message || '');
+      amount = parsed.total !== 'N/A' ? parsed.total : '₦5,500';
+    } else if (type === 'lab' || (item.id && item.id.startsWith('LAB-'))) {
+      title = "Mobile Diagnostic Test Package";
+      amount = "₦7,500";
+    } else {
+      title = `Medical Consultation (${item.doctor || item.doctorName || 'Specialist'})`;
+    }
+
+    return (
+      <div className="modal-backdrop" onClick={() => setShowReceiptModal(false)}>
+        <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px', color: '#1e293b', background: '#ffffff', borderRadius: '16px', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', textAlign: 'left' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px dashed #cbd5e1', paddingBottom: '1.25rem', marginBottom: '1.25rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <img src={logoSvg} alt="Logo" style={{ height: '32px' }} />
+                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.4rem', fontWeight: '800' }}>Simmy<span style={{ color: '#0284c7' }}>Care</span> Health</h2>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Official Digital Medical Receipt & Invoice</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Receipt No</span>
+              <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.1rem', color: '#0284c7' }}>{receiptId}</div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.2rem' }}>{dateStr}</div>
+            </div>
+          </div>
+
+          {/* Verification Badge Stamp */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isPaid ? 'rgba(34, 197, 94, 0.08)' : 'rgba(234, 179, 8, 0.1)', padding: '0.75rem 1rem', borderRadius: '8px', border: `1px solid ${isPaid ? '#bbf7d0' : '#fef08a'}`, marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <i className={isPaid ? "fa-solid fa-circle-check" : "fa-solid fa-clock"} style={{ color: isPaid ? '#16a34a' : '#ca8a04', fontSize: '1.2rem' }}></i>
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.85rem', color: isPaid ? '#15803d' : '#854d0e' }}>
+                  {isPaid ? 'PAYMENT VERIFIED & APPROVED' : 'PAYMENT AWAITING VERIFICATION'}
+                </strong>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  Method: <strong>{item.paymentMethod || 'Bank Transfer'}</strong> {item.paidApprovedBy ? `• Approved by: ${item.paidApprovedBy}` : ''}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {!isPaid && (
+                <button
+                  className="btn btn-xs"
+                  onClick={() => {
+                    handleStaffApprovePayment(item, type, 'Staff/Admin');
+                    setReceiptData({ ...receiptData, item: { ...item, paymentStatus: 'Paid & Verified', paidApprovedBy: 'Staff/Admin' } });
+                  }}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  <i className="fa-solid fa-check"></i> Mark as Paid
+                </button>
+              )}
+              <div style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', padding: '0.2rem 0.6rem', borderRadius: '4px', background: isPaid ? '#22c55e' : '#eab308', color: '#ffffff' }}>
+                {isPaid ? 'PAID' : 'PENDING'}
+              </div>
+            </div>
+          </div>
+
+          {/* Details Table */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <div>
+                <span style={{ color: '#64748b', fontSize: '0.75rem', display: 'block' }}>BILLED TO PATIENT</span>
+                <strong style={{ color: '#0f172a', fontSize: '0.95rem' }}>{patientName}</strong>
+                {item.email && <div style={{ color: '#475569', fontSize: '0.8rem' }}>{item.email}</div>}
+                {item.phone && <div style={{ color: '#475569', fontSize: '0.8rem' }}>{item.phone}</div>}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ color: '#64748b', fontSize: '0.75rem', display: 'block' }}>SERVICE CATEGORY</span>
+                <strong style={{ color: '#0f172a' }}>{title}</strong>
+                <div style={{ color: '#475569', fontSize: '0.8rem' }}>Reference ID: {item.id}</div>
+              </div>
+            </div>
+
+            {(item.isNhis || item.nhisNumber || item.paymentMethod === 'NHIS Co-pay Claim') && (
+              <div style={{ background: '#f0f9ff', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #bae6fd', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong style={{ fontSize: '0.82rem', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <i className="fa-solid fa-shield-halved"></i> NHIS / HMO INSURANCE COVERAGE BENEFIT
+                  </strong>
+                  <div style={{ fontSize: '0.75rem', color: '#0369a1', marginTop: '0.15rem' }}>
+                    Enrollee No: <strong>{item.nhisNumber || 'NHIS-928415-NG'}</strong> | HMO: <strong>{item.nhisHmo || 'NHIA Primary Scheme'}</strong>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 'bold', background: '#0284c7', color: '#fff', padding: '0.2rem 0.6rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+                  90% Subvention
+                </span>
+              </div>
+            )}
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
+                  <th style={{ padding: '0.6rem 0.8rem' }}>Description</th>
+                  <th style={{ padding: '0.6rem 0.8rem', textAlign: 'right' }}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '0.75rem 0.8rem', color: '#334155' }}>
+                    <strong>{title} (Standard Tariff)</strong>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                      {item.symptoms || item.prescription || item.message || 'Clinical consultations & digital health service'}
+                    </div>
+                  </td>
+                  <td style={{ padding: '0.75rem 0.8rem', textAlign: 'right', fontWeight: 'bold', color: '#0f172a' }}>
+                    {amount}
+                  </td>
+                </tr>
+
+                {(item.isNhis || item.nhisNumber || item.paymentMethod === 'NHIS Co-pay Claim') && (
+                  <>
+                    <tr style={{ borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                      <td style={{ padding: '0.6rem 0.8rem', color: '#16a34a' }}>
+                        <i className="fa-solid fa-shield-halved" style={{ marginRight: '6px' }}></i>
+                        <strong>NHIA Statutory Insurance Subsidy (90%)</strong>
+                      </td>
+                      <td style={{ padding: '0.6rem 0.8rem', textAlign: 'right', fontWeight: 'bold', color: '#16a34a' }}>
+                        -₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.9)).toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #f1f5f9', background: '#f0f9ff' }}>
+                      <td style={{ padding: '0.6rem 0.8rem', color: '#0369a1' }}>
+                        <strong>Net Enrollee Co-Pay Amount (10%)</strong>
+                      </td>
+                      <td style={{ padding: '0.6rem 0.8rem', textAlign: 'right', fontWeight: 'bold', color: '#0284c7', fontSize: '1rem' }}>
+                        ₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.1)).toLocaleString()}
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer & Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              Thank you for trusting SimmyCare. Keep this receipt for medical record purposes.
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setShowReceiptModal(false)}
+                style={{ borderColor: '#cbd5e1', color: '#475569' }}
+              >
+                Close
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => window.print()}
+                style={{ background: '#0284c7', borderColor: '#0284c7' }}
+              >
+                <i className="fa-solid fa-print"></i> Print Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdminReceiptsView = () => {
+    // Collect all appointments with payment info or receipts
+    const appointmentReceipts = appointments.map(apt => ({
+      id: `RC-APT-${apt.id.replace('APT-', '')}`,
+      referenceId: apt.id,
+      date: apt.date || 'Today',
+      patientName: apt.patientName || 'Patient',
+      serviceType: 'Doctor Consultation',
+      detail: `${apt.doctor} (${apt.type || 'Virtual'})`,
+      amount: apt.isNhis ? Math.round(3000 * 0.1) : 3000,
+      originalTariff: 3000,
+      paymentMethod: apt.paymentMethod || (apt.isNhis ? 'NHIS 10% Co-Pay' : 'Bank Transfer'),
+      paymentStatus: apt.paymentStatus || 'Paid & Verified',
+      isNhis: apt.isNhis,
+      nhisNumber: apt.nhisNumber,
+      nhisHmo: apt.nhisHmo,
+      rawItem: apt,
+      itemType: 'appointment'
+    }));
+
+    // Collect all pharmacy & lab orders with receipts
+    const orderReceipts = inquiries.filter(inq => inq.id.startsWith('ORD-') || inq.id.startsWith('LAB-')).map(inq => {
+      const isLab = inq.id.startsWith('LAB-');
+      const stdPrice = isLab ? 6500 : 8500;
+      return {
+        id: `RC-ORD-${inq.id.replace(/(ORD|LAB)-/, '')}`,
+        referenceId: inq.id,
+        date: inq.date || 'Recent',
+        patientName: inq.name || 'Patient',
+        serviceType: isLab ? 'Laboratory Diagnostic Test' : 'Dispensary Pharmacy Rx',
+        detail: inq.subject || (inq.message ? inq.message.slice(0, 40) + '...' : 'Prescription Order'),
+        amount: stdPrice,
+        originalTariff: stdPrice,
+        paymentMethod: inq.paymentMethod || 'Bank Transfer',
+        paymentStatus: inq.paymentStatus || 'Paid & Verified',
+        isNhis: false,
+        rawItem: inq,
+        itemType: isLab ? 'lab' : 'pharmacy'
+      };
+    });
+
+    const allReceipts = [...appointmentReceipts, ...orderReceipts];
+
+    let filtered = allReceipts;
+    if (adminReceiptFilter !== 'All') {
+      filtered = filtered.filter(r => r.paymentStatus === adminReceiptFilter);
+    }
+    if (adminReceiptSearch.trim()) {
+      const q = adminReceiptSearch.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.id.toLowerCase().includes(q) ||
+        r.referenceId.toLowerCase().includes(q) ||
+        r.patientName.toLowerCase().includes(q) ||
+        r.serviceType.toLowerCase().includes(q)
+      );
+    }
+
+    const totalVerifiedRevenue = allReceipts
+      .filter(r => r.paymentStatus === 'Paid & Verified')
+      .reduce((sum, r) => sum + r.amount, 0);
+
+    return (
+      <div className="animate-fade">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>Generated Receipts & Payments Register</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Audit patient payment proofs, official receipts, and NHIS subvention claims.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <span style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#047857', padding: '0.5rem 1rem', borderRadius: '10px', fontWeight: 'bold', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <i className="fa-solid fa-cash-register"></i> Total Collected: ₦{totalVerifiedRevenue.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Filter Bar */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="search-box" style={{ flex: '1 1 250px', margin: 0 }}>
+            <i className="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              placeholder="Search receipt #, patient name, ref ID..."
+              value={adminReceiptSearch}
+              onChange={(e) => setAdminReceiptSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="specialty-filters" style={{ margin: 0 }}>
+            {['All', 'Paid & Verified', 'Pending Verification'].map(status => (
+              <button
+                key={status}
+                className={`filter-btn ${adminReceiptFilter === status ? 'active' : ''}`}
+                onClick={() => setAdminReceiptFilter(status)}
+                style={{ fontSize: '0.78rem', padding: '0.35rem 0.8rem' }}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Receipts Table */}
+        {filtered.length === 0 ? (
+          <div className="empty-state glassmorphic" style={{ padding: '2rem', textAlign: 'center' }}>
+            <i className="fa-solid fa-receipt" style={{ fontSize: '2rem', color: 'var(--color-text-muted)' }}></i>
+            <h4 style={{ marginTop: '0.5rem' }}>No generated receipts found</h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>No receipts match your search filter.</p>
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Receipt No</th>
+                  <th>Ref ID</th>
+                  <th>Patient Name</th>
+                  <th>Service Category</th>
+                  <th>Amount</th>
+                  <th>Payment Method</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(rc => (
+                  <tr key={rc.id}>
+                    <td>
+                      <strong style={{ color: 'var(--color-primary)', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                        {rc.id}
+                      </strong>
+                    </td>
+                    <td><span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{rc.referenceId}</span></td>
+                    <td>
+                      <strong>{rc.patientName}</strong>
+                      {rc.isNhis && (
+                        <div style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 'bold' }}>
+                          NHIS: {rc.nhisNumber || 'Enrollee'}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '12px', background: 'rgba(255,255,255,0.06)' }}>
+                        {rc.serviceType}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>₦{rc.amount.toLocaleString()}</strong>
+                      {rc.isNhis && (
+                        <div style={{ fontSize: '0.7rem', color: '#16a34a' }}>10% Co-Pay Rate</div>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                        {rc.paymentMethod}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        background: rc.paymentStatus === 'Paid & Verified' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                        color: rc.paymentStatus === 'Paid & Verified' ? '#047857' : '#b45309'
+                      }}>
+                        {rc.paymentStatus}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => {
+                            setReceiptData({ item: rc.rawItem, type: rc.itemType });
+                            setShowReceiptModal(true);
+                          }}
+                          title="View / Print Official Receipt"
+                        >
+                          <i className="fa-solid fa-receipt"></i> Inspect Receipt
+                        </button>
+                        {rc.paymentStatus === 'Pending Verification' && (
+                          <button
+                            className="btn btn-accent btn-sm"
+                            onClick={() => {
+                              if (rc.itemType === 'appointment') {
+                                setAppointments(prev => prev.map(a => a.id === rc.referenceId ? { ...a, paymentStatus: 'Paid & Verified' } : a));
+                              } else {
+                                setInquiries(prev => prev.map(i => i.id === rc.referenceId ? { ...i, paymentStatus: 'Paid & Verified' } : i));
+                              }
+                            }}
+                            title="Mark Payment as Verified"
+                          >
+                            <i className="fa-solid fa-check"></i> Approve
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderEditPriceModal = () => {
+    if (!editPriceModal) return null;
+    return (
+      <div className="modal-backdrop" onClick={() => setEditPriceModal(null)}>
+        <div
+          className="modal-content glassmorphic animate-fade"
+          onClick={(e) => e.stopPropagation()}
+          style={{ maxWidth: '440px', textAlign: 'left' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+              <i className="fa-solid fa-tag" style={{ color: 'var(--color-primary)' }}></i> Update Price Tariff
+            </h3>
+            <button
+              onClick={() => setEditPriceModal(null)}
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+            >
+              &times;
+            </button>
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Medication Stock Item
+            </div>
+            <strong style={{ fontSize: '1.05rem', color: 'var(--color-heading)' }}>
+              {editPriceModal.name}
+            </strong>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '0.35rem' }}>
+              New Unit Selling Price (₦)
+            </label>
+            <input
+              type="number"
+              step="50"
+              value={editPriceModal.price}
+              onChange={(e) => setEditPriceModal({ ...editPriceModal, price: e.target.value })}
+              style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '1.15rem', fontWeight: 'bold' }}
+              autoFocus
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={() => setEditPriceModal(prev => ({ ...prev, price: Math.round(Number(prev.price) * 1.05) }))}
+            >
+              +5% Inflation
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={() => setEditPriceModal(prev => ({ ...prev, price: Math.round(Number(prev.price) * 1.1) }))}
+            >
+              +10% Rate
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={() => setEditPriceModal(prev => ({ ...prev, price: Math.round(Number(prev.price) * 0.9) }))}
+            >
+              -10% Discount
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <button className="btn btn-outline" onClick={() => setEditPriceModal(null)}>Cancel</button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                const num = Number(editPriceModal.price);
+                if (!isNaN(num) && num >= 0) {
+                  setClinicDrugStock(prev => prev.map(d => d.id === editPriceModal.id ? { ...d, price: num } : d));
+                  setEditPriceModal(null);
+                } else {
+                  alert('Please enter a valid price.');
+                }
+              }}
+            >
+              <i className="fa-solid fa-floppy-disk"></i> Save Tariff Price
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderStockInventoryView = () => {
     const categories = ['All', 'Analgesics', 'Antibiotics', 'Antimalarials', 'Supplements', 'Antihistamines', 'Respiratory', 'Pediatrics', 'Diagnostics'];
@@ -978,13 +1754,8 @@ export default function App() {
                         <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
                           <button
                             className="btn btn-outline btn-sm"
-                            onClick={() => {
-                              const newPrice = prompt(`Enter new price for ${drug.name}:`, drug.price);
-                              if (newPrice !== null && !isNaN(Number(newPrice))) {
-                                setClinicDrugStock(prev => prev.map(d => d.id === drug.id ? { ...d, price: Number(newPrice) } : d));
-                              }
-                            }}
-                            title="Update Price"
+                            onClick={() => setEditPriceModal({ id: drug.id, name: drug.name, price: drug.price })}
+                            title="Update Price Tariff"
                           >
                             <i className="fa-solid fa-pen-to-square"></i> Price
                           </button>
@@ -1047,6 +1818,7 @@ export default function App() {
                   <th>Customer / Patient</th>
                   <th>Details & Prescription</th>
                   <th>Status</th>
+                  <th>Payment Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -1102,6 +1874,9 @@ export default function App() {
                           </select>
                           <button className="btn btn-primary btn-sm" onClick={() => setAdminSelectedInquiry(order)}>
                             <i className="fa-solid fa-eye"></i> Details
+                          </button>
+                          <button className="btn btn-outline btn-sm" onClick={() => handleViewReceipt(order, 'order')} title="Generate Invoice / Receipt">
+                            <i className="fa-solid fa-receipt"></i> Receipt / Invoice
                           </button>
                         </div>
                       </td>
@@ -2122,7 +2897,10 @@ export default function App() {
       symptoms: bookingFormData.symptoms || "None provided",
       status: "Pending",
       notes: "",
-      prescription: ""
+      prescription: "",
+      isNhis: !!bookingFormData.isNhis,
+      nhisNumber: bookingFormData.isNhis ? bookingFormData.nhisNumber : '',
+      nhisHmo: bookingFormData.isNhis ? bookingFormData.nhisHmo : ''
     };
 
     setAppointments([newAppointment, ...appointments]);
@@ -2136,7 +2914,10 @@ export default function App() {
       doctorId: '',
       date: '',
       time: '10:00 AM',
-      symptoms: ''
+      symptoms: '',
+      isNhis: false,
+      nhisNumber: '',
+      nhisHmo: 'NHIA Primary Scheme'
     });
 
     setSuccessModal({
@@ -2793,7 +3574,10 @@ export default function App() {
     const matchesSearch = doc.name.toLowerCase().includes(doctorSearch.toLowerCase()) ||
       doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
       (doc.services && doc.services.some(srv => srv.toLowerCase().includes(doctorSearch.toLowerCase())));
-    const matchesFilter = doctorFilter === 'all' || doc.specialty === doctorFilter;
+    const matchesFilter = doctorFilter === 'all' ||
+      doc.specialty.toLowerCase() === doctorFilter.toLowerCase() ||
+      (doctorFilter.toLowerCase() === 'laboratory' && doc.specialty.toLowerCase().includes('lab')) ||
+      (doctorFilter.toLowerCase() === 'pharmacy' && doc.specialty.toLowerCase().includes('pharm'));
     return matchesSearch && matchesFilter && doc.active !== false;
   });
 
@@ -3316,6 +4100,7 @@ export default function App() {
               <ul className="nav-links">
                 <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
                 <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Doctors</a></li>
+                <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
                 <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
                 <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact</a></li>
               </ul>
@@ -4659,6 +5444,391 @@ export default function App() {
           </section>
         )}
 
+        {/* --- VIEW: PRICING DIRECTORY --- */}
+        {currentView === 'pricing' && (
+          <section id="pricing-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+
+            {/* Pricing Hero */}
+            <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
+              <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '20px', display: 'inline-block', marginBottom: '0.75rem' }}>
+                <i className="fa-solid fa-tags" style={{ marginRight: '6px' }}></i> Transparent Healthcare Tariffs
+              </span>
+              <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>Simple, Flat-Rate Medical Pricing</h2>
+              <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                No surprise bills or hidden facility fees. Explore verified rates for online consultations, mobile diagnostic lab tests, prescriptions, and annual family care plans.
+              </p>
+
+              {/* NHIS Enrollee Benefit Calculator Switch */}
+              <div style={{ marginTop: '1.5rem', background: 'rgba(2, 132, 199, 0.08)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(2, 132, 199, 0.25)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: pricingIsNhis ? 'var(--color-text-muted)' : 'var(--color-heading)' }}>
+                    Standard Private Tariff
+                  </span>
+                  <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px' }}>
+                    <input
+                      type="checkbox"
+                      checked={pricingIsNhis}
+                      onChange={(e) => setPricingIsNhis(e.target.checked)}
+                      style={{ opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: pricingIsNhis ? '#0284c7' : '#cbd5e1', transition: '.3s', borderRadius: '34px' }}>
+                      <span style={{ position: 'absolute', content: '""', height: '20px', width: '20px', left: pricingIsNhis ? '26px' : '3px', bottom: '3px', backgroundColor: 'white', transition: '.3s', borderRadius: '50%' }}></span>
+                    </span>
+                  </label>
+                  <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: pricingIsNhis ? '#0284c7' : 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-shield-halved"></i> NHIS / HMO Enrollee (10% Co-Pay)
+                  </span>
+                </div>
+                {pricingIsNhis && (
+                  <span style={{ fontSize: '0.8rem', color: '#0369a1', background: '#e0f2fe', padding: '0.2rem 0.75rem', borderRadius: '20px', fontWeight: 'bold' }}>
+                    ✨ 90% Statutory Government & HMO Coverage Applied Across All Rates
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Category Pills & Search */}
+            <div className="filter-bar glassmorphic" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+              <div className="specialty-filters" style={{ margin: 0 }}>
+                {[
+                  { id: 'consultations', label: 'Doctor Consultations', icon: 'fa-user-doctor' },
+                  { id: 'lab', label: 'Lab Tests & Diagnostics', icon: 'fa-flask-vial' },
+                  { id: 'pharmacy', label: 'Pharmacy Medications', icon: 'fa-pills' },
+                  { id: 'packages', label: 'Care Packages', icon: 'fa-heart-pulse' }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    className={`filter-btn ${pricingCategory === cat.id ? 'active' : ''}`}
+                    onClick={() => setPricingCategory(cat.id)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <i className={`fa-solid ${cat.icon}`}></i> {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="search-box" style={{ maxWidth: '300px' }}>
+                <i className="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="text"
+                  placeholder="Search service, drug, or test..."
+                  value={pricingSearch}
+                  onChange={(e) => setPricingSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* CATEGORY 1: CONSULTATIONS */}
+            {pricingCategory === 'consultations' && (
+              <div className="pricing-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: '1.5rem' }}>
+                {[
+                  {
+                    title: "General Practitioner (GP)",
+                    standardPrice: 3000,
+                    desc: "20-minute consultation with an MDCN-certified general practitioner for acute illness, vitals review, and general health inquiries.",
+                    features: ["20-min HD Video/Audio Call", "Digital Prescription Sent to Phone", "Specialist Referral if Required", "Follow-up Messaging (24hrs)"],
+                    badge: "Most Popular",
+                    icon: "fa-stethoscope"
+                  },
+                  {
+                    title: "Specialist Consultant",
+                    standardPrice: 6000,
+                    desc: "Dedicated appointment with a Senior Consultant in Pediatrics, Gynaecology, Cardiology, Psychology, or Public Health.",
+                    features: ["30-minute Specialist Session", "Comprehensive Care Plan", "Diagnostic Test Interpretation", "Official Medical Report"],
+                    badge: "Specialized Care",
+                    icon: "fa-user-doctor"
+                  },
+                  {
+                    title: "Urgent Home Visit Doctor",
+                    standardPrice: 15000,
+                    desc: "In-person visit by a licensed medical practitioner to your home or office in Abuja, Kaduna, Kano, Bauchi, or Gombe.",
+                    features: ["Physical Examination at Home", "On-site Rapid Diagnostics", "Immediate First-dose Medication", "Emergency Triage Coordination"],
+                    badge: "On-Demand Home Care",
+                    icon: "fa-house-medical"
+                  },
+                  {
+                    title: "Follow-Up Review Slot",
+                    standardPrice: 2000,
+                    desc: "Quick check-in session within 7 days of initial consultation to review lab results or evaluate medication progress.",
+                    features: ["15-min Video or Call", "Lab Result Evaluation", "Prescription Refill Adjustment", "Clinical Progress Check"],
+                    badge: "Existing Patients",
+                    icon: "fa-rotate-right"
+                  }
+                ]
+                .filter(item => !pricingSearch || item.title.toLowerCase().includes(pricingSearch.toLowerCase()) || item.desc.toLowerCase().includes(pricingSearch.toLowerCase()))
+                .map((item, idx) => {
+                  const finalPrice = pricingIsNhis ? Math.round(item.standardPrice * 0.1) : item.standardPrice;
+                  return (
+                    <div key={idx} className="pricing-card glassmorphic animate-fade" style={{ padding: '1.75rem', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
+                      {item.badge && (
+                        <span style={{ position: 'absolute', top: '-12px', right: '20px', background: 'var(--color-primary)', color: '#fff', fontSize: '0.72rem', fontWeight: 'bold', padding: '0.25rem 0.75rem', borderRadius: '12px', textTransform: 'uppercase' }}>
+                          {item.badge}
+                        </span>
+                      )}
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.12)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                            <i className={`fa-solid ${item.icon}`}></i>
+                          </div>
+                          <h3 style={{ margin: 0, fontSize: '1.15rem' }}>{item.title}</h3>
+                        </div>
+
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                          {item.desc}
+                        </p>
+
+                        <div style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {pricingIsNhis ? 'NHIS Enrollee Co-Pay Fee' : 'Standard Rate'}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.2rem' }}>
+                            <span style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--color-heading)' }}>
+                              ₦{finalPrice.toLocaleString()}
+                            </span>
+                            {pricingIsNhis && (
+                              <span style={{ fontSize: '0.85rem', color: '#16a34a', textDecoration: 'line-through' }}>
+                                ₦{item.standardPrice.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                          {pricingIsNhis && (
+                            <div style={{ fontSize: '0.72rem', color: '#0284c7', marginTop: '0.25rem', fontWeight: 'bold' }}>
+                              90% (₦{(item.standardPrice - finalPrice).toLocaleString()}) covered by NHIA Insurance
+                            </div>
+                          )}
+                        </div>
+
+                        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
+                          {item.features.map((f, i) => (
+                            <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text)' }}>
+                              <i className="fa-solid fa-circle-check" style={{ color: '#16a34a', fontSize: '0.85rem' }}></i> {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <button className="btn btn-primary btn-block" onClick={() => navigateTo('booking')}>
+                        Book {item.title}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* CATEGORY 2: LAB TESTS & DIAGNOSTICS */}
+            {pricingCategory === 'lab' && (
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px', overflowX: 'auto' }}>
+                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--color-border)', color: 'var(--color-text-muted)' }}>
+                      <th style={{ padding: '0.8rem' }}>Diagnostic Test Package</th>
+                      <th style={{ padding: '0.8rem' }}>Clinical Scope</th>
+                      <th style={{ padding: '0.8rem' }}>Standard Tariff</th>
+                      <th style={{ padding: '0.8rem' }}>NHIS 10% Co-Pay</th>
+                      <th style={{ padding: '0.8rem', textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { name: "Full Blood Count (FBC)", scope: "Hemoglobin, WBC, Platelets, RBC indices", standard: 4500, copay: 450 },
+                      { name: "Fasting Blood Sugar (FBS)", scope: "Diabetes screening & glycemic evaluation", standard: 2500, copay: 250 },
+                      { name: "Malaria Smear & Widal Typhoid Panel", scope: "Thick smear microscopy + Salmonella titers", standard: 5000, copay: 500 },
+                      { name: "Lipid Profile (Cholesterol Panel)", scope: "Total cholesterol, Triglycerides, HDL, LDL", standard: 6500, copay: 650 },
+                      { name: "Liver Function Test (LFT)", scope: "ALT, AST, Bilirubin, Alkaline Phosphatase", standard: 7000, copay: 700 },
+                      { name: "Kidney Electrolytes & Creatinine (E/U/Cr)", scope: "Sodium, Potassium, Urea, Creatinine", standard: 7500, copay: 750 },
+                      { name: "Mobile Lab Rider Sample Collection", scope: "Dispatch certified phlebotomist rider to home", standard: 1500, copay: 0 }
+                    ]
+                    .filter(t => !pricingSearch || t.name.toLowerCase().includes(pricingSearch.toLowerCase()) || t.scope.toLowerCase().includes(pricingSearch.toLowerCase()))
+                    .map((t, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '0.85rem' }}>
+                          <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="fa-solid fa-flask" style={{ color: 'var(--color-primary)', fontSize: '0.85rem' }}></i> {t.name}
+                          </strong>
+                        </td>
+                        <td style={{ padding: '0.85rem', color: 'var(--color-text-muted)', fontSize: '0.82rem' }}>{t.scope}</td>
+                        <td style={{ padding: '0.85rem', fontWeight: 'bold' }}>₦{t.standard.toLocaleString()}</td>
+                        <td style={{ padding: '0.85rem' }}>
+                          <span style={{ background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                            ₦{t.copay.toLocaleString()}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.85rem', textAlign: 'right' }}>
+                          <button className="btn btn-outline btn-sm" onClick={() => navigateTo('booking')}>
+                            Request Test
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* CATEGORY 3: PHARMACY MEDICATIONS */}
+            {pricingCategory === 'pharmacy' && (
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <h3 style={{ margin: 0 }}>Live Pharmacy Stock Price Directory</h3>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Real-time tariffs synced directly with SimmyCare central dispensary.</p>
+                  </div>
+                  {(authRole === 'pharmacist' || authRole === 'admin') && (
+                    <span style={{ fontSize: '0.78rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.6rem', borderRadius: '6px', fontWeight: 'bold' }}>
+                      <i className="fa-solid fa-lock-open"></i> Staff Mode: Edit Price buttons active
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--color-border)', color: 'var(--color-text-muted)' }}>
+                        <th style={{ padding: '0.8rem' }}>Medication Name</th>
+                        <th style={{ padding: '0.8rem' }}>Category</th>
+                        <th style={{ padding: '0.8rem' }}>Availability</th>
+                        <th style={{ padding: '0.8rem' }}>Standard Price</th>
+                        <th style={{ padding: '0.8rem' }}>NHIS 10% Co-Pay</th>
+                        <th style={{ padding: '0.8rem', textAlign: 'right' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clinicDrugStock
+                        .filter(drug => !pricingSearch || drug.name.toLowerCase().includes(pricingSearch.toLowerCase()) || drug.category?.toLowerCase().includes(pricingSearch.toLowerCase()))
+                        .map((drug) => {
+                          const stdPrice = drug.price || 1200;
+                          const copayPrice = Math.round(stdPrice * 0.1);
+                          return (
+                            <tr key={drug.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                              <td style={{ padding: '0.85rem' }}>
+                                <strong>{drug.name}</strong>
+                              </td>
+                              <td style={{ padding: '0.85rem', color: 'var(--color-text-muted)', fontSize: '0.82rem' }}>
+                                {drug.category || 'General Pharma'}
+                              </td>
+                              <td style={{ padding: '0.85rem' }}>
+                                <span style={{ color: drug.in_stock !== false ? '#16a34a' : '#ef4444', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                                  {drug.in_stock !== false ? '● Available' : '○ Out of Stock'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.85rem', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                ₦{stdPrice.toLocaleString()}
+                              </td>
+                              <td style={{ padding: '0.85rem' }}>
+                                <span style={{ background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                                  ₦{copayPrice.toLocaleString()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.85rem', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                                  {(authRole === 'pharmacist' || authRole === 'admin') && (
+                                    <button
+                                      className="btn btn-outline btn-sm"
+                                      onClick={() => setEditPriceModal({ id: drug.id, name: drug.name, price: drug.price })}
+                                      title="Update Price Tariff"
+                                    >
+                                      <i className="fa-solid fa-pen-to-square"></i> Edit Price
+                                    </button>
+                                  )}
+                                  <button className="btn btn-primary btn-sm" onClick={() => navigateTo('booking')}>
+                                    Order Rx
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORY 4: ANNUAL CARE PACKAGES */}
+            {pricingCategory === 'packages' && (
+              <div className="pricing-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {[
+                  {
+                    title: "Individual Wellness Subscription",
+                    price: 12000,
+                    period: "/ year",
+                    desc: "Ideal for young professionals seeking preventive care and hassle-free telemedicine.",
+                    features: ["4 Free GP Consultations/yr", "1 Free Full Blood Count Test", "10% Discount on Pharmacy Delivery", "Digital Medical Vault Storage"],
+                    badge: "Essential",
+                    icon: "fa-user-shield"
+                  },
+                  {
+                    title: "Family Primary Care Plan",
+                    price: 45000,
+                    period: "/ year (Up to 5 Family Members)",
+                    desc: "Comprehensive coverage for parents, children, or elderly dependents.",
+                    features: ["Unlimited Virtual GP Sessions", "Priority Specialist Booking", "Free Mobile Lab Rider Dispatch", "15% Discount on Medication", "Dedicated Family Doctor Triage"],
+                    badge: "Best Value",
+                    icon: "fa-people-roof"
+                  },
+                  {
+                    title: "Senior Chronic Care Plan",
+                    price: 30000,
+                    period: "/ year per Senior",
+                    desc: "Tailored for hypertensive, diabetic, or arthritic seniors needing continuous monitoring.",
+                    features: ["Monthly Home Nurse Vitals Check", "Automated Prescription Refill Delivery", "Direct Phone Line to Senior GP", "Quarterly Blood Sugar & Lipid Audit"],
+                    badge: "Elderly Care",
+                    icon: "fa-heart-circle-bolt"
+                  }
+                ]
+                .filter(p => !pricingSearch || p.title.toLowerCase().includes(pricingSearch.toLowerCase()) || p.desc.toLowerCase().includes(pricingSearch.toLowerCase()))
+                .map((plan, idx) => (
+                  <div key={idx} className="pricing-card glassmorphic animate-fade" style={{ padding: '1.75rem', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.12)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                          <i className={`fa-solid ${plan.icon}`}></i>
+                        </div>
+                        {plan.badge && (
+                          <span style={{ background: 'var(--color-accent)', color: '#fff', fontSize: '0.72rem', fontWeight: 'bold', padding: '0.2rem 0.6rem', borderRadius: '10px', textTransform: 'uppercase' }}>
+                            {plan.badge}
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.15rem' }}>{plan.title}</h3>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                        {plan.desc}
+                      </p>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
+                          <span style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--color-heading)' }}>
+                            ₦{plan.price.toLocaleString()}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{plan.period}</span>
+                        </div>
+                      </div>
+
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.85rem' }}>
+                        {plan.features.map((f, i) => (
+                          <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text)' }}>
+                            <i className="fa-solid fa-circle-check" style={{ color: '#16a34a', fontSize: '0.85rem' }}></i> {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button className="btn btn-primary btn-block" onClick={() => navigateTo('booking')}>
+                      Subscribe to {plan.title}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* --- VIEW: BOOKING FORM --- */}
         {currentView === 'booking' && (
           <section id="booking-view" className="view-section animate-fade">
@@ -4765,6 +5935,51 @@ export default function App() {
                       value={bookingFormData.symptoms}
                       onChange={(e) => setBookingFormData({ ...bookingFormData, symptoms: e.target.value })}
                     />
+                  </div>
+
+                  {/* NHIS / HMO Patient Enrollee Section */}
+                  <div style={{ background: 'rgba(2, 132, 199, 0.06)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(2, 132, 199, 0.2)', marginBottom: '1.25rem' }}>
+                    <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontWeight: 'bold', color: 'var(--color-indigo)', fontSize: '0.88rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!bookingFormData.isNhis}
+                        onChange={(e) => setBookingFormData({ ...bookingFormData, isNhis: e.target.checked })}
+                        style={{ width: 'auto', margin: 0 }}
+                      />
+                      <span><i className="fa-solid fa-shield-halved" style={{ color: '#0284c7', marginRight: '6px' }}></i> Patient is an NHIS / HMO Insurance Enrollee</span>
+                    </label>
+
+                    {bookingFormData.isNhis && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.85rem' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>NHIS / HMO Number *</label>
+                          <input
+                            type="text"
+                            required={bookingFormData.isNhis}
+                            placeholder="e.g. NHIS-849201"
+                            value={bookingFormData.nhisNumber}
+                            onChange={(e) => setBookingFormData({ ...bookingFormData, nhisNumber: e.target.value })}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>HMO / Provider Name</label>
+                          <select
+                            value={bookingFormData.nhisHmo}
+                            onChange={(e) => setBookingFormData({ ...bookingFormData, nhisHmo: e.target.value })}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--color-border)', height: '38px' }}
+                          >
+                            <option value="NHIA Primary Scheme">NHIA Primary Health Scheme</option>
+                            <option value="Hygeia HMO">Hygeia HMO</option>
+                            <option value="Total Health Trust">Total Health Trust</option>
+                            <option value="Reliance HMO">Reliance HMO</option>
+                            <option value="AXA Mansard Health">AXA Mansard Health</option>
+                            <option value="Anchor HMO">Anchor HMO</option>
+                            <option value="Other Licensed HMO">Other Licensed HMO</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group consent-checkbox-group" style={{ marginBottom: '1.25rem' }}>
@@ -5436,6 +6651,9 @@ export default function App() {
                                         <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
                                           {apt.status}
                                         </span>
+                                        <div style={{ marginTop: '0.35rem' }}>
+                                          {renderPaymentStatusBadge(apt, 'appointment', 'patient')}
+                                        </div>
                                       </td>
                                       <td>
                                         {apt.status === 'Approved' && (apt.notes || apt.prescription) ? (
@@ -5453,6 +6671,13 @@ export default function App() {
                                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                           <button className="action-btn" style={{ color: 'var(--color-indigo)' }} onClick={() => setAdminSelectedApt(apt)} title="View Full Details">
                                             <i className="fa-solid fa-eye"></i> View
+                                          </button>
+                                          <button
+                                            style={{ background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.25)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                            onClick={() => handleViewReceipt(apt, 'appointment')}
+                                            title="Invoice & Receipt"
+                                          >
+                                            <i className="fa-solid fa-file-invoice"></i> Invoice & Receipt
                                           </button>
                                           {apt.status === 'Pending' && (
                                             <>
@@ -5667,8 +6892,7 @@ export default function App() {
                                               alignItems: 'center',
                                               justifyContent: 'center',
                                               fontSize: '0.85rem',
-                                              transition: 'all 0.3s ease',
-                                              justifyContent: 'center'
+                                              transition: 'all 0.3s ease'
                                             }}
                                             className={isActive ? 'stage-dot active' : 'stage-dot'}
                                           >
@@ -5709,9 +6933,18 @@ export default function App() {
                                     <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Doctor Rx Notes</strong>
                                     <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>{notes || 'None'}</span>
                                   </div>
-                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Total Cost Paid</strong>
-                                    <strong style={{ fontSize: '1.1rem', color: 'var(--color-success)', display: 'block' }}>{total}</strong>
+                                  <div style={{ padding: '0.75rem', background: 'rgba(28,43,73,0.02)', borderRadius: '8px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    <div>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Total Cost Paid</strong>
+                                      <strong style={{ fontSize: '1.1rem', color: 'var(--color-success)', display: 'block' }}>{total}</strong>
+                                    </div>
+                                    <button
+                                      className="btn btn-outline btn-xs"
+                                      onClick={() => handleViewReceipt(selectedPharmacyOrder, 'order')}
+                                      style={{ marginTop: '0.5rem', fontSize: '0.75rem', padding: '0.25rem 0.5rem', alignSelf: 'flex-start' }}
+                                    >
+                                      <i className="fa-solid fa-receipt"></i> Generate Receipt / Invoice
+                                    </button>
                                   </div>
                                 </div>
 
@@ -6639,6 +7872,9 @@ export default function App() {
                                             <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
                                               {apt.status}
                                             </span>
+                                            <div style={{ marginTop: '0.35rem' }}>
+                                              {renderPaymentStatusBadge(apt, 'appointment', 'doctor')}
+                                            </div>
                                           </td>
                                           <td style={{ maxWidth: '200px' }}>
                                             {apt.notes || apt.prescription ? (
@@ -6659,6 +7895,14 @@ export default function App() {
                                                 title="View / Edit Medical Record"
                                               >
                                                 <i className="fa-solid fa-eye"></i> View
+                                              </button>
+
+                                              <button
+                                                style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                                onClick={() => handleViewReceipt(apt, 'appointment')}
+                                                title="Generate Invoice & Receipt"
+                                              >
+                                                <i className="fa-solid fa-receipt"></i> Invoice & Receipt
                                               </button>
 
                                               <button
@@ -7508,9 +8752,20 @@ export default function App() {
                                           </span>
                                         </td>
                                         <td>
+                                          {renderPaymentStatusBadge(order, 'order', 'pharmacist')}
+                                        </td>
+                                        <td>
                                           <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
                                             <button className="btn btn-primary btn-sm" onClick={() => setPharmacistSelectedOrder(order)}>
                                               <i className="fa-solid fa-eye"></i> View & Process
+                                            </button>
+                                            <button
+                                              className="btn btn-sm"
+                                              style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', fontWeight: 'bold' }}
+                                              onClick={() => handleViewReceipt(order, 'order')}
+                                              title="Generate Invoice & Receipt"
+                                            >
+                                              <i className="fa-solid fa-receipt"></i> Invoice
                                             </button>
                                           </div>
                                         </td>
@@ -9047,10 +10302,16 @@ export default function App() {
                       <i className="fa-solid fa-boxes-stacked"></i> Pharmacy Orders
                     </button>
                     <button
+                      className={`sidebar-nav-btn ${adminNavView === 'receipts' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('receipts')}
+                    >
+                      <i className="fa-solid fa-receipt"></i> Receipts & Payments
+                    </button>
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'drug_stock' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('drug_stock')}
                     >
-                      <i className="fa-solid fa-pills"></i> Available Stock
+                      <i className="fa-solid fa-pills"></i> Inventory & Stock Hub
                     </button>
                     <button
                       className={`sidebar-nav-btn ${adminNavView === 'admins' ? 'active' : ''}`}
@@ -9127,6 +10388,9 @@ export default function App() {
                                           <span className={`status-badge status-${apt.status.toLowerCase().replace(/\s+/g, '-')}`}>
                                             {apt.status}
                                           </span>
+                                          <div style={{ marginTop: '0.35rem' }}>
+                                            {renderPaymentStatusBadge(apt, 'appointment', authRole)}
+                                          </div>
                                         </td>
                                         <td>
                                           <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -9137,6 +10401,14 @@ export default function App() {
                                               title="View Details"
                                             >
                                               <i className="fa-solid fa-eye"></i> View
+                                            </button>
+
+                                            <button
+                                              style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                              onClick={() => handleViewReceipt(apt, 'appointment')}
+                                              title="Generate Invoice & Official Receipt"
+                                            >
+                                              <i className="fa-solid fa-receipt"></i> Invoice & Receipt
                                             </button>
 
                                             {apt.status === 'Pending' && (
@@ -10799,6 +12071,9 @@ export default function App() {
                     {/* Workspace: Pharmacy Orders (Admin View) */}
                     {adminNavView === 'pharmacy_orders' && renderAdminPharmacyOrdersView()}
 
+                    {/* Workspace: Receipts & Payments (Admin View) */}
+                    {adminNavView === 'receipts' && renderAdminReceiptsView()}
+
                     {/* Workspace: Available Stock & Inventory (Admin View) */}
                     {adminNavView === 'drug_stock' && renderStockInventoryView()}
 
@@ -10940,8 +12215,20 @@ export default function App() {
               <div>
                 <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Patient Information</strong>
                 <div style={{ marginTop: '0.25rem' }}>
-                  <strong>{adminSelectedApt.patientName}</strong>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>Phone: {adminSelectedApt.phone || 'N/A'}</div>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {adminSelectedApt.patientName}
+                    {(adminSelectedApt.isNhis || adminSelectedApt.nhisNumber) && (
+                      <span style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7', border: '1px solid rgba(2, 132, 199, 0.3)', fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                        <i className="fa-solid fa-shield-halved"></i> NHIS Enrollee
+                      </span>
+                    )}
+                  </strong>
+                  {(adminSelectedApt.isNhis || adminSelectedApt.nhisNumber) && (
+                    <div style={{ fontSize: '0.82rem', color: '#0284c7', marginTop: '0.25rem', background: 'rgba(2, 132, 199, 0.05)', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(2, 132, 199, 0.15)' }}>
+                      <strong>NHIS ID:</strong> {adminSelectedApt.nhisNumber || 'NHIS-ACTIVE-ENROLLEE'} | <strong>HMO:</strong> {adminSelectedApt.nhisHmo || 'NHIA Primary Scheme'}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Phone: {adminSelectedApt.phone || 'N/A'}</div>
                   <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Email: {adminSelectedApt.email || 'N/A'}</div>
                 </div>
               </div>
@@ -11237,7 +12524,10 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button className="btn btn-accent" onClick={() => handleViewReceipt(adminSelectedInquiry, 'order')}>
+                <i className="fa-solid fa-receipt"></i> Generate Receipt / Invoice
+              </button>
               <button className="btn btn-outline" onClick={() => {
                 handleDeleteInquiry(adminSelectedInquiry.id);
                 setAdminSelectedInquiry(null);
@@ -11573,8 +12863,15 @@ export default function App() {
                   {pharmacistSelectedOrder.status || 'Pending Review'}
                 </span>
               </div>
-
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => {
+                    handleViewReceipt(pharmacistSelectedOrder, 'order');
+                  }}
+                >
+                  <i className="fa-solid fa-receipt"></i> Generate Receipt / Invoice
+                </button>
                 <button
                   className="btn btn-primary"
                   onClick={() => {
@@ -12225,6 +13522,9 @@ export default function App() {
           </div>
         </div>
       )}
+      {renderPaymentModal()}
+      {renderReceiptModal()}
+      {renderEditPriceModal()}
     </div>
   );
 }
