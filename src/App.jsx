@@ -6834,7 +6834,7 @@ export default function App() {
                     `}</style>
 
                     {patientNavView === 'orders' && (
-                      <div className="dashboard-layout" style={{ gridTemplateColumns: '1.2fr 1.8fr', padding: 0, gap: '1.5rem', background: 'none', border: 'none', boxShadow: 'none' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {/* Left Column: My Orders List */}
                         <div className="dashboard-workspace glassmorphic" style={{ margin: 0 }}>
                           <h3>My Pharmacy Deliveries</h3>
