@@ -5037,7 +5037,7 @@ export default function App() {
                           value={test.name}
                           disabled={!isInStock}
                         >
-                          {isSelected ? '✓ ' : ''}{test.name} — ₦{Number(test.price).toLocaleString()} [{test.category}]{!isInStock ? ' (Out of Stock)' : ''}
+                          {isSelected ? '✓ ' : ''}{test.name}   ₦{Number(test.price).toLocaleString()} [{test.category}]{!isInStock ? ' (Out of Stock)' : ''}
                         </option>
                       );
                     })}
