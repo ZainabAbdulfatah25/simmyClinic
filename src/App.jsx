@@ -36,6 +36,88 @@ const CLINIC_DRUG_STOCK = [
   { id: 'dg-10', name: 'Cough Expectoral Syrup', price: 2200, category: 'Respiratory' }
 ];
 
+const CLINIC_LAB_STOCK = [
+  { id: 'lab-1', name: 'Full Blood Count (FBC) Diagnostic Panel', price: 8000, category: 'Hematology', desc: 'General screening for anemia, infections & immunity.' },
+  { id: 'lab-2', name: 'Fasting Blood Sugar (FBS) Test Strips & Kit', price: 2500, category: 'Biochemistry', desc: 'Diabetes screening & glycemic evaluation.' },
+  { id: 'lab-3', name: 'Malaria Smear & Widal Typhoid Panel', price: 5000, category: 'Parasitology', desc: 'Rapid diagnostic screening for common fevers.' },
+  { id: 'lab-4', name: 'Lipid Profile Diagnostic Test (Cholesterol)', price: 12000, category: 'Biochemistry', desc: 'Measures HDL, LDL, and cardiovascular markers.' },
+  { id: 'lab-5', name: 'Kidney Function Test (KFT / E/U/Cr)', price: 15000, category: 'Nephrology', desc: 'Evaluates urea, creatinine, and electrolytes.' },
+  { id: 'lab-6', name: 'Liver Function Test (LFT) Reagents', price: 15000, category: 'Biochemistry', desc: 'Assesses liver proteins and enzyme health.' },
+  { id: 'lab-7', name: 'Urine Analysis Multistix 10-Parameter Strips', price: 3000, category: 'Urinalysis', desc: 'Screening for UTIs, glucose levels & kidney status.' },
+  { id: 'lab-8', name: 'Hepatitis B & C Rapid Test Cassettes', price: 3500, category: 'Serology', desc: 'Rapid viral hepatitis antibody screening.' },
+  { id: 'lab-9', name: 'COVID-19 & Flu Rapid Ag Test Kits', price: 5000, category: 'Virology', desc: 'Respiratory viral antigen diagnostic cassette.' }
+];
+
+
+const NIGERIA_LOCATION_DATA = {
+  "Abuja (FCT)": {
+    "Abuja Municipal (AMAC)": ["Wuse Zone 1-7", "Wuse II", "Garki I & II", "Maitama", "Asokoro", "Jabi", "Utako", "Gwarinpa", "Lugbe", "Karu", "Nyanya", "City Centre", "Kabusa"],
+    "Bwari": ["Bwari Central", "Kubwa", "Dutse Alhaji", "Ushafa", "Dawaki", "Mpape", "Byazhin", "Igu"],
+    "Gwagwalada": ["Gwagwalada Center", "Kutunku", "Paiko", "Dobi", "Tungan Maje", "Zuba"],
+    "Kuje": ["Kuje Central", "Rubochi", "Gaube", "Chibiri", "Kujo"],
+    "Kwali": ["Kwali Ward", "Kilankwa", "Yangoji", "Sheda", "Ashara"],
+    "Abaji": ["Abaji Central", "Abaji East", "Nuku", "Yaba"]
+  },
+  "Lagos State": {
+    "Ikeja": ["Alausa", "Ikeja GRA", "Agidingbi", "Oregun", "Ojodu", "Computer Village", "Anifowoshe"],
+    "Eti-Osa": ["Ikoyi", "Victoria Island", "Lekki Phase 1 & 2", "Ikate", "Ajah", "Chevron", "Sangotedo", "VGC"],
+    "Lagos Mainland": ["Yaba", "Ebute Metta", "Akoka", "Sabo", "Iwaya"],
+    "Surulere": ["Ojuelegba", "Aguda", "Itire", "Ijesha", "Surulere Central"],
+    "Alimosho": ["Egbeda", "Idimu", "Igando", "Ikotun", "Ipaja", "Ayobo"],
+    "Lagos Island": ["Olowogbowo", "Marina", "Lagos Island East", "Lagos Island West"],
+    "Ikorodu": ["Ikorodu Central", "Ipakodo", "Imota", "Ikorodu North"],
+    "Kosofe": ["Gbagada", "Ojota", "Ikosi", "Ketu", "Mile 12"]
+  },
+  "Kano State": {
+    "Kano Municipal": ["Shahuchi", "Sharada", "Zango", "Jakara", "Gandun Albasa", "Goron Dutse"],
+    "Nasarawa": ["Dakata", "Giginyu", "Tudun Wada", "Kaura Goje", "Gama"],
+    "Dala": ["Dala", "Kabuga", "Gwammaja", "Madabo", "Yahaya Gusau"],
+    "Gwale": ["Gwale", "Diso", "Dorayi", "Galadanci"],
+    "Tarauni": ["Tarauni", "Gyadi-Gyadi", "Unguwa Uku", "Hotoro"]
+  },
+  "Rivers State": {
+    "Port Harcourt": ["Port Harcourt Township", "Diobu", "GRA Phase 1-4", "D-Line", "Borokiri"],
+    "Obio-Akpor": ["Rumuokoro", "Rumuola", "Trans Amadi", "GRA Phase 5", "Elelenwo", "Eliozu"],
+    "Oyigbo": ["Oyigbo West", "Asa", "Komkom", "Afam"]
+  },
+  "Oyo State": {
+    "Ibadan North": ["Bodija", "Agbowo", "Sango", "University of Ibadan", "Samonda"],
+    "Ibadan South-West": ["Ring Road", "Challenge", "Molete", "Oluyole", "Iyaganku"],
+    "Ibadan North-East": ["Agodi", "Iwo Road", "Testing Ground", "Monatan"]
+  },
+  "Kaduna State": {
+    "Kaduna North": ["Barnawa", "Sabon Gari", "Badarawa", "Unguwan Rimi", "Kawo"],
+    "Kaduna South": ["Kakuri", "Tudun Wada", "Sabon Tasha", "Television"]
+  },
+  "Enugu State": {
+    "Enugu North": ["Independence Layout", "New Haven", "Ogbete", "GRA Enugu"],
+    "Enugu South": ["Uwani", "Achara Layout", "Awkunanaw", "Garriki"]
+  },
+  "Edo State": {
+    "Oredo": ["GRA Benin", "Ring Road", "Airport Road", "Uselu", "New Benin"],
+    "Ikpoba-Okha": ["Aduwawa", "St Saviour", "Upper Sakponba", "Ikpoba Hill"]
+  },
+  "Anambra State": {
+    "Awka South": ["Awka Central", "Amawbia", "Nise", "Okpuno"],
+    "Onitsha North": ["GRA Onitsha", "Inland Town", "Odoakpu", "Fegge"]
+  },
+  "Delta State": {
+    "Warri South": ["Warri Central", "Effurun", "Enerhen", "Okumagba"],
+    "Oshimili South": ["Asaba GRA", "Okpanam Road", "Cable Point", "Nnebisi"]
+  },
+  "Ogun State": {
+    "Abeokuta South": ["Ibara", "Oke-Ilewo", "Ake", "Isale-Igbein"],
+    "Ado-Odo/Ota": ["Sango Ota", "Itta", "Igbesa", "Agbado"]
+  },
+  "Kwara State": {
+    "Ilorin South": ["Fate", "Challenge", "Gbagba", "Tanke"],
+    "Ilorin West": ["Taiwo Road", "Adewole", "Sawmill", "Oja Oba"]
+  },
+  "Other State / Region": {
+    "General Area": ["Central Ward", "Ward 1", "Ward 2", "Ward 3", "Ward 4", "Ward 5", "Other Ward"]
+  }
+};
+
 const isSupabaseReady = () => {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -637,7 +719,12 @@ export default function App() {
     nhisHmo: 'NHIA Primary Scheme',
     serviceType: 'Virtual Consultation',
     packageTitle: '',
-    price: ''
+    price: '',
+    consultationMode: 'Virtual Consultation',
+    stateName: '',
+    lga: '',
+    ward: '',
+    homeAddress: ''
   });
 
   const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
@@ -663,7 +750,7 @@ export default function App() {
   const [pharmacyCart, setPharmacyCart] = useState([]);
   const [labCheckout, setLabCheckout] = useState({ name: '', email: '', phone: '', date: '', address: '', notes: '' });
   const [pharmacyCheckout, setPharmacyCheckout] = useState({ name: '', email: '', phone: '', address: '', notes: '' });
-  const [homeServiceCheckout, setHomeServiceCheckout] = useState({ name: '', email: '', phone: '', date: '', address: '', notes: '', package: 'Elderly Care & Companion Visit' });
+  const [homeServiceCheckout, setHomeServiceCheckout] = useState({ name: '', email: '', phone: '', date: '', stateName: '', lga: '', ward: '', address: '', notes: '', package: 'Elderly Care & Companion Visit' });
 
   // Reset read state when terms modal is toggled
   useEffect(() => {
@@ -853,7 +940,23 @@ export default function App() {
   const [newDrugForm, setNewDrugForm] = useState({ name: '', price: '', category: 'Analgesics', in_stock: true });
   const [showAddDrugModal, setShowAddDrugModal] = useState(false);
   const [drugSearchQuery, setDrugSearchQuery] = useState('');
-  const [drugCategoryFilter, setDrugCategoryFilter] = useState('All');
+  // Lab Diagnostic Kit Inventory Stock States
+  const [clinicLabStock, setClinicLabStock] = useState(() => {
+    const stored = localStorage.getItem("simmy_clinic_lab_stock");
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return CLINIC_LAB_STOCK.map((item, index) => ({ ...item, id: item.id || `lab-${index+1}`, in_stock: true }));
+  });
+
+  useEffect(() => {
+    localStorage.setItem("simmy_clinic_lab_stock", JSON.stringify(clinicLabStock));
+  }, [clinicLabStock]);
+
+  const [newLabKitForm, setNewLabKitForm] = useState({ name: '', price: '', category: 'Hematology', desc: '', in_stock: true });
+  const [showAddLabKitModal, setShowAddLabKitModal] = useState(false);
+  const [labKitSearchQuery, setLabKitSearchQuery] = useState('');
+  const [labKitCategoryFilter, setLabKitCategoryFilter] = useState('All');
 
   // Custom Edit Price Modal State
   const [editPriceModal, setEditPriceModal] = useState(null);
@@ -1696,7 +1799,11 @@ export default function App() {
               onClick={() => {
                 const num = Number(editPriceModal.price);
                 if (!isNaN(num) && num >= 0) {
-                  setClinicDrugStock(prev => prev.map(d => d.id === editPriceModal.id ? { ...d, price: num } : d));
+                  if (editPriceModal.isLab) {
+                    setClinicLabStock(prev => prev.map(k => k.id === editPriceModal.id ? { ...k, price: num } : k));
+                  } else {
+                    setClinicDrugStock(prev => prev.map(d => d.id === editPriceModal.id ? { ...d, price: num } : d));
+                  }
                   setEditPriceModal(null);
                 } else {
                   alert('Please enter a valid price.');
@@ -1852,6 +1959,164 @@ export default function App() {
                             title="Remove Drug"
                           >
                             <i className="fa-solid fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderLabStockInventoryView = () => {
+    const categories = ['All', 'Hematology', 'Biochemistry', 'Parasitology', 'Serology', 'Virology', 'Nephrology', 'Urinalysis'];
+    let filtered = clinicLabStock;
+    if (labKitCategoryFilter !== 'All') {
+      filtered = filtered.filter(item => item.category === labKitCategoryFilter);
+    }
+    if (labKitSearchQuery.trim()) {
+      const q = labKitSearchQuery.toLowerCase();
+      filtered = filtered.filter(item => item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q)));
+    }
+
+    const inStockCount = clinicLabStock.filter(item => item.in_stock !== false).length;
+    const outOfStockCount = clinicLabStock.length - inStockCount;
+
+    return (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>Laboratory Diagnostic Kits & Test Inventory</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Manage available laboratory diagnostic kits, test tariffs, and reagent stock availability across the clinic.</p>
+          </div>
+          <button
+            className="btn btn-accent btn-sm"
+            onClick={() => setShowAddLabKitModal(true)}
+          >
+            <i className="fa-solid fa-plus"></i> Add New Diagnostic Test / Kit
+          </button>
+        </div>
+
+        {/* Stock Summary Cards */}
+        <div className="stats-row glassmorphic" style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px' }}>
+          <div className="stat-item">
+            <h3>{clinicLabStock.length}</h3>
+            <p>REGISTERED DIAGNOSTIC KITS</p>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <h3 style={{ color: '#10b981' }}>{inStockCount}</h3>
+            <p>AVAILABLE IN STOCK</p>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <h3 style={{ color: '#ef4444' }}>{outOfStockCount}</h3>
+            <p>OUT OF STOCK / REORDER</p>
+          </div>
+        </div>
+
+        {/* Search & Category Filter */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="search-box" style={{ flex: '1 1 250px', margin: 0 }}>
+            <i className="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              placeholder="Search diagnostic kit name or category..."
+              value={labKitSearchQuery}
+              onChange={(e) => setLabKitSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="specialty-filters" style={{ margin: 0 }}>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                className={`filter-btn ${labKitCategoryFilter === cat ? 'active' : ''}`}
+                onClick={() => setLabKitCategoryFilter(cat)}
+                style={{ fontSize: '0.78rem', padding: '0.35rem 0.8rem' }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stock Table */}
+        {filtered.length === 0 ? (
+          <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No lab diagnostic kits found matching your criteria.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Diagnostic Kit / Test Name</th>
+                  <th>Category</th>
+                  <th>Standard Tariff</th>
+                  <th>Stock Availability</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(item => {
+                  const isInStock = item.in_stock !== false;
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <strong>{item.name}</strong>
+                        {item.desc && <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>{item.desc}</div>}
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          {item.category}
+                        </span>
+                      </td>
+                      <td><strong>₦{Number(item.price).toLocaleString()}</strong></td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setClinicLabStock(prev => prev.map(k => k.id === item.id ? { ...k, in_stock: !isInStock } : k));
+                          }}
+                          style={{
+                            border: 'none',
+                            padding: '0.3rem 0.75rem',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            backgroundColor: isInStock ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: isInStock ? '#047857' : '#b91c1c'
+                          }}
+                          title="Click to toggle availability"
+                        >
+                          <i className={`fa-solid ${isInStock ? 'fa-check-circle' : 'fa-times-circle'}`} style={{ marginRight: '4px' }}></i>
+                          {isInStock ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setEditPriceModal({ id: item.id, name: item.name, price: item.price, isLab: true })}
+                            title="Update Price Tariff"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i> Price
+                          </button>
+                          <button
+                            className="btn btn-sm"
+                            onClick={() => {
+                              if (confirm(`Remove ${item.name} from clinic lab inventory?`)) {
+                                setClinicLabStock(prev => prev.filter(k => k.id !== item.id));
+                              }
+                            }}
+                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                            title="Remove Kit"
+                          >
+                            <i className="fa-solid fa-trash-can"></i>
                           </button>
                         </div>
                       </td>
@@ -2379,17 +2644,23 @@ export default function App() {
           ? context.doctorId.toString()
           : prev.doctorId;
       const targetDoc = doctors.find((d) => d.id.toString() === docId);
+      const isHome =
+        context.consultationMode === "Home Visit" ||
+        context.serviceType?.toLowerCase().includes("home") ||
+        context.packageTitle?.toLowerCase().includes("home");
+
       return {
         ...prev,
         patientName: prev.patientName || loggedInPatient?.name || "",
         phone: prev.phone || loggedInPatient?.phone || "",
         email: prev.email || loggedInPatient?.email || "",
         doctorId: docId,
+        consultationMode: isHome ? "Home Visit" : (context.consultationMode || prev.consultationMode || "Virtual Consultation"),
         serviceType:
           context.serviceType ||
           (targetDoc
             ? `${getSpecialtyTitle(targetDoc.specialty)} Consultation`
-            : "Virtual Consultation"),
+            : isHome ? "Home Visit Doctor Consultation" : "Virtual Consultation"),
         packageTitle:
           context.packageTitle ||
           (targetDoc ? `Consultation with ${targetDoc.name}` : ""),
@@ -2400,6 +2671,10 @@ export default function App() {
             : ""),
         symptoms: context.symptoms || prev.symptoms || "",
         isNhis: context.isNhis !== undefined ? context.isNhis : prev.isNhis,
+        stateName: context.stateName || prev.stateName || "",
+        lga: context.lga || prev.lga || "",
+        ward: context.ward || prev.ward || "",
+        homeAddress: context.homeAddress || prev.homeAddress || ""
       };
     });
     navigateTo("booking");
@@ -2999,6 +3274,18 @@ export default function App() {
       }
     }
 
+    const locationParts = [
+      bookingFormData.stateName ? `State: ${bookingFormData.stateName}` : '',
+      bookingFormData.lga ? `LGA: ${bookingFormData.lga}` : '',
+      bookingFormData.ward ? `Ward: ${bookingFormData.ward}` : '',
+      bookingFormData.homeAddress ? `Street Address: ${bookingFormData.homeAddress}` : ''
+    ].filter(Boolean).join(', ');
+
+    const isHome = bookingFormData.consultationMode === 'Home Visit' || bookingFormData.serviceType?.toLowerCase().includes('home') || bookingFormData.packageTitle?.toLowerCase().includes('home');
+    const fullSymptoms = (isHome || locationParts) && !bookingFormData.symptoms.includes('Home Visit Address:')
+      ? `[Home Visit Location: ${locationParts || 'Address provided'}] ${bookingFormData.symptoms || ''}`.trim()
+      : (bookingFormData.symptoms || "None provided");
+
     const ticketNumber = "APT-" + Math.floor(1000 + Math.random() * 9000);
     const newAppointment = {
       id: ticketNumber,
@@ -3008,12 +3295,17 @@ export default function App() {
       doctor: selectedDoc.name,
       doctorId: selectedDoc.id.toString(),
       specialty: selectedDoc.specialty,
-      serviceType: bookingFormData.serviceType || "Virtual Consultation",
+      consultationMode: isHome ? "Home Visit" : (bookingFormData.consultationMode || "Virtual Consultation"),
+      serviceType: bookingFormData.serviceType || (isHome ? "Home Visit Consultation" : "Virtual Consultation"),
       packageTitle: bookingFormData.packageTitle || "",
       price: bookingFormData.price || "",
       date: bookingFormData.date,
       time: bookingFormData.time,
-      symptoms: bookingFormData.symptoms || "None provided",
+      symptoms: fullSymptoms,
+      homeAddress: locationParts || bookingFormData.homeAddress || "",
+      stateName: bookingFormData.stateName || "",
+      lga: bookingFormData.lga || "",
+      ward: bookingFormData.ward || "",
       status: "Pending",
       notes: "",
       prescription: "",
@@ -3039,7 +3331,12 @@ export default function App() {
       nhisHmo: 'NHIA Primary Scheme',
       serviceType: 'Virtual Consultation',
       packageTitle: '',
-      price: ''
+      price: '',
+      consultationMode: 'Virtual Consultation',
+      stateName: '',
+      lga: '',
+      ward: '',
+      homeAddress: ''
     });
 
     setSuccessModal({
@@ -4627,21 +4924,11 @@ export default function App() {
                       </div>
                       {doc.specialty === 'Laboratory' ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
-                          startBooking({
-                            serviceType: "Mobile Laboratory",
-                            packageTitle: `Diagnostic Test Request (${doc.name})`,
-                            price: doc.consultationRate || "₦3,000",
-                            doctorId: doc.id.toString()
-                          });
+                          navigateTo('service-mobile-lab');
                         }}><i className="fa-solid fa-vial" style={{ marginRight: '4px' }}></i> Order Lab Test</button>
                       ) : doc.specialty === 'Pharmacy' ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
-                          startBooking({
-                            serviceType: "Prescription & Pharmacy Delivery",
-                            packageTitle: `Rx Medication Order (${doc.name})`,
-                            price: doc.consultationRate || "₦3,000",
-                            doctorId: doc.id.toString()
-                          });
+                          navigateTo('service-pharmacy-delivery');
                         }}><i className="fa-solid fa-pills" style={{ marginRight: '4px' }}></i> Order Prescription</button>
                       ) : (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
@@ -4706,48 +4993,130 @@ export default function App() {
               </div>
 
               <div className="booking-form-wrapper glassmorphic">
-                <h3>Select Diagnostic Tests</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
-                  Choose one or more lab tests to schedule for home collection:
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <i className="fa-solid fa-vials" style={{ color: 'var(--color-primary)' }}></i> Select Diagnostic Tests
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+                  Choose diagnostic lab tests from the dropdown menu to schedule for home collection:
                 </p>
 
-                <div className="lab-tests-list">
-                  {[
-                    { id: 'fbc', name: 'Full Blood Count (FBC)', price: 8000, desc: 'General screening for anemia, infections & immunity.' },
-                    { id: 'mal', name: 'Malaria & Typhoid Panel', price: 5000, desc: 'Rapid diagnostic screening for common fevers.' },
-                    { id: 'lip', name: 'Lipid Profile (Cholesterol)', price: 12000, desc: 'Measures HDL, LDL, and cardiovascular markers.' },
-                    { id: 'kft', name: 'Kidney Function Test (KFT)', price: 15000, desc: 'Evaluates urea, creatinine, and electrolytes.' },
-                    { id: 'lft', name: 'Liver Function Test (LFT)', price: 15000, desc: 'Assesses liver proteins and enzyme health.' },
-                    { id: 'uri', name: 'Urine Analysis', price: 3000, desc: 'Screening for UTIs, glucose levels & kidney status.' },
-                    { id: 'glu', name: 'Blood Sugar Profile', price: 4000, desc: 'Fasting and post-meal glucose checks.' }
-                  ].map(test => {
-                    const isSelected = labCart.includes(test.name);
-                    return (
-                      <div
-                        key={test.id}
-                        className={`lab-test-item glassmorphic ${isSelected ? 'selected' : ''}`}
-                        onClick={() => {
-                          if (isSelected) {
-                            setLabCart(labCart.filter(item => item !== test.name));
-                          } else {
-                            setLabCart([...labCart, test.name]);
-                          }
-                        }}
-                      >
-                        <div className="lab-test-info">
-                          <h4>{test.name}</h4>
-                          <p>{test.desc}</p>
-                        </div>
-                        <div className="lab-test-price-action">
-                          <span className="lab-test-price">₦{test.price.toLocaleString()}</span>
-                          <div className="checkbox-circle">
-                            {isSelected && <i className="fa-solid fa-check"></i>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Diagnostic Test Dropdown Selector */}
+                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                  <label htmlFor="diagnosticTestSelect" style={{ fontWeight: 'bold', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                    <i className="fa-solid fa-list-check" style={{ color: 'var(--color-accent)' }}></i> Diagnostic Test / Panel Dropdown
+                  </label>
+                  <select
+                    id="diagnosticTestSelect"
+                    value=""
+                    onChange={(e) => {
+                      const selectedVal = e.target.value;
+                      if (selectedVal && !labCart.includes(selectedVal)) {
+                        setLabCart([...labCart, selectedVal]);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: '1px solid var(--color-border)',
+                      fontSize: '0.92rem',
+                      fontWeight: '600',
+                      backgroundColor: 'var(--color-bg-card)',
+                      color: 'var(--color-text)',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                    }}
+                  >
+                    <option value="" disabled>-- Select a Lab Test to Add ({clinicLabStock.length} Available) --</option>
+                    {clinicLabStock.map((test) => {
+                      const isSelected = labCart.includes(test.name);
+                      const isInStock = test.in_stock !== false;
+                      return (
+                        <option
+                          key={test.id}
+                          value={test.name}
+                          disabled={!isInStock}
+                        >
+                          {isSelected ? '✓ ' : ''}{test.name} — ₦{Number(test.price).toLocaleString()} [{test.category}]{!isInStock ? ' (Out of Stock)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
+
+                {/* Selected Tests List Badges */}
+                {labCart.length > 0 ? (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--color-indigo)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Selected Tests ({labCart.length})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setLabCart([])}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {labCart.map((testName) => {
+                        const testItem = clinicLabStock.find(k => k.name === testName);
+                        const price = testItem ? Number(testItem.price) : 5000;
+                        return (
+                          <div
+                            key={testName}
+                            style={{
+                              display: 'flex',
+                              justify: 'space-between',
+                              alignItems: 'center',
+                              padding: '0.65rem 0.9rem',
+                              borderRadius: '8px',
+                              background: 'rgba(2, 132, 199, 0.08)',
+                              border: '1px solid rgba(2, 132, 199, 0.25)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <i className="fa-solid fa-flask-vial" style={{ color: 'var(--color-primary)', fontSize: '0.9rem' }}></i>
+                              <div>
+                                <strong style={{ fontSize: '0.88rem', display: 'block' }}>{testName}</strong>
+                                {testItem?.desc && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{testItem.desc}</span>}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                              <strong style={{ color: 'var(--color-indigo)', fontSize: '0.9rem' }}>₦{price.toLocaleString()}</strong>
+                              <button
+                                type="button"
+                                onClick={() => setLabCart(labCart.filter(item => item !== testName))}
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.12)',
+                                  color: '#ef4444',
+                                  border: 'none',
+                                  borderRadius: '50%',
+                                  width: '24px',
+                                  height: '24px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  fontSize: '0.75rem'
+                                }}
+                                title="Remove test"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed var(--color-border)', padding: '1rem', borderRadius: '8px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
+                    <i className="fa-solid fa-arrow-up" style={{ marginRight: '6px', color: 'var(--color-accent)' }}></i>
+                    Please click the dropdown menu above to pick diagnostic tests for your booking.
+                  </div>
+                )}
 
                 {labCart.length > 0 && (
                   <div className="lab-cart-summary glassmorphic">
@@ -4755,16 +5124,8 @@ export default function App() {
                       <span>Selected Tests ({labCart.length}):</span>
                       <strong>
                         ₦{labCart.reduce((sum, name) => {
-                          const testPrices = {
-                            'Full Blood Count (FBC)': 8000,
-                            'Malaria & Typhoid Panel': 5000,
-                            'Lipid Profile (Cholesterol)': 12000,
-                            'Kidney Function Test (KFT)': 15000,
-                            'Liver Function Test (LFT)': 15000,
-                            'Urine Analysis': 3000,
-                            'Blood Sugar Profile': 4000
-                          };
-                          return sum + (testPrices[name] || 0);
+                          const item = clinicLabStock.find(k => k.name === name);
+                          return sum + (item ? Number(item.price) : 5000);
                         }, 0).toLocaleString()}
                       </strong>
                     </div>
@@ -4776,16 +5137,8 @@ export default function App() {
                       <span>Grand Total:</span>
                       <strong>
                         ₦{(labCart.reduce((sum, name) => {
-                          const testPrices = {
-                            'Full Blood Count (FBC)': 8000,
-                            'Malaria & Typhoid Panel': 5000,
-                            'Lipid Profile (Cholesterol)': 12000,
-                            'Kidney Function Test (KFT)': 15000,
-                            'Liver Function Test (LFT)': 15000,
-                            'Urine Analysis': 3000,
-                            'Blood Sugar Profile': 4000
-                          };
-                          return sum + (testPrices[name] || 0);
+                          const item = clinicLabStock.find(k => k.name === name);
+                          return sum + (item ? Number(item.price) : 5000);
                         }, 0) + 3000).toLocaleString()}
                       </strong>
                     </div>
@@ -5134,6 +5487,13 @@ export default function App() {
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   const ticketId = `HMS-${Math.floor(1000 + Math.random() * 9000)}`;
+                  const locationParts = [
+                    homeServiceCheckout.stateName ? `State: ${homeServiceCheckout.stateName}` : '',
+                    homeServiceCheckout.lga ? `LGA: ${homeServiceCheckout.lga}` : '',
+                    homeServiceCheckout.ward ? `Ward: ${homeServiceCheckout.ward}` : '',
+                    homeServiceCheckout.address ? `Street/Address: ${homeServiceCheckout.address}` : ''
+                  ].filter(Boolean).join(', ');
+
                   const newApt = {
                     id: ticketId,
                     patientName: homeServiceCheckout.name,
@@ -5142,11 +5502,11 @@ export default function App() {
                     doctor: "Home Care Unit",
                     date: homeServiceCheckout.date,
                     time: "10:00 AM",
-                    symptoms: `Home Care Service Request: [${homeServiceCheckout.package}]. Home address: [${homeServiceCheckout.address}]. Special client request: [${homeServiceCheckout.notes || 'None'}]`,
+                    symptoms: `Home Care Service Request: [${homeServiceCheckout.package}]. Location: [${locationParts}]. Special client request: [${homeServiceCheckout.notes || 'None'}]`,
                     status: 'Pending'
                   };
                   setAppointments([newApt, ...appointments]);
-                  setHomeServiceCheckout({ name: '', email: '', phone: '', date: '', address: '', notes: '', package: 'Elderly Care & Companion Visit' });
+                  setHomeServiceCheckout({ name: '', email: '', phone: '', date: '', stateName: '', lga: '', ward: '', address: '', notes: '', package: 'Elderly Care & Companion Visit' });
                   setSuccessModal({
                     title: "Home Service Booking Received",
                     message: "Your home service care request has been received. Our clinical supervisor will contact you to assign the nurse or therapist and verify your schedule.",
@@ -5206,16 +5566,84 @@ export default function App() {
                       onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, date: e.target.value })}
                     />
                   </div>
-                  <div className="form-group">
-                    <label>Full Home Address for Visitation</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. House 4, Close B, Wuse II, Abuja"
-                      value={homeServiceCheckout.address}
-                      onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, address: e.target.value })}
-                    />
+
+                  {/* Dropdowns for State, Local Government, Ward, and Street Address */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>State</label>
+                      <select
+                        required
+                        value={homeServiceCheckout.stateName || ''}
+                        onChange={(e) => {
+                          const newState = e.target.value;
+                          setHomeServiceCheckout({
+                            ...homeServiceCheckout,
+                            stateName: newState,
+                            lga: '',
+                            ward: ''
+                          });
+                        }}
+                      >
+                        <option value="">-- Select State --</option>
+                        {Object.keys(NIGERIA_LOCATION_DATA).map((st) => (
+                          <option key={st} value={st}>{st}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Local Government Area (LGA)</label>
+                      <select
+                        required
+                        disabled={!homeServiceCheckout.stateName}
+                        value={homeServiceCheckout.lga || ''}
+                        onChange={(e) => {
+                          const newLga = e.target.value;
+                          setHomeServiceCheckout({
+                            ...homeServiceCheckout,
+                            lga: newLga,
+                            ward: ''
+                          });
+                        }}
+                      >
+                        <option value="">-- Select Local Govt --</option>
+                        {homeServiceCheckout.stateName && NIGERIA_LOCATION_DATA[homeServiceCheckout.stateName] &&
+                          Object.keys(NIGERIA_LOCATION_DATA[homeServiceCheckout.stateName]).map((lga) => (
+                            <option key={lga} value={lga}>{lga}</option>
+                          ))
+                        }
+                      </select>
+                    </div>
                   </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Ward</label>
+                      <select
+                        required
+                        disabled={!homeServiceCheckout.lga}
+                        value={homeServiceCheckout.ward || ''}
+                        onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, ward: e.target.value })}
+                      >
+                        <option value="">-- Select Ward --</option>
+                        {homeServiceCheckout.stateName && homeServiceCheckout.lga && NIGERIA_LOCATION_DATA[homeServiceCheckout.stateName]?.[homeServiceCheckout.lga] &&
+                          NIGERIA_LOCATION_DATA[homeServiceCheckout.stateName][homeServiceCheckout.lga].map((w) => (
+                            <option key={w} value={w}>{w}</option>
+                          ))
+                        }
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Street / Home Address</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. House 4, Close B, Off Airport Road"
+                        value={homeServiceCheckout.address}
+                        onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, address: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
                   <div className="form-group">
                     <label>Special Instructions (e.g. symptoms, specific medical history)</label>
                     <textarea
@@ -5290,21 +5718,11 @@ export default function App() {
                       </div>
                       {doc.specialty === 'Laboratory' ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
-                          startBooking({
-                            serviceType: "Mobile Laboratory",
-                            packageTitle: `Diagnostic Test Request (${doc.name})`,
-                            price: doc.consultationRate || "₦3,000",
-                            doctorId: doc.id.toString()
-                          });
+                          navigateTo('service-mobile-lab');
                         }}><i className="fa-solid fa-vial" style={{ marginRight: '4px' }}></i> Order Lab Test</button>
                       ) : doc.specialty === 'Pharmacy' ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
-                          startBooking({
-                            serviceType: "Prescription & Pharmacy Delivery",
-                            packageTitle: `Rx Medication Order (${doc.name})`,
-                            price: doc.consultationRate || "₦3,000",
-                            doctorId: doc.id.toString()
-                          });
+                          navigateTo('service-pharmacy-delivery');
                         }}><i className="fa-solid fa-pills" style={{ marginRight: '4px' }}></i> Order Prescription</button>
                       ) : (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
@@ -5588,23 +6006,13 @@ export default function App() {
                         </div>
                         {doc.specialty === 'Laboratory' ? (
                           <button className="btn btn-primary" onClick={() => {
-                            startBooking({
-                              serviceType: "Mobile Laboratory",
-                              packageTitle: `Diagnostic Test Request (${doc.name})`,
-                              price: doc.consultationRate || "₦3,000",
-                              doctorId: doc.id.toString()
-                            });
+                            navigateTo('service-mobile-lab');
                           }}>
                             <i className="fa-solid fa-vial" style={{ marginRight: '6px' }}></i> Order Lab Test
                           </button>
                         ) : doc.specialty === 'Pharmacy' ? (
                           <button className="btn btn-primary" onClick={() => {
-                            startBooking({
-                              serviceType: "Prescription & Pharmacy Delivery",
-                              packageTitle: `Rx Medication Order (${doc.name})`,
-                              price: doc.consultationRate || "₦3,000",
-                              doctorId: doc.id.toString()
-                            });
+                            navigateTo('service-pharmacy-delivery');
                           }}>
                             <i className="fa-solid fa-pills" style={{ marginRight: '6px' }}></i> Order Prescription
                           </button>
@@ -6090,6 +6498,34 @@ export default function App() {
 
               <div className="booking-form-wrapper glassmorphic">
                 <h3>Consultation Booking Form</h3>
+
+                {bookingFormData.serviceType === "Prescription & Pharmacy Delivery" || bookingFormData.packageTitle?.toLowerCase().includes("pharm") ? (
+                  <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', padding: '0.85rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <i className="fa-solid fa-capsules" style={{ fontSize: '1.2rem', color: '#1d4ed8' }}></i>
+                      <div>
+                        <strong style={{ fontSize: '0.9rem', color: '#1e40af', display: 'block' }}>Pharmacy Prescription & Medication Orders</strong>
+                        <span style={{ fontSize: '0.78rem', color: '#1e3a8a' }}>Use our dedicated Pharmacy Page for online medicine catalog and home dispatch.</span>
+                      </div>
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={() => navigateTo('service-pharmacy-delivery')}>
+                      Go to Pharmacy Page →
+                    </button>
+                  </div>
+                ) : bookingFormData.serviceType === "Mobile Diagnostic Lab" || bookingFormData.packageTitle?.toLowerCase().includes("lab") ? (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '0.85rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <i className="fa-solid fa-flask-vial" style={{ fontSize: '1.2rem', color: '#15803d' }}></i>
+                      <div>
+                        <strong style={{ fontSize: '0.9rem', color: '#166534', display: 'block' }}>Mobile Diagnostic Lab & Home Sample Collection</strong>
+                        <span style={{ fontSize: '0.78rem', color: '#14532d' }}>Use our Mobile Lab Page to schedule home phlebotomy riders and lab panels.</span>
+                      </div>
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={() => navigateTo('service-mobile-lab')}>
+                      Go to Mobile Lab Page →
+                    </button>
+                  </div>
+                ) : null}
                 {(bookingFormData.packageTitle || bookingFormData.serviceType) && (
                   <div
                     style={{
@@ -6248,6 +6684,114 @@ export default function App() {
                       />
                     </div>
                   </div>
+
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                    <label htmlFor="consultationMode" style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <i className="fa-solid fa-stethoscope" style={{ color: 'var(--color-primary)' }}></i> Consultation Mode / Visit Type
+                    </label>
+                    <select
+                      id="consultationMode"
+                      value={bookingFormData.consultationMode}
+                      onChange={(e) => setBookingFormData({ ...bookingFormData, consultationMode: e.target.value })}
+                      style={{ fontWeight: '600', padding: '0.6rem' }}
+                    >
+                      <option value="Virtual Consultation">🌐 Telemedicine Virtual Consultation (Video / Phone Call)</option>
+                      <option value="Home Visit">🏡 Physical Home Visit (Doctor Visits Your Residence)</option>
+                    </select>
+                  </div>
+
+                  {/* Home Visit Residential Address Section */}
+                  {(bookingFormData.consultationMode === 'Home Visit' || bookingFormData.serviceType?.toLowerCase().includes('home') || bookingFormData.packageTitle?.toLowerCase().includes('home')) && (
+                    <div style={{ background: 'rgba(34, 197, 94, 0.06)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.25)', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', color: '#15803d' }}>
+                        <i className="fa-solid fa-house-medical" style={{ fontSize: '1.2rem' }}></i>
+                        <div>
+                          <strong style={{ fontSize: '0.95rem', display: 'block' }}>Home Visit Residential Address</strong>
+                          <span style={{ fontSize: '0.78rem', color: '#166534' }}>Specify patient residence location for the doctor's home visitation:</span>
+                        </div>
+                      </div>
+
+                      <div className="form-row" style={{ marginBottom: '0.75rem' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>State *</label>
+                          <select
+                            required={bookingFormData.consultationMode === 'Home Visit'}
+                            value={bookingFormData.stateName || ''}
+                            onChange={(e) => {
+                              setBookingFormData({
+                                ...bookingFormData,
+                                stateName: e.target.value,
+                                lga: '',
+                                ward: ''
+                              });
+                            }}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                          >
+                            <option value="">-- Select State --</option>
+                            {Object.keys(NIGERIA_LOCATION_DATA).map((st) => (
+                              <option key={st} value={st}>{st}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Local Government (LGA) *</label>
+                          <select
+                            required={bookingFormData.consultationMode === 'Home Visit'}
+                            disabled={!bookingFormData.stateName}
+                            value={bookingFormData.lga || ''}
+                            onChange={(e) => {
+                              setBookingFormData({
+                                ...bookingFormData,
+                                lga: e.target.value,
+                                ward: ''
+                              });
+                            }}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                          >
+                            <option value="">-- Select LGA --</option>
+                            {bookingFormData.stateName && NIGERIA_LOCATION_DATA[bookingFormData.stateName] &&
+                              Object.keys(NIGERIA_LOCATION_DATA[bookingFormData.stateName]).map((lga) => (
+                                <option key={lga} value={lga}>{lga}</option>
+                              ))
+                            }
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Ward *</label>
+                          <select
+                            required={bookingFormData.consultationMode === 'Home Visit'}
+                            disabled={!bookingFormData.lga}
+                            value={bookingFormData.ward || ''}
+                            onChange={(e) => setBookingFormData({ ...bookingFormData, ward: e.target.value })}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                          >
+                            <option value="">-- Select Ward --</option>
+                            {bookingFormData.stateName && bookingFormData.lga && NIGERIA_LOCATION_DATA[bookingFormData.stateName]?.[bookingFormData.lga] &&
+                              NIGERIA_LOCATION_DATA[bookingFormData.stateName][bookingFormData.lga].map((w) => (
+                                <option key={w} value={w}>{w}</option>
+                              ))
+                            }
+                          </select>
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Street / House Address *</label>
+                          <input
+                            type="text"
+                            required={bookingFormData.consultationMode === 'Home Visit'}
+                            placeholder="e.g. House 12, Close B, Off Airport Road"
+                            value={bookingFormData.homeAddress}
+                            onChange={(e) => setBookingFormData({ ...bookingFormData, homeAddress: e.target.value })}
+                            style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label htmlFor="symptoms">Brief Description of Symptoms</label>
@@ -9287,10 +9831,19 @@ export default function App() {
                     >
                       <i className="fa-solid fa-clock-rotate-left"></i> Completed Reports
                     </button>
+                    <button
+                      className={`sidebar-link ${labNavView === 'inventory' ? 'active' : ''}`}
+                      onClick={() => setLabNavView('inventory')}
+                    >
+                      <i className="fa-solid fa-boxes-stacked"></i> Lab Test & Kit Inventory
+                    </button>
                   </div>
 
                   {/* Right Column: Workspaces */}
                   <div className="dashboard-workspace glassmorphic">
+
+                    {/* Workspace: Lab Stock Inventory */}
+                    {labNavView === 'inventory' && renderLabStockInventoryView()}
 
                     {/* Workspace: Active Requests */}
                     {labNavView === 'requests' && (
@@ -12553,6 +13106,11 @@ export default function App() {
                   )}
                   <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Phone: {adminSelectedApt.phone || 'N/A'}</div>
                   <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Email: {adminSelectedApt.email || 'N/A'}</div>
+                  {(adminSelectedApt.homeAddress || adminSelectedApt.consultationMode === 'Home Visit' || adminSelectedApt.symptoms?.includes('Location:')) && (
+                    <div style={{ fontSize: '0.85rem', color: '#15803d', marginTop: '0.4rem', background: 'rgba(34, 197, 94, 0.08)', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.25)' }}>
+                      <strong><i className="fa-solid fa-house-medical" style={{ marginRight: '4px' }}></i> Home Visit Address:</strong> {adminSelectedApt.homeAddress || (adminSelectedApt.symptoms?.includes('Location: ') ? adminSelectedApt.symptoms.split('Location: ')[1]?.split(']')[0] : 'Residence details recorded')}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -13545,19 +14103,11 @@ export default function App() {
               <button className="btn btn-outline" onClick={() => setPreviewBookingDoc(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => {
                 if (previewBookingDoc.specialty === 'Laboratory') {
-                  startBooking({
-                    serviceType: "Mobile Laboratory",
-                    packageTitle: `Diagnostic Test Request (${previewBookingDoc.name})`,
-                    price: previewBookingDoc.consultationRate || "₦3,000",
-                    doctorId: previewBookingDoc.id.toString()
-                  });
+                  setPreviewBookingDoc(null);
+                  navigateTo('service-mobile-lab');
                 } else if (previewBookingDoc.specialty === 'Pharmacy') {
-                  startBooking({
-                    serviceType: "Prescription & Pharmacy Delivery",
-                    packageTitle: `Rx Medication Order (${previewBookingDoc.name})`,
-                    price: previewBookingDoc.consultationRate || "₦3,000",
-                    doctorId: previewBookingDoc.id.toString()
-                  });
+                  setPreviewBookingDoc(null);
+                  navigateTo('service-pharmacy-delivery');
                 } else {
                   setBookingFormData({
                     ...bookingFormData,
@@ -13567,14 +14117,14 @@ export default function App() {
                     phone: loggedInPatient ? loggedInPatient.phone : '',
                     symptoms: `Consultation request for ${getSpecialtyTitle(previewBookingDoc.specialty)} department.`
                   });
+                  setPreviewBookingDoc(null);
                   navigateTo('booking');
                 }
-                setPreviewBookingDoc(null);
               }}>
                 {previewBookingDoc.specialty === 'Laboratory'
-                  ? 'Proceed to Lab Test Order'
+                  ? 'Proceed to Lab Page'
                   : previewBookingDoc.specialty === 'Pharmacy'
-                  ? 'Proceed to Prescription Order'
+                  ? 'Proceed to Pharmacy Page'
                   : 'Confirm & Proceed to Booking Form'}
               </button>
             </div>
@@ -13872,6 +14422,103 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button type="button" className="btn btn-outline" onClick={() => setShowAddDrugModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-accent">Add to Inventory</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- Add New Lab Diagnostic Kit/Test Modal --- */}
+      {showAddLabKitModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddLabKitModal(false)}>
+          <div className="modal-content glassmorphic" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0 }}><i className="fa-solid fa-vials" style={{ color: 'var(--color-accent)', marginRight: '8px' }}></i> Add Diagnostic Kit to Inventory</h3>
+              <button className="modal-close" onClick={() => setShowAddLabKitModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newLabKitForm.name || !newLabKitForm.price) return;
+              const newItem = {
+                id: `lab-${Date.now()}`,
+                name: newLabKitForm.name,
+                price: Number(newLabKitForm.price),
+                category: newLabKitForm.category,
+                desc: newLabKitForm.desc,
+                in_stock: newLabKitForm.in_stock
+              };
+              setClinicLabStock(prev => [newItem, ...prev]);
+              setShowAddLabKitModal(false);
+              setNewLabKitForm({ name: '', price: '', category: 'Hematology', desc: '', in_stock: true });
+            }}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Diagnostic Test / Kit Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Thyroid Panel (TSH/T3/T4) Diagnostic Kit"
+                  value={newLabKitForm.name}
+                  onChange={(e) => setNewLabKitForm({ ...newLabKitForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Test Description / Clinical Scope</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Evaluates thyroid hormones and metabolic activity"
+                  value={newLabKitForm.desc}
+                  onChange={(e) => setNewLabKitForm({ ...newLabKitForm, desc: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Category</label>
+                  <select
+                    value={newLabKitForm.category}
+                    onChange={(e) => setNewLabKitForm({ ...newLabKitForm, category: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  >
+                    <option value="Hematology">Hematology</option>
+                    <option value="Biochemistry">Biochemistry</option>
+                    <option value="Parasitology">Parasitology</option>
+                    <option value="Serology">Serology</option>
+                    <option value="Virology">Virology</option>
+                    <option value="Nephrology">Nephrology</option>
+                    <option value="Urinalysis">Urinalysis</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Tariff Price (₦)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 10000"
+                    value={newLabKitForm.price}
+                    onChange={(e) => setNewLabKitForm({ ...newLabKitForm, price: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={newLabKitForm.in_stock}
+                    onChange={(e) => setNewLabKitForm({ ...newLabKitForm, in_stock: e.target.checked })}
+                    style={{ width: 'auto', margin: 0 }}
+                  />
+                  <span>Mark as Available in Stock</span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowAddLabKitModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i> Save Diagnostic Kit</button>
               </div>
             </form>
           </div>
