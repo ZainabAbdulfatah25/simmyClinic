@@ -6497,7 +6497,44 @@ export default function App() {
               </div>
 
               <div className="booking-form-wrapper glassmorphic">
-                <h3>Consultation Booking Form</h3>
+                {/* Booking Mode Tabs */}
+                <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBookingFormData(prev => ({ ...prev, consultationMode: 'Virtual Consultation' }))}
+                    style={{
+                      flex: 1,
+                      padding: '0.65rem 1rem',
+                      border: 'none',
+                      borderRight: '1px solid var(--color-border)',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.88rem',
+                      transition: 'background 0.2s',
+                      background: bookingFormData.consultationMode !== 'Home Visit' ? 'var(--color-primary)' : 'transparent',
+                      color: bookingFormData.consultationMode !== 'Home Visit' ? '#fff' : 'var(--color-text-muted)'
+                    }}
+                  >
+                    <i className="fa-solid fa-video" style={{ marginRight: '6px' }}></i> Online Consultation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingFormData(prev => ({ ...prev, consultationMode: 'Home Visit' }))}
+                    style={{
+                      flex: 1,
+                      padding: '0.65rem 1rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.88rem',
+                      transition: 'background 0.2s',
+                      background: bookingFormData.consultationMode === 'Home Visit' ? 'var(--color-primary)' : 'transparent',
+                      color: bookingFormData.consultationMode === 'Home Visit' ? '#fff' : 'var(--color-text-muted)'
+                    }}
+                  >
+                    <i className="fa-solid fa-house" style={{ marginRight: '6px' }}></i> Home Visit
+                  </button>
+                </div>
 
                 {bookingFormData.serviceType === "Prescription & Pharmacy Delivery" || bookingFormData.packageTitle?.toLowerCase().includes("pharm") ? (
                   <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', padding: '0.85rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
@@ -6685,31 +6722,12 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                    <label htmlFor="consultationMode" style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <i className="fa-solid fa-stethoscope" style={{ color: 'var(--color-primary)' }}></i> Consultation Mode / Visit Type
-                    </label>
-                    <select
-                      id="consultationMode"
-                      value={bookingFormData.consultationMode}
-                      onChange={(e) => setBookingFormData({ ...bookingFormData, consultationMode: e.target.value })}
-                      style={{ fontWeight: '600', padding: '0.6rem' }}
-                    >
-                      <option value="Virtual Consultation">🌐 Telemedicine Virtual Consultation (Video / Phone Call)</option>
-                      <option value="Home Visit">🏡 Physical Home Visit (Doctor Visits Your Residence)</option>
-                    </select>
-                  </div>
+
 
                   {/* Home Visit Residential Address Section */}
                   {(bookingFormData.consultationMode === 'Home Visit' || bookingFormData.serviceType?.toLowerCase().includes('home') || bookingFormData.packageTitle?.toLowerCase().includes('home')) && (
                     <div style={{ background: 'rgba(34, 197, 94, 0.06)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.25)', marginBottom: '1.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', color: '#15803d' }}>
-                        <i className="fa-solid fa-house-medical" style={{ fontSize: '1.2rem' }}></i>
-                        <div>
-                          <strong style={{ fontSize: '0.95rem', display: 'block' }}>Home Visit Residential Address</strong>
-                          <span style={{ fontSize: '0.78rem', color: '#166534' }}>Specify patient residence location for the doctor's home visitation:</span>
-                        </div>
-                      </div>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '1rem' }}>Home Visit Address</p>
 
                       <div className="form-row" style={{ marginBottom: '0.75rem' }}>
                         <div className="form-group" style={{ margin: 0 }}>
