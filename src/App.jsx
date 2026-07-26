@@ -4221,7 +4221,7 @@ export default function App() {
             {currentView !== 'dashboard' && (
               <ul className="nav-links">
                 <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
-                <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Doctors</a></li>
+                <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Staff & Specialists</a></li>
                 <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
                 <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
                 <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact</a></li>
@@ -4272,7 +4272,7 @@ export default function App() {
                 </p>
                 <div className="hero-ctas">
                   <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Consultation</button>
-                  <button className="btn btn-outline" onClick={() => navigateTo('doctors')}>Meet the Doctors</button>
+                  <button className="btn btn-outline" onClick={() => navigateTo('doctors')}>Meet Our Specialists & Staff</button>
                 </div>
               </div>
 
@@ -4309,8 +4309,8 @@ export default function App() {
                       <i className="fa-solid fa-user-shield"></i>
                     </div>
                     <div className="badge-texts">
-                      <strong>MDCN Verified</strong>
-                      <span>Accredited Doctors</span>
+                      <strong>MDCN & PCN Verified</strong>
+                      <span>Accredited Medical Staff</span>
                     </div>
                   </div>
                 </div>
@@ -4625,9 +4625,29 @@ export default function App() {
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 600, textTransform: 'uppercase' }}>{getSpecialtyTitle(doc.specialty)}</span>
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
-                        setPreviewBookingDoc(doc);
-                      }}>Book Session</button>
+                      {doc.specialty === 'Laboratory' ? (
+                        <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                          startBooking({
+                            serviceType: "Mobile Laboratory",
+                            packageTitle: `Diagnostic Test Request (${doc.name})`,
+                            price: doc.consultationRate || "₦3,000",
+                            doctorId: doc.id.toString()
+                          });
+                        }}><i className="fa-solid fa-vial" style={{ marginRight: '4px' }}></i> Order Lab Test</button>
+                      ) : doc.specialty === 'Pharmacy' ? (
+                        <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                          startBooking({
+                            serviceType: "Prescription & Pharmacy Delivery",
+                            packageTitle: `Rx Medication Order (${doc.name})`,
+                            price: doc.consultationRate || "₦3,000",
+                            doctorId: doc.id.toString()
+                          });
+                        }}><i className="fa-solid fa-pills" style={{ marginRight: '4px' }}></i> Order Prescription</button>
+                      ) : (
+                        <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                          setPreviewBookingDoc(doc);
+                        }}>Book Session</button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -5268,9 +5288,29 @@ export default function App() {
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Location: {doc.clinicRoom || 'Main Clinic Unit'}</span>
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
-                        setPreviewBookingDoc(doc);
-                      }}>Book Slot</button>
+                      {doc.specialty === 'Laboratory' ? (
+                        <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                          startBooking({
+                            serviceType: "Mobile Laboratory",
+                            packageTitle: `Diagnostic Test Request (${doc.name})`,
+                            price: doc.consultationRate || "₦3,000",
+                            doctorId: doc.id.toString()
+                          });
+                        }}><i className="fa-solid fa-vial" style={{ marginRight: '4px' }}></i> Order Lab Test</button>
+                      ) : doc.specialty === 'Pharmacy' ? (
+                        <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                          startBooking({
+                            serviceType: "Prescription & Pharmacy Delivery",
+                            packageTitle: `Rx Medication Order (${doc.name})`,
+                            price: doc.consultationRate || "₦3,000",
+                            doctorId: doc.id.toString()
+                          });
+                        }}><i className="fa-solid fa-pills" style={{ marginRight: '4px' }}></i> Order Prescription</button>
+                      ) : (
+                        <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
+                          setPreviewBookingDoc(doc);
+                        }}>Book Slot</button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -5456,8 +5496,8 @@ export default function App() {
               <i className="fa-solid fa-arrow-left"></i> Back to Previous
             </button>
             <div className="section-header">
-              <h2>Doctor Directory</h2>
-              <p>Search and inspect verified medical professionals active on our digital board.</p>
+              <h2>Medical Staff & Specialist Directory</h2>
+              <p>Search and connect with verified medical doctors, pharmacists, laboratory scientists, and healthcare specialists.</p>
             </div>
 
             {/* Filter controls */}
@@ -5466,7 +5506,7 @@ export default function App() {
                 <i className="fa-solid fa-magnifying-glass"></i>
                 <input
                   type="text"
-                  placeholder="Search doctor names, clinical focus..."
+                  placeholder="Search staff name, clinical focus, or role..."
                   value={doctorSearch}
                   onChange={(e) => setDoctorSearch(e.target.value)}
                 />
@@ -5546,11 +5586,35 @@ export default function App() {
                             </div>
                           )}
                         </div>
-                        <button className="btn btn-primary" onClick={() => {
-                          setPreviewBookingDoc(doc);
-                        }}>
-                          Book Consultation
-                        </button>
+                        {doc.specialty === 'Laboratory' ? (
+                          <button className="btn btn-primary" onClick={() => {
+                            startBooking({
+                              serviceType: "Mobile Laboratory",
+                              packageTitle: `Diagnostic Test Request (${doc.name})`,
+                              price: doc.consultationRate || "₦3,000",
+                              doctorId: doc.id.toString()
+                            });
+                          }}>
+                            <i className="fa-solid fa-vial" style={{ marginRight: '6px' }}></i> Order Lab Test
+                          </button>
+                        ) : doc.specialty === 'Pharmacy' ? (
+                          <button className="btn btn-primary" onClick={() => {
+                            startBooking({
+                              serviceType: "Prescription & Pharmacy Delivery",
+                              packageTitle: `Rx Medication Order (${doc.name})`,
+                              price: doc.consultationRate || "₦3,000",
+                              doctorId: doc.id.toString()
+                            });
+                          }}>
+                            <i className="fa-solid fa-pills" style={{ marginRight: '6px' }}></i> Order Prescription
+                          </button>
+                        ) : (
+                          <button className="btn btn-primary" onClick={() => {
+                            setPreviewBookingDoc(doc);
+                          }}>
+                            Book Consultation
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -10903,13 +10967,13 @@ export default function App() {
 
                     {adminNavView === 'doctors' && (
                       <div>
-                        <h3>Manage Doctor Directory</h3>
+                        <h3>Manage Staff & Specialist Directory</h3>
 
                         <form className="add-doctor-form glassmorphic" onSubmit={handleAddDoctor}>
                           <h4>{editingDoctorId ? "Edit Specialist Profile" : "Register New Specialist Profile"}</h4>
                           <div className="form-row">
                             <div className="form-group">
-                              <label>Doctor Name (Exclude "Dr.")</label>
+                              <label>Staff / Specialist Full Name</label>
                               <input
                                 type="text"
                                 required
@@ -11176,7 +11240,7 @@ export default function App() {
                         </form>
 
                         <div style={{ marginTop: '2rem' }}>
-                          <h4>Registered Doctors ({doctors.length})</h4>
+                          <h4>Registered Medical Staff & Specialists ({doctors.length})</h4>
                           <div className="table-responsive">
                             <table className="admin-table">
                               <thead>
@@ -12369,7 +12433,7 @@ export default function App() {
             <h4>QUICK LINKS</h4>
             <ul>
               <li><a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
-              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Find Doctors</a></li>
+              <li><a href="#doctors" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Find Staff & Specialists</a></li>
               <li><a href="#booking" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Book Appointment</a></li>
               <li><a href="#contact" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact Us</a></li>
             </ul>
@@ -13424,18 +13488,30 @@ export default function App() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Consultation Rates & Duration:</strong>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
+                  {previewBookingDoc.specialty === 'Laboratory'
+                    ? 'Diagnostic Tariff & Duration:'
+                    : previewBookingDoc.specialty === 'Pharmacy'
+                    ? 'Pharmacy Dispensing Tariff & Duration:'
+                    : 'Consultation Rates & Duration:'}
+                </strong>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
-                    <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>General Consultation Rate</span>
-                    <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationRate || '₦5,000'}</span>
+                    <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>
+                      {previewBookingDoc.specialty === 'Laboratory'
+                        ? 'Diagnostic Testing Tariff'
+                        : previewBookingDoc.specialty === 'Pharmacy'
+                        ? 'Rx Dispensing & Handling Fee'
+                        : 'General Consultation Rate'}
+                    </span>
+                    <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationRate || '₦3,000'}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.4)', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
-                    <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>Consultation Session Duration</span>
+                    <span style={{ fontWeight: '600', color: 'var(--color-indigo)' }}>Session / Dispatch Duration</span>
                     <span style={{ fontWeight: 'bold', color: 'var(--color-accent-hover)' }}>{previewBookingDoc.consultationDuration || '30 mins'}</span>
                   </div>
                   <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.35rem' }}>
-                    * Note: Special services fees are negotiable
+                    * Note: Special procedures and customized requests are negotiable
                   </span>
                 </div>
               </div>
@@ -13468,18 +13544,38 @@ export default function App() {
             <div style={{ marginTop: '1.75rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button className="btn btn-outline" onClick={() => setPreviewBookingDoc(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => {
-                setBookingFormData({
-                  ...bookingFormData,
-                  doctorId: previewBookingDoc.id.toString(),
-                  patientName: loggedInPatient ? loggedInPatient.name : '',
-                  email: loggedInPatient ? loggedInPatient.email : '',
-                  phone: loggedInPatient ? loggedInPatient.phone : '',
-                  symptoms: `Consultation request for ${getSpecialtyTitle(previewBookingDoc.specialty)} department.`
-                });
+                if (previewBookingDoc.specialty === 'Laboratory') {
+                  startBooking({
+                    serviceType: "Mobile Laboratory",
+                    packageTitle: `Diagnostic Test Request (${previewBookingDoc.name})`,
+                    price: previewBookingDoc.consultationRate || "₦3,000",
+                    doctorId: previewBookingDoc.id.toString()
+                  });
+                } else if (previewBookingDoc.specialty === 'Pharmacy') {
+                  startBooking({
+                    serviceType: "Prescription & Pharmacy Delivery",
+                    packageTitle: `Rx Medication Order (${previewBookingDoc.name})`,
+                    price: previewBookingDoc.consultationRate || "₦3,000",
+                    doctorId: previewBookingDoc.id.toString()
+                  });
+                } else {
+                  setBookingFormData({
+                    ...bookingFormData,
+                    doctorId: previewBookingDoc.id.toString(),
+                    patientName: loggedInPatient ? loggedInPatient.name : '',
+                    email: loggedInPatient ? loggedInPatient.email : '',
+                    phone: loggedInPatient ? loggedInPatient.phone : '',
+                    symptoms: `Consultation request for ${getSpecialtyTitle(previewBookingDoc.specialty)} department.`
+                  });
+                  navigateTo('booking');
+                }
                 setPreviewBookingDoc(null);
-                navigateTo('booking');
               }}>
-                Confirm & Proceed to Booking Form
+                {previewBookingDoc.specialty === 'Laboratory'
+                  ? 'Proceed to Lab Test Order'
+                  : previewBookingDoc.specialty === 'Pharmacy'
+                  ? 'Proceed to Prescription Order'
+                  : 'Confirm & Proceed to Booking Form'}
               </button>
             </div>
           </div>
