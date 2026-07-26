@@ -6726,7 +6726,7 @@ export default function App() {
 
                   {/* Home Visit Residential Address Section */}
                   {(bookingFormData.consultationMode === 'Home Visit' || bookingFormData.serviceType?.toLowerCase().includes('home') || bookingFormData.packageTitle?.toLowerCase().includes('home')) && (
-                    <div style={{ background: 'rgba(34, 197, 94, 0.06)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.25)', marginBottom: '1.25rem' }}>
+                    <div style={{ marginBottom: '1.25rem' }}>
                       <p style={{ fontWeight: 'bold', fontSize: '0.88rem', marginBottom: '1rem' }}>Home Visit Address</p>
 
                       <div className="form-row" style={{ marginBottom: '0.75rem' }}>
