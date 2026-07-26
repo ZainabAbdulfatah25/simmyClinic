@@ -9,6 +9,8 @@ import doctorWasilaImg from './assets/doctor_wasila.jpg';
 import doctorHadizaImg from './assets/doctor_hadiza.jpg';
 import doctorAsmauImg from './assets/doctor_asmau.png';
 import doctorSaimaImg from './assets/doctor_saima.jpg';
+import pharmMashkuratuImg from './assets/pharm_mashkuratu_jibril.jpg';
+import firdausiSaniImg from './assets/firdausi_sani_usman.jpg';
 import heroPng from './assets/hero.png';
 import logoSvg from './assets/logo.svg';
 
@@ -73,7 +75,7 @@ const INITIAL_DOCTORS = [
     phone: "08034567890",
     bio: "Senior consultant gynaecologist specializing in maternal care, obstetrics, and female reproductive wellness.",
     clinicRoom: "Room 102, West Wing",
-    license: "",
+    license: "MDCN/8431",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
@@ -95,7 +97,7 @@ const INITIAL_DOCTORS = [
     phone: "08051234567",
     bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
     clinicRoom: "Room 205, Main Block",
-    license: "",
+    license: "MDCN/7123",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Mobile Laboratory"],
@@ -117,7 +119,7 @@ const INITIAL_DOCTORS = [
     phone: "+234 909 677 6797",
     bio: "Medical Doctor and Public Health Practitioner with more than 4 years of progressive clinical experience in tertiary and specialist hospitals, skilled in patient-centered care, emergency medicine, maternal and child health, and preventive healthcare.",
     clinicRoom: "Room 110, Public Health Wing",
-    license: "",
+    license: "MDCN/6203",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
@@ -139,7 +141,7 @@ const INITIAL_DOCTORS = [
     phone: "+234 813 870 5738",
     bio: "Experienced Medical Doctor with 9 years of clinical practice, providing comprehensive general medical consultations across physical and telemedicine platforms.",
     clinicRoom: "Room 207, Main Block",
-    license: "",
+    license: "MDCN/5890",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
@@ -161,7 +163,7 @@ const INITIAL_DOCTORS = [
     phone: "+234 803 133 8534",
     bio: "Registered Medical Laboratory Scientist with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
     clinicRoom: "Room 105, Diagnostic Wing",
-    license: "",
+    license: "MLS/REG/6831",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Mobile Laboratory"],
@@ -183,7 +185,7 @@ const INITIAL_DOCTORS = [
     phone: "+234 706 665 0730",
     bio: "Dedicated and compassionate mental health specialist committed to promoting well-being, active listening, and culturally sensitive evidence-based mental health services.",
     clinicRoom: "Room 108, Wellness Wing",
-    license: "",
+    license: "MNCP/9821",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
@@ -205,7 +207,7 @@ const INITIAL_DOCTORS = [
     phone: "+234 916 652 1888",
     bio: "Dedicated Community Health Officer committed to promoting quality primary healthcare through disease prevention, treatment of minor ailments, and health education.",
     clinicRoom: "Room 114, Community Health Unit",
-    license: "",
+    license: "CHO/7812",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation", "Home Services"],
@@ -227,7 +229,7 @@ const INITIAL_DOCTORS = [
     phone: "+234 901 432 4442",
     bio: "Experienced ENT Specialist and Public Health Practitioner (ENT/MPH) with 15 years of clinical expertise in ear, nose, and throat care and preventive medicine.",
     clinicRoom: "Room 201, ENT & Specialist Wing",
-    license: "",
+    license: "MDCN/4521",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation", "Home Services"],
@@ -238,24 +240,46 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 9,
-    name: "Pharm. Bello Ibrahim",
+    name: "Pharm. Mashkuratu Jibril",
     specialty: "Pharmacy",
-    schedule: "Mon - Sat (8am - 8pm)",
-    experience: "7 Years",
-    regNo: "PCN/P/9482",
-    image: "",
-    email: "pharmacist@simmycare.com",
+    schedule: "Mon - Sat (8am - 6pm)",
+    experience: "3 Years",
+    regNo: "PCN/P/1042",
+    image: pharmMashkuratuImg,
+    email: "mashkuratujibril@gmail.com",
     password: "password123",
-    phone: "08012345678",
-    bio: "Senior Clinical Pharmacist managing central pharmacy inventory, prescription verification, pharmaceutical care, and courier dispatch.",
+    phone: "+234 810 581 9033",
+    bio: "I am Mashkuratu Jibril, a dedicated and compassionate Pharmacy Technician with progressive experience in pharmaceutical care, drug dispensing, inventory management, and patient counseling.",
     clinicRoom: "Central Pharmacy, Ground Floor",
-    license: "PCN/P/9482",
+    license: "PCN/P/1042",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Pharmacy Delivery", "Online Consultation"],
     verified: true,
     level: "Head Pharmacist",
     patientCapacity: "50 patients/month",
+    remunerationNotes: "Standard clinical rate"
+  },
+  {
+    id: 10,
+    name: "Firdausi Sani Usman",
+    specialty: "General Medicine",
+    schedule: "Mon - Fri (8am - 4pm)",
+    experience: "5 Years",
+    regNo: "NMCN/REG/4819",
+    image: firdausiSaniImg,
+    email: "firdausisani@gmail.com",
+    password: "password123",
+    phone: "+234 803 987 6543",
+    bio: "Dedicated clinical care practitioner and nursing officer committed to patient triage, vital signs monitoring, inpatient care, and wellness support.",
+    clinicRoom: "Room 104, Clinical Care Unit",
+    license: "NMCN/REG/4819",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation", "Home Services"],
+    verified: true,
+    level: "Senior Care Officer",
+    patientCapacity: "40 patients/month",
     remunerationNotes: "Standard clinical rate"
   }
 ];
@@ -461,11 +485,13 @@ export default function App() {
     5: doctorWasilaImg,
     6: doctorHadizaImg,
     7: doctorAsmauImg,
-    8: doctorSaimaImg 
+    8: doctorSaimaImg,
+    9: pharmMashkuratuImg,
+    10: firdausiSaniImg
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v15_lab_specialty_filter_fix";
+  const DATA_VERSION = "v18_complete_staff_profiles_and_images";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -608,7 +634,10 @@ export default function App() {
     symptoms: '',
     isNhis: false,
     nhisNumber: '',
-    nhisHmo: 'NHIA Primary Scheme'
+    nhisHmo: 'NHIA Primary Scheme',
+    serviceType: 'Virtual Consultation',
+    packageTitle: '',
+    price: ''
   });
 
   const [contactFormData, setContactFormData] = useState({ name: '', email: '', message: '' });
@@ -2343,6 +2372,39 @@ export default function App() {
     });
   };
 
+  const startBooking = (context = {}) => {
+    setBookingFormData((prev) => {
+      const docId =
+        context.doctorId !== undefined
+          ? context.doctorId.toString()
+          : prev.doctorId;
+      const targetDoc = doctors.find((d) => d.id.toString() === docId);
+      return {
+        ...prev,
+        patientName: prev.patientName || loggedInPatient?.name || "",
+        phone: prev.phone || loggedInPatient?.phone || "",
+        email: prev.email || loggedInPatient?.email || "",
+        doctorId: docId,
+        serviceType:
+          context.serviceType ||
+          (targetDoc
+            ? `${getSpecialtyTitle(targetDoc.specialty)} Consultation`
+            : "Virtual Consultation"),
+        packageTitle:
+          context.packageTitle ||
+          (targetDoc ? `Consultation with ${targetDoc.name}` : ""),
+        price:
+          context.price ||
+          (targetDoc?.consultationRate
+            ? `₦${targetDoc.consultationRate.toLocaleString()}`
+            : ""),
+        symptoms: context.symptoms || prev.symptoms || "",
+        isNhis: context.isNhis !== undefined ? context.isNhis : prev.isNhis,
+      };
+    });
+    navigateTo("booking");
+  };
+
   // --- Auth Handlers ---
   const handleGoogleAuth = async () => {
     setLoginError('');
@@ -2945,6 +3007,10 @@ export default function App() {
       email: bookingFormData.email.toLowerCase(),
       doctor: selectedDoc.name,
       doctorId: selectedDoc.id.toString(),
+      specialty: selectedDoc.specialty,
+      serviceType: bookingFormData.serviceType || "Virtual Consultation",
+      packageTitle: bookingFormData.packageTitle || "",
+      price: bookingFormData.price || "",
       date: bookingFormData.date,
       time: bookingFormData.time,
       symptoms: bookingFormData.symptoms || "None provided",
@@ -2970,7 +3036,10 @@ export default function App() {
       symptoms: '',
       isNhis: false,
       nhisNumber: '',
-      nhisHmo: 'NHIA Primary Scheme'
+      nhisHmo: 'NHIA Primary Scheme',
+      serviceType: 'Virtual Consultation',
+      packageTitle: '',
+      price: ''
     });
 
     setSuccessModal({
@@ -5664,7 +5733,17 @@ export default function App() {
                         </ul>
                       </div>
 
-                      <button className="btn btn-primary btn-block" onClick={() => navigateTo('booking')}>
+                      <button
+                        className="btn btn-primary btn-block"
+                        onClick={() =>
+                          startBooking({
+                            serviceType: "Virtual Consultation",
+                            packageTitle: item.title,
+                            price: `₦${finalPrice.toLocaleString()}`,
+                            isNhis: pricingIsNhis,
+                          })
+                        }
+                      >
                         Book {item.title}
                       </button>
                     </div>
@@ -5712,7 +5791,19 @@ export default function App() {
                           </span>
                         </td>
                         <td style={{ padding: '0.85rem', textAlign: 'right' }}>
-                          <button className="btn btn-outline btn-sm" onClick={() => navigateTo('booking')}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() =>
+                              startBooking({
+                                serviceType: "Mobile Diagnostic Lab",
+                                packageTitle: `Diagnostic Test: ${t.name}`,
+                                price: pricingIsNhis
+                                  ? `₦${t.copay.toLocaleString()} (NHIS Copay)`
+                                  : `₦${t.standard.toLocaleString()}`,
+                                isNhis: pricingIsNhis,
+                              })
+                            }
+                          >
                             Request Test
                           </button>
                         </td>
@@ -5788,7 +5879,19 @@ export default function App() {
                                       <i className="fa-solid fa-pen-to-square"></i> Edit Price
                                     </button>
                                   )}
-                                  <button className="btn btn-primary btn-sm" onClick={() => navigateTo('booking')}>
+                                  <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() =>
+                                      startBooking({
+                                        serviceType: "Prescription & Pharmacy Delivery",
+                                        packageTitle: `Rx Drug Order: ${drug.name}`,
+                                        price: pricingIsNhis
+                                          ? `₦${copayPrice.toLocaleString()} (NHIS Copay)`
+                                          : `₦${stdPrice.toLocaleString()}`,
+                                        isNhis: pricingIsNhis,
+                                      })
+                                    }
+                                  >
                                     Order Rx
                                   </button>
                                 </div>
@@ -5872,7 +5975,17 @@ export default function App() {
                       </ul>
                     </div>
 
-                    <button className="btn btn-primary btn-block" onClick={() => navigateTo('booking')}>
+                    <button
+                      className="btn btn-primary btn-block"
+                      onClick={() =>
+                        startBooking({
+                          serviceType: "Wellness Subscription Package",
+                          packageTitle: plan.title,
+                          price: pricingIsNhis ? plan.nhisPrice : plan.price,
+                          isNhis: pricingIsNhis,
+                        })
+                      }
+                    >
                       Subscribe to {plan.title}
                     </button>
                   </div>
@@ -5913,6 +6026,99 @@ export default function App() {
 
               <div className="booking-form-wrapper glassmorphic">
                 <h3>Consultation Booking Form</h3>
+                {(bookingFormData.packageTitle || bookingFormData.serviceType) && (
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(30, 58, 138, 0.08), rgba(2, 132, 199, 0.08))",
+                      border: "1px solid rgba(2, 132, 199, 0.25)",
+                      borderRadius: "12px",
+                      padding: "0.85rem 1rem",
+                      marginBottom: "1.25rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "38px",
+                          height: "38px",
+                          borderRadius: "10px",
+                          background: "var(--color-primary)",
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "1.1rem",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <i className="fa-solid fa-receipt"></i>
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "0.72rem",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            color: "var(--color-text-muted)",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Request Context
+                        </div>
+                        <div
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "0.95rem",
+                            color: "var(--color-primary)",
+                          }}
+                        >
+                          {bookingFormData.packageTitle ||
+                            bookingFormData.serviceType}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--color-text-muted)",
+                            marginTop: "1px",
+                          }}
+                        >
+                          Type: <strong>{bookingFormData.serviceType}</strong>
+                          {bookingFormData.price
+                            ? ` • Tariff: ${bookingFormData.price}`
+                            : ""}
+                        </div>
+                      </div>
+                    </div>
+                    {bookingFormData.packageTitle && (
+                      <button
+                        className="btn btn-outline btn-sm"
+                        type="button"
+                        onClick={() =>
+                          setBookingFormData((prev) => ({
+                            ...prev,
+                            packageTitle: "",
+                            price: "",
+                            serviceType: "Virtual Consultation",
+                          }))
+                        }
+                        style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                )}
                 <form onSubmit={handleBookingSubmit}>
                   <div className="form-group">
                     <label htmlFor="patientName">Patient Name</label>
