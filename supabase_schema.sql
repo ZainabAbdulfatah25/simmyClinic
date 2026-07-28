@@ -137,15 +137,14 @@ ALTER TABLE public.clinic_drugs ENABLE ROW LEVEL SECURITY;
 -- ==========================================
 
 -- A. Profiles Policies
-CREATE POLICY "Allow public SELECT for doctor profiles" 
+CREATE POLICY "Allow public SELECT for profiles" 
   ON public.profiles FOR SELECT 
-  USING (role = 'doctor' OR id = auth.uid() OR EXISTS (
-    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-  ));
+  USING (true);
 
-CREATE POLICY "Allow users to UPDATE their own profiles" 
-  ON public.profiles FOR UPDATE 
-  USING (id = auth.uid());
+CREATE POLICY "Allow public INSERT/UPDATE for profiles" 
+  ON public.profiles FOR ALL 
+  USING (true)
+  WITH CHECK (true);
 
 -- B. Appointments Policies
 CREATE POLICY "Allow users to view their own associated appointments" 

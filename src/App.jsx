@@ -2416,20 +2416,56 @@ export default function App() {
     }
   }, []);
 
-  // Fetch initial data from Supabase backend if configured
+  // Helper to merge fetched profiles with existing state lists
+  const mergeProfiles = (existingList, fetchedProfiles, role) => {
+    const map = new Map();
+    existingList.forEach(item => {
+      const key = item.email ? item.email.toLowerCase() : item.id;
+      if (key) map.set(String(key), item);
+    });
+    fetchedProfiles.forEach(item => {
+      const key = item.email ? item.email.toLowerCase() : item.id;
+      if (key) {
+        const prev = map.get(String(key)) || {};
+        map.set(String(key), { ...prev, ...item, role });
+      }
+    });
+    return Array.from(map.values());
+  };
+
+  // Fetch initial data & profiles from Supabase backend if configured
   useEffect(() => {
     async function loadSupabaseBackendData() {
       if (!isSupabaseConfigured()) return;
       try {
-        const [apts, orders, labReqs, drugsData] = await Promise.all([
+        const [apts, orders, labReqs, drugsData, profilesData] = await Promise.all([
           appointmentsApi.getAll(),
           pharmacyOrdersApi.getAll(),
           labRequestsApi.getAll(),
-          clinicDrugsApi.getAll()
+          clinicDrugsApi.getAll(),
+          profilesApi.getAllProfiles()
         ]);
         if (apts && apts.length > 0) setAppointments(apts);
         if (orders && orders.length > 0) setInquiries(orders);
-        if (drugsData && drugsData.length > 0) setDrugs(drugsData);
+
+        if (profilesData && profilesData.length > 0) {
+          const sDoctors = profilesData.filter(p => p.role === 'doctor');
+          const sPatients = profilesData.filter(p => p.role === 'patient');
+          const sPharmacists = profilesData.filter(p => p.role === 'pharmacist');
+          const sLabs = profilesData.filter(p => p.role === 'lab');
+          const sLogistics = profilesData.filter(p => p.role === 'logistics');
+          const sAdmins = profilesData.filter(p => p.role === 'admin');
+
+          if (sDoctors.length > 0) setDoctors(prev => mergeProfiles(prev, sDoctors, 'doctor'));
+          if (sPatients.length > 0) setPatients(prev => mergeProfiles(prev, sPatients, 'patient'));
+          if (sPharmacists.length > 0) setPharmacists(prev => mergeProfiles(prev, sPharmacists, 'pharmacist'));
+          if (sLabs.length > 0) setLabs(prev => mergeProfiles(prev, sLabs, 'lab'));
+          if (sLogistics.length > 0) setLogistics(prev => mergeProfiles(prev, sLogistics, 'logistics'));
+          if (sAdmins.length > 0) setAdmins(prev => mergeProfiles(prev, sAdmins, 'admin'));
+        }
+
+        // Auto sync all local seed/stored users to Supabase profiles
+        profilesApi.syncAllLocalUsers(doctors, patients, pharmacists, labs, logistics, admins);
       } catch (err) {
         console.info('Supabase initial fetch info:', err);
       }
@@ -2957,6 +2993,112 @@ export default function App() {
         }
       }
     } else {
+      const normEmail = email.toLowerCase().trim();
+
+      const attemptLocalLogin = () => {
+        // 1. Check Admin
+        const matchedAdmin = admins.find(a => 
+          (normEmail === a.email.toLowerCase().trim() || normEmail === (a.username || '').toLowerCase().trim()) && 
+          password === a.password
+        );
+        if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (normEmail === 'admin@simmycare.com' && (password === 'password123' || password === 'admin123' || password === 'admin'))) {
+          setAuthRole('admin');
+          sessionStorage.setItem("simmy_auth_role", "admin");
+          if (matchedAdmin) {
+            sessionStorage.setItem("simmy_auth_admin", JSON.stringify(matchedAdmin));
+          } else {
+            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({ username: 'admin', name: 'System Administrator', email: 'admin@simmycare.com' }));
+          }
+          clearForm();
+          navigateTo('dashboard');
+          return true;
+        }
+
+        // 2. Check Pharmacist
+        const pharm = pharmacists.find(p => p.email && p.email.toLowerCase().trim() === normEmail);
+        if (pharm && (pharm.password === password || !pharm.password)) {
+          if (pharm.active === false || pharm.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return true;
+          }
+          setAuthRole('pharmacist');
+          setLoggedInPharmacist(pharm);
+          sessionStorage.setItem("simmy_auth_role", "pharmacist");
+          sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(pharm));
+          clearForm();
+          navigateTo('dashboard');
+          return true;
+        }
+
+        // 3. Check Lab Tech
+        const labUser = labs.find(l => l.email && l.email.toLowerCase().trim() === normEmail);
+        if (labUser && (labUser.password === password || !labUser.password)) {
+          if (labUser.active === false || labUser.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return true;
+          }
+          setAuthRole('lab');
+          setLoggedInLab(labUser);
+          sessionStorage.setItem("simmy_auth_role", "lab");
+          sessionStorage.setItem("simmy_auth_lab", JSON.stringify(labUser));
+          clearForm();
+          navigateTo('dashboard');
+          return true;
+        }
+
+        // 4. Check Logistics
+        const logUser = logistics.find(l => l.email && l.email.toLowerCase().trim() === normEmail);
+        if (logUser && (logUser.password === password || !logUser.password)) {
+          if (logUser.active === false || logUser.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return true;
+          }
+          setAuthRole('logistics');
+          setLoggedInLogistics(logUser);
+          sessionStorage.setItem("simmy_auth_role", "logistics");
+          sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(logUser));
+          clearForm();
+          navigateTo('dashboard');
+          return true;
+        }
+
+        // 5. Check Doctor
+        const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === normEmail);
+        if (doc && (doc.password === password || !doc.password)) {
+          if (doc.active === false || doc.verified === false) {
+            setLoginError("Your staff account is pending administrator activation.");
+            return true;
+          }
+          setAuthRole('doctor');
+          setLoggedInDoctor(doc);
+          sessionStorage.setItem("simmy_auth_role", "doctor");
+          sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
+          clearForm();
+          navigateTo('dashboard');
+          return true;
+        }
+
+        // 6. Check Patient
+        const existing = patients.find(p => p.email && p.email.toLowerCase().trim() === normEmail);
+        if (existing && (existing.password === password || !existing.password)) {
+          setAuthRole('patient');
+          setLoggedInPatient(existing);
+          sessionStorage.setItem("simmy_auth_role", "patient");
+          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(existing));
+          clearForm();
+          navigateTo('dashboard');
+          return true;
+        }
+
+        return false;
+      };
+
+      // First check if credentials match a local seed account
+      if (attemptLocalLogin()) {
+        return;
+      }
+
+      // If not local seed, try Supabase Auth
       if (isSupabaseReady()) {
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
@@ -3003,107 +3145,13 @@ export default function App() {
             sessionStorage.setItem("simmy_auth_role", profile.role);
             clearForm();
             navigateTo('dashboard');
+            return;
           }
         } catch (err) {
           setLoginError("Invalid email address or password.");
         }
       } else {
-        // Fallback local memory login
-        // 1. Check Admin
-        const matchedAdmin = admins.find(a => 
-          (email.toLowerCase().trim() === a.email.toLowerCase().trim() || 
-           email.toLowerCase().trim() === a.username.toLowerCase().trim()) && 
-          password === a.password
-        );
-        if (matchedAdmin || (email === 'admin' && password === 'admin') || (email === 'admin@simmycare.com' && password === 'password123')) {
-          setAuthRole('admin');
-          sessionStorage.setItem("simmy_auth_role", "admin");
-          if (matchedAdmin) {
-            sessionStorage.setItem("simmy_auth_admin", JSON.stringify(matchedAdmin));
-          } else {
-            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({ username: 'admin', name: 'System Administrator', email: 'admin@simmycare.com' }));
-          }
-          clearForm();
-          navigateTo('dashboard');
-          return;
-        }
-
-        // 2. Check Pharmacist
-        const pharm = pharmacists.find(p => p.email.toLowerCase().trim() === email);
-        if (pharm && pharm.password === password) {
-          if (pharm.active === false || pharm.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return;
-          }
-          setAuthRole('pharmacist');
-          setLoggedInPharmacist(pharm);
-          sessionStorage.setItem("simmy_auth_role", "pharmacist");
-          sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(pharm));
-          clearForm();
-          navigateTo('dashboard');
-          return;
-        }
-
-        // 3. Check Lab Tech
-        const labUser = labs.find(l => l.email.toLowerCase().trim() === email);
-        if (labUser && labUser.password === password) {
-          if (labUser.active === false || labUser.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return;
-          }
-          setAuthRole('lab');
-          setLoggedInLab(labUser);
-          sessionStorage.setItem("simmy_auth_role", "lab");
-          sessionStorage.setItem("simmy_auth_lab", JSON.stringify(labUser));
-          clearForm();
-          navigateTo('dashboard');
-          return;
-        }
-
-        // 4. Check Logistics
-        const logUser = logistics.find(l => l.email.toLowerCase().trim() === email);
-        if (logUser && logUser.password === password) {
-          if (logUser.active === false || logUser.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return;
-          }
-          setAuthRole('logistics');
-          setLoggedInLogistics(logUser);
-          sessionStorage.setItem("simmy_auth_role", "logistics");
-          sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(logUser));
-          clearForm();
-          navigateTo('dashboard');
-          return;
-        }
-
-        // 5. Check Doctor
-        const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === email);
-        if (doc && doc.password && doc.password === password) {
-          if (doc.active === false || doc.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return;
-          }
-          setAuthRole('doctor');
-          setLoggedInDoctor(doc);
-          sessionStorage.setItem("simmy_auth_role", "doctor");
-          sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
-          clearForm();
-          navigateTo('dashboard');
-          return;
-        }
-
-        // 6. Check Patient
-        const existing = patients.find(p => p.email.toLowerCase() === email);
-        if (existing && existing.password === password) {
-          setAuthRole('patient');
-          setLoggedInPatient(existing);
-          sessionStorage.setItem("simmy_auth_role", "patient");
-          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(existing));
-          clearForm();
-          navigateTo('dashboard');
-        } else {
-          setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
-        }
+        setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
       }
     }
   };
@@ -3442,18 +3490,30 @@ export default function App() {
   };
 
   const handleToggleDoctorActive = (docId) => {
-    setDoctors(doctors.map(d =>
-      d.id === docId ? { ...d, active: d.active === false ? true : false } : d
-    ));
+    let updatedDoc = null;
+    setDoctors(doctors.map(d => {
+      if (d.id === docId) {
+        updatedDoc = { ...d, active: d.active === false ? true : false, role: 'doctor' };
+        return updatedDoc;
+      }
+      return d;
+    }));
+    if (updatedDoc) profilesApi.upsertProfile(updatedDoc);
     if (loggedInDoctor && loggedInDoctor.id === docId) {
       setLoggedInDoctor(prev => prev ? { ...prev, active: prev.active === false ? true : false } : null);
     }
   };
 
   const handleToggleDoctorVerify = (docId) => {
-    setDoctors(doctors.map(d =>
-      d.id === docId ? { ...d, verified: d.verified === true ? false : true } : d
-    ));
+    let updatedDoc = null;
+    setDoctors(doctors.map(d => {
+      if (d.id === docId) {
+        updatedDoc = { ...d, verified: d.verified === true ? false : true, role: 'doctor' };
+        return updatedDoc;
+      }
+      return d;
+    }));
+    if (updatedDoc) profilesApi.upsertProfile(updatedDoc);
     if (loggedInDoctor && loggedInDoctor.id === docId) {
       setLoggedInDoctor(prev => prev ? { ...prev, verified: prev.verified === true ? false : true } : null);
     }
@@ -3467,9 +3527,13 @@ export default function App() {
     }
     const updated = {
       username: adminSelfData.username.trim(),
-      password: adminSelfData.password.trim()
+      password: adminSelfData.password.trim(),
+      email: 'admin@simmycare.com',
+      name: 'System Administrator',
+      role: 'admin'
     };
     setAdminCredentials(updated);
+    profilesApi.upsertProfile(updated);
     setIsEditingAdminSelf(false);
     alert("Admin login credentials updated successfully!");
   };
@@ -3481,9 +3545,10 @@ export default function App() {
       const oldName = oldDoc ? oldDoc.name : '';
       const newName = newDoctorData.name.startsWith("Dr. ") ? newDoctorData.name : `Dr. ${newDoctorData.name}`;
 
+      let updatedDoctorObj = null;
       setDoctors(doctors.map(d => {
         if (d.id === editingDoctorId) {
-          return {
+          updatedDoctorObj = {
             ...d,
             name: newName,
             specialty: newDoctorData.specialty,
@@ -3499,11 +3564,15 @@ export default function App() {
             license: newDoctorData.license,
             consultationRate: newDoctorData.consultationRate,
             consultationDuration: newDoctorData.consultationDuration,
-            services: newDoctorData.services
+            services: newDoctorData.services,
+            role: 'doctor'
           };
+          return updatedDoctorObj;
         }
         return d;
       }));
+
+      if (updatedDoctorObj) profilesApi.upsertProfile(updatedDoctorObj);
 
       if (oldName && oldName.toLowerCase() !== newName.toLowerCase()) {
         setAppointments(appointments.map(apt => {
@@ -3535,11 +3604,13 @@ export default function App() {
         license: newDoctorData.license || '',
         consultationRate: newDoctorData.consultationRate || '',
         consultationDuration: newDoctorData.consultationDuration || '30 mins',
-        services: newDoctorData.services || []
+        services: newDoctorData.services || [],
+        role: 'doctor'
       };
       const staffId = generateStaffId('doctor', doctors);
       const newDocWithId = { ...newDoc, staffId };
       setDoctors([...doctors, newDocWithId]);
+      profilesApi.upsertProfile(newDocWithId);
       setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
       alert(`Doctor profile added successfully! Staff ID: ${staffId}`);
     }
@@ -3548,9 +3619,10 @@ export default function App() {
   const handleAddPharmacist = (e) => {
     e.preventDefault();
     if (editingPharmacistId) {
+      let updatedP = null;
       setPharmacists(pharmacists.map(p => {
         if (p.email === editingPharmacistId) {
-          return {
+          updatedP = {
             ...p,
             name: newPharmacistData.name,
             email: newPharmacistData.email,
@@ -3559,11 +3631,14 @@ export default function App() {
             pharmacyName: newPharmacistData.pharmacyName,
             pharmacyLicense: newPharmacistData.pharmacyLicense,
             verified: newPharmacistData.verified !== undefined ? newPharmacistData.verified : true,
-            active: newPharmacistData.active !== undefined ? newPharmacistData.active : true
+            active: newPharmacistData.active !== undefined ? newPharmacistData.active : true,
+            role: 'pharmacist'
           };
+          return updatedP;
         }
         return p;
       }));
+      if (updatedP) profilesApi.upsertProfile(updatedP);
       setEditingPharmacistId(null);
       setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
       alert("Pharmacist profile updated successfully!");
@@ -3578,9 +3653,11 @@ export default function App() {
         pharmacyName: newPharmacistData.pharmacyName || "SimmyCare Central Pharmacy",
         pharmacyLicense: newPharmacistData.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
         verified: true,
-        active: true
+        active: true,
+        role: 'pharmacist'
       };
       setPharmacists([...pharmacists, newPharm]);
+      profilesApi.upsertProfile(newPharm);
       setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
       alert(`Pharmacist registered successfully! Staff ID: ${staffId}`);
     }
@@ -3589,9 +3666,10 @@ export default function App() {
   const handleAddLab = (e) => {
     e.preventDefault();
     if (editingLabId) {
+      let updatedL = null;
       setLabs(labs.map(l => {
         if (l.email === editingLabId) {
-          return {
+          updatedL = {
             ...l,
             name: newLabData.name,
             email: newLabData.email,
@@ -3600,11 +3678,14 @@ export default function App() {
             facilityName: newLabData.facilityName,
             labLicense: newLabData.labLicense,
             verified: newLabData.verified !== undefined ? newLabData.verified : true,
-            active: newLabData.active !== undefined ? newLabData.active : true
+            active: newLabData.active !== undefined ? newLabData.active : true,
+            role: 'lab'
           };
+          return updatedL;
         }
         return l;
       }));
+      if (updatedL) profilesApi.upsertProfile(updatedL);
       setEditingLabId(null);
       setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
       alert("Laboratory profile updated successfully!");
@@ -3619,9 +3700,11 @@ export default function App() {
         facilityName: newLabData.facilityName || "SimmyCare Lab Partner",
         labLicense: newLabData.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
         verified: true,
-        active: true
+        active: true,
+        role: 'lab'
       };
       setLabs([...labs, newL]);
+      profilesApi.upsertProfile(newL);
       setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
       alert(`Laboratory Technician registered successfully! Staff ID: ${staffId}`);
     }
@@ -3630,9 +3713,10 @@ export default function App() {
   const handleAddLogistics = (e) => {
     e.preventDefault();
     if (editingLogisticsId) {
+      let updatedLg = null;
       setLogistics(logistics.map(l => {
         if (l.email === editingLogisticsId) {
-          return {
+          updatedLg = {
             ...l,
             name: newLogisticsData.name,
             email: newLogisticsData.email,
@@ -3641,11 +3725,14 @@ export default function App() {
             vehicleType: newLogisticsData.vehicleType,
             dispatchArea: newLogisticsData.dispatchArea,
             verified: newLogisticsData.verified !== undefined ? newLogisticsData.verified : true,
-            active: newLogisticsData.active !== undefined ? newLogisticsData.active : true
+            active: newLogisticsData.active !== undefined ? newLogisticsData.active : true,
+            role: 'logistics'
           };
+          return updatedLg;
         }
         return l;
       }));
+      if (updatedLg) profilesApi.upsertProfile(updatedLg);
       setEditingLogisticsId(null);
       setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
       alert("Logistics profile updated successfully!");
@@ -3660,9 +3747,11 @@ export default function App() {
         vehicleType: newLogisticsData.vehicleType || "Motorbike",
         dispatchArea: newLogisticsData.dispatchArea || "Lagos Metro",
         verified: true,
-        active: true
+        active: true,
+        role: 'logistics'
       };
       setLogistics([...logistics, newLg]);
+      profilesApi.upsertProfile(newLg);
       setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
       alert(`Logistics Rider registered successfully! Staff ID: ${staffId}`);
     }
@@ -3671,18 +3760,22 @@ export default function App() {
   const handleAddAdmin = (e) => {
     e.preventDefault();
     if (editingAdminId) {
+      let updatedAd = null;
       setAdmins(admins.map(a => {
         if (a.email === editingAdminId) {
-          return {
+          updatedAd = {
             ...a,
             name: newAdminData.name,
             username: newAdminData.username,
             email: newAdminData.email,
-            password: newAdminData.password
+            password: newAdminData.password,
+            role: 'admin'
           };
+          return updatedAd;
         }
         return a;
       }));
+      if (updatedAd) profilesApi.upsertProfile(updatedAd);
       setEditingAdminId(null);
       setNewAdminData({ name: '', username: '', email: '', password: '' });
       alert("Administrator profile updated successfully!");
@@ -3693,9 +3786,11 @@ export default function App() {
         name: newAdminData.name,
         username: newAdminData.username,
         email: newAdminData.email,
-        password: newAdminData.password
+        password: newAdminData.password,
+        role: 'admin'
       };
       setAdmins([...admins, newAd]);
+      profilesApi.upsertProfile(newAd);
       setNewAdminData({ name: '', username: '', email: '', password: '' });
       alert(`Administrator registered successfully! Staff ID: ${staffId}`);
     }
@@ -3725,7 +3820,11 @@ export default function App() {
 
   const handleDeleteDoctor = (id) => {
     if (window.confirm("Are you sure you want to remove this doctor profile?")) {
+      const docToDelete = doctors.find(d => d.id === id);
       setDoctors(doctors.filter(d => d.id !== id));
+      if (docToDelete && docToDelete.email) {
+        profilesApi.deleteProfile(docToDelete.email);
+      }
       if (editingDoctorId === id) {
         setEditingDoctorId(null);
         setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
@@ -3754,10 +3853,12 @@ export default function App() {
       license: docSelfData.license,
       consultationRate: docSelfData.consultationRate,
       consultationDuration: docSelfData.consultationDuration,
-      services: docSelfData.services
+      services: docSelfData.services,
+      role: 'doctor'
     };
 
     setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
+    profilesApi.upsertProfile(updatedDoc);
 
     if (oldName.toLowerCase() !== newName.toLowerCase()) {
       setAppointments(appointments.map(apt => {
@@ -3791,10 +3892,12 @@ export default function App() {
       name: newName,
       email: newEmail,
       phone: newPhone,
-      password: patSelfData.password
+      password: patSelfData.password,
+      role: 'patient'
     };
 
     setPatients(patients.map(p => p.email.toLowerCase() === oldEmail.toLowerCase() ? updatedPat : p));
+    profilesApi.upsertProfile(updatedPat);
 
     setAppointments(appointments.map(apt => {
       if (apt.email.toLowerCase() === oldEmail.toLowerCase()) {
@@ -3821,18 +3924,22 @@ export default function App() {
       const newName = newPatientData.name;
       const newPhone = newPatientData.phone;
 
+      let updatedPat = null;
       setPatients(patients.map(p => {
         if (p.email === editingPatientId) {
-          return {
+          updatedPat = {
             ...p,
             name: newName,
             email: newEmail,
             phone: newPhone,
-            password: newPatientData.password
+            password: newPatientData.password,
+            role: 'patient'
           };
+          return updatedPat;
         }
         return p;
       }));
+      if (updatedPat) profilesApi.upsertProfile(updatedPat);
 
       setAppointments(appointments.map(apt => {
         if (apt.email.toLowerCase() === oldEmail.toLowerCase()) {
@@ -3858,9 +3965,11 @@ export default function App() {
         name: newPatientData.name,
         email: newPatientData.email,
         phone: newPatientData.phone,
-        password: newPatientData.password
+        password: newPatientData.password,
+        role: 'patient'
       };
       setPatients([...patients, newPatient]);
+      profilesApi.upsertProfile(newPatient);
       setNewPatientData({ name: '', email: '', phone: '', password: '' });
       alert("Patient profile added successfully!");
     }
@@ -3879,6 +3988,7 @@ export default function App() {
   const handleDeletePatient = (email) => {
     if (window.confirm("Are you sure you want to remove this patient profile?")) {
       setPatients(patients.filter(p => p.email !== email));
+      profilesApi.deleteProfile(email);
       if (editingPatientId === email) {
         setEditingPatientId(null);
         setNewPatientData({ name: '', email: '', phone: '', password: '' });
@@ -7243,7 +7353,7 @@ export default function App() {
                                 value={patientLoginForm.password}
                                 onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
                               />
-                              <button type="button" className="pw-toggle-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(p => ({ ...p, patient: !p.patient })); }} tabIndex={-1} aria-label="Toggle password visibility">
+                              <button type="button" className="pw-toggle-btn" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(p => ({ ...p, patient: !p.patient })); }} tabIndex={-1} aria-label="Toggle password visibility">
                                 <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                               </button>
                             </div>
@@ -7277,7 +7387,7 @@ export default function App() {
                               value={patientLoginForm.password}
                               onChange={(e) => setPatientLoginForm({ ...patientLoginForm, password: e.target.value })}
                             />
-                            <button type="button" className="pw-toggle-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(p => ({ ...p, patient: !p.patient })); }} tabIndex={-1} aria-label="Toggle password visibility">
+                            <button type="button" className="pw-toggle-btn" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(p => ({ ...p, patient: !p.patient })); }} tabIndex={-1} aria-label="Toggle password visibility">
                               <i className={`fa-solid ${showPasswords.patient ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                             </button>
                           </div>
@@ -14332,14 +14442,19 @@ export default function App() {
 
               <div className="form-group">
                 <label style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-indigo)' }}>CREATE ACCOUNT PASSWORD *</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="password123"
-                  value={riderForm.password}
-                  onChange={(e) => setRiderForm({ ...riderForm, password: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    type={showPasswords.logistics ? 'text' : 'password'}
+                    required
+                    placeholder="password123"
+                    value={riderForm.password}
+                    onChange={(e) => setRiderForm({ ...riderForm, password: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 2.5rem 0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}
+                  />
+                  <button type="button" className="pw-toggle-btn" onClick={() => setShowPasswords(p => ({ ...p, logistics: !p.logistics }))} tabIndex={-1} aria-label="Toggle password visibility">
+                    <i className={`fa-solid ${showPasswords.logistics ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

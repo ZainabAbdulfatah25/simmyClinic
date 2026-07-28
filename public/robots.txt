@@ -1,0 +1,7 @@
+# SimmyCare Online Clinic Robots.txt
+User-agent: *
+Allow: /
+Allow: /assets/
+
+# Sitemap location
+Sitemap: https://simmycare.com/sitemap.xml
