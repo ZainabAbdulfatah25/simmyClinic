@@ -236,6 +236,8 @@ BEGIN
     vehicle_type,
     dispatch_area,
     level,
+    bio,
+    active,
     verified,
     terms_accepted,
     terms_accepted_at
@@ -253,7 +255,13 @@ BEGIN
     new.raw_user_meta_data->>'vehicle_type',
     new.raw_user_meta_data->>'dispatch_area',
     new.raw_user_meta_data->>'level',
-    -- Patients and Admins are auto-verified; staff needs admin activation
+    new.raw_user_meta_data->>'bio',
+    -- Patients and Admins are auto-activated; staff accounts need admin activation
+    CASE 
+      WHEN COALESCE(new.raw_user_meta_data->>'role', 'patient') IN ('patient', 'admin') THEN true 
+      ELSE false 
+    END,
+    -- Patients and Admins are auto-verified; staff needs admin verification
     CASE 
       WHEN COALESCE(new.raw_user_meta_data->>'role', 'patient') IN ('patient', 'admin') THEN true 
       ELSE false 

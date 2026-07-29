@@ -2496,6 +2496,46 @@ export default function App() {
     loadSupabaseBackendData();
   }, []);
 
+  // Supabase Auth Session Restoration — runs once on mount
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    // Restore existing session on page reload
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (!profile) return;
+          sessionStorage.setItem('simmy_auth_role', profile.role);
+          setAuthRole(profile.role);
+          if (profile.role === 'patient') { setLoggedInPatient(profile); sessionStorage.setItem('simmy_auth_patient', JSON.stringify(profile)); }
+          else if (profile.role === 'doctor') { setLoggedInDoctor(profile); sessionStorage.setItem('simmy_auth_doctor', JSON.stringify(profile)); }
+          else if (profile.role === 'pharmacist') { setLoggedInPharmacist(profile); sessionStorage.setItem('simmy_auth_pharmacist', JSON.stringify(profile)); }
+          else if (profile.role === 'lab') { setLoggedInLab(profile); sessionStorage.setItem('simmy_auth_lab', JSON.stringify(profile)); }
+          else if (profile.role === 'logistics') { setLoggedInLogistics(profile); sessionStorage.setItem('simmy_auth_logistics', JSON.stringify(profile)); }
+        });
+    });
+
+    // Listen for future auth events (sign-in, sign-out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setAuthRole(null);
+        setLoggedInPatient(null);
+        setLoggedInDoctor(null);
+        setLoggedInPharmacist(null);
+        setLoggedInLab(null);
+        setLoggedInLogistics(null);
+        ['simmy_auth_role','simmy_auth_patient','simmy_auth_doctor','simmy_auth_pharmacist','simmy_auth_lab','simmy_auth_logistics'].forEach(k => sessionStorage.removeItem(k));
+      }
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
   // Sync Auth State
   useEffect(() => {
     sessionStorage.setItem("simmy_auth_role", authRole || '');
@@ -3236,7 +3276,11 @@ export default function App() {
     setLogisticsSelectedShipment(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Sign out from Supabase Auth (clears JWT session & cookies)
+    if (isSupabaseConfigured()) {
+      try { await supabase.auth.signOut(); } catch (err) { console.warn('Supabase sign out error:', err); }
+    }
     setAuthRole(null);
     setLoggedInPatient(null);
     setLoggedInDoctor(null);
