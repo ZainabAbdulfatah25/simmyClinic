@@ -551,7 +551,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState(() => {
     const hash = window.location.hash.replace('#', '');
     const validViews = [
-      'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard',
+      'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
       'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
     ];
@@ -1061,9 +1061,10 @@ export default function App() {
   };
 
   const renderPaymentStatusBadge = (item, type = 'appointment', role = 'patient') => {
-    const status = item.paymentStatus || 'Paid & Verified';
-    const isPaid = status === 'Paid & Verified' || status === 'Paid';
-    const isPending = status === 'Payment Pending Approval' || status === 'Pending Verification';
+    const status = item.paymentStatus || '';
+    const isPaid = status === 'Paid & Verified' || status === 'Paid via NHIS Co-pay';
+    const isPending = status === 'Payment Pending Approval' || status === 'Pending Verification' || status === 'Paid via NHIS Co-pay (Pending)';
+    const isUnpaid = !isPaid && !isPending;
 
     if (isPaid) {
       return (
@@ -1072,6 +1073,7 @@ export default function App() {
             <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
               <i className="fa-solid fa-circle-check"></i> Paid & Verified
             </span>
+            {/* Receipt button — only shown after staff approval */}
             <button
               type="button"
               className="btn btn-outline btn-xs"
@@ -1093,57 +1095,51 @@ export default function App() {
 
     } else if (isPending) {
       return (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-          <span style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#a16207', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-            <i className="fa-solid fa-clock"></i> Payment Pending Verification
-          </span>
-          {role !== 'patient' ? (
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
-              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              <i className="fa-solid fa-check-circle"></i> Approve Payment
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-outline btn-xs"
-              onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
-              style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem' }}
-            >
-              <i className="fa-solid fa-receipt"></i> Receipt
-            </button>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.35rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <span style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#a16207', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <i className="fa-solid fa-clock"></i> Payment Pending Staff Approval
+            </span>
+            {role !== 'patient' ? (
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
+                style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                <i className="fa-solid fa-check-circle"></i> Approve & Release Receipt
+              </button>
+            ) : (
+              // Patient sees waiting notice — no receipt until approved
+              <span style={{ fontSize: '0.72rem', color: '#92400e', background: 'rgba(234,179,8,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-hourglass-half"></i> Awaiting staff verification
+              </span>
+            )}
+          </div>
+          {role === 'patient' && (
+            <span style={{ fontSize: '0.7rem', color: '#78716c' }}>
+              <i className="fa-solid fa-circle-info" style={{ marginRight: '4px', color: '#0284c7' }}></i>
+              Your receipt will be released once our team confirms your payment.
+            </span>
           )}
         </div>
       );
     } else {
+      // Unpaid
       return (
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
           <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#b91c1c', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             <i className="fa-solid fa-circle-exclamation"></i> Unpaid
           </span>
           {role === 'patient' ? (
-            <>
-              <button
-                type="button"
-                className="btn btn-accent btn-xs"
-                onClick={(e) => { e.stopPropagation(); handleOpenPayment(item, type); }}
-                style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 'bold' }}
-              >
-                <i className="fa-solid fa-credit-card"></i> Pay Now
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-xs"
-                onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
-                style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem' }}
-                title="View Pro-Forma Invoice"
-              >
-                <i className="fa-solid fa-file-invoice"></i> Invoice
-              </button>
-            </>
+            <button
+              type="button"
+              className="btn btn-accent btn-xs"
+              onClick={(e) => { e.stopPropagation(); handleOpenPayment(item, type); }}
+              style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 'bold' }}
+            >
+              <i className="fa-solid fa-credit-card"></i> Pay Now
+            </button>
           ) : (
             <>
               <button
@@ -1152,7 +1148,7 @@ export default function App() {
                 onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
                 style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
               >
-                <i className="fa-solid fa-check-circle"></i> Approve Payment
+                <i className="fa-solid fa-check-circle"></i> Approve & Release Receipt
               </button>
               <button
                 type="button"
@@ -1302,7 +1298,8 @@ export default function App() {
             <button
               className="btn btn-accent"
               onClick={() => {
-                const updatedStatus = selectedPaymentMethod === 'card_gateway' ? 'Paid & Verified' : selectedPaymentMethod === 'nhis_copay' ? 'Paid via NHIS Co-pay' : 'Payment Pending Approval';
+                // All payment methods go to 'Payment Pending Approval' — staff must approve before receipt is released
+                const updatedStatus = selectedPaymentMethod === 'nhis_copay' ? 'Paid via NHIS Co-pay (Pending)' : 'Payment Pending Approval';
                 const methodLabel = selectedPaymentMethod === 'bank_transfer' ? 'Bank Transfer' : selectedPaymentMethod === 'nhis_copay' ? 'NHIS Co-pay Claim' : 'Card Gateway';
                 const receiptId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -1312,10 +1309,9 @@ export default function App() {
                   setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || apt.isNhis } : apt));
                 }
                 setShowPaymentModal(false);
-                alert(`Payment process completed! Status: ${updatedStatus}`);
               }}
             >
-              <i className="fa-solid fa-lock"></i> {selectedPaymentMethod === 'card_gateway' ? `Pay ${amount} Now` : selectedPaymentMethod === 'nhis_copay' ? 'Confirm NHIS Claim & Co-pay' : 'Confirm Payment Sent'}
+              <i className="fa-solid fa-paper-plane"></i> {selectedPaymentMethod === 'nhis_copay' ? 'Submit NHIS Claim' : 'Confirm Payment Sent — Awaiting Approval'}
             </button>
           </div>
         </div>
@@ -1326,9 +1322,36 @@ export default function App() {
   const renderReceiptModal = () => {
     if (!showReceiptModal || !receiptData) return null;
     const { item, type } = receiptData;
-    const isPaid = (item.paymentStatus === 'Paid & Verified' || item.paymentStatus === 'Paid' || (!item.paymentStatus && item.id));
+    // Strict: only genuinely staff-approved payments count as paid
+    const isPaid = item.paymentStatus === 'Paid & Verified' || item.paymentStatus === 'Paid via NHIS Co-pay';
+    const isPending = item.paymentStatus === 'Payment Pending Approval' || item.paymentStatus === 'Pending Verification';
     const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.abs((item.id || '1').split('').reduce((a,b)=>a+b.charCodeAt(0),0)) * 89) % 900000}`;
     const dateStr = item.date || new Date().toISOString().split('T')[0];
+
+    // GATE: If patient is viewing and payment is not yet approved, show pending notice instead of full receipt
+    const isPatientViewing = authRole === 'patient' || !authRole;
+    if (isPatientViewing && !isPaid) {
+      return (
+        <div className="modal-backdrop" onClick={() => setShowReceiptModal(false)}>
+          <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', textAlign: 'center', padding: '2.5rem' }}>
+            <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(234,179,8,0.12)', border: '2px solid #fef08a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', fontSize: '2rem', color: '#ca8a04' }}>
+              <i className="fa-solid fa-hourglass-half"></i>
+            </div>
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--color-heading)' }}>Receipt Pending Staff Approval</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', lineHeight: '1.6', margin: '0 0 0.75rem' }}>
+              Your payment has been received and is currently being verified by our team.
+              Your official receipt will be released to you once a staff member confirms and approves your payment.
+            </p>
+            <div style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid #fef08a', borderRadius: '8px', padding: '0.75rem 1rem', fontSize: '0.82rem', color: '#92400e', marginBottom: '1.25rem' }}>
+              <i className="fa-solid fa-circle-info" style={{ marginRight: '6px', color: '#0284c7' }}></i>
+              Reference ID: <strong style={{ fontFamily: 'monospace' }}>{item.id}</strong>
+              {item.paymentMethod && <span> &nbsp;·&nbsp; Method: <strong>{item.paymentMethod}</strong></span>}
+            </div>
+            <button className="btn btn-outline" onClick={() => setShowReceiptModal(false)}>Close</button>
+          </div>
+        </div>
+      );
+    }
 
     let title = "Clinical Service";
     let patientName = item.patientName || item.name || "Patient";
@@ -2588,7 +2611,7 @@ export default function App() {
       const params = new URLSearchParams(queryPart || '');
 
       const validViews = [
-        'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard',
+        'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
         'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
         'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
       ];
@@ -4760,28 +4783,28 @@ export default function App() {
 
                 {/* Benefits Sidebar */}
                 <div className="benefits-sidebar">
-                  <div className="benefit-item">
+                  <div className="benefit-item" onClick={() => navigateTo('service-online-consultation')} style={{ cursor: 'pointer' }}>
                     <div className="benefit-icon"><i className="fa-solid fa-comments"></i></div>
                     <div className="benefit-text">
                       <strong>Consult Anytime, Anywhere</strong>
                       <span>24/7 access to medical professionals</span>
                     </div>
                   </div>
-                  <div className="benefit-item">
+                  <div className="benefit-item" onClick={() => navigateTo('portal-login')} style={{ cursor: 'pointer' }}>
                     <div className="benefit-icon"><i className="fa-solid fa-shield-halved"></i></div>
                     <div className="benefit-text">
                       <strong>Safe, Secure & Confidential</strong>
                       <span>Your data is fully protected</span>
                     </div>
                   </div>
-                  <div className="benefit-item">
+                  <div className="benefit-item" onClick={() => navigateTo('booking')} style={{ cursor: 'pointer' }}>
                     <div className="benefit-icon"><i className="fa-regular fa-clock"></i></div>
                     <div className="benefit-text">
                       <strong>Rapid Care Cycle</strong>
                       <span>Skip wait times with scheduled or direct-dial consultations</span>
                     </div>
                   </div>
-                  <div className="benefit-item">
+                  <div className="benefit-item" onClick={() => navigateTo('doctors')} style={{ cursor: 'pointer' }}>
                     <div className="benefit-icon"><i className="fa-solid fa-hand-holding-medical"></i></div>
                     <div className="benefit-text">
                       <strong>Professional Care You Can Trust</strong>
@@ -4824,11 +4847,11 @@ export default function App() {
                   <p>Curated clinical insights, wellness guidance, and preventative tips compiled by our medical board.</p>
                 </div>
                 <div className="health-tips-list">
-                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Nutrition Tips</div>
-                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Exercise Tips</div>
-                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Mental Health</div>
-                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Disease Prevention</div>
-                  <div className="health-tip-item"><i className="fa-solid fa-circle-check"></i> Healthy Lifestyle</div>
+                  <div className="health-tip-item" onClick={() => navigateTo('booking')} style={{ cursor: 'pointer' }}><i className="fa-solid fa-circle-check"></i> Nutrition Tips</div>
+                  <div className="health-tip-item" onClick={() => navigateTo('booking')} style={{ cursor: 'pointer' }}><i className="fa-solid fa-circle-check"></i> Exercise Tips</div>
+                  <div className="health-tip-item" onClick={() => { setDoctorFilter('Psychology'); navigateTo('doctors'); }} style={{ cursor: 'pointer' }}><i className="fa-solid fa-circle-check"></i> Mental Health</div>
+                  <div className="health-tip-item" onClick={() => navigateTo('service-online-consultation')} style={{ cursor: 'pointer' }}><i className="fa-solid fa-circle-check"></i> Disease Prevention</div>
+                  <div className="health-tip-item" onClick={() => navigateTo('booking')} style={{ cursor: 'pointer' }}><i className="fa-solid fa-circle-check"></i> Healthy Lifestyle</div>
                 </div>
               </div>
             </div>
@@ -4890,23 +4913,26 @@ export default function App() {
                 <p>Navigate from initial consultation to diagnostics and prescription delivery in hours, not days.</p>
               </div>
               <div className="steps-grid">
-                <div className="step-card glassmorphic">
+                <div className="step-card glassmorphic" onClick={() => navigateTo('portal-login')} style={{ cursor: 'pointer' }}>
                   <div className="step-icon"><i className="fa-solid fa-heart-pulse"></i></div>
                   <span className="step-label">STEP 1</span>
                   <h3>Set Up Your Health Record</h3>
                   <p>Register securely and build a comprehensive medical profile for seamless doctor handovers.</p>
+                  <span className="service-link" style={{ marginTop: 'auto' }}>Get Started <i className="fa-solid fa-arrow-right-long"></i></span>
                 </div>
-                <div className="step-card glassmorphic">
+                <div className="step-card glassmorphic" onClick={() => navigateTo('doctors')} style={{ cursor: 'pointer' }}>
                   <div className="step-icon"><i className="fa-solid fa-stethoscope"></i></div>
                   <span className="step-label">STEP 2</span>
                   <h3>Schedule with a Specialist</h3>
                   <p>Match with accredited clinicians based on therapeutic specialty, availability, or location.</p>
+                  <span className="service-link" style={{ marginTop: 'auto' }}>Browse Specialists <i className="fa-solid fa-arrow-right-long"></i></span>
                 </div>
-                <div className="step-card glassmorphic">
+                <div className="step-card glassmorphic" onClick={() => navigateTo('booking')} style={{ cursor: 'pointer' }}>
                   <div className="step-icon"><i className="fa-solid fa-video"></i></div>
                   <span className="step-label">STEP 3</span>
                   <h3>Receive Integrated Care</h3>
                   <p>Connect securely online, get detailed care plans, digital prescriptions, and logistics tracking.</p>
+                  <span className="service-link" style={{ marginTop: 'auto' }}>Book Now <i className="fa-solid fa-arrow-right-long"></i></span>
                 </div>
               </div>
             </div>

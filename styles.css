@@ -635,6 +635,22 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 12px 30px rgba(44, 93, 136, 0.12);
+}
+
+.step-card .step-icon {
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.step-card:hover .step-icon {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-indigo));
+  color: #fff;
 }
 
 .step-number {
@@ -1805,4 +1821,70 @@ textarea.form-control {
   to {
     transform: rotate(-360deg);
   }
+}
+
+/* Benefit Sidebar Items — Hover States */
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: background 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
+}
+
+.benefit-item:hover {
+  background: rgba(44, 93, 136, 0.06);
+  border-color: var(--color-accent);
+  transform: translateX(4px);
+}
+
+.benefit-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: rgba(44, 93, 136, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  font-size: 1rem;
+  transition: background 0.22s ease, color 0.22s ease;
+}
+
+.benefit-item:hover .benefit-icon {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* Health Tips List Items — Hover States */
+.health-tip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.health-tip-item:hover {
+  background: rgba(44, 93, 136, 0.08);
+  border-color: var(--color-accent);
+  transform: translateX(4px);
+  color: var(--color-indigo);
+}
+
+.health-tip-item i {
+  color: var(--color-accent);
+  font-size: 0.85rem;
+  transition: color 0.2s ease;
+}
+
+.health-tip-item:hover i {
+  color: var(--color-indigo);
 }
