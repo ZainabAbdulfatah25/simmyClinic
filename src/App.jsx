@@ -152,7 +152,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Wed (9am - 2pm)",
     experience: "8 Years",
     regNo: "MDCN/8431",
-    image: doctorFatimaImg,
+    image: doctorFatimaImg || "/doctor_fatima.jpg",
     email: "fatima@simmycare.com",
     password: "password123",
     phone: "08034567890",
@@ -174,7 +174,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "10 Years",
     regNo: "MDCN/7123",
-    image: doctorAdamImg,
+    image: doctorAdamImg || "/doctor_adam.jpg",
     email: "adam@simmycare.com",
     password: "password123",
     phone: "08051234567",
@@ -196,7 +196,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 4pm)",
     experience: "4 Years",
     regNo: "MDCN/6203",
-    image: doctorTijjaniImg,
+    image: doctorTijjaniImg || "/doctor_saddiqa.jpg",
     email: "matosaddiqa@gmail.com",
     password: "password123",
     phone: "+234 909 677 6797",
@@ -218,7 +218,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MDCN/5890",
-    image: doctorBamalliImg,
+    image: doctorBamalliImg || "/doctor_bamalli.jpg",
     email: "abubakarbalili79@gmail.com",
     password: "password123",
     phone: "+234 813 870 5738",
@@ -240,7 +240,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
-    image: doctorWasilaImg,
+    image: doctorWasilaImg || "/doctor_wasila.jpg",
     email: "wasilagoranduma@gmail.com",
     password: "password123",
     phone: "+234 803 133 8534",
@@ -262,7 +262,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MNCP/9821",
-    image: doctorHadizaImg,
+    image: doctorHadizaImg || "/doctor_hadiza.jpg",
     email: "kadykubra@gmail.com",
     password: "password123",
     phone: "+234 706 665 0730",
@@ -284,7 +284,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "10 Years",
     regNo: "CHO/7812",
-    image: doctorAsmauImg,
+    image: doctorAsmauImg || "/doctor_asmau.png",
     email: "ridwanasmau901@gmail.com",
     password: "password123",
     phone: "+234 916 652 1888",
@@ -306,7 +306,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "15 Years",
     regNo: "MDCN/4521",
-    image: doctorSaimaImg,
+    image: doctorSaimaImg || "/doctor_saima.jpg",
     email: "mohammedrealsaemaj@gmail.com",
     password: "password123",
     phone: "+234 901 432 4442",
@@ -328,7 +328,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Sat (8am - 6pm)",
     experience: "3 Years",
     regNo: "PCN/P/1042",
-    image: pharmMashkuratuImg,
+    image: pharmMashkuratuImg || "/pharm_mashkuratu_jibril.jpg",
     email: "mashkuratujibril@gmail.com",
     password: "password123",
     phone: "+234 810 581 9033",
@@ -350,7 +350,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "5 Years",
     regNo: "NMCN/REG/4819",
-    image: firdausiSaniImg,
+    image: firdausiSaniImg || "/firdausi_sani_usman.jpg",
     email: "firdausisani@gmail.com",
     password: "password123",
     phone: "+234 803 987 6543",
@@ -561,20 +561,20 @@ export default function App() {
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
   const BUNDLED_IMAGES = { 
-    1: doctorFatimaImg, 
-    2: doctorAdamImg, 
-    3: doctorTijjaniImg, 
-    4: doctorBamalliImg,
-    5: doctorWasilaImg,
-    6: doctorHadizaImg,
-    7: doctorAsmauImg,
-    8: doctorSaimaImg,
-    9: pharmMashkuratuImg,
-    10: firdausiSaniImg
+    1: doctorFatimaImg || "/doctor_fatima.jpg", 
+    2: doctorAdamImg || "/doctor_adam.jpg", 
+    3: doctorTijjaniImg || "/doctor_saddiqa.jpg", 
+    4: doctorBamalliImg || "/doctor_bamalli.jpg",
+    5: doctorWasilaImg || "/doctor_wasila.jpg",
+    6: doctorHadizaImg || "/doctor_hadiza.jpg",
+    7: doctorAsmauImg || "/doctor_asmau.png",
+    8: doctorSaimaImg || "/doctor_saima.jpg",
+    9: pharmMashkuratuImg || "/pharm_mashkuratu_jibril.jpg",
+    10: firdausiSaniImg || "/firdausi_sani_usman.jpg"
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v20_obstetrics_gynecology_damaturu_staff_expansion";
+  const DATA_VERSION = "v22_fix_doctor_images_public_fallbacks_and_admin_edit";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -601,8 +601,10 @@ export default function App() {
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
         };
-        if (BUNDLED_IMAGES[doc.id] && (!doc.image || (!doc.image.startsWith('data:') && !doc.image.startsWith('http')))) {
-          updatedDoc.image = BUNDLED_IMAGES[doc.id];
+        if (BUNDLED_IMAGES[doc.id]) {
+          if (!doc.image || (!doc.image.startsWith('data:') && !doc.image.startsWith('http') && !doc.image.startsWith('/'))) {
+            updatedDoc.image = BUNDLED_IMAGES[doc.id];
+          }
         }
         return updatedDoc;
       });
@@ -3611,12 +3613,13 @@ export default function App() {
             ...d,
             name: newName,
             specialty: newDoctorData.specialty,
+            level: newDoctorData.level || d.level || 'Junior Doctor',
             schedule: newDoctorData.schedule,
             experience: newDoctorData.experience,
             regNo: newDoctorData.regNo,
             email: newDoctorData.email,
             password: newDoctorData.password,
-            image: newDoctorData.image,
+            image: newDoctorData.image || d.image,
             phone: newDoctorData.phone,
             bio: newDoctorData.bio,
             clinicRoom: newDoctorData.clinicRoom,
@@ -3624,6 +3627,7 @@ export default function App() {
             consultationRate: newDoctorData.consultationRate,
             consultationDuration: newDoctorData.consultationDuration,
             services: newDoctorData.services,
+            verified: newDoctorData.verified !== undefined ? newDoctorData.verified : d.verified,
             role: 'doctor'
           };
           return updatedDoctorObj;
@@ -3643,7 +3647,7 @@ export default function App() {
       }
 
       setEditingDoctorId(null);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
+      setNewDoctorData({ name: '', specialty: 'Obstetrics & Gynaecology', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [], level: 'Junior Doctor', verified: false });
       alert("Doctor profile updated successfully!");
     } else {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
@@ -3651,6 +3655,7 @@ export default function App() {
         id: newId,
         name: newDoctorData.name.startsWith("Dr. ") ? newDoctorData.name : `Dr. ${newDoctorData.name}`,
         specialty: newDoctorData.specialty,
+        level: newDoctorData.level || "Junior Doctor",
         schedule: newDoctorData.schedule || "Mon - Fri (9am - 5pm)",
         experience: newDoctorData.experience || "5 Years",
         regNo: newDoctorData.regNo || "MDCN/" + Math.floor(1000 + Math.random() * 9000),
@@ -3664,13 +3669,14 @@ export default function App() {
         consultationRate: newDoctorData.consultationRate || '',
         consultationDuration: newDoctorData.consultationDuration || '30 mins',
         services: newDoctorData.services || [],
+        verified: newDoctorData.verified !== undefined ? newDoctorData.verified : true,
         role: 'doctor'
       };
       const staffId = generateStaffId('doctor', doctors);
       const newDocWithId = { ...newDoc, staffId };
       setDoctors([...doctors, newDocWithId]);
       profilesApi.upsertProfile(newDocWithId);
-      setNewDoctorData({ name: '', specialty: 'Pediatrics', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [] });
+      setNewDoctorData({ name: '', specialty: 'Obstetrics & Gynaecology', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [], level: 'Junior Doctor', verified: false });
       alert(`Doctor profile added successfully! Staff ID: ${staffId}`);
     }
   };
@@ -3861,6 +3867,7 @@ export default function App() {
     setNewDoctorData({
       name: cleanName,
       specialty: doc.specialty,
+      level: doc.level || 'Junior Doctor',
       schedule: doc.schedule,
       experience: doc.experience,
       regNo: doc.regNo,
@@ -3873,8 +3880,11 @@ export default function App() {
       license: doc.license || '',
       consultationRate: doc.consultationRate || '',
       consultationDuration: doc.consultationDuration || '',
-      services: doc.services || []
+      services: doc.services || [],
+      verified: doc.verified !== false
     });
+    const formEl = document.querySelector('.add-doctor-form');
+    if (formEl) formEl.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleDeleteDoctor = (id) => {
@@ -11769,10 +11779,13 @@ export default function App() {
                                 value={newDoctorData.specialty}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, specialty: e.target.value })}
                               >
+                                <option value="Obstetrics & Gynaecology">Obstetrics & Gynaecology</option>
+                                <option value="Gynaecology">Gynaecology</option>
                                 <option value="Pediatrics">Pediatrics</option>
                                 <option value="General Medicine">General Medicine</option>
-                                <option value="Gynaecology">Gynaecology</option>
                                 <option value="Public Health">Public Health</option>
+                                <option value="ENT">ENT</option>
+                                <option value="Psychology">Psychology</option>
                                 <option value="Laboratory">Laboratory</option>
                                 <option value="Pharmacy">Pharmacy</option>
                               </select>
