@@ -127,7 +127,8 @@ const isSupabaseReady = () => {
 const getSpecialtyTitle = (specialty) => {
   if (!specialty) return '';
   const mapping = {
-    'Gynaecology': 'Gynaecologist',
+    'Gynaecology': 'Obstetrician & Gynaecologist',
+    'Obstetrics & Gynaecology': 'Obstetrician & Gynaecologist',
     'Pediatrics': 'Pediatrician',
     'General Medicine': 'General Practitioner',
     'Laboratory': 'Laboratory Specialist',
@@ -147,7 +148,7 @@ const INITIAL_DOCTORS = [
   {
     id: 1,
     name: "Dr. Fatima Yahaya Maiauduga",
-    specialty: "Gynaecology",
+    specialty: "Obstetrics & Gynaecology",
     schedule: "Mon - Wed (9am - 2pm)",
     experience: "8 Years",
     regNo: "MDCN/8431",
@@ -155,14 +156,14 @@ const INITIAL_DOCTORS = [
     email: "fatima@simmycare.com",
     password: "password123",
     phone: "08034567890",
-    bio: "Senior consultant gynaecologist specializing in maternal care, obstetrics, and female reproductive wellness.",
+    bio: "Junior doctor specializing in obstetrics, gynecology, maternal care, and female reproductive wellness under senior clinical supervision.",
     clinicRoom: "Room 102, West Wing",
     license: "MDCN/8431",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Senior Consultant",
+    level: "Junior Doctor",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -213,7 +214,7 @@ const INITIAL_DOCTORS = [
   {
     id: 4,
     name: "Dr. Abubakar Muhammad Bamalli",
-    specialty: "General Medicine",
+    specialty: "Obstetrics & Gynaecology",
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MDCN/5890",
@@ -221,14 +222,14 @@ const INITIAL_DOCTORS = [
     email: "abubakarbalili79@gmail.com",
     password: "password123",
     phone: "+234 813 870 5738",
-    bio: "Experienced Medical Doctor with 9 years of clinical practice, providing comprehensive general medical consultations across physical and telemedicine platforms.",
+    bio: "Senior Consultant Obstetrician & Gynaecologist with 9 years of clinical practice in maternal health, reproductive medicine, high-risk obstetrics, and general medical care.",
     clinicRoom: "Room 207, Main Block",
     license: "MDCN/5890",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Consultant",
+    level: "Senior Consultant",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -573,7 +574,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v18_complete_staff_profiles_and_images";
+  const DATA_VERSION = "v20_obstetrics_gynecology_damaturu_staff_expansion";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -589,14 +590,13 @@ export default function App() {
     if (data) {
       const parsed = JSON.parse(data);
       const seedIds = INITIAL_DOCTORS.map(sd => sd.id);
-      // Only keep doctors that exist in INITIAL_DOCTORS (removes any stale dummy entries)
-      const validDoctors = parsed.filter(doc => seedIds.includes(doc.id));
-      // Re-apply bundled images for seed doctors unless they have a user-uploaded base64/http image
-      const merged = validDoctors.map(doc => {
+      const merged = parsed.map(doc => {
         const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
         const updatedDoc = {
           ...doc,
           specialty: seedDoc ? seedDoc.specialty : doc.specialty,
+          level: seedDoc ? seedDoc.level : doc.level,
+          bio: seedDoc ? seedDoc.bio : doc.bio,
           consultationRate: doc.consultationRate !== undefined ? doc.consultationRate : (seedDoc ? seedDoc.consultationRate : ''),
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
@@ -606,8 +606,7 @@ export default function App() {
         }
         return updatedDoc;
       });
-      // Append any new seed doctors not yet in cached data
-      const cachedIds = validDoctors.map(d => d.id);
+      const cachedIds = merged.map(d => d.id);
       const newSeedDoctors = INITIAL_DOCTORS.filter(sd => !cachedIds.includes(sd.id));
       return [...merged, ...newSeedDoctors];
     }
@@ -686,6 +685,7 @@ export default function App() {
   const [isPatientRegistering, setIsPatientRegistering] = useState(false);
   const [doctorSearch, setDoctorSearch] = useState('');
   const [doctorFilter, setDoctorFilter] = useState('all');
+  const [showAllDoctors, setShowAllDoctors] = useState(false);
 
   const [patientLoginForm, setPatientLoginForm] = useState({
     email: '',
@@ -1040,8 +1040,6 @@ export default function App() {
 
   const handleStaffApprovePayment = (item, type = 'appointment', staffRole = 'admin') => {
     const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}`;
-    const isOrder = type === 'order' || (item.id && item.id.startsWith('ORD-'));
-    const isLab = type === 'lab' || (item.id && item.id.startsWith('LAB-'));
     const verifier = getVerifierIdentity(staffRole);
     const verifiedAt = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' });
     const verifierStamp = `${verifier.name} (${verifier.label})`;
@@ -1053,11 +1051,8 @@ export default function App() {
       receiptNo: receiptId
     };
 
-    if (isOrder || isLab) {
-      setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq));
-    } else {
-      setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt));
-    }
+    setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt));
+    setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq));
   };
 
   const renderPaymentStatusBadge = (item, type = 'appointment', role = 'patient') => {
@@ -1303,11 +1298,8 @@ export default function App() {
                 const methodLabel = selectedPaymentMethod === 'bank_transfer' ? 'Bank Transfer' : selectedPaymentMethod === 'nhis_copay' ? 'NHIS Co-pay Claim' : 'Card Gateway';
                 const receiptId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
 
-                if (type === 'order' || (item.id && item.id.startsWith('ORD-'))) {
-                  setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || inq.isNhis } : inq));
-                } else {
-                  setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || apt.isNhis } : apt));
-                }
+                setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || inq.isNhis } : inq));
+                setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || apt.isNhis } : apt));
                 setShowPaymentModal(false);
               }}
             >
@@ -4172,6 +4164,9 @@ export default function App() {
       (doc.services && doc.services.some(srv => srv.toLowerCase().includes(doctorSearch.toLowerCase())));
     const matchesFilter = doctorFilter === 'all' ||
       doc.specialty.toLowerCase() === doctorFilter.toLowerCase() ||
+      (doctorFilter.toLowerCase() === 'obstetrics & gynaecology' && doc.specialty.toLowerCase().includes('gynaec')) ||
+      (doctorFilter.toLowerCase() === 'gynaecology' && doc.specialty.toLowerCase().includes('gynaec')) ||
+      (doctorFilter.toLowerCase() === 'ent' && (doc.specialty.toLowerCase() === 'ent' || doc.specialty.toLowerCase().includes('ear'))) ||
       (doctorFilter.toLowerCase() === 'laboratory' && doc.specialty.toLowerCase().includes('lab')) ||
       (doctorFilter.toLowerCase() === 'pharmacy' && doc.specialty.toLowerCase().includes('pharm'));
     return matchesSearch && matchesFilter && doc.active !== false;
@@ -4742,7 +4737,7 @@ export default function App() {
                   <span>Our Priority</span>
                 </h1>
                 <p className="hero-subtitle">
-                  SimmyCare connects you directly with MDCN-certified specialists, general practitioners, and laboratory consultants. Access on-demand virtual sessions or book physical visits and home healthcare across Abuja, Kaduna, Kano, Bauchi, and Gombe.
+                  SimmyCare connects you directly with MDCN-certified specialists, general practitioners, and laboratory consultants. Access on-demand virtual sessions or book physical visits and home healthcare across Abuja, Kaduna, Kano, Bauchi, Gombe, and Damaturu.
                 </p>
                 <div className="hero-ctas">
                   <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Consultation</button>
@@ -6111,13 +6106,13 @@ export default function App() {
               </div>
 
               <div className="specialty-filters">
-                {['all', 'Pediatrics', 'General Medicine', 'Gynaecology', 'Public Health', 'Psychology', 'ENT', 'Laboratory', 'Pharmacy'].map(spec => (
+                {['all', 'Obstetrics & Gynaecology', 'Pediatrics', 'General Medicine', 'Public Health', 'Psychology', 'ENT', 'Laboratory', 'Pharmacy'].map(spec => (
                   <button
                     key={spec}
                     className={`filter-btn ${doctorFilter === spec ? 'active' : ''}`}
-                    onClick={() => setDoctorFilter(spec)}
+                    onClick={() => { setDoctorFilter(spec); setShowAllDoctors(true); }}
                   >
-                    {spec === 'all' ? 'All Focus' : spec}
+                    {spec === 'all' ? 'All Focus' : spec === 'Obstetrics & Gynaecology' ? 'Obstetrics & Gynae' : spec}
                   </button>
                 ))}
               </div>
@@ -6125,89 +6120,124 @@ export default function App() {
 
             {/* Doctor cards list */}
             {filteredDoctors.length > 0 ? (
-              <div className="doctors-grid">
-                {filteredDoctors.map((doc, idx) => {
-                  const grad = getAvatarGradient(idx);
-                  return (
-                    <div className="doctor-card glassmorphic" key={doc.id}>
-                      <div className="doctor-image-container">
-                        <DoctorAvatar image={doc.image} name={doc.name} size={110} border="none" className="doctor-avatar-img" />
-                        <div className="doctor-badge">{doc.experience}</div>
-                      </div>
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--color-heading)', fontWeight: '500' }}>
+                    Showing <strong>{showAllDoctors ? filteredDoctors.length : Math.min(4, filteredDoctors.length)}</strong> of <strong>{filteredDoctors.length}</strong> verified medical staff members
+                  </span>
+                  {filteredDoctors.length > 4 && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setShowAllDoctors(!showAllDoctors)}
+                      style={{ fontSize: '0.8rem', padding: '0.35rem 0.85rem' }}
+                    >
+                      {showAllDoctors ? (
+                        <><i className="fa-solid fa-chevron-up"></i> Show Fewer (Top 4)</>
+                      ) : (
+                        <><i className="fa-solid fa-chevron-down"></i> View More Staff ({filteredDoctors.length - 4} More)</>
+                      )}
+                    </button>
+                  )}
+                </div>
 
-                      <div className="doctor-info">
-                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          {doc.name}
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            fontSize: '0.7rem',
-                            padding: '0.1rem 0.4rem',
-                            borderRadius: '12px',
-                            fontWeight: '600',
-                            color: doc.active !== false ? '#15803D' : '#6B7280',
-                            background: doc.active !== false ? '#DCFCE7' : '#F3F4F6'
-                          }}>
+                <div className="doctors-grid">
+                  {(showAllDoctors ? filteredDoctors : filteredDoctors.slice(0, 4)).map((doc, idx) => {
+                    const grad = getAvatarGradient(idx);
+                    return (
+                      <div className="doctor-card glassmorphic" key={doc.id}>
+                        <div className="doctor-image-container">
+                          <DoctorAvatar image={doc.image} name={doc.name} size={110} border="none" className="doctor-avatar-img" />
+                          <div className="doctor-badge">{doc.experience}</div>
+                        </div>
+
+                        <div className="doctor-info">
+                          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            {doc.name}
                             <span style={{
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              backgroundColor: doc.active !== false ? '#22C55E' : '#9CA3AF'
-                            }}></span>
-                            {doc.active !== false ? 'Online' : 'Offline'}
-                          </span>
-                        </h3>
-                        <div className="doctor-specialty">
-                          <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
-                        </div>
-                        <div className="doctor-details">
-                          <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
-                          {doc.consultationRate && (
-                            <div style={{ marginTop: '0.2rem' }}>
-                              <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
-                              <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.25rem' }}>
-                                * Note: Special services fees are negotiable
-                              </span>
-                            </div>
-                          )}
-                          {doc.services && doc.services.length > 0 && (
-                            <div className="doctor-services-list" style={{ marginTop: '0.5rem' }}>
-                              <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services:</strong>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                                {doc.services.map(srv => (
-                                  <span key={srv} style={{ fontSize: '0.78rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    <i className="fa-solid fa-check" style={{ fontSize: '0.7rem', color: 'var(--color-accent)' }}></i> {srv}
-                                  </span>
-                                ))}
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              fontSize: '0.7rem',
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '12px',
+                              fontWeight: '600',
+                              color: doc.active !== false ? '#15803D' : '#6B7280',
+                              background: doc.active !== false ? '#DCFCE7' : '#F3F4F6'
+                            }}>
+                              <span style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                backgroundColor: doc.active !== false ? '#22C55E' : '#9CA3AF'
+                              }}></span>
+                              {doc.active !== false ? 'Online' : 'Offline'}
+                            </span>
+                          </h3>
+                          <div className="doctor-specialty">
+                            <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
+                          </div>
+                          <div className="doctor-details">
+                            <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
+                            {doc.consultationRate && (
+                              <div style={{ marginTop: '0.2rem' }}>
+                                <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
+                                <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.25rem' }}>
+                                  * Note: Special services fees are negotiable
+                                </span>
                               </div>
-                            </div>
+                            )}
+                            {doc.services && doc.services.length > 0 && (
+                              <div className="doctor-services-list" style={{ marginTop: '0.5rem' }}>
+                                <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services:</strong>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                  {doc.services.map(srv => (
+                                    <span key={srv} style={{ fontSize: '0.78rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                      <i className="fa-solid fa-check" style={{ fontSize: '0.7rem', color: 'var(--color-accent)' }}></i> {srv}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {doc.specialty === 'Laboratory' ? (
+                            <button className="btn btn-primary" onClick={() => {
+                              navigateTo('service-mobile-lab');
+                            }}>
+                              <i className="fa-solid fa-vial" style={{ marginRight: '6px' }}></i> Order Lab Test
+                            </button>
+                          ) : doc.specialty === 'Pharmacy' ? (
+                            <button className="btn btn-primary" onClick={() => {
+                              navigateTo('service-pharmacy-delivery');
+                            }}>
+                              <i className="fa-solid fa-pills" style={{ marginRight: '6px' }}></i> Order Prescription
+                            </button>
+                          ) : (
+                            <button className="btn btn-primary" onClick={() => {
+                              setPreviewBookingDoc(doc);
+                            }}>
+                              Book Consultation
+                            </button>
                           )}
                         </div>
-                        {doc.specialty === 'Laboratory' ? (
-                          <button className="btn btn-primary" onClick={() => {
-                            navigateTo('service-mobile-lab');
-                          }}>
-                            <i className="fa-solid fa-vial" style={{ marginRight: '6px' }}></i> Order Lab Test
-                          </button>
-                        ) : doc.specialty === 'Pharmacy' ? (
-                          <button className="btn btn-primary" onClick={() => {
-                            navigateTo('service-pharmacy-delivery');
-                          }}>
-                            <i className="fa-solid fa-pills" style={{ marginRight: '6px' }}></i> Order Prescription
-                          </button>
-                        ) : (
-                          <button className="btn btn-primary" onClick={() => {
-                            setPreviewBookingDoc(doc);
-                          }}>
-                            Book Consultation
-                          </button>
-                        )}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                {filteredDoctors.length > 4 && !showAllDoctors && (
+                  <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => setShowAllDoctors(true)}
+                      style={{ padding: '0.75rem 2rem', fontSize: '0.95rem', fontWeight: 'bold' }}
+                    >
+                      <i className="fa-solid fa-users-line" style={{ marginRight: '8px' }}></i> View All {filteredDoctors.length} Medical Staff & Specialists →
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="empty-state glassmorphic">
                 <i className="fa-solid fa-user-slash"></i>

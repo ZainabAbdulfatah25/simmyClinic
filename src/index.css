@@ -1238,10 +1238,12 @@ textarea {
 }
 
 /* Ensure ALL buttons inside table cells are always clickable */
-.admin-table td button,
-.admin-table td .btn,
-.admin-table td .btn-sm,
-.admin-table td .btn-xs {
+table td button,
+table td .btn,
+table td .btn-sm,
+table td .btn-xs,
+table td .action-btn,
+.action-btn {
   position: relative;
   z-index: 3;
   pointer-events: auto !important;
