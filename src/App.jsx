@@ -152,7 +152,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Wed (9am - 2pm)",
     experience: "8 Years",
     regNo: "MDCN/8431",
-    image: "/doctor_fatima.jpg",
+    image: doctorFatimaImg || "/doctor_fatima.jpg",
     email: "fatima@simmycare.com",
     password: "password123",
     phone: "08034567890",
@@ -174,7 +174,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "10 Years",
     regNo: "MDCN/7123",
-    image: "/doctor_adam.jpg",
+    image: doctorAdamImg || "/doctor_adam.jpg",
     email: "adam@simmycare.com",
     password: "password123",
     phone: "08051234567",
@@ -196,7 +196,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 4pm)",
     experience: "4 Years",
     regNo: "MDCN/6203",
-    image: "/doctor_saddiqa.jpg",
+    image: doctorTijjaniImg || "/doctor_saddiqa.jpg",
     email: "matosaddiqa@gmail.com",
     password: "password123",
     phone: "+234 909 677 6797",
@@ -218,7 +218,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MDCN/5890",
-    image: "/doctor_bamalli.jpg",
+    image: doctorBamalliImg || "/doctor_bamalli.jpg",
     email: "abubakarbalili79@gmail.com",
     password: "password123",
     phone: "+234 813 870 5738",
@@ -240,7 +240,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
-    image: "/doctor_wasila.jpg",
+    image: doctorWasilaImg || "/doctor_wasila.jpg",
     email: "wasilagoranduma@gmail.com",
     password: "password123",
     phone: "+234 803 133 8534",
@@ -262,7 +262,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "9 Years",
     regNo: "MNCP/9821",
-    image: "/doctor_hadiza.jpg",
+    image: doctorHadizaImg || "/doctor_hadiza.jpg",
     email: "kadykubra@gmail.com",
     password: "password123",
     phone: "+234 706 665 0730",
@@ -284,7 +284,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "10 Years",
     regNo: "CHO/7812",
-    image: "/doctor_asmau.png",
+    image: doctorAsmauImg || "/doctor_asmau.png",
     email: "ridwanasmau901@gmail.com",
     password: "password123",
     phone: "+234 916 652 1888",
@@ -306,7 +306,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "15 Years",
     regNo: "MDCN/4521",
-    image: "/doctor_saima.jpg",
+    image: doctorSaimaImg || "/doctor_saima.jpg",
     email: "mohammedrealsaemaj@gmail.com",
     password: "password123",
     phone: "+234 901 432 4442",
@@ -328,7 +328,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Sat (8am - 6pm)",
     experience: "3 Years",
     regNo: "PCN/P/1042",
-    image: "/pharm_mashkuratu_jibril.jpg",
+    image: pharmMashkuratuImg || "/pharm_mashkuratu_jibril.jpg",
     email: "mashkuratujibril@gmail.com",
     password: "password123",
     phone: "+234 810 581 9033",
@@ -350,7 +350,7 @@ const INITIAL_DOCTORS = [
     schedule: "Mon - Fri (8am - 4pm)",
     experience: "5 Years",
     regNo: "NMCN/REG/4819",
-    image: "/firdausi_sani_usman.jpg",
+    image: firdausiSaniImg || "/firdausi_sani_usman.jpg",
     email: "firdausisani@gmail.com",
     password: "password123",
     phone: "+234 803 987 6543",
@@ -574,7 +574,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v22_fix_doctor_images_public_fallbacks_and_admin_edit";
+  const DATA_VERSION = "v23_fix_bundled_doctor_images_assets_v3";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -602,7 +602,7 @@ export default function App() {
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
         };
         if (BUNDLED_IMAGES[doc.id]) {
-          if (!doc.image || (!doc.image.startsWith('data:') && !doc.image.startsWith('http') && !doc.image.startsWith('/'))) {
+          if (!doc.image || !doc.image.startsWith('data:')) {
             updatedDoc.image = BUNDLED_IMAGES[doc.id];
           }
         }
