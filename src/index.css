@@ -1152,6 +1152,10 @@ textarea {
   margin-top: 2rem;
 }
 
+.dashboard-layout > * {
+  min-width: 0;
+}
+
 .dashboard-sidebar {
   padding: 1.25rem;
   border-radius: var(--radius-md);
@@ -1190,6 +1194,8 @@ textarea {
   padding: 2.5rem;
   border-radius: var(--radius-md);
   min-height: 50vh;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dashboard-workspace h3 {
