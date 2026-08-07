@@ -12112,24 +12112,6 @@ export default function App() {
                                             </span>
                                           </div>
                                           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{d.regNo || 'N/A'} • {d.level || 'Junior Doctor'}</span>
-                                          <div style={{ marginTop: '0.4rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                            <button
-                                              type="button"
-                                              className="btn btn-outline btn-xs"
-                                              onClick={() => setAdminSelectedDoctor(d)}
-                                              style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                            >
-                                              <i className="fa-solid fa-eye"></i> View Details
-                                            </button>
-                                            <button
-                                              type="button"
-                                              className="btn btn-primary btn-xs"
-                                              onClick={() => startEditDoctor(d)}
-                                              style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                            >
-                                              <i className="fa-solid fa-pen-to-square"></i> Edit Profile
-                                            </button>
-                                          </div>
                                         </div>
                                       </div>
                                     </td>
@@ -12326,16 +12308,6 @@ export default function App() {
                                   <tr key={p.email}>
                                     <td>
                                       <strong>{p.name}</strong>
-                                      <div style={{ marginTop: '0.25rem' }}>
-                                        <button
-                                          type="button"
-                                          className="btn btn-primary btn-xs"
-                                          onClick={() => startEditPatient(p)}
-                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                        >
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit Patient
-                                        </button>
-                                      </div>
                                     </td>
                                     <td>{p.phone}</td>
                                     <td><code>{p.email}</code></td>
@@ -12610,28 +12582,6 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{p.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{p.name}</strong>
-                                      <div style={{ marginTop: '0.25rem' }}>
-                                        <button
-                                          type="button"
-                                          className="btn btn-primary btn-xs"
-                                          onClick={() => {
-                                            setEditingPharmacistId(p.email);
-                                            setNewPharmacistData({
-                                              name: p.name,
-                                              email: p.email,
-                                              password: p.password,
-                                              phone: p.phone || '',
-                                              pharmacyName: p.pharmacyName,
-                                              pharmacyLicense: p.pharmacyLicense,
-                                              verified: p.verified !== undefined ? p.verified : true,
-                                              active: p.active !== undefined ? p.active : true
-                                            });
-                                          }}
-                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                        >
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit Profile
-                                        </button>
-                                      </div>
                                     </td>
                                     <td>{p.pharmacyName}</td>
                                     <td><code>{p.pharmacyLicense}</code></td>
@@ -12824,28 +12774,6 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{l.name}</strong>
-                                      <div style={{ marginTop: '0.25rem' }}>
-                                        <button
-                                          type="button"
-                                          className="btn btn-primary btn-xs"
-                                          onClick={() => {
-                                            setEditingLabId(l.email);
-                                            setNewLabData({
-                                              name: l.name,
-                                              email: l.email,
-                                              password: l.password,
-                                              phone: l.phone || '',
-                                              facilityName: l.facilityName,
-                                              labLicense: l.labLicense,
-                                              verified: l.verified !== undefined ? l.verified : true,
-                                              active: l.active !== undefined ? l.active : true
-                                            });
-                                          }}
-                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                        >
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit Profile
-                                        </button>
-                                      </div>
                                     </td>
                                     <td>{l.facilityName}</td>
                                     <td><code>{l.labLicense}</code></td>
@@ -13031,28 +12959,6 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{l.name}</strong>
-                                      <div style={{ marginTop: '0.25rem' }}>
-                                        <button
-                                          type="button"
-                                          className="btn btn-primary btn-xs"
-                                          onClick={() => {
-                                            setEditingLogisticsId(l.email);
-                                            setNewLogisticsData({
-                                              name: l.name,
-                                              email: l.email,
-                                              password: l.password,
-                                              phone: l.phone || '',
-                                              vehicleType: l.vehicleType,
-                                              dispatchArea: l.dispatchArea,
-                                              verified: l.verified !== undefined ? l.verified : true,
-                                              active: l.active !== undefined ? l.active : true
-                                            });
-                                          }}
-                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                        >
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit Profile
-                                        </button>
-                                      </div>
                                     </td>
                                     <td>{l.vehicleType}</td>
                                     <td>{l.dispatchArea}</td>
@@ -13216,24 +13122,6 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{a.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{a.name}</strong>
-                                      <div style={{ marginTop: '0.25rem' }}>
-                                        <button
-                                          type="button"
-                                          className="btn btn-primary btn-xs"
-                                          onClick={() => {
-                                            setEditingAdminId(a.email);
-                                            setNewAdminData({
-                                              name: a.name,
-                                              username: a.username,
-                                              email: a.email,
-                                              password: a.password
-                                            });
-                                          }}
-                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                        >
-                                          <i className="fa-solid fa-pen-to-square"></i> Edit Credentials
-                                        </button>
-                                      </div>
                                     </td>
                                     <td><code>{a.username}</code></td>
                                     <td>{a.email}</td>

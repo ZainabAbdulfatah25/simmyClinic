@@ -1204,14 +1204,37 @@ textarea {
 /* Table styling */
 .table-responsive {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: auto !important;
   overflow-y: auto;
-  max-height: 480px;
+  max-height: 520px;
   border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent) rgba(24, 43, 73, 0.08);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 10px;
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(24, 43, 73, 0.06);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--color-indigo);
 }
 
 .admin-table {
   width: 100%;
+  min-width: 1050px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.9rem;
@@ -1235,6 +1258,31 @@ textarea {
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
   position: relative;
+}
+
+/* Sticky right edge for Actions column */
+.admin-table th:last-child {
+  position: sticky;
+  right: 0;
+  top: 0;
+  z-index: 10;
+  background: #F4F7FB !important;
+  box-shadow: -4px 0 8px rgba(24, 43, 73, 0.1);
+  text-align: center;
+}
+
+.admin-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 9;
+  background: #FFFFFF !important;
+  box-shadow: -4px 0 8px rgba(24, 43, 73, 0.1);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.admin-table tr:hover td:last-child {
+  background: #F8FAF6 !important;
 }
 
 /* Ensure ALL buttons inside table cells are always clickable */
