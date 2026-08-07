@@ -1076,6 +1076,32 @@ export default function App() {
   const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
   const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
   const [isMapSimulating, setIsMapSimulating] = useState(false);
+  const [logisticsActivityLogs, setLogisticsActivityLogs] = useState(() => {
+    const data = localStorage.getItem("simmy_logistics_logs");
+    return data ? JSON.parse(data) : [
+      { id: "LOG-101", timestamp: "23:35:10", tripId: "LAB-3829", riderName: "Chinedu Okeke", checkpoint: "Departed SimmyCare Depot", progress: "30%", sector: "Central Hub HQ" },
+      { id: "LOG-102", timestamp: "23:42:05", tripId: "LAB-3829", riderName: "Chinedu Okeke", checkpoint: "Transiting Expressway", progress: "70%", sector: "Ring Expressway Axis" }
+    ];
+  });
+
+  const addLogisticsActivityLog = (tripId, checkpoint, progress, sector = '') => {
+    const timeStr = new Date().toTimeString().split(' ')[0];
+    const riderName = loggedInLogistics ? loggedInLogistics.name : (logisticsSelectedRider ? logisticsSelectedRider.name : "SimmyCare Dispatch");
+    const newEntry = {
+      id: `LOG-${Date.now()}`,
+      timestamp: timeStr,
+      tripId: tripId || 'GENERAL-DISPATCH',
+      riderName,
+      checkpoint,
+      progress: typeof progress === 'number' ? `${progress}%` : progress,
+      sector: sector || 'Live Telemetry'
+    };
+    setLogisticsActivityLogs(prev => {
+      const updated = [newEntry, ...prev].slice(0, 50);
+      localStorage.setItem("simmy_logistics_logs", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   // Staff Availability States
   const [isPharmacistAvailable, setIsPharmacistAvailable] = useState(true);
@@ -4605,6 +4631,7 @@ const LeafletDispatchMap = ({
   const polylineRef = useRef(null);
   const hubMarkerRef = useRef(null);
   const lastTrackedTripIdRef = useRef(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     if (!mapContainerRef.current || !window.L || mapInstanceRef.current) return;
@@ -4665,17 +4692,20 @@ const LeafletDispatchMap = ({
       </div>
     `);
 
+    setIsMapReady(true);
+
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        setIsMapReady(false);
       }
     };
   }, []);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !window.L) return;
+    if (!map || !window.L || !isMapReady) return;
 
     const createPinHtml = (emoji, color, isPulse = false) => `
       <div style="
@@ -4817,7 +4847,7 @@ const LeafletDispatchMap = ({
       }
       lastTrackedTripIdRef.current = null;
     }
-  }, [riders, selectedRider, trackedTripId, simulationProgress, destinationAddress]);
+  }, [isMapReady, riders, selectedRider, trackedTripId, isSimulating, simulationProgress, destinationAddress]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -11117,85 +11147,114 @@ const LeafletDispatchMap = ({
                                     <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden', marginBottom: '0.5rem' }}>
                                       <div style={{ width: `${mapSimulationProgress}%`, height: '100%', background: 'var(--color-accent)', borderRadius: '3px' }}></div>
                                     </div>
-                                  </div>
 
-                                   {/* Route Checkpoints with Manual Logging */}
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '8px' }}>
-                                    <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'block' }}>Route Checkpoints</strong>
+                                    {/* Route Checkpoints with Manual Logging */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '8px' }}>
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'block' }}>Route Checkpoints & Rider Log</strong>
 
-                                    {/* Checkpoint 1: Depot Departure */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
-                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                        <span>Departed SimmyCare Depot</span>
+                                      {/* Checkpoint 1: Depot Departure */}
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
+                                          <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                          <span>Departed SimmyCare Depot</span>
+                                        </div>
+                                        {mapSimulationProgress === 0 && (
+                                          <button
+                                            type="button"
+                                            className="btn btn-xs btn-accent"
+                                            onClick={() => {
+                                              setMapSimulationProgress(30);
+                                              const isOrder = mapTrackedTripId.startsWith('ORD-');
+                                              const setList = isOrder ? setInquiries : setAppointments;
+                                              setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
+                                              addLogisticsActivityLog(mapTrackedTripId, 'Departed SimmyCare Depot', 30, 'Central Hub HQ');
+                                            }}
+                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                          >
+                                            Log Depart
+                                          </button>
+                                        )}
                                       </div>
-                                      {mapSimulationProgress === 0 && (
-                                        <button
-                                          type="button"
-                                          className="btn btn-xs btn-accent"
-                                          onClick={() => {
-                                            setMapSimulationProgress(30);
-                                            const isOrder = mapTrackedTripId.startsWith('ORD-');
-                                            const setList = isOrder ? setInquiries : setAppointments;
-                                            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
-                                          }}
-                                          style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
-                                        >
-                                          Log Depart
-                                        </button>
-                                      )}
+
+                                      {/* Checkpoint 2: Abuja Ring Expressway */}
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
+                                          <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                          <span>Transiting Expressway</span>
+                                        </div>
+                                        {mapSimulationProgress === 30 && (
+                                          <button
+                                            type="button"
+                                            className="btn btn-xs btn-accent"
+                                            onClick={() => {
+                                              setMapSimulationProgress(70);
+                                              const isOrder = mapTrackedTripId.startsWith('ORD-');
+                                              const setList = isOrder ? setInquiries : setAppointments;
+                                              setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 70 } : x));
+                                              addLogisticsActivityLog(mapTrackedTripId, 'Transiting Expressway', 70, 'Expressway Transit Corridor');
+                                            }}
+                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                          >
+                                            Log Transit
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {/* Checkpoint 3: Destination Ward */}
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
+                                          <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                          <span>Entering Destination Area</span>
+                                        </div>
+                                        {mapSimulationProgress === 70 && (
+                                          <button
+                                            type="button"
+                                            className="btn btn-xs btn-accent"
+                                            onClick={() => {
+                                              setMapSimulationProgress(100);
+                                              const isOrder = mapTrackedTripId.startsWith('ORD-');
+                                              const setList = isOrder ? setInquiries : setAppointments;
+                                              setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
+                                              addLogisticsActivityLog(mapTrackedTripId, 'Entering Destination Area', 100, address);
+                                            }}
+                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                          >
+                                            Log Arrival
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {/* Checkpoint 4: Delivered */}
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
+                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <span>Delivered & Handed Over</span>
+                                      </div>
                                     </div>
 
-                                    {/* Checkpoint 2: Abuja Ring Expressway */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
-                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                        <span>Transiting Expressway</span>
+                                    {/* Rider Telemetry & Activity Log Feed */}
+                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)', textTransform: 'uppercase' }}>Rider Telemetry & Activity Log</strong>
+                                        <span style={{ fontSize: '0.65rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>LIVE AUDIT</span>
                                       </div>
-                                      {mapSimulationProgress === 30 && (
-                                        <button
-                                          type="button"
-                                          className="btn btn-xs btn-accent"
-                                          onClick={() => {
-                                            setMapSimulationProgress(70);
-                                            const isOrder = mapTrackedTripId.startsWith('ORD-');
-                                            const setList = isOrder ? setInquiries : setAppointments;
-                                            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 70 } : x));
-                                          }}
-                                          style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
-                                        >
-                                          Log Transit
-                                        </button>
-                                      )}
-                                    </div>
 
-                                    {/* Checkpoint 3: Destination Ward */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
-                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                        <span>Entering Destination Area</span>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '130px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                                        {logisticsActivityLogs.length === 0 ? (
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No active telemetry logs recorded yet.</div>
+                                        ) : (
+                                          logisticsActivityLogs.map(log => (
+                                            <div key={log.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', background: 'rgba(255,255,255,0.03)', padding: '0.35rem 0.5rem', borderRadius: '4px', borderLeft: '3px solid #3b82f6' }}>
+                                              <div>
+                                                <span style={{ color: 'var(--color-accent)', fontWeight: 'bold', marginRight: '0.4rem' }}>[{log.timestamp}]</span>
+                                                <span style={{ color: '#fff', fontWeight: '600' }}>{log.riderName}</span>
+                                                <span style={{ color: 'var(--color-text-muted)', marginLeft: '0.3rem' }}>({log.tripId}):</span>
+                                                <span style={{ color: '#10b981', marginLeft: '0.3rem' }}>{log.checkpoint}</span>
+                                              </div>
+                                              <span style={{ fontSize: '0.68rem', background: 'rgba(255,255,255,0.1)', padding: '0.1rem 0.3rem', borderRadius: '3px', color: '#cbd5e1' }}>{log.progress}</span>
+                                            </div>
+                                          ))
+                                        )}
                                       </div>
-                                      {mapSimulationProgress === 70 && (
-                                        <button
-                                          type="button"
-                                          className="btn btn-xs btn-accent"
-                                          onClick={() => {
-                                            setMapSimulationProgress(100);
-                                            const isOrder = mapTrackedTripId.startsWith('ORD-');
-                                            const setList = isOrder ? setInquiries : setAppointments;
-                                            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
-                                          }}
-                                          style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
-                                        >
-                                          Log Arrival
-                                        </button>
-                                      )}
-                                    </div>
-
-                                    {/* Checkpoint 4: Delivered */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
-                                      <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                      <span>Delivered & Handed Over</span>
                                     </div>
                                   </div>
 
