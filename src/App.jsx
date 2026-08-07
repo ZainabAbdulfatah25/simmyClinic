@@ -147,6 +147,18 @@ const getSpecialtyTitle = (specialty) => {
   return mapping[specialty] || specialty;
 };
 
+const getDoctorCardSubheading = (doc) => {
+  if (!doc) return { mainText: '', unitText: '' };
+  const cleanLevel = (doc.level || 'Junior Doctor').replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
+  const cleanSpecialty = getSpecialtyTitle(doc.specialty).replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
+  const mainText = `${cleanLevel} • ${cleanSpecialty}`;
+  const unitText = doc.unit || (doc.specialty && doc.specialty.includes('Family Planning') ? 'Family Planning / ANC Unit' : null);
+  return {
+    mainText,
+    unitText: unitText ? `(${unitText})` : null
+  };
+};
+
 const INITIAL_DOCTORS = [
   {
     id: 1,
@@ -640,7 +652,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v27_unique_staff_id_rule_enforcement";
+  const DATA_VERSION = "v29_fatima_unit_bracket_subheading";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -655,9 +667,9 @@ export default function App() {
     const data = localStorage.getItem("simmy_doctors");
     if (data) {
       const parsed = JSON.parse(data);
-      const seedIds = INITIAL_DOCTORS.map(sd => sd.id);
+      const seedIds = INITIAL_DOCTORS.map(sd => String(sd.id));
       const merged = parsed.map(doc => {
-        const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
+        const seedDoc = INITIAL_DOCTORS.find(sd => String(sd.id) === String(doc.id));
         const updatedDoc = {
           ...doc,
           staffId: seedDoc ? (seedDoc.staffId || `SMC-DOC-${String(doc.id).padStart(3, '0')}`) : (doc.staffId || `SMC-DOC-${String(doc.id).padStart(3, '0')}`),
@@ -671,15 +683,15 @@ export default function App() {
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
         };
-        if (BUNDLED_IMAGES[doc.id]) {
+        if (BUNDLED_IMAGES[doc.id] || BUNDLED_IMAGES[Number(doc.id)]) {
           if (!doc.image || !doc.image.startsWith('data:')) {
-            updatedDoc.image = BUNDLED_IMAGES[doc.id];
+            updatedDoc.image = BUNDLED_IMAGES[doc.id] || BUNDLED_IMAGES[Number(doc.id)];
           }
         }
         return updatedDoc;
       });
-      const cachedIds = merged.map(d => d.id);
-      const newSeedDoctors = INITIAL_DOCTORS.filter(sd => !cachedIds.includes(sd.id));
+      const cachedIds = merged.map(d => String(d.id));
+      const newSeedDoctors = INITIAL_DOCTORS.filter(sd => !cachedIds.includes(String(sd.id)));
       return [...merged, ...newSeedDoctors];
     }
     return INITIAL_DOCTORS;
@@ -5197,11 +5209,11 @@ export default function App() {
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 600, textTransform: 'uppercase' }}>{getSpecialtyTitle(doc.specialty)}</span>
                       </div>
-                      {doc.specialty === 'Laboratory' ? (
+                      {(doc.specialty && doc.specialty.includes('Laboratory')) ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
                           navigateTo('service-mobile-lab');
                         }}><i className="fa-solid fa-vial" style={{ marginRight: '4px' }}></i> Order Lab Test</button>
-                      ) : doc.specialty === 'Pharmacy' ? (
+                      ) : (doc.specialty && doc.specialty.includes('Pharmacy')) ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
                           navigateTo('service-pharmacy-delivery');
                         }}><i className="fa-solid fa-pills" style={{ marginRight: '4px' }}></i> Order Prescription</button>
@@ -5991,11 +6003,11 @@ export default function App() {
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{doc.name}</strong>
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Location: {doc.clinicRoom || 'Main Clinic Unit'}</span>
                       </div>
-                      {doc.specialty === 'Laboratory' ? (
+                      {(doc.specialty && doc.specialty.includes('Laboratory')) ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
                           navigateTo('service-mobile-lab');
                         }}><i className="fa-solid fa-vial" style={{ marginRight: '4px' }}></i> Order Lab Test</button>
-                      ) : doc.specialty === 'Pharmacy' ? (
+                      ) : (doc.specialty && doc.specialty.includes('Pharmacy')) ? (
                         <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem' }} onClick={() => {
                           navigateTo('service-pharmacy-delivery');
                         }}><i className="fa-solid fa-pills" style={{ marginRight: '4px' }}></i> Order Prescription</button>
@@ -6121,7 +6133,19 @@ export default function App() {
                               </span>
                             </h3>
                             <div className="doctor-specialty">
-                              <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
+                              {(() => {
+                                const sub = getDoctorCardSubheading(doc);
+                                return (
+                                  <>
+                                    <span>{sub.mainText}</span>
+                                    {sub.unitText && (
+                                      <div style={{ fontSize: '0.78rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.2rem' }}>
+                                        {sub.unitText}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                             <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>{doc.bio}</p>
                             <div className="doctor-details" style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
@@ -6275,7 +6299,19 @@ export default function App() {
                             </span>
                           </h3>
                           <div className="doctor-specialty">
-                            <span style={{ fontWeight: '600' }}>{doc.level || 'Junior Doctor'}</span> • {getSpecialtyTitle(doc.specialty)}
+                            {(() => {
+                              const sub = getDoctorCardSubheading(doc);
+                              return (
+                                <>
+                                  <span>{sub.mainText}</span>
+                                  {sub.unitText && (
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.2rem' }}>
+                                      {sub.unitText}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                           <div className="doctor-details">
                             <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
@@ -6300,13 +6336,13 @@ export default function App() {
                               </div>
                             )}
                           </div>
-                          {doc.specialty === 'Laboratory' ? (
+                          {(doc.specialty && doc.specialty.includes('Laboratory')) ? (
                             <button className="btn btn-primary" onClick={() => {
                               navigateTo('service-mobile-lab');
                             }}>
                               <i className="fa-solid fa-vial" style={{ marginRight: '6px' }}></i> Order Lab Test
                             </button>
-                          ) : doc.specialty === 'Pharmacy' ? (
+                          ) : (doc.specialty && doc.specialty.includes('Pharmacy')) ? (
                             <button className="btn btn-primary" onClick={() => {
                               navigateTo('service-pharmacy-delivery');
                             }}>
@@ -14378,7 +14414,19 @@ export default function App() {
                   )}
                 </strong>
                 <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>
-                  {previewBookingDoc.level || 'Junior Doctor'} • {getSpecialtyTitle(previewBookingDoc.specialty)}
+                  {(() => {
+                    const sub = getDoctorCardSubheading(previewBookingDoc);
+                    return (
+                      <>
+                        <div>{sub.mainText}</div>
+                        {sub.unitText && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>
+                            {sub.unitText}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{previewBookingDoc.experience} Experience</div>
               </div>
