@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase, uploadAvatarToSupabase, isSupabaseConfigured } from './supabaseClient';
 import { appointmentsApi, pharmacyOrdersApi, labRequestsApi, clinicDrugsApi, profilesApi } from './services/api';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
@@ -4341,8 +4341,8 @@ export default function App() {
     return { tests, address, instructions };
   };
 
-  const getAbujaLocationData = (addressStr, tripId) => {
-    const hub = { lat: 9.0765, lng: 7.3986, sector: 'SimmyCare Central Hub (Abuja HQ)' };
+  const getAbujaLocationData = (addressStr, tripId, startLocation = null) => {
+    let hub = { lat: 9.0765, lng: 7.3986, sector: 'SimmyCare Central Hub (Abuja HQ)' };
     
     const addr = (addressStr || '').toLowerCase();
     
@@ -4416,6 +4416,26 @@ export default function App() {
       { key: 'osogbo', lat: 7.7710, lng: 4.5624, name: 'Osogbo City, Osun State' },
       { key: 'ado ekiti', lat: 7.6211, lng: 5.2215, name: 'Ado Ekiti, Ekiti State' }
     ];
+
+    if (startLocation) {
+      if (typeof startLocation === 'object' && startLocation.lat && startLocation.lng) {
+        hub = {
+          lat: startLocation.lat,
+          lng: startLocation.lng,
+          sector: startLocation.sector || startLocation.name || startLocation.dispatchArea || 'Rider Live Location'
+        };
+      } else if (typeof startLocation === 'string' && startLocation.trim()) {
+        const startStr = startLocation.toLowerCase();
+        const matchedStart = sectors.find(s => startStr.includes(s.key));
+        if (matchedStart) {
+          hub = {
+            lat: matchedStart.lat,
+            lng: matchedStart.lng,
+            sector: matchedStart.name
+          };
+        }
+      }
+    }
 
     let matchedSector = sectors.find(s => addr.includes(s.key));
     
@@ -4695,7 +4715,15 @@ const LeafletDispatchMap = ({
     ];
 
     riders.forEach((rider, idx) => {
-      const pos = riderPositions[idx % riderPositions.length];
+      let pos = riderPositions[idx % riderPositions.length];
+      if (rider.currentLocation || rider.location || rider.dispatchArea) {
+        const locStr = rider.currentLocation || rider.location || rider.dispatchArea;
+        const geocodedRider = getAbujaLocationData(locStr, null);
+        if (geocodedRider && geocodedRider.dest) {
+          pos = { lat: geocodedRider.dest.lat, lng: geocodedRider.dest.lng, sector: geocodedRider.dest.sector };
+        }
+      }
+
       const isSelected = selectedRider && (selectedRider.email === rider.email || selectedRider.id === rider.id || selectedRider.name === rider.name);
       const emoji = rider.vehicleType === 'Drone' ? '🛸' : '🏍️';
       const color = isSelected ? '#f59e0b' : (rider.active !== false ? '#3b82f6' : '#64748b');
@@ -4707,9 +4735,9 @@ const LeafletDispatchMap = ({
         m.bindPopup(`
           <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
             <strong style="font-size: 13px;">${rider.name}</strong><br/>
-            <span style="font-size: 11px; color: #64748b;">${pos.sector} Sector</span><br/>
+            <span style="font-size: 11px; color: #64748b;">Current Location: ${pos.sector}</span><br/>
             <div style="font-size: 11px; margin-top: 4px;">Vehicle: <strong>${rider.vehicleType || 'Motorbike'}</strong></div>
-            <div style="font-size: 11px; color: #10b981; font-weight: bold;">Status: Live Telemetry Active</div>
+            <div style="font-size: 11px; color: #10b981; font-weight: bold;">Status: Live GPS Active</div>
           </div>
         `);
         m.on('click', () => {
@@ -4718,12 +4746,14 @@ const LeafletDispatchMap = ({
         riderMarkersRef.current[key] = m;
       } else {
         const markerIcon = createPin(emoji, color, rider.name, isSelected);
+        riderMarkersRef.current[key].setLatLng([pos.lat, pos.lng]);
         riderMarkersRef.current[key].setIcon(markerIcon);
       }
     });
 
     if (trackedTripId) {
-      const locationData = getAbujaLocationData(destinationAddress, trackedTripId);
+      const riderStart = selectedRider ? (selectedRider.currentLocation || selectedRider.location || selectedRider.dispatchArea || selectedRider.name) : null;
+      const locationData = getAbujaLocationData(destinationAddress, trackedTripId, riderStart);
       const { dest, waypoints } = locationData;
 
       if (polylineRef.current) {
