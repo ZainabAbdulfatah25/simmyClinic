@@ -150,6 +150,7 @@ const getSpecialtyTitle = (specialty) => {
 const INITIAL_DOCTORS = [
   {
     id: 1,
+    staffId: "SMC-DOC-001",
     name: "Dr. Fatima Yahaya Maiauduga",
     specialty: "Obstetrics & Gynaecology (Family Planning / ANC Unit)",
     unit: "Family Planning / ANC Unit",
@@ -174,6 +175,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 2,
+    staffId: "SMC-DOC-002",
     name: "Dr. Adam Zamzam",
     specialty: "General Medicine",
     schedule: "Mon - Fri (8am - 4pm)",
@@ -196,6 +198,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 3,
+    staffId: "SMC-DOC-003",
     name: "Dr. Mato Saddiqa Tijjani",
     specialty: "Public Health",
     schedule: "Mon - Fri (9am - 4pm)",
@@ -218,6 +221,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 4,
+    staffId: "SMC-DOC-004",
     name: "Dr. Abubakar Muhammad Bamalli",
     specialty: "Obstetrics & Gynaecology",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -240,6 +244,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 5,
+    staffId: "SMC-LAB-001",
     name: "Dr. Wasila Goranduma",
     specialty: "Laboratory / MPH",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -262,6 +267,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 6,
+    staffId: "SMC-DOC-006",
     name: "Hadiza Garba Ammani",
     specialty: "Psychology",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -284,6 +290,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 7,
+    staffId: "SMC-DOC-007",
     name: "Asma'u Zubairu",
     specialty: "Public Health",
     schedule: "Mon - Fri (8am - 4pm)",
@@ -306,6 +313,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 8,
+    staffId: "SMC-DOC-008",
     name: "Dr. Mohammed Sa'ima Jibril",
     specialty: "ENT / MPH",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -328,6 +336,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 9,
+    staffId: "SMC-PHARM-001",
     name: "Pharm. Mashkuratu Jibril",
     specialty: "Pharmacy",
     schedule: "Mon - Sat (8am - 6pm)",
@@ -350,6 +359,7 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 10,
+    staffId: "SMC-DOC-010",
     name: "Firdausi Sani Usman",
     specialty: "General Medicine",
     schedule: "Mon - Fri (8am - 4pm)",
@@ -630,7 +640,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v26_reswitch_wasila_saima_and_mph_anc_units";
+  const DATA_VERSION = "v27_unique_staff_id_rule_enforcement";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -650,6 +660,7 @@ export default function App() {
         const seedDoc = INITIAL_DOCTORS.find(sd => sd.id === doc.id);
         const updatedDoc = {
           ...doc,
+          staffId: seedDoc ? (seedDoc.staffId || `SMC-DOC-${String(doc.id).padStart(3, '0')}`) : (doc.staffId || `SMC-DOC-${String(doc.id).padStart(3, '0')}`),
           specialty: seedDoc ? seedDoc.specialty : doc.specialty,
           unit: seedDoc ? seedDoc.unit : doc.unit,
           department: seedDoc ? seedDoc.department : doc.department,
@@ -702,21 +713,21 @@ export default function App() {
   const [pharmacists, setPharmacists] = useState(() => {
     const data = localStorage.getItem("simmy_pharmacists");
     return data ? JSON.parse(data) : [
-      { name: "Pharm. Bello Ibrahim", email: "pharmacist@simmycare.com", password: "password123", phone: "08012345678", pharmacyName: "SimmyCare Central Pharmacy", pharmacyLicense: "PCN/P/9482" }
+      { staffId: "SMC-PHARM-002", name: "Pharm. Bello Ibrahim", email: "pharmacist@simmycare.com", password: "password123", phone: "08012345678", pharmacyName: "SimmyCare Central Pharmacy", pharmacyLicense: "PCN/P/9482" }
     ];
   });
 
   const [labs, setLabs] = useState(() => {
     const data = localStorage.getItem("simmy_labs");
     return data ? JSON.parse(data) : [
-      { name: "MLS Wasila Goranduma", email: "lab@simmycare.com", password: "password123", phone: "08023456789", facilityName: "SimmyCare Diagnostics", labLicense: "MLSCN/L/3821" }
+      { staffId: "SMC-LAB-002", name: "MLS Wasila Goranduma", email: "lab@simmycare.com", password: "password123", phone: "08023456789", facilityName: "SimmyCare Diagnostics", labLicense: "MLSCN/L/3821" }
     ];
   });
 
   const [logistics, setLogistics] = useState(() => {
     const data = localStorage.getItem("simmy_logistics");
     return data ? JSON.parse(data) : [
-      { name: "Chinedu Okeke", email: "logistics@simmycare.com", password: "password123", phone: "08034567890", vehicleType: "Motorbike", dispatchArea: "Abuja Central" }
+      { staffId: "SMC-LOG-001", name: "Chinedu Okeke", email: "logistics@simmycare.com", password: "password123", phone: "08034567890", vehicleType: "Motorbike", dispatchArea: "Abuja Central" }
     ];
   });
 
@@ -915,7 +926,7 @@ export default function App() {
     name: '', username: '', email: '', password: ''
   });
 
-  const generateStaffId = (role, list) => {
+  const generateStaffId = (role, list = []) => {
     const prefixMap = {
       doctor: 'DOC',
       pharmacist: 'PHM',
@@ -924,12 +935,27 @@ export default function App() {
       admin: 'ADM'
     };
     const prefix = prefixMap[role] || 'STF';
+    // System-wide uniqueness check across all staff roles
+    const allExistingStaffIds = [
+      ...doctors.map(d => d.staffId),
+      ...pharmacists.map(p => p.staffId),
+      ...labs.map(l => l.staffId),
+      ...logistics.map(g => g.staffId),
+      ...admins.map(a => a.staffId),
+      ...(list || []).map(item => item.staffId)
+    ].filter(Boolean);
+
     let isUnique = false;
     let staffId = '';
+    let counter = (list ? list.length : 0) + 1;
+
     while (!isUnique) {
-      const randNum = Math.floor(1000 + Math.random() * 9000);
-      staffId = `${prefix}-${randNum}`;
-      isUnique = !list.some(item => item.staffId === staffId);
+      staffId = `SMC-${prefix}-${String(counter).padStart(3, '0')}`;
+      if (allExistingStaffIds.includes(staffId)) {
+        counter++;
+      } else {
+        isUnique = true;
+      }
     }
     return staffId;
   };
