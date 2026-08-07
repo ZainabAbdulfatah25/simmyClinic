@@ -4341,6 +4341,151 @@ export default function App() {
     return { tests, address, instructions };
   };
 
+  const getAbujaLocationData = (addressStr, tripId) => {
+    const hub = { lat: 9.0765, lng: 7.3986, sector: 'SimmyCare Central Hub (Abuja HQ)' };
+    
+    const addr = (addressStr || '').toLowerCase();
+    
+    const sectors = [
+      // Abuja Federal Capital Territory Sectors
+      { key: 'wuse', lat: 9.0820, lng: 7.4770, name: 'Wuse District, Abuja' },
+      { key: 'maitama', lat: 9.0910, lng: 7.4920, name: 'Maitama Sector, Abuja' },
+      { key: 'garki', lat: 9.0350, lng: 7.4900, name: 'Garki District, Abuja' },
+      { key: 'utako', lat: 9.0620, lng: 7.4480, name: 'Utako Commercial District, Abuja' },
+      { key: 'jabi', lat: 9.0720, lng: 7.4250, name: 'Jabi Lake Sector, Abuja' },
+      { key: 'gwarinpa', lat: 9.1100, lng: 7.4000, name: 'Gwarinpa Estate, Abuja' },
+      { key: 'asokoro', lat: 9.0450, lng: 7.5200, name: 'Asokoro Diplomatic Zone, Abuja' },
+      { key: 'lugbe', lat: 8.9800, lng: 7.3700, name: 'Lugbe Corridor, Abuja' },
+      { key: 'kubwa', lat: 9.1500, lng: 7.3300, name: 'Kubwa Sector, Abuja' },
+      { key: 'apo', lat: 9.0050, lng: 7.4900, name: 'Apo Legislative Zone, Abuja' },
+      { key: 'lokogoma', lat: 8.9700, lng: 7.4600, name: 'Lokogoma Sector, Abuja' },
+      { key: 'life camp', lat: 9.0780, lng: 7.3980, name: 'Life Camp Sector, Abuja' },
+      { key: 'guzape', lat: 9.0300, lng: 7.5100, name: 'Guzape Heights, Abuja' },
+      { key: 'katampe', lat: 9.1150, lng: 7.4650, name: 'Katampe Extension, Abuja' },
+      { key: 'dawaki', lat: 9.1350, lng: 7.3950, name: 'Dawaki Sector, Abuja' },
+      { key: 'central area', lat: 9.0580, lng: 7.4950, name: 'Central Business District, Abuja' },
+      { key: 'cbd', lat: 9.0580, lng: 7.4950, name: 'Central Business District, Abuja' },
+      { key: 'karu', lat: 9.0100, lng: 7.5700, name: 'Karu Urban Sector, Abuja' },
+      { key: 'nyanya', lat: 9.0300, lng: 7.5600, name: 'Nyanya Axis, Abuja' },
+      { key: 'kuje', lat: 8.8800, lng: 7.2300, name: 'Kuje District, Abuja' },
+      { key: 'bwari', lat: 9.2800, lng: 7.3800, name: 'Bwari Area Council, Abuja' },
+      { key: 'gwagwalada', lat: 8.9500, lng: 7.0800, name: 'Gwagwalada Sector, Abuja' },
+
+      // Nationwide Nigerian States & Major Cities
+      { key: 'lagos', lat: 6.5244, lng: 3.3792, name: 'Lagos Metropolis, Lagos State' },
+      { key: 'ikeja', lat: 6.6018, lng: 3.3515, name: 'Ikeja Capital Sector, Lagos' },
+      { key: 'victoria island', lat: 6.4281, lng: 3.4219, name: 'Victoria Island, Lagos' },
+      { key: 'lekki', lat: 6.4698, lng: 3.5852, name: 'Lekki Peninsula, Lagos' },
+      { key: 'yaba', lat: 6.5095, lng: 3.3711, name: 'Yaba Tech Corridor, Lagos' },
+      { key: 'surulere', lat: 6.4974, lng: 3.3582, name: 'Surulere Urban Zone, Lagos' },
+      { key: 'ibadan', lat: 7.3775, lng: 3.9470, name: 'Ibadan Metro, Oyo State' },
+      { key: 'kano', lat: 12.0022, lng: 8.5919, name: 'Kano Central Metropolis, Kano State' },
+      { key: 'port harcourt', lat: 4.8156, lng: 7.0498, name: 'Port Harcourt Hub, Rivers State' },
+      { key: 'phc', lat: 4.8156, lng: 7.0498, name: 'Port Harcourt Hub, Rivers State' },
+      { key: 'enugu', lat: 6.4584, lng: 7.5464, name: 'Enugu City Sector, Enugu State' },
+      { key: 'benin', lat: 6.3350, lng: 5.6037, name: 'Benin City Metropolis, Edo State' },
+      { key: 'kaduna', lat: 10.5105, lng: 7.4165, name: 'Kaduna Central Zone, Kaduna State' },
+      { key: 'jos', lat: 9.8965, lng: 8.8583, name: 'Jos Metropolis, Plateau State' },
+      { key: 'ilorin', lat: 8.4799, lng: 4.5418, name: 'Ilorin Urban Hub, Kwara State' },
+      { key: 'abeokuta', lat: 7.1475, lng: 3.3619, name: 'Abeokuta City, Ogun State' },
+      { key: 'calabar', lat: 4.9757, lng: 8.3417, name: 'Calabar Metropolis, Cross River State' },
+      { key: 'warri', lat: 5.5544, lng: 5.7932, name: 'Warri Urban Center, Delta State' },
+      { key: 'asaba', lat: 6.1994, lng: 6.7303, name: 'Asaba Metropolis, Delta State' },
+      { key: 'akure', lat: 7.2571, lng: 5.2058, name: 'Akure Central, Ondo State' },
+      { key: 'sokoto', lat: 13.0059, lng: 5.2476, name: 'Sokoto City, Sokoto State' },
+      { key: 'maiduguri', lat: 11.8311, lng: 13.1510, name: 'Maiduguri Center, Borno State' },
+      { key: 'owerri', lat: 5.4836, lng: 7.0333, name: 'Owerri Metro, Imo State' },
+      { key: 'uyo', lat: 5.0377, lng: 7.9128, name: 'Uyo Metropolis, Akwa Ibom State' },
+      { key: 'bauchi', lat: 10.3158, lng: 9.8442, name: 'Bauchi City Sector, Bauchi State' },
+      { key: 'katsina', lat: 12.9908, lng: 7.6018, name: 'Katsina Central, Katsina State' },
+      { key: 'zaria', lat: 11.0855, lng: 7.7199, name: 'Zaria City, Kaduna State' },
+      { key: 'minna', lat: 9.6139, lng: 6.5569, name: 'Minna Capital Hub, Niger State' },
+      { key: 'lokoja', lat: 7.8023, lng: 6.7333, name: 'Lokoja Confluence Center, Kogi State' },
+      { key: 'makurdi', lat: 7.7322, lng: 8.5391, name: 'Makurdi Metropolis, Benue State' },
+      { key: 'abakaliki', lat: 6.3249, lng: 8.1137, name: 'Abakaliki City, Ebonyi State' },
+      { key: 'umuahia', lat: 5.5249, lng: 7.4943, name: 'Umuahia Capital Sector, Abia State' },
+      { key: 'aba', lat: 5.1066, lng: 7.3667, name: 'Aba Commercial Hub, Abia State' },
+      { key: 'yola', lat: 9.2094, lng: 12.4818, name: 'Yola Capital Sector, Adamawa State' },
+      { key: 'jalingo', lat: 8.8930, lng: 11.3601, name: 'Jalingo Metropolis, Taraba State' },
+      { key: 'gusau', lat: 12.1628, lng: 6.6614, name: 'Gusau City, Zamfara State' },
+      { key: 'birnin kebbi', lat: 12.4539, lng: 4.1975, name: 'Birnin Kebbi, Kebbi State' },
+      { key: 'lafia', lat: 8.4932, lng: 8.5153, name: 'Lafia Urban Center, Nasarawa State' },
+      { key: 'gombe', lat: 10.2897, lng: 11.1673, name: 'Gombe Metropolis, Gombe State' },
+      { key: 'damaturu', lat: 11.7470, lng: 11.9608, name: 'Damaturu Center, Yobe State' },
+      { key: 'dutse', lat: 11.7594, lng: 9.3392, name: 'Dutse Sector, Jigawa State' },
+      { key: 'osogbo', lat: 7.7710, lng: 4.5624, name: 'Osogbo City, Osun State' },
+      { key: 'ado ekiti', lat: 7.6211, lng: 5.2215, name: 'Ado Ekiti, Ekiti State' }
+    ];
+
+    let matchedSector = sectors.find(s => addr.includes(s.key));
+    
+    let destLat, destLng, sectorName;
+
+    if (matchedSector) {
+      let hash = 0;
+      for (let i = 0; i < (addressStr || '').length; i++) hash += addressStr.charCodeAt(i);
+      const latOff = ((hash % 10) - 5) * 0.0012;
+      const lngOff = (((hash >> 2) % 10) - 5) * 0.0012;
+      destLat = matchedSector.lat + latOff;
+      destLng = matchedSector.lng + lngOff;
+      sectorName = matchedSector.name;
+    } else {
+      let hash = 0;
+      const str = (addressStr || tripId || 'nigeria');
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const latOffset = ((Math.abs(hash) % 80) - 40) * 0.0008;
+      const lngOffset = ((Math.abs(hash >> 3) % 80) - 40) * 0.0008;
+      destLat = hub.lat + 0.015 + latOffset;
+      destLng = hub.lng + 0.020 + lngOffset;
+      sectorName = 'Nigeria Central Dispatch Sector';
+    }
+
+    const midLat1 = hub.lat + (destLat - hub.lat) * 0.35 + 0.002;
+    const midLng1 = hub.lng + (destLng - hub.lng) * 0.35 - 0.002;
+
+    const midLat2 = hub.lat + (destLat - hub.lat) * 0.70 - 0.001;
+    const midLng2 = hub.lng + (destLng - hub.lng) * 0.70 + 0.003;
+
+    const waypoints = [
+      [hub.lat, hub.lng],
+      [midLat1, midLng1],
+      [midLat2, midLng2],
+      [destLat, destLng]
+    ];
+
+    const dLat = destLat - hub.lat;
+    const dLng = destLng - hub.lng;
+    const distanceKm = Math.max(1.2, parseFloat((Math.sqrt(dLat * dLat + dLng * dLng) * 111).toFixed(1)));
+
+    return {
+      hub,
+      dest: { lat: destLat, lng: destLng, sector: sectorName },
+      waypoints,
+      distanceKm
+    };
+  };
+
+  const interpolatePolyline = (waypoints, progress) => {
+    if (!waypoints || waypoints.length === 0) return [9.0765, 7.3986];
+    if (progress <= 0) return waypoints[0];
+    if (progress >= 100) return waypoints[waypoints.length - 1];
+
+    const numSegments = waypoints.length - 1;
+    const segmentFrac = 100 / numSegments;
+    const segIndex = Math.min(numSegments - 1, Math.floor(progress / segmentFrac));
+    const subProg = (progress - (segIndex * segmentFrac)) / segmentFrac;
+
+    const p1 = waypoints[segIndex];
+    const p2 = waypoints[segIndex + 1];
+
+    const lat = p1[0] + (p2[0] - p1[0]) * subProg;
+    const lng = p1[1] + (p2[1] - p1[1]) * subProg;
+
+    return [lat, lng];
+  };
+
   const getRiderCoords = (riderName) => {
     if (!riderName) return { x: 120, y: 80 };
     const idx = logistics.findIndex(r => r.name === riderName);
@@ -4360,8 +4505,8 @@ export default function App() {
     for (let i = 0; i < tripId.length; i++) {
       hash = tripId.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const x = 80 + Math.abs(hash % 340); // 80 to 420
-    const y = 80 + Math.abs((hash >> 2) % 200); // 80 to 280
+    const x = 80 + Math.abs(hash % 340);
+    const y = 80 + Math.abs((hash >> 2) % 200);
     return { x, y };
   };
 
@@ -4401,14 +4546,13 @@ export default function App() {
     }
     const hash = (riderName + tripId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const plateId = 100 + (hash % 899);
-    const speed = 35 + (hash % 20); // 35 - 55 km/h
-    const rating = (4.6 + (hash % 4) / 10).toFixed(1); // 4.6 - 4.9 rating
-    const otp = 1000 + (hash % 9000); // 4-digit secure delivery PIN
+    const speed = 35 + (hash % 20);
+    const rating = (4.6 + (hash % 4) / 10).toFixed(1);
+    const otp = 1000 + (hash % 9000);
     const plateLetters = ["ABJ", "DT", "LA", "KD", "PH"][hash % 5];
     const plate = `RV-${plateId}-${plateLetters}`;
     
-    // Medical logistics specific metrics (Cold-chain)
-    const tempDecimal = (3.5 + (hash % 35) / 10).toFixed(1); // 3.5°C to 7.0°C (standard cold-chain for drugs/blood/samples is 2°C to 8°C)
+    const tempDecimal = (3.5 + (hash % 35) / 10).toFixed(1);
     
     return {
       plate,
@@ -4422,6 +4566,235 @@ export default function App() {
       totalCompleted: `${240 + (hash % 800)}`
     };
   };
+
+const LeafletDispatchMap = ({
+  riders = [],
+  selectedRider = null,
+  onSelectRider = () => {},
+  trackedTripId = null,
+  isSimulating = false,
+  simulationProgress = 0,
+  height = '380px',
+  destinationAddress = ''
+}) => {
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const riderMarkersRef = useRef({});
+  const destMarkerRef = useRef(null);
+  const transitMarkerRef = useRef(null);
+  const polylineRef = useRef(null);
+  const hubMarkerRef = useRef(null);
+  const lastTrackedTripIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!mapContainerRef.current || !window.L || mapInstanceRef.current) return;
+
+    const centerLat = 9.0765;
+    const centerLng = 7.3986;
+
+    const map = window.L.map(mapContainerRef.current, {
+      center: [centerLat, centerLng],
+      zoom: 13,
+      zoomControl: true,
+      attributionControl: false
+    });
+
+    window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    const createPinHtml = (emoji, color, isPulse = false) => `
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: ${color};
+        color: white;
+        font-size: 15px;
+        box-shadow: 0 0 12px ${color}bb;
+        border: 2px solid #ffffff;
+        position: relative;
+        cursor: pointer;
+      ">
+        ${emoji}
+        ${isPulse ? `<span style="position:absolute; width:100%; height:100%; border-radius:50%; background:${color}; opacity:0.4; animation: pulse 1.5s infinite;"></span>` : ''}
+      </div>
+    `;
+
+    const createPin = (emoji, color, label, isPulse = false) => window.L.divIcon({
+      html: createPinHtml(emoji, color, isPulse),
+      className: 'custom-leaflet-pin',
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      popupAnchor: [0, -17]
+    });
+
+    const hubIcon = createPin('🏥', '#10b981', 'Central Hub');
+    hubMarkerRef.current = window.L.marker([centerLat, centerLng], { icon: hubIcon }).addTo(map);
+    hubMarkerRef.current.bindPopup(`
+      <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
+        <strong style="color: #10b981; font-size: 13px;">SimmyCare Central Hub</strong><br/>
+        <span style="font-size: 11px; color: #475569;">Central Dispatch HQ — Abuja</span><br/>
+        <span style="font-size: 10px; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 4px;">OPERATIONAL HQ</span>
+      </div>
+    `);
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !window.L) return;
+
+    const createPinHtml = (emoji, color, isPulse = false) => `
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: ${color};
+        color: white;
+        font-size: 15px;
+        box-shadow: 0 0 12px ${color}bb;
+        border: 2px solid #ffffff;
+        position: relative;
+        cursor: pointer;
+      ">
+        ${emoji}
+        ${isPulse ? `<span style="position:absolute; width:100%; height:100%; border-radius:50%; background:${color}; opacity:0.4; animation: pulse 1.5s infinite;"></span>` : ''}
+      </div>
+    `;
+
+    const createPin = (emoji, color, label, isPulse = false) => window.L.divIcon({
+      html: createPinHtml(emoji, color, isPulse),
+      className: 'custom-leaflet-pin',
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      popupAnchor: [0, -17]
+    });
+
+    const riderPositions = [
+      { lat: 9.0820, lng: 7.4050, sector: 'Wuse II' },
+      { lat: 9.0680, lng: 7.3880, sector: 'Garki II' },
+      { lat: 9.0910, lng: 7.4200, sector: 'Maitama' },
+      { lat: 9.0550, lng: 7.4100, sector: 'Asokoro' },
+      { lat: 9.0700, lng: 7.4350, sector: 'Utako / Jabi' }
+    ];
+
+    riders.forEach((rider, idx) => {
+      const pos = riderPositions[idx % riderPositions.length];
+      const isSelected = selectedRider && (selectedRider.email === rider.email || selectedRider.id === rider.id || selectedRider.name === rider.name);
+      const emoji = rider.vehicleType === 'Drone' ? '🛸' : '🏍️';
+      const color = isSelected ? '#f59e0b' : (rider.active !== false ? '#3b82f6' : '#64748b');
+      const key = rider.id || rider.email || rider.name;
+
+      if (!riderMarkersRef.current[key]) {
+        const markerIcon = createPin(emoji, color, rider.name, isSelected);
+        const m = window.L.marker([pos.lat, pos.lng], { icon: markerIcon }).addTo(map);
+        m.bindPopup(`
+          <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
+            <strong style="font-size: 13px;">${rider.name}</strong><br/>
+            <span style="font-size: 11px; color: #64748b;">${pos.sector} Sector</span><br/>
+            <div style="font-size: 11px; margin-top: 4px;">Vehicle: <strong>${rider.vehicleType || 'Motorbike'}</strong></div>
+            <div style="font-size: 11px; color: #10b981; font-weight: bold;">Status: Live Telemetry Active</div>
+          </div>
+        `);
+        m.on('click', () => {
+          if (onSelectRider) onSelectRider(rider);
+        });
+        riderMarkersRef.current[key] = m;
+      } else {
+        const markerIcon = createPin(emoji, color, rider.name, isSelected);
+        riderMarkersRef.current[key].setIcon(markerIcon);
+      }
+    });
+
+    if (trackedTripId) {
+      const locationData = getAbujaLocationData(destinationAddress, trackedTripId);
+      const { dest, waypoints } = locationData;
+
+      if (polylineRef.current) {
+        polylineRef.current.setLatLngs(waypoints);
+      } else {
+        polylineRef.current = window.L.polyline(waypoints, {
+          color: '#10b981',
+          weight: 4,
+          dashArray: '6, 8',
+          opacity: 0.95
+        }).addTo(map);
+      }
+
+      const destIcon = createPin('📍', '#ef4444', 'Destination', true);
+      if (destMarkerRef.current) {
+        destMarkerRef.current.setLatLng([dest.lat, dest.lng]);
+      } else {
+        destMarkerRef.current = window.L.marker([dest.lat, dest.lng], { icon: destIcon }).addTo(map);
+      }
+      destMarkerRef.current.bindPopup(`
+        <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
+          <strong style="color: #ef4444; font-size: 13px;">Patient Delivery Location</strong><br/>
+          <span style="font-size: 11px; color: #64748b;">Address: <strong>${destinationAddress || 'Abuja Metropolitan Address'}</strong></span><br/>
+          <span style="font-size: 10px; color: #10b981; font-weight: bold;">Task: ${trackedTripId} (${dest.sector})</span>
+        </div>
+      `);
+
+      const [curLat, curLng] = interpolatePolyline(waypoints, simulationProgress);
+      const transitIcon = createPin('📦', '#6366f1', 'In Transit', true);
+      if (transitMarkerRef.current) {
+        transitMarkerRef.current.setLatLng([curLat, curLng]);
+      } else {
+        transitMarkerRef.current = window.L.marker([curLat, curLng], { icon: transitIcon }).addTo(map);
+      }
+      transitMarkerRef.current.bindPopup(`
+        <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
+          <strong style="color: #6366f1; font-size: 13px;">Live Medical Payload</strong><br/>
+          <span style="font-size: 11px;">Progress: <strong>${simulationProgress}%</strong></span><br/>
+          <span style="font-size: 10px; color: #475569;">GPS: ${curLat.toFixed(4)}, ${curLng.toFixed(4)}</span>
+        </div>
+      `);
+
+      if (lastTrackedTripIdRef.current !== trackedTripId || simulationProgress === 0) {
+        lastTrackedTripIdRef.current = trackedTripId;
+        if (polylineRef.current) {
+          map.fitBounds(polylineRef.current.getBounds(), { padding: [40, 40] });
+        }
+      }
+    } else {
+      if (polylineRef.current) {
+        polylineRef.current.remove();
+        polylineRef.current = null;
+      }
+      if (destMarkerRef.current) {
+        destMarkerRef.current.remove();
+        destMarkerRef.current = null;
+      }
+      if (transitMarkerRef.current) {
+        transitMarkerRef.current.remove();
+        transitMarkerRef.current = null;
+      }
+      lastTrackedTripIdRef.current = null;
+    }
+  }, [riders, selectedRider, trackedTripId, simulationProgress, destinationAddress]);
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div ref={mapContainerRef} style={{ width: '100%', height: '100%', background: '#070d1e' }} />
+    </div>
+  );
+};
 
   const renderLiveTrackingMap = (showDropdown = true) => {
     const activeOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
@@ -4488,116 +4861,15 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ position: 'relative', minHeight: '220px', background: '#070d1e', borderRadius: '8px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.3rem', zIndex: 10 }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
-            {currentProgress > 0 && currentProgress < 100 ? 'RIDER IN TRANSIT' : currentProgress === 100 ? 'RIDER ARRIVED' : 'TELEMETRY IDLE'}
-          </div>
-
-          <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e' }}>
-            <defs>
-              <pattern id="mapGridMini" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="500" height="300" fill="url(#mapGridMini)" />
-
-            {/* Soft background elements simulating water/parks */}
-            <path d="M 0,220 C 150,230 300,180 500,210 L 500,300 L 0,300 Z" fill="#0d1b3e" opacity="0.4" />
-            <path d="M 0,220 C 150,230 300,180 500,210" stroke="#1b3b6f" strokeWidth="4" fill="none" opacity="0.6" />
-            <text x="350" y="255" fill="#3a6073" fontSize="8" style={{ fontStyle: 'italic', letterSpacing: '1px' }}>Jabi River</text>
-
-            <rect x="50" y="60" width="80" height="60" rx="8" fill="#14362d" opacity="0.3" />
-            <text x="65" y="95" fill="#1d6f42" fontSize="7" fontWeight="600" opacity="0.7">Millennium Park</text>
-            <rect x="360" y="40" width="90" height="50" rx="8" fill="#14362d" opacity="0.3" />
-            <text x="380" y="70" fill="#1d6f42" fontSize="7" fontWeight="600" opacity="0.7">Maitama Park</text>
-
-            {/* Realistic Road Grid (Google Maps style) */}
-            <path d="M 20,40 L 480,40 M 20,260 L 480,260 M 70,20 L 70,280 M 430,20 L 430,280" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
-            
-            {/* Main Highways / Expressways */}
-            <path d="M 0,150 L 500,150" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
-            <path d="M 0,150 L 500,150" stroke="#0f172a" strokeWidth="6" fill="none" />
-            <text x="20" y="146" fill="rgba(255,255,255,0.3)" fontSize="6" fontWeight="bold">CONSTITUTION EXPRESSWAY</text>
-
-            <path d="M 250,0 L 250,300" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
-            <path d="M 250,0 L 250,300" stroke="#0f172a" strokeWidth="6" fill="none" />
-            <text x="254" y="20" fill="rgba(255,255,255,0.3)" fontSize="6" fontWeight="bold" transform="rotate(90, 254, 20)">HERBERT MACAULAY WAY</text>
-
-            <path d="M 20,20 L 480,280" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
-            <path d="M 20,20 L 480,280" stroke="#0f172a" strokeWidth="4" fill="none" />
-            <text x="120" y="90" fill="rgba(255,255,255,0.2)" fontSize="6" fontWeight="bold" transform="rotate(29, 120, 90)">AMBASE BYPASS</text>
-
-            {/* Central Hub */}
-            <g transform="translate(250, 150)">
-              <circle r="6" fill="#10b981" />
-              <circle r="12" fill="#10b981" fillOpacity="0.15" />
-              <text x="10" y="3" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
-            </g>
-
-            {/* Other riders */}
-            {logistics.filter(r => r.name !== courier).map((rider, idx) => {
-              const coords = [
-                { x: 120, y: 80 },
-                { x: 380, y: 110 },
-                { x: 170, y: 220 },
-                { x: 310, y: 260 },
-                { x: 220, y: 90 },
-              ];
-              const pt = coords[idx % coords.length];
-              const isRiderOnline = rider.active !== false;
-              return (
-                <g key={rider.id} transform={`translate(${pt.x}, ${pt.y})`} style={{ cursor: 'pointer', opacity: 0.4 }}>
-                  <circle r="5" fill={isRiderOnline ? 'var(--color-accent)' : '#ef4444'} />
-                  <text x="8" y="3" fill="rgba(255,255,255,0.4)" fontSize="7">{rider.name}</text>
-                </g>
-              );
-            })}
-
-            {/* Target Route */}
-            {mapTrackedTripId && (
-              <>
-                {/* Leg 1: Rider -> Central Hub */}
-                <line
-                  x1={riderCoords.x}
-                  y1={riderCoords.y}
-                  x2="250"
-                  y2="150"
-                  stroke="#f59e0b"
-                  strokeWidth="2.5"
-                  strokeDasharray="4,4"
-                  opacity={currentProgress <= 40 ? 1 : 0.3}
-                />
-
-                {/* Leg 2: Central Hub -> Client Location */}
-                <line
-                  x1="250"
-                  y1="150"
-                  x2={dest.x}
-                  y2={dest.y}
-                  stroke="#10b981"
-                  strokeWidth="3"
-                  strokeDasharray={currentProgress < 40 ? "5,5" : "none"}
-                  opacity={currentProgress >= 40 ? 1 : 0.4}
-                />
-
-                {/* Client Location Pin */}
-                <g transform={`translate(${dest.x}, ${dest.y})`}>
-                  <circle r="7" fill="#ec4899" />
-                  <circle r="14" fill="#ec4899" fillOpacity="0.2" className="ping-ring" />
-                  <text x="10" y="3" fill="#ec4899" fontSize="9" fontWeight="bold">{clientName}</text>
-                </g>
-
-                {/* Current Moving Courier */}
-                <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
-                  <circle r="8" fill="#06b6d4" />
-                  <circle r="15" fill="#06b6d4" fillOpacity="0.25" />
-                  <text textAnchor="middle" y="3" fill="#fff" fontSize="8">{currentProgress < 40 ? '🏍️' : '📦'}</text>
-                  <text x="10" y="-3" fill="#06b6d4" fontSize="8" fontWeight="bold">{courier}</text>
-                </g>
-              </>
-            )}
-          </svg>
+        <div style={{ position: 'relative', minHeight: '240px', borderRadius: '8px', overflow: 'hidden' }}>
+          <LeafletDispatchMap
+            riders={logistics}
+            selectedRider={logistics.find(r => r.name === courier)}
+            trackedTripId={mapTrackedTripId}
+            isSimulating={isItemSimulating}
+            simulationProgress={currentProgress}
+            height="240px"
+          />
         </div>
 
         {mapTrackedTripId ? (
@@ -8202,73 +8474,15 @@ export default function App() {
                                            ETA: {Math.max(1, Math.round(15 * (1 - progressVal / 100)))} MINS
                                          </div>
 
-                                         <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
-                                           {/* Road Map Grid */}
-                                           <defs>
-                                             <pattern id="mapGridMini2" width="20" height="20" patternUnits="userSpaceOnUse">
-                                               <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
-                                             </pattern>
-                                           </defs>
-                                           <rect width="500" height="300" fill="url(#mapGridMini2)" />
-
-                                           {/* Water / Parks */}
-                                           <path d="M 0,220 C 150,230 300,180 500,210 L 500,300 L 0,300 Z" fill="#0d1b3e" opacity="0.4" />
-                                           <path d="M 0,220 C 150,230 300,180 500,210" stroke="#1b3b6f" strokeWidth="4" fill="none" opacity="0.6" />
-                                           <rect x="50" y="60" width="80" height="60" rx="8" fill="#14362d" opacity="0.3" />
-                                           <rect x="360" y="40" width="90" height="50" rx="8" fill="#14362d" opacity="0.3" />
-
-                                           {/* Streets */}
-                                           <path d="M 20,40 L 480,40 M 20,260 L 480,260 M 70,20 L 70,280 M 430,20 L 430,280" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
-                                           <path d="M 0,150 L 500,150" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
-                                           <path d="M 0,150 L 500,150" stroke="#0f172a" strokeWidth="6" fill="none" />
-                                           <path d="M 250,0 L 250,300" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
-                                           <path d="M 250,0 L 250,300" stroke="#0f172a" strokeWidth="6" fill="none" />
-                                           <path d="M 20,20 L 480,280" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
-                                           <path d="M 20,20 L 480,280" stroke="#0f172a" strokeWidth="4" fill="none" />
-
-                                           {/* Central Hub Pin */}
-                                           <circle cx="250" cy="150" r="6" fill="#10b981" />
-                                           <circle cx="250" cy="150" r="12" fill="#10b981" fillOpacity="0.15" />
-                                           <text x="260" y="154" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
-
-                                           {/* Leg 1 Path */}
-                                           <line
-                                             x1={riderCoords.x}
-                                             y1={riderCoords.y}
-                                             x2="250"
-                                             y2="150"
-                                             stroke="#f59e0b"
-                                             strokeWidth="2.5"
-                                             strokeDasharray="4,4"
-                                             opacity={progressVal <= 40 ? 1 : 0.3}
-                                           />
-
-                                           {/* Leg 2 Path */}
-                                           <line
-                                             x1="250"
-                                             y1="150"
-                                             x2={destCoords.x}
-                                             y2={destCoords.y}
-                                             stroke="#10b981"
-                                             strokeWidth="3"
-                                             strokeDasharray={progressVal < 40 ? "5,5" : "none"}
-                                             opacity={progressVal >= 40 ? 1 : 0.4}
-                                           />
-
-                                           {/* Destination Pin */}
-                                           <g transform={`translate(${destCoords.x}, ${destCoords.y})`}>
-                                             <circle r="7" fill="#ef4444" />
-                                             <circle r="13" fill="#ef4444" fillOpacity="0.15" />
-                                             <text x="10" y="3" fill="#ef4444" fontSize="9" fontWeight="bold">{selectedPharmacyOrder.name || loggedInPatient.name}</text>
-                                           </g>
-
-                                           {/* Moving Courier */}
-                                           <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
-                                             <circle r="9" fill="var(--color-accent)" />
-                                             <circle r="16" fill="var(--color-accent)" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
-                                             <text textAnchor="middle" y="3" fill="#fff" fontSize="9">{progressVal < 40 ? '🏍️' : '📦'}</text>
-                                           </g>
-                                         </svg>
+                                         <LeafletDispatchMap
+                                           riders={logistics}
+                                           selectedRider={logistics.find(r => r.name === courierName)}
+                                           trackedTripId={selectedPharmacyOrder.id}
+                                           isSimulating={true}
+                                           simulationProgress={progressVal}
+                                           destinationAddress={address}
+                                           height="260px"
+                                         />
 
                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
                                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
@@ -8608,75 +8822,15 @@ export default function App() {
                                             ETA: {Math.max(1, Math.round(15 * (1 - progressVal / 100)))} MINS
                                           </div>
 
-                                          <svg viewBox="0 0 500 300" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
-                                            {/* Road Map Grid */}
-                                            <defs>
-                                              <pattern id="mapGridMini3" width="20" height="20" patternUnits="userSpaceOnUse">
-                                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.015)" strokeWidth="1" />
-                                              </pattern>
-                                            </defs>
-                                            <rect width="500" height="300" fill="url(#mapGridMini3)" />
-
-                                            {/* Water / Parks */}
-                                            <path d="M 0,220 C 150,230 300,180 500,210 L 500,300 L 0,300 Z" fill="#0d1b3e" opacity="0.4" />
-                                            <path d="M 0,220 C 150,230 300,180 500,210" stroke="#1b3b6f" strokeWidth="4" fill="none" opacity="0.6" />
-                                            <rect x="50" y="60" width="80" height="60" rx="8" fill="#14362d" opacity="0.3" />
-                                            <rect x="360" y="40" width="90" height="50" rx="8" fill="#14362d" opacity="0.3" />
-
-                                            {/* Streets */}
-                                            <path d="M 20,40 L 480,40 M 20,260 L 480,260 M 70,20 L 70,280 M 430,20 L 430,280" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
-                                            <path d="M 0,150 L 500,150" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
-                                            <path d="M 0,150 L 500,150" stroke="#0f172a" strokeWidth="6" fill="none" />
-                                            <path d="M 250,0 L 250,300" stroke="rgba(255,255,255,0.08)" strokeWidth="8" fill="none" />
-                                            <path d="M 250,0 L 250,300" stroke="#0f172a" strokeWidth="6" fill="none" />
-                                            <path d="M 20,20 L 480,280" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
-                                            <path d="M 20,20 L 480,280" stroke="#0f172a" strokeWidth="4" fill="none" />
-
-                                            {/* Central Hub Pin */}
-                                            <circle cx="250" cy="150" r="6" fill="#10b981" />
-                                            <circle cx="250" cy="150" r="12" fill="#10b981" fillOpacity="0.15" />
-                                            <text x="260" y="154" fill="#10b981" fontSize="8" fontWeight="bold">Central Hub</text>
-
-                                            {/* Route path Leg 1 (dashed or active depending on stage) */}
-                                            {status !== 'Sample Collected' && (
-                                              <line
-                                                x1={riderCoords.x}
-                                                y1={riderCoords.y}
-                                                x2="250"
-                                                y2="150"
-                                                stroke="#f59e0b"
-                                                strokeWidth="2.5"
-                                                strokeDasharray="4,4"
-                                                opacity={progressVal <= 40 ? 1 : 0.3}
-                                              />
-                                            )}
-
-                                            {/* Leg 2 path: Hub -> Patient */}
-                                            <line
-                                              x1="250"
-                                              y1="150"
-                                              x2={destCoords.x}
-                                              y2={destCoords.y}
-                                              stroke="#10b981"
-                                              strokeWidth="3"
-                                              strokeDasharray={progressVal < 40 && status !== 'Sample Collected' ? "5,5" : "none"}
-                                              opacity={progressVal >= 40 || status === 'Sample Collected' ? 1 : 0.4}
-                                            />
-
-                                            {/* Patient Location Pin */}
-                                            <g transform={`translate(${destCoords.x}, ${destCoords.y})`}>
-                                              <circle r="7" fill="#ef4444" />
-                                              <circle r="13" fill="#ef4444" fillOpacity="0.15" />
-                                              <text x="10" y="3" fill="#ef4444" fontSize="9" fontWeight="bold">{selectedLabRequest.patientName || loggedInPatient.name}</text>
-                                            </g>
-
-                                            {/* Moving Courier */}
-                                            <g transform={`translate(${currentCoords.x}, ${currentCoords.y})`}>
-                                              <circle r="9" fill="#f59e0b" />
-                                              <circle r="16" fill="#f59e0b" fillOpacity="0.3" style={{ animation: 'ping 1.5s infinite' }} />
-                                              <text textAnchor="middle" y="3" fill="#fff" fontSize="9">{status === 'Sample Collected' ? '🧪' : '🚁'}</text>
-                                            </g>
-                                          </svg>
+                                          <LeafletDispatchMap
+                                            riders={logistics}
+                                            selectedRider={logistics.find(r => r.name === courierName)}
+                                            trackedTripId={selectedLabRequest.id}
+                                            isSimulating={true}
+                                            simulationProgress={progressVal}
+                                            destinationAddress={address}
+                                            height="260px"
+                                          />
 
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
                                             <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
@@ -10779,103 +10933,34 @@ export default function App() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1.3fr', gap: '1.5rem' }}>
                           {/* Map container */}
-                          <div style={{ background: '#0b1329', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem', position: 'relative', minHeight: '400px' }}>
-                            <div style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 10 }}>
+                          <div style={{ position: 'relative', minHeight: '420px' }}>
+                            <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(15,23,42,0.9)', color: '#10b981', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', gap: '0.4rem', zIndex: 1000 }}>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1s infinite' }}></span>
                               {isMapSimulating ? 'TELEMETRY SIMULATION ACTIVE' : 'SATELLITE TELEMETRY IDLE'}
                             </div>
 
-                            <svg viewBox="0 0 500 350" style={{ width: '100%', height: 'auto', background: '#070d1e', borderRadius: '8px' }}>
-                              {/* Grid Gridlines */}
-                              <defs>
-                                <pattern id="mapGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
-                                </pattern>
-                              </defs>
-                              <rect width="500" height="350" fill="url(#mapGrid)" />
-
-                              {/* Main Roads network in Abuja */}
-                              <path d="M 50,50 L 450,50 M 50,150 L 450,150 M 50,250 L 450,250 M 150,50 L 150,300 M 350,50 L 350,300 M 50,50 Q 250,180 450,250" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
-                              <path d="M 250,50 L 250,300" stroke="rgba(255,255,255,0.03)" strokeWidth="10" fill="none" />
-
-                              {/* SimmyCare Central Hub Pin */}
-                              <g transform="translate(250, 150)">
-                                <circle r="8" fill="#10b981" />
-                                <circle r="16" fill="#10b981" fillOpacity="0.15" />
-                                <text x="12" y="4" fill="#10b981" fontSize="9" fontWeight="bold">Central Hub</text>
-                              </g>
-
-                              {/* Render Rider Pins */}
-                              {logistics.map((rider, idx) => {
-                                const coords = [
-                                  { x: 120, y: 80 },   // Rider 1
-                                  { x: 380, y: 110 },  // Rider 2
-                                  { x: 170, y: 220 },  // Rider 3
-                                  { x: 310, y: 260 },  // Rider 4
-                                  { x: 220, y: 90 },   // Rider 5
-                                ];
-                                const coord = coords[idx % coords.length];
-
-                                const activeOrder = inquiries.find(inq => inq.id.startsWith('ORD-') && inq.status === 'Out for Delivery' && inq.assignedRider === rider.name);
-                                const activeTrip = appointments.find(apt => apt.id.startsWith('LAB-') && apt.status === 'Sample Collected' && apt.assignedRider === rider.name);
-                                const isBusy = !!(activeOrder || activeTrip);
-                                const isSelected = logisticsSelectedRider && logisticsSelectedRider.email === rider.email;
-
-                                return (
-                                  <g
-                                    key={rider.email}
-                                    transform={`translate(${coord.x}, ${coord.y})`}
-                                    onClick={() => setLogisticsSelectedRider(rider)}
-                                    style={{ cursor: 'pointer' }}
-                                  >
-                                    <circle r="7" fill={isSelected ? 'var(--color-accent)' : (isBusy ? '#eab308' : '#3b82f6')} />
-                                    <circle r="14" fill={isSelected ? 'var(--color-accent)' : (isBusy ? '#eab308' : '#3b82f6')} fillOpacity="0.2" />
-                                    <text x="10" y="-3" fill="#fff" fontSize="8" fontWeight="bold" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
-                                      {rider.name.split(' ')[0]}
-                                    </text>
-                                    <text x="10" y="6" fill="#cbd5e1" fontSize="7">
-                                      {rider.vehicleType === 'Drone' ? '🛸' : '🏍️'}
-                                    </text>
-                                  </g>
-                                );
-                              })}
-
-                              {/* Draw Tracked Route line if active shipment is being simulated */}
-                              {(() => {
-                                if (!mapTrackedTripId) return null;
-                                const dest = getTripCoords(mapTrackedTripId);
-                                const progressCoords = getInterpolatedCoords(mapSimulationProgress, dest);
-                                return (
-                                  <g>
-                                    {/* Dotted path to client destination */}
-                                    <line
-                                      x1="250"
-                                      y1="150"
-                                      x2={dest.x}
-                                      y2={dest.y}
-                                      stroke="var(--color-accent)"
-                                      strokeWidth="2.5"
-                                      strokeDasharray="5,5"
-                                      opacity="0.8"
-                                    />
-                                    {/* Destination target */}
-                                    <g transform={`translate(${dest.x}, ${dest.y})`}>
-                                      <circle r="8" fill="#ef4444" />
-                                      <circle r="16" fill="#ef4444" fillOpacity="0.2" />
-                                      <text x="12" y="4" fill="#ef4444" fontSize="9" fontWeight="bold">Destination</text>
-                                    </g>
-                                    {/* Live Moving Pin */}
-                                    <g transform={`translate(${progressCoords.x}, ${progressCoords.y})`}>
-                                      <circle r="8" fill="var(--color-accent)" />
-                                      <circle r="16" fill="var(--color-accent)" fillOpacity="0.4" />
-                                      <text x="-15" y="-12" fill="var(--color-accent)" fontSize="8" fontWeight="bold" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
-                                        📦 Transit ({mapSimulationProgress}%)
-                                      </text>
-                                    </g>
-                                  </g>
-                                );
-                              })()}
-                            </svg>
+                            {(() => {
+                              const activeControlOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
+                              const activeControlTrip = appointments.find(apt => apt.id === mapTrackedTripId);
+                              let controlAddress = '';
+                              if (activeControlOrder) {
+                                controlAddress = parseOrderMessage(activeControlOrder.message).address;
+                              } else if (activeControlTrip) {
+                                controlAddress = parseLabRequest(activeControlTrip.symptoms).address;
+                              }
+                              return (
+                                <LeafletDispatchMap
+                                  riders={logistics}
+                                  selectedRider={logisticsSelectedRider}
+                                  onSelectRider={(r) => setLogisticsSelectedRider(r)}
+                                  trackedTripId={mapTrackedTripId}
+                                  isSimulating={isMapSimulating}
+                                  simulationProgress={mapSimulationProgress}
+                                  destinationAddress={controlAddress}
+                                  height="420px"
+                                />
+                              );
+                            })()}
                           </div>
 
                           {/* Detail Panel & Simulation Controller */}
