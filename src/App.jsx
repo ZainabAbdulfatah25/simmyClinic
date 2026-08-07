@@ -129,9 +129,11 @@ const getSpecialtyTitle = (specialty) => {
   const mapping = {
     'Gynaecology': 'Obstetrician & Gynaecologist',
     'Obstetrics & Gynaecology': 'Obstetrician & Gynaecologist',
+    'Obstetrics & Gynaecology (Family Planning / ANC Unit)': 'Obstetrician & Gynaecologist (Family Planning / ANC Unit)',
     'Pediatrics': 'Pediatrician',
     'General Medicine': 'General Practitioner',
-    'Laboratory': 'Laboratory Specialist',
+    'Laboratory': 'Laboratory Specialist / MPH',
+    'Laboratory / MPH': 'Laboratory Specialist / MPH',
     'Pharmacy': 'Pharmacist',
     'Dentistry': 'Dentist',
     'Optometry': 'Optometrist',
@@ -139,7 +141,8 @@ const getSpecialtyTitle = (specialty) => {
     'Dermatology': 'Dermatologist',
     'Psychology': 'Psychology & Mental Health Specialist',
     'Public Health': 'Public Health & Community Health Officer',
-    'ENT': 'ENT Specialist (Ear, Nose & Throat)'
+    'ENT': 'ENT Specialist / MPH (Ear, Nose & Throat)',
+    'ENT / MPH': 'ENT Specialist / MPH (Ear, Nose & Throat)'
   };
   return mapping[specialty] || specialty;
 };
@@ -148,7 +151,9 @@ const INITIAL_DOCTORS = [
   {
     id: 1,
     name: "Dr. Fatima Yahaya Maiauduga",
-    specialty: "Obstetrics & Gynaecology",
+    specialty: "Obstetrics & Gynaecology (Family Planning / ANC Unit)",
+    unit: "Family Planning / ANC Unit",
+    department: "OBG Department",
     schedule: "Mon - Wed (9am - 2pm)",
     experience: "8 Years",
     regNo: "MDCN/8431",
@@ -156,14 +161,14 @@ const INITIAL_DOCTORS = [
     email: "fatima@simmycare.com",
     password: "password123",
     phone: "08034567890",
-    bio: "Junior doctor specializing in obstetrics, gynecology, maternal care, and female reproductive wellness under senior clinical supervision.",
-    clinicRoom: "Room 102, West Wing",
+    bio: "Junior doctor specializing in obstetrics, gynecology, maternal care, antenatal care (ANC), family planning services, and female reproductive wellness in the Family Planning / ANC Unit under senior clinical supervision in the OBG Department.",
+    clinicRoom: "Room 102, Family Planning / ANC Unit (OBG Department)",
     license: "MDCN/8431",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Junior Doctor",
+    level: "Junior Doctor (Family Planning / ANC Unit)",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -236,7 +241,7 @@ const INITIAL_DOCTORS = [
   {
     id: 5,
     name: "Dr. Wasila Goranduma",
-    specialty: "Laboratory",
+    specialty: "Laboratory / MPH",
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "6 Years",
     regNo: "MLS/REG",
@@ -244,14 +249,14 @@ const INITIAL_DOCTORS = [
     email: "wasilagoranduma@gmail.com",
     password: "password123",
     phone: "+234 803 133 8534",
-    bio: "Registered Medical Laboratory Scientist with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
+    bio: "Registered Medical Laboratory Scientist & Public Health Specialist (MPH) with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
     clinicRoom: "Room 105, Diagnostic Wing",
     license: "MLS/REG/6831",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Mobile Laboratory"],
     verified: true,
-    level: "Diagnostic Specialist",
+    level: "Diagnostic Specialist / MPH",
     patientCapacity: "25 patients/month",
     remunerationNotes: "Negotiable for specialized diagnostic procedures"
   },
@@ -302,7 +307,7 @@ const INITIAL_DOCTORS = [
   {
     id: 8,
     name: "Dr. Mohammed Sa'ima Jibril",
-    specialty: "ENT",
+    specialty: "ENT / MPH",
     schedule: "Mon - Fri (9am - 5pm)",
     experience: "15 Years",
     regNo: "MDCN/4521",
@@ -317,7 +322,7 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation", "Home Services"],
     verified: true,
-    level: "Senior Consultant",
+    level: "Senior Consultant / MPH",
     patientCapacity: "Flexible / Unlimited",
     remunerationNotes: "Home services or traveling fees are negotiable."
   },
@@ -625,7 +630,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v25_fix_doctor_images_apostrophes";
+  const DATA_VERSION = "v26_reswitch_wasila_saima_and_mph_anc_units";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -646,6 +651,9 @@ export default function App() {
         const updatedDoc = {
           ...doc,
           specialty: seedDoc ? seedDoc.specialty : doc.specialty,
+          unit: seedDoc ? seedDoc.unit : doc.unit,
+          department: seedDoc ? seedDoc.department : doc.department,
+          clinicRoom: seedDoc ? seedDoc.clinicRoom : doc.clinicRoom,
           level: seedDoc ? seedDoc.level : doc.level,
           bio: seedDoc ? seedDoc.bio : doc.bio,
           consultationRate: doc.consultationRate !== undefined ? doc.consultationRate : (seedDoc ? seedDoc.consultationRate : ''),
