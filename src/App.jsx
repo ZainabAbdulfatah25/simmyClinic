@@ -515,7 +515,9 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
     'wasila': doctorWasilaImg,
     'hadiza': doctorHadizaImg,
     'asmau': doctorAsmauImg,
+    'asma': doctorAsmauImg,
     'saima': doctorSaimaImg,
+    'saema': doctorSaimaImg,
     'mashkuratu': pharmMashkuratuImg,
     'firdausi': firdausiSaniImg
   };
@@ -523,8 +525,10 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
   const getFallbackForName = (docName) => {
     if (!docName) return null;
     const lower = docName.toLowerCase();
+    const cleanLower = lower.replace(/['"`’\s]/g, '');
     for (const [key, path] of Object.entries(nameToFallback)) {
-      if (lower.includes(key)) return path;
+      const cleanKey = key.replace(/['"`’\s]/g, '');
+      if (lower.includes(key) || cleanLower.includes(cleanKey)) return path;
     }
     return null;
   };
@@ -533,8 +537,11 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
 
   // Determine current image src, prioritizing bundled ESM image assets if string path is standard static
   let currentSrc = image;
-  if (!currentSrc || useFallbackSrc || (typeof currentSrc === 'string' && currentSrc.startsWith('/doctor_'))) {
+  if (!currentSrc || useFallbackSrc || (typeof currentSrc === 'string' && (currentSrc.startsWith('/doctor_') || currentSrc.includes('doctor_')))) {
     currentSrc = fallbackPath || image;
+  }
+  if (!currentSrc && fallbackPath) {
+    currentSrc = fallbackPath;
   }
 
   const handleImgError = () => {
@@ -618,7 +625,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v24_fix_saima_image_and_popup_modal_v2";
+  const DATA_VERSION = "v25_fix_doctor_images_apostrophes";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
