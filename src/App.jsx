@@ -1072,6 +1072,26 @@ export default function App() {
   const [adminReceiptSearch, setAdminReceiptSearch] = useState('');
   const [adminReceiptFilter, setAdminReceiptFilter] = useState('All');
 
+  // Central Dispatch Hub Options & Selection State
+  const DISPATCH_HUBS = [
+    { id: 'abuja', name: 'SimmyCare Central Hub (Abuja HQ)', city: 'Abuja (FCT)', lat: 9.0765, lng: 7.3986, sector: 'Abuja Metropolitan HQ' },
+    { id: 'lagos-ikeja', name: 'Ikeja Capital Logistics Hub', city: 'Lagos State', lat: 6.6018, lng: 3.3515, sector: 'Ikeja Commercial Sector' },
+    { id: 'lagos-vi', name: 'Victoria Island Logistics Station', city: 'Lagos Island', lat: 6.4281, lng: 3.4219, sector: 'VI Coastal Zone' },
+    { id: 'kano', name: 'Kano Central Dispatch Command', city: 'Kano State', lat: 12.0022, lng: 8.5919, sector: 'Kano Metropolis Sector' },
+    { id: 'phc', name: 'Port Harcourt Regional Hub', city: 'Rivers State', lat: 4.8156, lng: 7.0498, sector: 'Port Harcourt Hub' },
+    { id: 'enugu', name: 'Enugu Sector Operations Hub', city: 'Enugu State', lat: 6.4584, lng: 7.5464, sector: 'Enugu City Center' },
+    { id: 'ibadan', name: 'Ibadan Commercial Dispatch Depot', city: 'Oyo State', lat: 7.3775, lng: 3.9470, sector: 'Ibadan Metro Area' },
+    { id: 'kaduna', name: 'Kaduna Metropolitan Dispatch Hub', city: 'Kaduna State', lat: 10.5105, lng: 7.4165, sector: 'Kaduna Central Zone' }
+  ];
+
+  const [selectedCentralDispatch, setSelectedCentralDispatch] = useState(() => {
+    const saved = localStorage.getItem('simmy_central_dispatch');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return DISPATCH_HUBS[0];
+  });
+
   // Route Map Tracking & Simulation States
   const [mapTrackedTripId, setMapTrackedTripId] = useState(null);
   const [mapSimulationProgress, setMapSimulationProgress] = useState(0);
@@ -4621,7 +4641,8 @@ const LeafletDispatchMap = ({
   isSimulating = false,
   simulationProgress = 0,
   height = '380px',
-  destinationAddress = ''
+  destinationAddress = '',
+  centralDispatch = null
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -4636,14 +4657,17 @@ const LeafletDispatchMap = ({
   useEffect(() => {
     if (!mapContainerRef.current || !window.L || mapInstanceRef.current) return;
 
-    const centerLat = 9.0765;
-    const centerLng = 7.3986;
+    const centerLat = centralDispatch ? centralDispatch.lat : 9.0765;
+    const centerLng = centralDispatch ? centralDispatch.lng : 7.3986;
 
     const map = window.L.map(mapContainerRef.current, {
       center: [centerLat, centerLng],
       zoom: 13,
       zoomControl: true,
-      attributionControl: false
+      attributionControl: false,
+      scrollWheelZoom: false,
+      touchZoom: 'center',
+      bounceAtZoom: false
     });
 
     window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -4683,11 +4707,14 @@ const LeafletDispatchMap = ({
     });
 
     const hubIcon = createPin('🏥', '#10b981', 'Central Hub');
+    const hubTitle = centralDispatch ? centralDispatch.name : 'SimmyCare Central Hub';
+    const hubCity = centralDispatch ? centralDispatch.city : 'Central Dispatch HQ — Abuja';
+
     hubMarkerRef.current = window.L.marker([centerLat, centerLng], { icon: hubIcon }).addTo(map);
     hubMarkerRef.current.bindPopup(`
       <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
-        <strong style="color: #10b981; font-size: 13px;">SimmyCare Central Hub</strong><br/>
-        <span style="font-size: 11px; color: #475569;">Central Dispatch HQ — Abuja</span><br/>
+        <strong style="color: #10b981; font-size: 13px;">${hubTitle}</strong><br/>
+        <span style="font-size: 11px; color: #475569;">${hubCity}</span><br/>
         <span style="font-size: 10px; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 4px;">OPERATIONAL HQ</span>
       </div>
     `);
@@ -4706,6 +4733,22 @@ const LeafletDispatchMap = ({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !window.L || !isMapReady) return;
+
+    if (centralDispatch && hubMarkerRef.current) {
+      const hLat = centralDispatch.lat;
+      const hLng = centralDispatch.lng;
+      hubMarkerRef.current.setLatLng([hLat, hLng]);
+      hubMarkerRef.current.bindPopup(`
+        <div style="font-family: system-ui, sans-serif; color: #0f172a; padding: 4px;">
+          <strong style="color: #10b981; font-size: 13px;">${centralDispatch.name}</strong><br/>
+          <span style="font-size: 11px; color: #475569;">${centralDispatch.city}</span><br/>
+          <span style="font-size: 10px; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 4px;">OPERATIONAL HQ</span>
+        </div>
+      `);
+      if (!trackedTripId) {
+        map.setView([hLat, hLng], 13);
+      }
+    }
 
     const createPinHtml = (emoji, color, isPulse = false) => `
       <div style="
@@ -4782,7 +4825,7 @@ const LeafletDispatchMap = ({
     });
 
     if (trackedTripId) {
-      const riderStart = selectedRider ? (selectedRider.currentLocation || selectedRider.location || selectedRider.dispatchArea || selectedRider.name) : null;
+      const riderStart = selectedRider ? (selectedRider.currentLocation || selectedRider.location || selectedRider.dispatchArea || selectedRider.name) : centralDispatch;
       const locationData = getAbujaLocationData(destinationAddress, trackedTripId, riderStart);
       const { dest, waypoints } = locationData;
 
@@ -4847,7 +4890,7 @@ const LeafletDispatchMap = ({
       }
       lastTrackedTripIdRef.current = null;
     }
-  }, [isMapReady, riders, selectedRider, trackedTripId, isSimulating, simulationProgress, destinationAddress]);
+  }, [isMapReady, riders, selectedRider, trackedTripId, isSimulating, simulationProgress, destinationAddress, centralDispatch]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -4928,6 +4971,7 @@ const LeafletDispatchMap = ({
             trackedTripId={mapTrackedTripId}
             isSimulating={isItemSimulating}
             simulationProgress={currentProgress}
+            centralDispatch={selectedCentralDispatch}
             height="240px"
           />
         </div>
@@ -8889,6 +8933,7 @@ const LeafletDispatchMap = ({
                                             isSimulating={true}
                                             simulationProgress={progressVal}
                                             destinationAddress={address}
+                                            centralDispatch={selectedCentralDispatch}
                                             height="260px"
                                           />
 
@@ -11017,6 +11062,7 @@ const LeafletDispatchMap = ({
                                   isSimulating={isMapSimulating}
                                   simulationProgress={mapSimulationProgress}
                                   destinationAddress={controlAddress}
+                                  centralDispatch={selectedCentralDispatch}
                                   height="420px"
                                 />
                               );
@@ -11025,6 +11071,47 @@ const LeafletDispatchMap = ({
 
                           {/* Detail Panel & Simulation Controller */}
                           <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'flex-start' }}>
+                            {/* Operational Central Dispatch HQ Selector */}
+                            <div style={{ background: 'rgba(16,185,129,0.08)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                <strong style={{ fontSize: '0.78rem', color: '#10b981', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <i className="fa-solid fa-hospital"></i> Active Central Dispatch HQ
+                                </strong>
+                                <span style={{ fontSize: '0.7rem', color: '#cbd5e1', background: 'rgba(0,0,0,0.3)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                  {selectedCentralDispatch.city}
+                                </span>
+                              </div>
+                              <select
+                                value={selectedCentralDispatch.id}
+                                onChange={(e) => {
+                                  const selected = DISPATCH_HUBS.find(h => h.id === e.target.value);
+                                  if (selected) {
+                                    setSelectedCentralDispatch(selected);
+                                    localStorage.setItem('simmy_central_dispatch', JSON.stringify(selected));
+                                    addLogisticsActivityLog(mapTrackedTripId || 'HQ-SWITCH', `Changed Operational HQ to ${selected.name}`, 0, selected.city);
+                                  }
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.5rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(16,185,129,0.4)',
+                                  background: 'rgba(15,23,42,0.85)',
+                                  color: '#fff',
+                                  fontSize: '0.85rem',
+                                  fontWeight: '600',
+                                  outline: 'none',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {DISPATCH_HUBS.map(hub => (
+                                  <option key={hub.id} value={hub.id}>
+                                    🏥 {hub.name} — ({hub.city})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
                             {/* Route Selector Dropdown */}
                             <div>
                               <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem' }}>Select Live Dispatch to Track</strong>
