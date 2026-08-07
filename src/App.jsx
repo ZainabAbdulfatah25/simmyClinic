@@ -489,9 +489,11 @@ function getAvatarGradient(index) {
 // Reusable Doctor Avatar Component with stateful error fallback
 function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-accent)', className = '' }) {
   const [imgError, setImgError] = useState(false);
+  const [useFallbackSrc, setUseFallbackSrc] = useState(false);
 
   useEffect(() => {
     setImgError(false);
+    setUseFallbackSrc(false);
   }, [image]);
 
   const initials = (name || '')
@@ -503,15 +505,57 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
     .join('')
     .toUpperCase() || 'DR';
 
-  const hasImage = image && typeof image === 'string' && image.length > 5 && !imgError;
+  // Fallback map based on doctor name to imported JS image module assets
+  const nameToFallback = {
+    'fatima': doctorFatimaImg,
+    'adam': doctorAdamImg,
+    'tijjani': doctorTijjaniImg,
+    'saddiqa': doctorTijjaniImg,
+    'bamalli': doctorBamalliImg,
+    'wasila': doctorWasilaImg,
+    'hadiza': doctorHadizaImg,
+    'asmau': doctorAsmauImg,
+    'saima': doctorSaimaImg,
+    'mashkuratu': pharmMashkuratuImg,
+    'firdausi': firdausiSaniImg
+  };
+
+  const getFallbackForName = (docName) => {
+    if (!docName) return null;
+    const lower = docName.toLowerCase();
+    for (const [key, path] of Object.entries(nameToFallback)) {
+      if (lower.includes(key)) return path;
+    }
+    return null;
+  };
+
+  const fallbackPath = getFallbackForName(name);
+
+  // Determine current image src, prioritizing bundled ESM image assets if string path is standard static
+  let currentSrc = image;
+  if (!currentSrc || useFallbackSrc || (typeof currentSrc === 'string' && currentSrc.startsWith('/doctor_'))) {
+    currentSrc = fallbackPath || image;
+  }
+
+  const handleImgError = () => {
+    if (!useFallbackSrc && fallbackPath && currentSrc !== fallbackPath) {
+      setUseFallbackSrc(true);
+    } else if (currentSrc !== '/doctor_fatima.jpg' && fallbackPath) {
+      setUseFallbackSrc(true);
+    } else {
+      setImgError(false); // keep attempting fallback rather than collapsing to initials immediately
+    }
+  };
+
+  const hasImage = currentSrc && typeof currentSrc === 'string' && currentSrc.length > 5 && !imgError;
 
   if (hasImage) {
     return (
       <img
         className={className}
-        src={image}
+        src={currentSrc}
         alt={name || 'Doctor'}
-        onError={() => setImgError(true)}
+        onError={handleImgError}
         style={{
           width: `${size}px`,
           height: `${size}px`,
@@ -12068,6 +12112,24 @@ export default function App() {
                                             </span>
                                           </div>
                                           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{d.regNo || 'N/A'} • {d.level || 'Junior Doctor'}</span>
+                                          <div style={{ marginTop: '0.4rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                            <button
+                                              type="button"
+                                              className="btn btn-outline btn-xs"
+                                              onClick={() => setAdminSelectedDoctor(d)}
+                                              style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                            >
+                                              <i className="fa-solid fa-eye"></i> View Details
+                                            </button>
+                                            <button
+                                              type="button"
+                                              className="btn btn-primary btn-xs"
+                                              onClick={() => startEditDoctor(d)}
+                                              style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                            >
+                                              <i className="fa-solid fa-pen-to-square"></i> Edit Profile
+                                            </button>
+                                          </div>
                                         </div>
                                       </div>
                                     </td>
@@ -12264,6 +12326,16 @@ export default function App() {
                                   <tr key={p.email}>
                                     <td>
                                       <strong>{p.name}</strong>
+                                      <div style={{ marginTop: '0.25rem' }}>
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary btn-xs"
+                                          onClick={() => startEditPatient(p)}
+                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit Patient
+                                        </button>
+                                      </div>
                                     </td>
                                     <td>{p.phone}</td>
                                     <td><code>{p.email}</code></td>
@@ -12538,6 +12610,28 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{p.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{p.name}</strong>
+                                      <div style={{ marginTop: '0.25rem' }}>
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary btn-xs"
+                                          onClick={() => {
+                                            setEditingPharmacistId(p.email);
+                                            setNewPharmacistData({
+                                              name: p.name,
+                                              email: p.email,
+                                              password: p.password,
+                                              phone: p.phone || '',
+                                              pharmacyName: p.pharmacyName,
+                                              pharmacyLicense: p.pharmacyLicense,
+                                              verified: p.verified !== undefined ? p.verified : true,
+                                              active: p.active !== undefined ? p.active : true
+                                            });
+                                          }}
+                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit Profile
+                                        </button>
+                                      </div>
                                     </td>
                                     <td>{p.pharmacyName}</td>
                                     <td><code>{p.pharmacyLicense}</code></td>
@@ -12557,7 +12651,15 @@ export default function App() {
                                         <button
                                           className="delete-doctor-btn"
                                           onClick={() => {
-                                            setPharmacists(pharmacists.map(x => x.email === p.email ? { ...x, active: !x.active } : x));
+                                            let updated = null;
+                                            setPharmacists(pharmacists.map(x => {
+                                              if (x.email === p.email) {
+                                                updated = { ...x, active: !x.active, role: 'pharmacist' };
+                                                return updated;
+                                              }
+                                              return x;
+                                            }));
+                                            if (updated) profilesApi.upsertProfile(updated);
                                           }}
                                           title={p.active === false ? "Go Online" : "Go Offline"}
                                           style={{
@@ -12594,6 +12696,7 @@ export default function App() {
                                           onClick={() => {
                                             if (confirm(`Are you sure you want to offboard Pharmacist ${p.name}?`)) {
                                               setPharmacists(pharmacists.filter(x => x.email !== p.email));
+                                              profilesApi.deleteProfile(p.email);
                                             }
                                           }}
                                           title="Delete Profile"
@@ -12721,6 +12824,28 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{l.name}</strong>
+                                      <div style={{ marginTop: '0.25rem' }}>
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary btn-xs"
+                                          onClick={() => {
+                                            setEditingLabId(l.email);
+                                            setNewLabData({
+                                              name: l.name,
+                                              email: l.email,
+                                              password: l.password,
+                                              phone: l.phone || '',
+                                              facilityName: l.facilityName,
+                                              labLicense: l.labLicense,
+                                              verified: l.verified !== undefined ? l.verified : true,
+                                              active: l.active !== undefined ? l.active : true
+                                            });
+                                          }}
+                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit Profile
+                                        </button>
+                                      </div>
                                     </td>
                                     <td>{l.facilityName}</td>
                                     <td><code>{l.labLicense}</code></td>
@@ -12906,6 +13031,28 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{l.name}</strong>
+                                      <div style={{ marginTop: '0.25rem' }}>
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary btn-xs"
+                                          onClick={() => {
+                                            setEditingLogisticsId(l.email);
+                                            setNewLogisticsData({
+                                              name: l.name,
+                                              email: l.email,
+                                              password: l.password,
+                                              phone: l.phone || '',
+                                              vehicleType: l.vehicleType,
+                                              dispatchArea: l.dispatchArea,
+                                              verified: l.verified !== undefined ? l.verified : true,
+                                              active: l.active !== undefined ? l.active : true
+                                            });
+                                          }}
+                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit Profile
+                                        </button>
+                                      </div>
                                     </td>
                                     <td>{l.vehicleType}</td>
                                     <td>{l.dispatchArea}</td>
@@ -13069,6 +13216,24 @@ export default function App() {
                                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{a.staffId || 'N/A'}</td>
                                     <td>
                                       <strong>{a.name}</strong>
+                                      <div style={{ marginTop: '0.25rem' }}>
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary btn-xs"
+                                          onClick={() => {
+                                            setEditingAdminId(a.email);
+                                            setNewAdminData({
+                                              name: a.name,
+                                              username: a.username,
+                                              email: a.email,
+                                              password: a.password
+                                            });
+                                          }}
+                                          style={{ padding: '2px 7px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                        >
+                                          <i className="fa-solid fa-pen-to-square"></i> Edit Credentials
+                                        </button>
+                                      </div>
                                     </td>
                                     <td><code>{a.username}</code></td>
                                     <td>{a.email}</td>
