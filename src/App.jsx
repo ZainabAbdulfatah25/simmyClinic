@@ -618,7 +618,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v23_fix_bundled_doctor_images_assets_v3";
+  const DATA_VERSION = "v24_fix_saima_image_and_popup_modal_v2";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -942,6 +942,11 @@ export default function App() {
   const [followUpApt, setFollowUpApt] = useState(null);
   const [followUpData, setFollowUpData] = useState({ date: '', time: '10:00 AM', reason: '2-Week Observation Follow-up' });
   const [whatsappPopupOpen, setWhatsappPopupOpen] = useState(false);
+  const [popupNotification, setPopupNotification] = useState(null); // { title, message, type }
+
+  const showPopup = (message, title = "System Notification", type = "success") => {
+    setPopupNotification({ title, message, type });
+  };
 
   // New role authentication & UI states
   const [loggedInPharmacist, setLoggedInPharmacist] = useState(() => {
@@ -3692,7 +3697,7 @@ export default function App() {
 
       setEditingDoctorId(null);
       setNewDoctorData({ name: '', specialty: 'Obstetrics & Gynaecology', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [], level: 'Junior Doctor', verified: false });
-      alert("Doctor profile updated successfully!");
+      showPopup("Doctor profile updated successfully!", "Profile Saved", "success");
     } else {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
       const newDoc = {
@@ -3721,7 +3726,7 @@ export default function App() {
       setDoctors([...doctors, newDocWithId]);
       profilesApi.upsertProfile(newDocWithId);
       setNewDoctorData({ name: '', specialty: 'Obstetrics & Gynaecology', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [], level: 'Junior Doctor', verified: false });
-      alert(`Doctor profile added successfully! Staff ID: ${staffId}`);
+      showPopup(`Doctor profile added successfully! Staff ID: ${staffId}`, "Specialist Registered", "success");
     }
   };
 
@@ -3750,7 +3755,7 @@ export default function App() {
       if (updatedP) profilesApi.upsertProfile(updatedP);
       setEditingPharmacistId(null);
       setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
-      alert("Pharmacist profile updated successfully!");
+      showPopup("Pharmacist profile updated successfully!", "Profile Saved", "success");
     } else {
       const staffId = generateStaffId('pharmacist', pharmacists);
       const newPharm = {
@@ -3768,7 +3773,7 @@ export default function App() {
       setPharmacists([...pharmacists, newPharm]);
       profilesApi.upsertProfile(newPharm);
       setNewPharmacistData({ name: '', email: '', password: '', phone: '', pharmacyName: '', pharmacyLicense: '', verified: true, active: true });
-      alert(`Pharmacist registered successfully! Staff ID: ${staffId}`);
+      showPopup(`Pharmacist registered successfully! Staff ID: ${staffId}`, "Staff Onboarded", "success");
     }
   };
 
@@ -3797,7 +3802,7 @@ export default function App() {
       if (updatedL) profilesApi.upsertProfile(updatedL);
       setEditingLabId(null);
       setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
-      alert("Laboratory profile updated successfully!");
+      showPopup("Laboratory profile updated successfully!", "Profile Saved", "success");
     } else {
       const staffId = generateStaffId('lab', labs);
       const newL = {
@@ -3815,7 +3820,7 @@ export default function App() {
       setLabs([...labs, newL]);
       profilesApi.upsertProfile(newL);
       setNewLabData({ name: '', email: '', password: '', phone: '', facilityName: '', labLicense: '', verified: true, active: true });
-      alert(`Laboratory Technician registered successfully! Staff ID: ${staffId}`);
+      showPopup(`Laboratory Technician registered successfully! Staff ID: ${staffId}`, "Technician Registered", "success");
     }
   };
 
@@ -3844,7 +3849,7 @@ export default function App() {
       if (updatedLg) profilesApi.upsertProfile(updatedLg);
       setEditingLogisticsId(null);
       setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
-      alert("Logistics profile updated successfully!");
+      showPopup("Logistics profile updated successfully!", "Profile Saved", "success");
     } else {
       const staffId = generateStaffId('logistics', logistics);
       const newLg = {
@@ -3862,7 +3867,7 @@ export default function App() {
       setLogistics([...logistics, newLg]);
       profilesApi.upsertProfile(newLg);
       setNewLogisticsData({ name: '', email: '', password: '', phone: '', vehicleType: 'Motorbike', dispatchArea: '', verified: true, active: true });
-      alert(`Logistics Rider registered successfully! Staff ID: ${staffId}`);
+      showPopup(`Logistics Rider registered successfully! Staff ID: ${staffId}`, "Rider Registered", "success");
     }
   };
 
@@ -3887,7 +3892,7 @@ export default function App() {
       if (updatedAd) profilesApi.upsertProfile(updatedAd);
       setEditingAdminId(null);
       setNewAdminData({ name: '', username: '', email: '', password: '' });
-      alert("Administrator profile updated successfully!");
+      showPopup("Administrator profile updated successfully!", "Profile Saved", "success");
     } else {
       const staffId = generateStaffId('admin', admins);
       const newAd = {
@@ -3901,7 +3906,7 @@ export default function App() {
       setAdmins([...admins, newAd]);
       profilesApi.upsertProfile(newAd);
       setNewAdminData({ name: '', username: '', email: '', password: '' });
-      alert(`Administrator registered successfully! Staff ID: ${staffId}`);
+      showPopup(`Administrator registered successfully! Staff ID: ${staffId}`, "Admin Registered", "success");
     }
   };
 
@@ -14826,6 +14831,55 @@ export default function App() {
       {renderPaymentModal()}
       {renderReceiptModal()}
       {renderEditPriceModal()}
+
+      {/* Global Page Popup Notification Modal */}
+      {popupNotification && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }} onClick={() => setPopupNotification(null)}>
+          <div
+            className="modal-content glassmorphic animate-fade"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '440px',
+              textAlign: 'center',
+              padding: '2rem',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
+              background: '#FFFFFF'
+            }}
+          >
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                margin: '0 auto 1.25rem auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.85rem',
+                background: popupNotification.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : popupNotification.type === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                color: popupNotification.type === 'error' ? '#EF4444' : popupNotification.type === 'warning' ? '#F59E0B' : '#10B981'
+              }}
+            >
+              <i className={`fa-solid ${popupNotification.type === 'error' ? 'fa-triangle-exclamation' : popupNotification.type === 'warning' ? 'fa-circle-exclamation' : 'fa-circle-check'}`}></i>
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-indigo)', marginBottom: '0.5rem', fontSize: '1.35rem', fontWeight: 'bold' }}>
+              {popupNotification.title || "System Notification"}
+            </h3>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.92rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+              {popupNotification.message}
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.75rem', fontWeight: 'bold', borderRadius: '8px' }}
+              onClick={() => setPopupNotification(null)}
+            >
+              Okay, Got It
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
