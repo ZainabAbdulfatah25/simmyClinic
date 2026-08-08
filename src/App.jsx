@@ -698,8 +698,8 @@ export default function App() {
       return hashPart;
     }
 
-    // 3. Fallback to saved session view
-    const savedView = sessionStorage.getItem('simmy_current_view');
+    // 3. Fallback to saved session or local storage view
+    const savedView = sessionStorage.getItem('simmy_current_view') || localStorage.getItem('simmy_current_view');
     if (savedView && validViews.includes(savedView)) {
       if (savedView === 'dashboard' && !storedRole) {
         return 'portal-login';
@@ -2955,13 +2955,11 @@ export default function App() {
       return [...prev, view];
     });
     const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
-    if (view === 'dashboard' && !storedRole) {
-      window.history.pushState(null, '', '#portal-login');
-      setCurrentView('portal-login');
-    } else {
-      window.history.pushState(null, '', `#${view}`);
-      setCurrentView(view);
-    }
+    const targetView = (view === 'dashboard' && !storedRole) ? 'portal-login' : view;
+    sessionStorage.setItem("simmy_current_view", targetView);
+    localStorage.setItem("simmy_current_view", targetView);
+    window.history.pushState(null, '', `#${targetView}`);
+    setCurrentView(targetView);
   };
 
   const navigateBack = () => {

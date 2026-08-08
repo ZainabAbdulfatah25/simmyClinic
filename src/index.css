@@ -497,13 +497,13 @@ html, body {
 }
 
 .badge-top-right {
-  top: 5%;
-  right: -5%;
+  top: 4%;
+  right: 0%;
 }
 
 .badge-bottom-left {
-  bottom: 8%;
-  left: -8%;
+  bottom: 6%;
+  left: 0%;
 }
 
 .badge-icon {

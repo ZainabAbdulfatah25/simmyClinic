@@ -41,37 +41,53 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <!-- Schema.org JSON-LD Structured Data for MedicalClinic -->
+  <!-- Schema.org JSON-LD Structured Data for Google Search Indexing -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "MedicalClinic",
-    "name": "SimmyCare Online Clinic",
-    "url": "https://www.simmyclinic.com",
-    "logo": "https://www.simmyclinic.com/favicon.svg",
-    "description": "Virtual healthcare portal providing doctor consultations, online pharmacy orders, and clinical diagnostic lab processing.",
-    "medicalSpecialty": [
-      "GeneralPractice",
-      "ObstetricsAndGynecology",
-      "PublicHealth",
-      "Psychiatry",
-      "Otolaryngology"
-    ],
-    "availableService": [
+    "@graph": [
       {
-        "@type": "MedicalProcedure",
-        "name": "Virtual Medical Consultation"
+        "@type": "MedicalClinic",
+        "@id": "https://www.simmyclinic.com/#clinic",
+        "name": "SimmyCare Online Clinic",
+        "alternateName": ["simmyclinic", "simmy clinic", "simmyclinic.com", "SimmyCare"],
+        "url": "https://www.simmyclinic.com",
+        "logo": "https://www.simmyclinic.com/favicon.svg",
+        "description": "MDCN-certified virtual healthcare portal in Nigeria providing online doctor consultations, prescription home delivery, and mobile lab diagnostics.",
+        "medicalSpecialty": [
+          "GeneralPractice",
+          "ObstetricsAndGynecology",
+          "PublicHealth",
+          "Psychiatry",
+          "Otolaryngology"
+        ],
+        "availableService": [
+          {
+            "@type": "MedicalProcedure",
+            "name": "Virtual Medical Consultation"
+          },
+          {
+            "@type": "MedicalProcedure",
+            "name": "Diagnostic Specimen & Lab Request"
+          },
+          {
+            "@type": "MedicalProcedure",
+            "name": "Prescription Home Delivery"
+          }
+        ],
+        "priceRange": "₦₦"
       },
       {
-        "@type": "MedicalProcedure",
-        "name": "Diagnostic Specimen & Lab Request"
-      },
-      {
-        "@type": "MedicalProcedure",
-        "name": "Prescription Home Delivery"
+        "@type": "WebSite",
+        "@id": "https://www.simmyclinic.com/#website",
+        "url": "https://www.simmyclinic.com",
+        "name": "SimmyClinic",
+        "alternateName": ["simmyclinic", "simmy clinic", "SimmyCare"],
+        "publisher": {
+          "@id": "https://www.simmyclinic.com/#clinic"
+        }
       }
-    ],
-    "priceRange": "₦₦"
+    ]
   }
   </script>
 </head>
