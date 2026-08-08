@@ -636,13 +636,28 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
 export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
-    const hash = window.location.hash.replace('#', '');
+    const rawHash = window.location.hash.replace(/^#/, '');
+    const [viewPart] = rawHash.split('?');
     const validViews = [
       'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
       'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
     ];
-    return validViews.includes(hash) ? hash : 'home';
+    const storedRole = sessionStorage.getItem("simmy_auth_role");
+    if (viewPart && validViews.includes(viewPart)) {
+      if (viewPart === 'dashboard' && !storedRole) {
+        return 'portal-login';
+      }
+      return viewPart;
+    }
+    const savedView = sessionStorage.getItem('simmy_current_view');
+    if (savedView && validViews.includes(savedView)) {
+      if (savedView === 'dashboard' && !storedRole) {
+        return 'portal-login';
+      }
+      return savedView;
+    }
+    return 'home';
   });
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
