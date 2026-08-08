@@ -530,17 +530,19 @@ const REVERSE_SECURE_TOKENS = Object.fromEntries(
 
 // Anti-Hacker URL Injection & Malicious Pattern Detector
 const isMaliciousURL = (urlStr) => {
-  if (!urlStr) return false;
+  if (!urlStr || typeof urlStr !== 'string') return false;
+  let decoded = urlStr;
   try {
-    const decoded = decodeURIComponent(urlStr).toLowerCase();
-    const dangerousPatterns = [
-      '<script', 'javascript:', 'data:text/html', 'union select', 'drop table',
-      'exec(', 'onload=', 'onerror=', 'document.cookie', 'eval(', '../..', 'sys.'
-    ];
-    return dangerousPatterns.some(pat => decoded.includes(pat));
+    decoded = decodeURIComponent(urlStr);
   } catch {
-    return true; // If URL cannot be decoded cleanly, treat as suspicious
+    decoded = urlStr;
   }
+  const lower = decoded.toLowerCase();
+  const dangerousPatterns = [
+    '<script', 'javascript:', 'union select', 'drop table', 'delete from',
+    'exec(', 'onload=', 'onerror=', 'document.cookie'
+  ];
+  return dangerousPatterns.some(pat => lower.includes(pat));
 };
 
 // Helper to generate initials avatar gradients
@@ -2802,9 +2804,10 @@ export default function App() {
     }
   }, [currentView, adminNavView, doctorNavView, previewBookingDoc, adminSelectedDoctor]);
 
-  // Sync state variables to sessionStorage and URL hash/query
+  // Sync state variables to sessionStorage, localStorage, and URL hash/query
   useEffect(() => {
     sessionStorage.setItem("simmy_current_view", currentView);
+    localStorage.setItem("simmy_current_view", currentView);
     sessionStorage.setItem("simmy_admin_nav_view", adminNavView);
     sessionStorage.setItem("simmy_doctor_nav_view", doctorNavView);
 
