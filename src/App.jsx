@@ -636,20 +636,34 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
 export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
-    const rawHash = window.location.hash.replace(/^#/, '');
-    const [viewPart] = rawHash.split('?');
     const validViews = [
       'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
       'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
     ];
     const storedRole = sessionStorage.getItem("simmy_auth_role");
-    if (viewPart && validViews.includes(viewPart)) {
-      if (viewPart === 'dashboard' && !storedRole) {
+
+    // 1. Check URL path (e.g. /portal-login or /doctors)
+    const rawPath = window.location.pathname.replace(/^\//, '');
+    const [pathPart] = rawPath.split('?');
+    if (pathPart && validViews.includes(pathPart)) {
+      if (pathPart === 'dashboard' && !storedRole) {
         return 'portal-login';
       }
-      return viewPart;
+      return pathPart;
     }
+
+    // 2. Check URL hash (e.g. #portal-login or #doctors)
+    const rawHash = window.location.hash.replace(/^#/, '');
+    const [hashPart] = rawHash.split('?');
+    if (hashPart && validViews.includes(hashPart)) {
+      if (hashPart === 'dashboard' && !storedRole) {
+        return 'portal-login';
+      }
+      return hashPart;
+    }
+
+    // 3. Fallback to saved session view
     const savedView = sessionStorage.getItem('simmy_current_view');
     if (savedView && validViews.includes(savedView)) {
       if (savedView === 'dashboard' && !storedRole) {
