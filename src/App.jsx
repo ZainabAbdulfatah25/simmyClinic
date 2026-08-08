@@ -502,6 +502,14 @@ const compressImageFile = (file, maxDimension = 500, quality = 0.7) => {
   });
 };
 
+// Sanitizes user inputs and search queries to prevent XSS, script injection, and scammer URL tampering
+const sanitizeSearchInput = (str) => {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/[<>'"`;()]/g, '')
+    .trim();
+};
+
 // Helper to generate initials avatar gradients
 function getAvatarGradient(index) {
   const gradients = [
@@ -2765,6 +2773,25 @@ export default function App() {
       window.history.replaceState(null, '', `#${newHash}`);
     }
   }, [currentView, adminNavView, doctorNavView, previewBookingDoc, adminSelectedDoctor, authRole]);
+
+  // Dynamic SEO Document Title & Meta Updates
+  useEffect(() => {
+    const titles = {
+      'home': 'SimmyCare Online Clinic — Virtual Healthcare & Doctor Consultations',
+      'doctors': 'Meet Specialist Doctors & Medical Consultants | SimmyCare',
+      'booking': 'Book Online Doctor Consultation & Physical Visits | SimmyCare',
+      'pricing': 'Consultation Plans & Healthcare Pricing | SimmyCare',
+      'contact': 'Contact SimmyCare Clinic & Support Team | SimmyCare',
+      'portal-login': 'Patient & Staff Portal Login | SimmyCare',
+      'dashboard': 'Healthcare Portal Dashboard | SimmyCare',
+      'service-online-consultation': 'Virtual Doctor Consultations | SimmyCare',
+      'service-mobile-lab': 'Mobile Diagnostics & Lab Tests | SimmyCare',
+      'service-pharmacy-delivery': 'Prescription Home Delivery | SimmyCare',
+      'service-home-services': 'Home Healthcare & Companion Visits | SimmyCare',
+      'service-physical-consult': 'In-Person Specialist Consultations | SimmyCare'
+    };
+    document.title = titles[currentView] || 'SimmyCare Online Clinic — Virtual Healthcare';
+  }, [currentView]);
 
   // Restore modals or nested tabs from URL/session on initial load or doctors change
   useEffect(() => {

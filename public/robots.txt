@@ -1,7 +1,8 @@
-# SimmyCare Online Clinic Robots.txt
+# SimmyCare Online Clinic - Search Engine Robots Configuration
 User-agent: *
 Allow: /
 Allow: /assets/
+Allow: /favicon.svg
 
-# Sitemap location
-Sitemap: https://simmycare.com/sitemap.xml
+# Sitemap Location
+Sitemap: https://www.simmyclinic.com/sitemap.xml
