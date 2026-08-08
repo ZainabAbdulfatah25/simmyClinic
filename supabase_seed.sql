@@ -78,7 +78,7 @@ BEGIN
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
 
-  -- F. Doctor 1: Dr. Fatima Yahaya Maiauduga
+  -- F. Doctor 1: Fatima Yahaya Maiauduga
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e', 
@@ -86,7 +86,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Dr. Fatima Yahaya Maiauduga","role":"doctor","phone":"08034567890","terms_accepted":true}', 
+    '{"name":"Fatima Yahaya Maiauduga","role":"doctor","phone":"08034567890","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -104,7 +104,7 @@ BEGIN
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
 
-  -- H. Doctor 3: Dr. Mato Saddiqa Tijjani
+  -- H. Doctor 3: Mato Saddiqa Tijjani
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'b4c5d6e7-f8a9-0b1c-2d3e-4f5a6b7c8d9e', 
@@ -112,7 +112,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Dr. Mato Saddiqa Tijjani","role":"doctor","phone":"+234 909 677 6797","terms_accepted":true}', 
+    '{"name":"Mato Saddiqa Tijjani","role":"doctor","phone":"+234 909 677 6797","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -169,7 +169,7 @@ BEGIN
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
 
-  -- M. Doctor 8: Dr. Mohammed Sa''ima Jibril
+  -- M. Doctor 8: Mohammed Sa''ima Jibril (CEO)
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'b9c0d1e2-f3a4-5b6c-7d8e-9f0a1b2c3d4e', 
@@ -177,7 +177,7 @@ BEGIN
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Dr. Mohammed Sa''ima Jibril","role":"doctor","phone":"+234 901 432 4442","terms_accepted":true}', 
+    '{"name":"Mohammed Sa''ima Jibril","role":"doctor","phone":"+234 901 432 4442","terms_accepted":true}', 
     'authenticated', 
     'authenticated'
   ) ON CONFLICT (id) DO NOTHING;
@@ -186,14 +186,14 @@ END $$;
 
 
 -- 3. Update public.profiles table with role-specific details
-UPDATE public.profiles SET specialty = 'Obstetrics & Gynaecology (Family Planning / ANC Unit)', schedule = 'Mon - Wed (9am - 2pm)', experience = '8 Years', reg_no = 'MDCN/8431', clinic_room = 'Room 102, Family Planning / ANC Unit (OBG Department)', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Junior Doctor (Family Planning / ANC Unit)', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'fatima@simmycare.com';
+UPDATE public.profiles SET specialty = 'Obstetrics & Gynaecology (Family Planning / ANC Unit)', schedule = 'Mon - Wed (9am - 2pm)', experience = '8 Years', reg_no = 'MDCN/8431', clinic_room = 'Room 102, Family Planning / ANC Unit (OBG Department)', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Clinical Specialist (Family Planning / ANC Unit)', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'fatima@simmycare.com';
 UPDATE public.profiles SET specialty = 'General Medicine', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'MDCN/7123', clinic_room = 'Room 205, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'adam@simmycare.com';
-UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (9am - 4pm)', experience = '4 Years', reg_no = 'MDCN/6203', clinic_room = 'Room 110, Public Health Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'matosaddiqa@gmail.com';
+UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (9am - 4pm)', experience = '4 Years', reg_no = 'MDCN/6203', clinic_room = 'Room 110, Public Health Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Public Health Specialist', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'matosaddiqa@gmail.com';
 UPDATE public.profiles SET specialty = 'Obstetrics & Gynaecology', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MDCN/5890', clinic_room = 'Room 207, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'abubakarbalili79@gmail.com';
 UPDATE public.profiles SET specialty = 'Laboratory / MPH', schedule = 'Mon - Fri (9am - 5pm)', experience = '6 Years', reg_no = 'MLS/REG', clinic_room = 'Room 105, Diagnostic Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Diagnostic Specialist / MPH', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'wasilagoranduma@gmail.com';
-UPDATE public.profiles SET specialty = 'Psychology', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MNCP/9821', clinic_room = 'Room 108, Wellness Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'kadykubra@gmail.com';
-UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'CHO/7812', clinic_room = 'Room 114, Community Health Unit', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'ridwanasmau901@gmail.com';
-UPDATE public.profiles SET specialty = 'ENT / MPH', schedule = 'Mon - Fri (9am - 5pm)', experience = '15 Years', reg_no = 'MDCN/4521', clinic_room = 'Room 201, ENT & Specialist Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Senior Consultant / MPH', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'mohammedrealsaemaj@gmail.com';
+UPDATE public.profiles SET specialty = 'Psychology', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MNCP/9821', clinic_room = 'Room 108, Wellness Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Mental Health Specialist', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'kadykubra@gmail.com';
+UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'CHO/7812', clinic_room = 'Room 114, Community Health Unit', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Community Health Officer', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'ridwanasmau901@gmail.com';
+UPDATE public.profiles SET specialty = 'ENT / MPH', schedule = 'Mon - Fri (9am - 5pm)', experience = '15 Years', reg_no = 'MDCN/4521', clinic_room = 'Executive Office & Room 201, ENT Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'CEO', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'mohammedrealsaemaj@gmail.com';
 
 UPDATE public.profiles SET specialty = 'Pharmacy', facility_name = 'SimmyCare Central Pharmacy', license_no = 'PCN/P/9482', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'pharmacist@simmycare.com';
 UPDATE public.profiles SET facility_name = 'SimmyCare Diagnostics', license_no = 'MLSCN/L/3821', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'lab@simmycare.com';

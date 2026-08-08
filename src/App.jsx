@@ -148,14 +148,16 @@ const getSpecialtyTitle = (specialty) => {
 };
 
 const getDoctorCardSubheading = (doc) => {
-  if (!doc) return { mainText: '', unitText: '' };
-  const cleanLevel = (doc.level || 'Junior Doctor').replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
+  if (!doc) return { mainText: '', unitText: '', isCeo: false };
+  const isCeo = doc.isCeo || (doc.name && (doc.name.toLowerCase().includes('sa\'ima') || doc.name.toLowerCase().includes('saima'))) || (doc.level && doc.level.toUpperCase().includes('CEO'));
+  const cleanLevel = (doc.level || 'Specialist').replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
   const cleanSpecialty = getSpecialtyTitle(doc.specialty).replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
-  const mainText = `${cleanLevel} • ${cleanSpecialty}`;
+  const mainText = isCeo ? `CEO • ${cleanSpecialty}` : `${cleanLevel} • ${cleanSpecialty}`;
   const unitText = doc.unit || (doc.specialty && doc.specialty.includes('Family Planning') ? 'Family Planning / ANC Unit' : null);
   return {
     mainText,
-    unitText: unitText ? `(${unitText})` : null
+    unitText: unitText ? `(${unitText})` : null,
+    isCeo
   };
 };
 
@@ -163,31 +165,53 @@ const INITIAL_DOCTORS = [
   {
     id: 1,
     staffId: "SMC-DOC-001",
-    name: "Dr. Fatima Yahaya Maiauduga",
-    specialty: "Obstetrics & Gynaecology (Family Planning / ANC Unit)",
-    unit: "Family Planning / ANC Unit",
-    department: "OBG Department",
-    schedule: "Mon - Wed (9am - 2pm)",
-    experience: "8 Years",
-    regNo: "MDCN/8431",
-    image: doctorFatimaImg || "/doctor_fatima.jpg",
-    email: "fatima@simmycare.com",
+    name: "Mohammed Sa'ima Jibril",
+    isCeo: true,
+    specialty: "ENT / MPH",
+    schedule: "Mon - Fri (9am - 5pm)",
+    experience: "15 Years",
+    regNo: "MDCN/4521",
+    image: doctorSaimaImg || "/doctor_saima.jpg",
+    email: "mohammedrealsaemaj@gmail.com",
     password: "password123",
-    phone: "08034567890",
-    bio: "Junior doctor specializing in obstetrics, gynecology, maternal care, antenatal care (ANC), family planning services, and female reproductive wellness in the Family Planning / ANC Unit under senior clinical supervision in the OBG Department.",
-    clinicRoom: "Room 102, Family Planning / ANC Unit (OBG Department)",
-    license: "MDCN/8431",
+    phone: "+234 901 432 4442",
+    bio: "Chief Executive Officer (CEO) & ENT Specialist / Public Health Practitioner with 15 years of executive leadership and clinical expertise in ENT care, health administration, and preventive medicine.",
+    clinicRoom: "Executive Office & Room 201, ENT Wing",
+    license: "MDCN/4521",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"],
+    services: ["Online Consultation", "Physical Consultation", "Home Services"],
     verified: true,
-    level: "Junior Doctor (Family Planning / ANC Unit)",
-    patientCapacity: "30 patients/month",
-    remunerationNotes: "Standard clinical rate"
+    level: "CEO",
+    patientCapacity: "Flexible / Unlimited",
+    remunerationNotes: "Executive consultations & home services fees are negotiable."
   },
   {
     id: 2,
     staffId: "SMC-DOC-002",
+    name: "Dr. Wasila Goranduma",
+    specialty: "Laboratory / MPH",
+    schedule: "Mon - Fri (9am - 5pm)",
+    experience: "6 Years",
+    regNo: "MLS/REG/6831",
+    image: doctorWasilaImg || "/doctor_wasila.jpg",
+    email: "wasilagoranduma@gmail.com",
+    password: "password123",
+    phone: "+234 803 133 8534",
+    bio: "Registered Medical Laboratory Scientist & Public Health Specialist (MPH) with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
+    clinicRoom: "Room 105, Diagnostic Wing",
+    license: "MLS/REG/6831",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Mobile Laboratory"],
+    verified: true,
+    level: "Diagnostic Specialist / MPH",
+    patientCapacity: "25 patients/month",
+    remunerationNotes: "Negotiable for specialized diagnostic procedures"
+  },
+  {
+    id: 3,
+    staffId: "SMC-DOC-003",
     name: "Dr. Adam Zamzam",
     specialty: "General Medicine",
     schedule: "Mon - Fri (8am - 4pm)",
@@ -207,29 +231,6 @@ const INITIAL_DOCTORS = [
     level: "Consultant",
     patientCapacity: "40 patients/month",
     remunerationNotes: "Standard clinical rate"
-  },
-  {
-    id: 3,
-    staffId: "SMC-DOC-003",
-    name: "Dr. Mato Saddiqa Tijjani",
-    specialty: "Public Health",
-    schedule: "Mon - Fri (9am - 4pm)",
-    experience: "4 Years",
-    regNo: "MDCN/6203",
-    image: doctorTijjaniImg || "/doctor_saddiqa.jpg",
-    email: "matosaddiqa@gmail.com",
-    password: "password123",
-    phone: "+234 909 677 6797",
-    bio: "Medical Doctor and Public Health Practitioner with more than 4 years of progressive clinical experience in tertiary and specialist hospitals, skilled in patient-centered care, emergency medicine, maternal and child health, and preventive healthcare.",
-    clinicRoom: "Room 110, Public Health Wing",
-    license: "MDCN/6203",
-    consultationRate: "₦3,000",
-    consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"],
-    verified: true,
-    level: "Senior Consultant",
-    patientCapacity: "35 patients/month",
-    remunerationNotes: "Special project consultancy rate negotiable"
   },
   {
     id: 4,
@@ -256,30 +257,55 @@ const INITIAL_DOCTORS = [
   },
   {
     id: 5,
-    staffId: "SMC-LAB-001",
-    name: "Dr. Wasila Goranduma",
-    specialty: "Laboratory / MPH",
-    schedule: "Mon - Fri (9am - 5pm)",
-    experience: "6 Years",
-    regNo: "MLS/REG",
-    image: doctorWasilaImg || "/doctor_wasila.jpg",
-    email: "wasilagoranduma@gmail.com",
+    staffId: "SMC-DOC-005",
+    name: "Fatima Yahaya Maiauduga",
+    specialty: "Obstetrics & Gynaecology (Family Planning / ANC Unit)",
+    unit: "Family Planning / ANC Unit",
+    department: "OBG Department",
+    schedule: "Mon - Wed (9am - 2pm)",
+    experience: "8 Years",
+    regNo: "MDCN/8431",
+    image: doctorFatimaImg || "/doctor_fatima.jpg",
+    email: "fatima@simmycare.com",
     password: "password123",
-    phone: "+234 803 133 8534",
-    bio: "Registered Medical Laboratory Scientist & Public Health Specialist (MPH) with 6 years of progressive experience in clinical laboratory diagnostics, public health screening, and quality assurance. Happy to collaborate and give maximum support any time.",
-    clinicRoom: "Room 105, Diagnostic Wing",
-    license: "MLS/REG/6831",
+    phone: "08034567890",
+    bio: "Clinical practitioner specializing in obstetrics, gynecology, maternal care, antenatal care (ANC), family planning services, and female reproductive wellness in the Family Planning / ANC Unit under senior clinical supervision in the OBG Department.",
+    clinicRoom: "Room 102, Family Planning / ANC Unit (OBG Department)",
+    license: "MDCN/8431",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Mobile Laboratory"],
+    services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Diagnostic Specialist / MPH",
-    patientCapacity: "25 patients/month",
-    remunerationNotes: "Negotiable for specialized diagnostic procedures"
+    level: "Clinical Specialist (Family Planning / ANC Unit)",
+    patientCapacity: "30 patients/month",
+    remunerationNotes: "Standard clinical rate"
   },
   {
     id: 6,
     staffId: "SMC-DOC-006",
+    name: "Mato Saddiqa Tijjani",
+    specialty: "Public Health",
+    schedule: "Mon - Fri (9am - 4pm)",
+    experience: "4 Years",
+    regNo: "MDCN/6203",
+    image: doctorTijjaniImg || "/doctor_saddiqa.jpg",
+    email: "matosaddiqa@gmail.com",
+    password: "password123",
+    phone: "+234 909 677 6797",
+    bio: "Public Health Practitioner with more than 4 years of progressive clinical experience in tertiary and specialist hospitals, skilled in patient-centered care, emergency medicine, maternal and child health, and preventive healthcare.",
+    clinicRoom: "Room 110, Public Health Wing",
+    license: "MDCN/6203",
+    consultationRate: "₦3,000",
+    consultationDuration: "30 mins",
+    services: ["Online Consultation", "Physical Consultation"],
+    verified: true,
+    level: "Public Health Specialist",
+    patientCapacity: "35 patients/month",
+    remunerationNotes: "Special project consultancy rate negotiable"
+  },
+  {
+    id: 7,
+    staffId: "SMC-DOC-007",
     name: "Hadiza Garba Ammani",
     specialty: "Psychology",
     schedule: "Mon - Fri (9am - 5pm)",
@@ -296,13 +322,13 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Senior Consultant",
+    level: "Senior Mental Health Specialist",
     patientCapacity: "5 patients/month",
     remunerationNotes: "Flexible consultancy rates based on nature and scope of assignment."
   },
   {
-    id: 7,
-    staffId: "SMC-DOC-007",
+    id: 8,
+    staffId: "SMC-DOC-008",
     name: "Asma'u Zubairu",
     specialty: "Public Health",
     schedule: "Mon - Fri (8am - 4pm)",
@@ -319,32 +345,9 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation", "Home Services"],
     verified: true,
-    level: "Senior Consultant",
+    level: "Community Health Officer",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Negotiable based on scope of services, location, workload, and contract terms."
-  },
-  {
-    id: 8,
-    staffId: "SMC-DOC-008",
-    name: "Dr. Mohammed Sa'ima Jibril",
-    specialty: "ENT / MPH",
-    schedule: "Mon - Fri (9am - 5pm)",
-    experience: "15 Years",
-    regNo: "MDCN/4521",
-    image: doctorSaimaImg || "/doctor_saima.jpg",
-    email: "mohammedrealsaemaj@gmail.com",
-    password: "password123",
-    phone: "+234 901 432 4442",
-    bio: "Experienced ENT Specialist and Public Health Practitioner (ENT/MPH) with 15 years of clinical expertise in ear, nose, and throat care and preventive medicine.",
-    clinicRoom: "Room 201, ENT & Specialist Wing",
-    license: "MDCN/4521",
-    consultationRate: "₦3,000",
-    consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation", "Home Services"],
-    verified: true,
-    level: "Senior Consultant / MPH",
-    patientCapacity: "Flexible / Unlimited",
-    remunerationNotes: "Home services or traveling fees are negotiable."
   },
   {
     id: 9,
@@ -405,7 +408,7 @@ const INITIAL_APPOINTMENTS = [
     assignedRider: "Chinedu Okeke",
     date: new Date().toISOString().split('T')[0],
     time: "10:00 AM",
-    doctorName: "Dr. Fatima Ibrahim",
+    doctorName: "Dr. Wasila Goranduma",
     isNhis: true,
     nhisNumber: "NHIS-928415-NG",
     nhisHmo: "NHIA Primary Scheme"
@@ -420,7 +423,7 @@ const INITIAL_APPOINTMENTS = [
     assignedRider: "",
     date: new Date().toISOString().split('T')[0],
     time: "02:00 PM",
-    doctorName: "Dr. Fatima Ibrahim",
+    doctorName: "Dr. Wasila Goranduma",
     isNhis: false,
     nhisNumber: "",
     nhisHmo: ""
@@ -711,20 +714,20 @@ export default function App() {
 
   // Map seed doctor IDs to their bundled image imports so they survive localStorage serialization
   const BUNDLED_IMAGES = { 
-    1: doctorFatimaImg || "/doctor_fatima.jpg", 
-    2: doctorAdamImg || "/doctor_adam.jpg", 
-    3: doctorTijjaniImg || "/doctor_saddiqa.jpg", 
-    4: doctorBamalliImg || "/doctor_bamalli.jpg",
-    5: doctorWasilaImg || "/doctor_wasila.jpg",
-    6: doctorHadizaImg || "/doctor_hadiza.jpg",
-    7: doctorAsmauImg || "/doctor_asmau.png",
-    8: doctorSaimaImg || "/doctor_saima.jpg",
+    1: doctorSaimaImg || "/doctor_saima.jpg",
+    2: doctorWasilaImg || "/doctor_wasila.jpg", 
+    3: doctorAdamImg || "/doctor_adam.jpg", 
+    4: doctorBamalliImg || "/doctor_bamalli.jpg", 
+    5: doctorFatimaImg || "/doctor_fatima.jpg",
+    6: doctorTijjaniImg || "/doctor_saddiqa.jpg",
+    7: doctorHadizaImg || "/doctor_hadiza.jpg",
+    8: doctorAsmauImg || "/doctor_asmau.png",
     9: pharmMashkuratuImg || "/pharm_mashkuratu_jibril.jpg",
     10: firdausiSaniImg || "/firdausi_sani_usman.jpg"
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v29_fatima_unit_bracket_subheading";
+  const DATA_VERSION = "v31_saima_ceo_top1_only3_doctors";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -3068,7 +3071,7 @@ export default function App() {
       } else {
         const newDoc = {
           id: Date.now(),
-          name: gName.startsWith("Dr.") ? gName : `Dr. ${gName}`,
+          name: gName,
           specialty: patientLoginForm.specialty || 'General Medicine',
           schedule: 'Mon - Fri (9am - 5pm)',
           experience: '5 Years',
@@ -3129,7 +3132,7 @@ export default function App() {
       if (isSupabaseReady()) {
         try {
           const metadata = {
-            name: patientLoginForm.name || (registerRole === 'doctor' ? `Dr. ${patientLoginForm.name}` : patientLoginForm.name),
+            name: patientLoginForm.name,
             phone: patientLoginForm.phone || "",
             role: registerRole,
             terms_accepted: true
@@ -3238,7 +3241,7 @@ export default function App() {
               id: doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1,
               staffId,
               email,
-              name: patientLoginForm.name.startsWith("Dr. ") ? patientLoginForm.name : `Dr. ${patientLoginForm.name}`,
+              name: patientLoginForm.name,
               phone: patientLoginForm.phone || "",
               password: password,
               specialty: patientLoginForm.specialty || "General Medicine",
@@ -3546,7 +3549,7 @@ export default function App() {
   };
 
   const startEditApt = (apt) => {
-    const docObj = doctors.find(d => d.name === apt.doctor || `Dr. ${d.name}` === apt.doctor);
+    const docObj = doctors.find(d => d.name === apt.doctor);
     setEditingApt(apt);
     setEditAptData({
       doctorId: docObj ? docObj.id : '',
@@ -3567,7 +3570,7 @@ export default function App() {
       const docObj = doctors.find(d => d.id === parseInt(editAptData.doctorId));
       if (docObj) {
         // Avoid double "Dr." prefix since names already include it
-        docName = docObj.name.startsWith('Dr. ') ? docObj.name : `Dr. ${docObj.name}`;
+        docName = docObj.name;
       }
     }
 
@@ -3706,7 +3709,7 @@ export default function App() {
     setSuccessModal({
       title: routed ? "Appointment Auto-Routed" : "Booking Submitted Successfully",
       message: routed
-        ? `Your requested specialist (${originalDocName}) is currently offline or unverified. Your appointment has been automatically routed to Dr. ${selectedDoc.name} (${getSpecialtyTitle(selectedDoc.specialty)} - ${selectedDoc.level || 'Specialist'}) to ensure you receive immediate clinical care.`
+        ? `Your requested specialist (${originalDocName}) is currently offline or unverified. Your appointment has been automatically routed to ${selectedDoc.name} (${getSpecialtyTitle(selectedDoc.specialty)} - ${selectedDoc.level || 'Specialist'}) to ensure you receive immediate clinical care.`
         : `Your appointment request with ${selectedDoc.name} has been received and is currently under review.`,
       ticket: ticketNumber
     });
@@ -3802,7 +3805,7 @@ export default function App() {
         : a
     ));
 
-    alert(`Patient successfully routed to Dr. ${mostAvailable.doc.name} (${mostAvailable.doc.specialty}) who has the lowest active workload (${mostAvailable.activeCount} active bookings).`);
+    alert(`Patient successfully routed to ${mostAvailable.doc.name} (${mostAvailable.doc.specialty}) who has the lowest active workload (${mostAvailable.activeCount} active bookings).`);
   };
 
   const handleToggleDoctorActive = (docId) => {
@@ -3859,7 +3862,7 @@ export default function App() {
     if (editingDoctorId) {
       const oldDoc = doctors.find(d => d.id === editingDoctorId);
       const oldName = oldDoc ? oldDoc.name : '';
-      const newName = newDoctorData.name.startsWith("Dr. ") ? newDoctorData.name : `Dr. ${newDoctorData.name}`;
+      const newName = newDoctorData.name;
 
       let updatedDoctorObj = null;
       setDoctors(doctors.map(d => {
@@ -3908,7 +3911,7 @@ export default function App() {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
       const newDoc = {
         id: newId,
-        name: newDoctorData.name.startsWith("Dr. ") ? newDoctorData.name : `Dr. ${newDoctorData.name}`,
+        name: newDoctorData.name,
         specialty: newDoctorData.specialty,
         level: newDoctorData.level || "Junior Doctor",
         schedule: newDoctorData.schedule || "Mon - Fri (9am - 5pm)",
@@ -4159,7 +4162,7 @@ export default function App() {
   const handleSaveDocSelf = (e) => {
     e.preventDefault();
     const oldName = loggedInDoctor.name;
-    const newName = docSelfData.name.startsWith("Dr. ") ? docSelfData.name : `Dr. ${docSelfData.name}`;
+    const newName = docSelfData.name;
 
     const updatedDoc = {
       ...loggedInDoctor,
@@ -9686,7 +9689,7 @@ const LeafletDispatchMap = ({
                                     { name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
                                     { name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
                                     ...doctors.map(d => ({
-                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`,
+                                      name: d.name,
                                       role: d.specialty,
                                       available: d.active !== false,
                                       icon: 'fa-user-doctor',
@@ -9915,7 +9918,7 @@ const LeafletDispatchMap = ({
 
                             <div className="form-row">
                               <div className="form-group">
-                                <label>Doctor Name (Exclude "Dr.")</label>
+                                <label>Staff / Specialist Full Name</label>
                                 <input
                                   type="text"
                                   required
@@ -12117,7 +12120,7 @@ const LeafletDispatchMap = ({
                                     ...doctors.map(d => ({
                                       type: 'doctor',
                                       id: d.id,
-                                      name: d.name.startsWith("Dr. ") ? d.name : `Dr. ${d.name}`,
+                                      name: d.name,
                                       role: d.specialty,
                                       available: d.active !== false,
                                       icon: 'fa-user-doctor',
@@ -14309,7 +14312,7 @@ const LeafletDispatchMap = ({
                 >
                   <option value="">Select Specialist...</option>
                   {doctors.filter(d => d.active !== false).map(d => (
-                    <option key={d.id} value={d.id}>Dr. {d.name} ({getSpecialtyTitle(d.specialty)})</option>
+                    <option key={d.id} value={d.id}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
                   ))}
                 </select>
               </div>
@@ -14775,10 +14778,10 @@ const LeafletDispatchMap = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
               <DoctorAvatar image={previewBookingDoc.image} name={previewBookingDoc.name} size={64} border="3px solid var(--color-accent)" />
               <div>
-                <strong style={{ fontSize: '1.1rem', color: 'var(--color-indigo)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <strong style={{ fontSize: '1.1rem', color: 'var(--color-indigo)', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                   {previewBookingDoc.name}
                   {previewBookingDoc.verified !== false && (
-                    <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '1rem' }} title="Verified Doctor"></i>
+                    <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-accent)', fontSize: '1rem' }} title="Verified Staff"></i>
                   )}
                 </strong>
                 <div style={{ fontSize: '0.9rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: '0.15rem' }}>
