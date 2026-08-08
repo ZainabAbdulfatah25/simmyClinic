@@ -510,6 +510,39 @@ const sanitizeSearchInput = (str) => {
     .trim();
 };
 
+// Security Obfuscation Map for Sensitive URL Parameters (Hides plain text tab names from hackers)
+const SECURE_TAB_TOKENS = {
+  'overview': 'sec_ov91',
+  'doctors': 'sec_dc44',
+  'appointments': 'sec_ap18',
+  'patients': 'sec_pt05',
+  'logistics': 'sec_lg77',
+  'analytics': 'sec_an92',
+  'backlog': 'sec_bk33',
+  'consultations': 'sec_cn81',
+  'prescriptions': 'sec_rx59',
+  'schedule': 'sec_sc12'
+};
+
+const REVERSE_SECURE_TOKENS = Object.fromEntries(
+  Object.entries(SECURE_TAB_TOKENS).map(([k, v]) => [v, k])
+);
+
+// Anti-Hacker URL Injection & Malicious Pattern Detector
+const isMaliciousURL = (urlStr) => {
+  if (!urlStr) return false;
+  try {
+    const decoded = decodeURIComponent(urlStr).toLowerCase();
+    const dangerousPatterns = [
+      '<script', 'javascript:', 'data:text/html', 'union select', 'drop table',
+      'exec(', 'onload=', 'onerror=', 'document.cookie', 'eval(', '../..', 'sys.'
+    ];
+    return dangerousPatterns.some(pat => decoded.includes(pat));
+  } catch {
+    return true; // If URL cannot be decoded cleanly, treat as suspicious
+  }
+};
+
 // Helper to generate initials avatar gradients
 function getAvatarGradient(index) {
   const gradients = [
@@ -2791,9 +2824,11 @@ export default function App() {
     }
 
     if (currentView === 'dashboard' && authRole === 'admin') {
-      queryParts.push(`adminTab=${adminNavView}`);
+      const token = SECURE_TAB_TOKENS[adminNavView] || adminNavView;
+      queryParts.push(`sec_t=${token}`);
     } else if (currentView === 'dashboard' && authRole === 'doctor') {
-      queryParts.push(`doctorTab=${doctorNavView}`);
+      const token = SECURE_TAB_TOKENS[doctorNavView] || doctorNavView;
+      queryParts.push(`sec_t=${token}`);
     }
 
     const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
@@ -2844,6 +2879,13 @@ export default function App() {
   // PopState & HashChange Event Handler (Browser Back / Forward buttons)
   useEffect(() => {
     const handlePopState = () => {
+      if (isMaliciousURL(window.location.href)) {
+        console.warn("Security Shield: Malicious or illegal URL pattern blocked.");
+        window.history.replaceState(null, '', '#home');
+        setCurrentView('home');
+        return;
+      }
+
       const fullHash = window.location.hash.replace('#', '');
       const [viewPart, queryPart] = fullHash.split('?');
       const params = new URLSearchParams(queryPart || '');
@@ -2865,7 +2907,7 @@ export default function App() {
 
       const docId = params.get('doc');
       if (docId) {
-        const found = doctors.find(d => d.id.toString() === docId);
+        const found = doctors.find(d => d.id.toString() === sanitizeSearchInput(docId));
         if (found) setPreviewBookingDoc(found);
       } else {
         setPreviewBookingDoc(null);
@@ -2873,17 +2915,25 @@ export default function App() {
 
       const adminDocId = params.get('adminDoc');
       if (adminDocId) {
-        const found = doctors.find(d => d.id.toString() === adminDocId);
+        const found = doctors.find(d => d.id.toString() === sanitizeSearchInput(adminDocId));
         if (found) setAdminSelectedDoctor(found);
       } else {
         setAdminSelectedDoctor(null);
       }
 
-      const adminTab = params.get('adminTab');
-      if (adminTab) setAdminNavView(adminTab);
+      const secToken = params.get('sec_t');
+      if (secToken && REVERSE_SECURE_TOKENS[secToken]) {
+        const decodedTab = REVERSE_SECURE_TOKENS[secToken];
+        const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
+        if (storedRole === 'admin') setAdminNavView(decodedTab);
+        else if (storedRole === 'doctor') setDoctorNavView(decodedTab);
+      } else {
+        const adminTab = params.get('adminTab');
+        if (adminTab) setAdminNavView(sanitizeSearchInput(adminTab));
 
-      const doctorTab = params.get('doctorTab');
-      if (doctorTab) setDoctorNavView(doctorTab);
+        const doctorTab = params.get('doctorTab');
+        if (doctorTab) setDoctorNavView(sanitizeSearchInput(doctorTab));
+      }
     };
 
     window.addEventListener('popstate', handlePopState);
