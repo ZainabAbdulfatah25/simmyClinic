@@ -2478,14 +2478,14 @@ export default function App() {
     );
   };
 
-  // Shared Real-Time GPS Simulation background timer
+  // Real-Time GPS Telemetry — strictly manual rider input (auto-timer only runs if manual simulation toggle is turned ON)
   useEffect(() => {
     const interval = setInterval(() => {
-      // 1. Update Pharmacy Orders (inquiries) in transit
+      // 1. Update Pharmacy Orders (inquiries) in transit ONLY if manual simulation mode is enabled
       setInquiries(prev => {
         let changed = false;
         const next = prev.map(inq => {
-          if (inq.id.startsWith('ORD-') && (inq.status === 'Out for Delivery' || inq.isSimulating)) {
+          if (inq.id.startsWith('ORD-') && inq.isSimulating === true) {
             const currentProg = inq.deliveryProgress !== undefined ? inq.deliveryProgress : 0;
             if (currentProg < 100) {
               changed = true;
@@ -2497,11 +2497,11 @@ export default function App() {
         return changed ? next : prev;
       });
 
-      // 2. Update Lab Trips (appointments) in transit
+      // 2. Update Lab Trips (appointments) in transit ONLY if manual simulation mode is enabled
       setAppointments(prev => {
         let changed = false;
         const next = prev.map(apt => {
-          if (apt.id.startsWith('LAB-') && (apt.isSimulating || (apt.status === 'Pending' && apt.assignedRider) || apt.status === 'Sample Collected')) {
+          if (apt.id.startsWith('LAB-') && apt.isSimulating === true) {
             const currentProg = apt.deliveryProgress !== undefined ? apt.deliveryProgress : 0;
             if (currentProg < 100) {
               changed = true;
@@ -14700,6 +14700,54 @@ const LeafletDispatchMap = ({
                 <strong>Logistics details:</strong> <br />
                 {logisticsSelectedShipment.message}
               </p>
+
+              {/* Rider Manual Progress Controls */}
+              <div style={{ marginTop: '1.25rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', display: 'block', marginBottom: '0.5rem' }}>
+                  <i className="fa-solid fa-location-crosshairs"></i> Rider Live Checkpoint Update
+                </strong>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                  Current progress: <strong>{logisticsSelectedShipment.deliveryProgress || 0}%</strong> ({logisticsSelectedShipment.status || 'Pending'})
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      const isOrder = logisticsSelectedShipment.id.startsWith('ORD-');
+                      const setList = isOrder ? setInquiries : setAppointments;
+                      setList(prev => prev.map(x => x.id === logisticsSelectedShipment.id ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
+                      setLogisticsSelectedShipment(prev => ({ ...prev, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' }));
+                    }}
+                  >
+                    🚀 Depart Depot (30%)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      const isOrder = logisticsSelectedShipment.id.startsWith('ORD-');
+                      const setList = isOrder ? setInquiries : setAppointments;
+                      setList(prev => prev.map(x => x.id === logisticsSelectedShipment.id ? { ...x, deliveryProgress: 70 } : x));
+                      setLogisticsSelectedShipment(prev => ({ ...prev, deliveryProgress: 70 }));
+                    }}
+                  >
+                    🛣️ En Route (70%)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-accent"
+                    onClick={() => {
+                      const isOrder = logisticsSelectedShipment.id.startsWith('ORD-');
+                      const setList = isOrder ? setInquiries : setAppointments;
+                      setList(prev => prev.map(x => x.id === logisticsSelectedShipment.id ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
+                      setLogisticsSelectedShipment(prev => ({ ...prev, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' }));
+                    }}
+                  >
+                    ✅ Delivered (100%)
+                  </button>
+                </div>
+              </div>
 
               <form onSubmit={handleSaveDeliveryIssue} style={{ marginTop: '1.5rem' }}>
                 <div className="form-group">
