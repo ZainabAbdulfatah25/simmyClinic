@@ -30,7 +30,7 @@ BEGIN
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'f6a7b8c9-d0e1-2f3a-4b5c-6d7e8f9a0b1c', 
-    'admin@simmycare.com', 
+    'admin@simmyclinic.com', 
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
@@ -43,7 +43,7 @@ BEGIN
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f', 
-    'pharmacist@simmycare.com', 
+    'pharmacist@simmyclinic.com', 
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
@@ -56,7 +56,7 @@ BEGIN
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'd4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a', 
-    'lab@simmycare.com', 
+    'lab@simmyclinic.com', 
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
@@ -69,7 +69,7 @@ BEGIN
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', 
-    'logistics@simmycare.com', 
+    'logistics@simmyclinic.com', 
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
@@ -82,7 +82,7 @@ BEGIN
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e', 
-    'fatima@simmycare.com', 
+    'fatima@simmyclinic.com', 
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
@@ -95,7 +95,7 @@ BEGIN
   INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud)
   VALUES (
     'b3c4d5e6-f7a8-9b0c-1d2e-3f4a5b6c7d8e', 
-    'adam@simmycare.com', 
+    'adam@simmyclinic.com', 
     hashed_pw, 
     now(), 
     '{"provider":"email","providers":["email"]}', 
@@ -186,8 +186,8 @@ END $$;
 
 
 -- 3. Update public.profiles table with role-specific details
-UPDATE public.profiles SET specialty = 'Obstetrics & Gynaecology (Family Planning / ANC Unit)', schedule = 'Mon - Wed (9am - 2pm)', experience = '8 Years', reg_no = 'MDCN/8431', clinic_room = 'Room 102, Family Planning / ANC Unit (OBG Department)', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Clinical Specialist (Family Planning / ANC Unit)', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'fatima@simmycare.com';
-UPDATE public.profiles SET specialty = 'General Medicine', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'MDCN/7123', clinic_room = 'Room 205, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'adam@simmycare.com';
+UPDATE public.profiles SET specialty = 'Obstetrics & Gynaecology (Family Planning / ANC Unit)', schedule = 'Mon - Wed (9am - 2pm)', experience = '8 Years', reg_no = 'MDCN/8431', clinic_room = 'Room 102, Family Planning / ANC Unit (OBG Department)', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Clinical Specialist (Family Planning / ANC Unit)', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'fatima@simmyclinic.com';
+UPDATE public.profiles SET specialty = 'General Medicine', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'MDCN/7123', clinic_room = 'Room 205, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'adam@simmyclinic.com';
 UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (9am - 4pm)', experience = '4 Years', reg_no = 'MDCN/6203', clinic_room = 'Room 110, Public Health Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Public Health Specialist', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'matosaddiqa@gmail.com';
 UPDATE public.profiles SET specialty = 'Obstetrics & Gynaecology', schedule = 'Mon - Fri (9am - 5pm)', experience = '9 Years', reg_no = 'MDCN/5890', clinic_room = 'Room 207, Main Block', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation'], level = 'Senior Consultant', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'abubakarbalili79@gmail.com';
 UPDATE public.profiles SET specialty = 'Laboratory / MPH', schedule = 'Mon - Fri (9am - 5pm)', experience = '6 Years', reg_no = 'MLS/REG', clinic_room = 'Room 105, Diagnostic Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Mobile Laboratory'], level = 'Diagnostic Specialist / MPH', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'wasilagoranduma@gmail.com';
@@ -195,10 +195,10 @@ UPDATE public.profiles SET specialty = 'Psychology', schedule = 'Mon - Fri (9am 
 UPDATE public.profiles SET specialty = 'Public Health', schedule = 'Mon - Fri (8am - 4pm)', experience = '10 Years', reg_no = 'CHO/7812', clinic_room = 'Room 114, Community Health Unit', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'Community Health Officer', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'ridwanasmau901@gmail.com';
 UPDATE public.profiles SET specialty = 'ENT / MPH', schedule = 'Mon - Fri (9am - 5pm)', experience = '15 Years', reg_no = 'MDCN/4521', clinic_room = 'Executive Office & Room 201, ENT Wing', consultation_rate = '₦3,000', consultation_duration = '30 mins', services = ARRAY['Online Consultation', 'Physical Consultation', 'Home Services'], level = 'CEO', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'mohammedrealsaemaj@gmail.com';
 
-UPDATE public.profiles SET specialty = 'Pharmacy', facility_name = 'SimmyCare Central Pharmacy', license_no = 'PCN/P/9482', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'pharmacist@simmycare.com';
-UPDATE public.profiles SET facility_name = 'SimmyCare Diagnostics', license_no = 'MLSCN/L/3821', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'lab@simmycare.com';
-UPDATE public.profiles SET vehicle_type = 'Motorbike', dispatch_area = 'Abuja Central', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'logistics@simmycare.com';
-UPDATE public.profiles SET verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email IN ('zainab@example.com', 'admin@simmycare.com');
+UPDATE public.profiles SET specialty = 'Pharmacy', facility_name = 'SimmyClinic Central Pharmacy', license_no = 'PCN/P/9482', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'pharmacist@simmyclinic.com';
+UPDATE public.profiles SET facility_name = 'SimmyClinic Diagnostics', license_no = 'MLSCN/L/3821', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'lab@simmyclinic.com';
+UPDATE public.profiles SET vehicle_type = 'Motorbike', dispatch_area = 'Abuja Central', verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email = 'logistics@simmyclinic.com';
+UPDATE public.profiles SET verified = true, terms_accepted = true, terms_accepted_at = NOW() WHERE email IN ('zainab@example.com', 'admin@simmyclinic.com');
 
 -- 4. Insert Default Drug Inventory (using simple INSERT with ON CONFLICT DO NOTHING)
 INSERT INTO public.clinic_drugs (name, price, category, in_stock) VALUES

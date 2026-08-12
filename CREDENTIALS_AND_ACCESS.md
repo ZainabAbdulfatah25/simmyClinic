@@ -1,6 +1,6 @@
-# SimmyCare Online Clinic — Credentials & Access Registry
+# SimmyClinic Online Clinic — Credentials & Access Registry
 
-This document provides a comprehensive summary of all user accounts, roles, access credentials, and database integration details for the **SimmyCare Online Clinic** platform connected to your Supabase backend.
+This document provides a comprehensive summary of all user accounts, roles, access credentials, and database integration details for the **SimmyClinic Online Clinic** platform connected to your Supabase backend.
 
 ---
 
@@ -14,18 +14,18 @@ This document provides a comprehensive summary of all user accounts, roles, acce
 
 | Role / Designation | Full Name | Login Email / Identifier | Default Password | Specialization / Scope |
 | :--- | :--- | :--- | :--- | :--- |
-| **System Administrator** | Admin Director | `admin@simmycare.com`<br>*(Username: `admin`)* | `password123`<br>*(or `admin`)* | Full administrative controls, clinic management, appointments, and staff oversight. |
+| **System Administrator** | Admin Director | `admin@simmyclinic.com`<br>*(Username: `admin`)* | `password123`<br>*(or `admin`)* | Full administrative controls, clinic management, appointments, and staff oversight. |
 | **Chief Executive Officer (CEO)** | Mohammed Sa'ima Jibril | `mohammedrealsaemaj@gmail.com` | `password123` | Executive Management, ENT Care & Public Health. |
 | **Diagnostic Specialist Doctor** | Dr. Wasila Goranduma | `wasilagoranduma@gmail.com` | `password123` | Public Health & Clinical Laboratory Diagnostics. |
-| **Consultant Doctor** | Dr. Adam Zamzam | `adam@simmycare.com` | `password123` | General Medicine, Family Practice, and Chronic Disease. |
+| **Consultant Doctor** | Dr. Adam Zamzam | `adam@simmyclinic.com` | `password123` | General Medicine, Family Practice, and Chronic Disease. |
 | **Senior Consultant Doctor** | Dr. Abubakar Muhammad Bamalli | `abubakarbalili79@gmail.com` | `password123` | Obstetrics & Gynaecology and General Medicine. |
-| **Clinical Specialist** | Fatima Yahaya Maiauduga | `fatima@simmycare.com` | `password123` | Obstetrics & Gynaecology, Maternal Health, and Reproductive Wellness. |
+| **Clinical Specialist** | Fatima Yahaya Maiauduga | `fatima@simmyclinic.com` | `password123` | Obstetrics & Gynaecology, Maternal Health, and Reproductive Wellness. |
 | **Public Health Specialist** | Mato Saddiqa Tijjani | `matosaddiqa@gmail.com` | `password123` | Public Health & Community Healthcare. |
 | **Senior Specialist** | Hadiza Garba Ammani | `kadykubra@gmail.com` | `password123` | Psychology & Mental Health Services. |
 | **Community Health Officer** | Asma'u Zubairu | `ridwanasmau901@gmail.com` | `password123` | Community Health & Disease Prevention. |
-| **Pharmacist** | Pharm. Bello Ibrahim | `pharmacist@simmycare.com` | `password123` | Central Pharmacy Inventory, Prescriptions, and Checkout. |
-| **Lab Technologist** | MLS Wasila Goranduma | `lab@simmycare.com` | `password123` | Diagnostics Queue, Specimen Intake, and Lab File Uploads. |
-| **Logistics / Courier** | Chinedu Okeke | `logistics@simmycare.com` | `password123` | Rider Console, Delivery Assignments, and Path Telemetry. |
+| **Pharmacist** | Pharm. Bello Ibrahim | `pharmacist@simmyclinic.com` | `password123` | Central Pharmacy Inventory, Prescriptions, and Checkout. |
+| **Lab Technologist** | MLS Wasila Goranduma | `lab@simmyclinic.com` | `password123` | Diagnostics Queue, Specimen Intake, and Lab File Uploads. |
+| **Logistics / Courier** | Chinedu Okeke | `logistics@simmyclinic.com` | `password123` | Rider Console, Delivery Assignments, and Path Telemetry. |
 | **Patient** | Zainab Abdulfatah | `zainab@example.com` | `password123` | Booking Consultations, Pharmacy Orders, and Diagnostic Reports. |
 
 ---

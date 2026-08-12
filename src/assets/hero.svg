@@ -68,7 +68,7 @@
     
     <!-- Portal Header Content -->
     <circle cx="140" cy="110" r="3.5" fill="#4ADE80" /> <!-- Status Green -->
-    <text x="150" y="114" fill="#E2ECF5" font-family="'Outfit', sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">SimmyCare Telehealth Console</text>
+    <text x="150" y="114" fill="#E2ECF5" font-family="'Outfit', sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">SimmyClinic Telehealth Console</text>
     <rect x="330" y="102" width="38" height="16" rx="8" fill="rgba(255,255,255,0.15)" />
     <text x="349" y="113" fill="#FFFFFF" font-family="'Inter', sans-serif" font-size="8" font-weight="600" text-anchor="middle">v2.1</text>
 

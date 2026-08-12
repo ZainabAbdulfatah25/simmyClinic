@@ -1,12 +1,12 @@
-# SimmyCare Online Clinic  Developer Handover Guide & Systems Documentation
+# SimmyClinic Online Clinic  Developer Handover Guide & Systems Documentation
 
-This document serves as the official developer handover guide and comprehensive technical documentation for the **SimmyCare Online Clinic** platform. It provides an overview of the system architecture, styling conventions, key functional workflows, user credentials, local development commands, and production deployment procedures.
+This document serves as the official developer handover guide and comprehensive technical documentation for the **SimmyClinic Online Clinic** platform. It provides an overview of the system architecture, styling conventions, key functional workflows, user credentials, local development commands, and production deployment procedures.
 
 ---
 
 ## 1. Executive Summary & Scope
 
-SimmyCare is a high-performance, single-page digital healthcare portal designed to streamline patient consultations, clinic scheduling, and diagnostic workflows. The platform operates on a **Standard Package** core (covering public landing pages, doctor directories, booking pipelines, and administrator controls) but incorporates a series of out-of-scope operational dashboards (Doctor, Pharmacy, Laboratory, and Logistics portals) to simulate a complete healthcare facility ecosystem.
+SimmyClinic is a high-performance, single-page digital healthcare portal designed to streamline patient consultations, clinic scheduling, and diagnostic workflows. The platform operates on a **Standard Package** core (covering public landing pages, doctor directories, booking pipelines, and administrator controls) but incorporates a series of out-of-scope operational dashboards (Doctor, Pharmacy, Laboratory, and Logistics portals) to simulate a complete healthcare facility ecosystem.
 
 > [!NOTE]
 > All state management, user authentication, and data operations run client-side. The system utilizes `localStorage` and `sessionStorage` to simulate persistent database behaviors, rendering backend database systems unnecessary for this phase.
@@ -95,14 +95,14 @@ The platform features six distinct roles. Each role has access to specific dashb
 | Portal / Dashboard | Email / Username | Password | Role Description |
 | :--- | :--- | :--- | :--- |
 | **Admin Portal** | `admin` | `admin` | Full control over appointments, doctor roster, and inboxes. |
-| **Doctor Fatima** | `fatima@simmycare.com` | `password123` | Senior Gynaecologist workspace. Manage patient consultation records. |
-| **Doctor Adam** | `adam@simmycare.com` | `password123` | General Medicine consultant workspace. Manage primary care queue. |
+| **Doctor Fatima** | `fatima@simmyclinic.com` | `password123` | Senior Gynaecologist workspace. Manage patient consultation records. |
+| **Doctor Adam** | `adam@simmyclinic.com` | `password123` | General Medicine consultant workspace. Manage primary care queue. |
 | **Doctor Tijjani** | `matosaddiqa@gmail.com` | `password123` | Public Health Senior Consultant workspace. |
 | **Doctor Bamalli** | `abubakarbalili79@gmail.com` | `password123` | General Medicine Consultant workspace. |
 | **Doctor Wasila** | `wasilagoranduma@gmail.com` | `password123` | Junior Doctor / Public Health screening specialist. |
-| **Pharmacy Portal** | `pharmacist@simmycare.com` | `password123` | Drug stock tracker, prescription intake, and dispatch. |
-| **Lab Portal** | `lab@simmycare.com` | `password123` | Diagnostic queue manager, clinical findings uploader. |
-| **Logistics Portal** | `logistics@simmycare.com` | `password123` | Rider assignment console, SVG route tracking simulator. |
+| **Pharmacy Portal** | `pharmacist@simmyclinic.com` | `password123` | Drug stock tracker, prescription intake, and dispatch. |
+| **Lab Portal** | `lab@simmyclinic.com` | `password123` | Diagnostic queue manager, clinical findings uploader. |
+| **Logistics Portal** | `logistics@simmyclinic.com` | `password123` | Rider assignment console, SVG route tracking simulator. |
 | **Patient Portal** | `zainab@example.com` | `password123` | Default patient. View bookings, prescriptions, and orders. |
 
 > [!TIP]

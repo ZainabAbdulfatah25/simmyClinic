@@ -218,7 +218,7 @@ const INITIAL_DOCTORS = [
     experience: "10 Years",
     regNo: "MDCN/7123",
     image: doctorAdamImg || "/doctor_adam.jpg",
-    email: "adam@simmycare.com",
+    email: "adam@simmyclinic.com",
     password: "password123",
     phone: "08051234567",
     bio: "General practitioner committed to family medicine, chronic disease management, and preventative patient education.",
@@ -266,7 +266,7 @@ const INITIAL_DOCTORS = [
     experience: "8 Years",
     regNo: "MDCN/8431",
     image: doctorFatimaImg || "/doctor_fatima.jpg",
-    email: "fatima@simmycare.com",
+    email: "fatima@simmyclinic.com",
     password: "password123",
     phone: "08034567890",
     bio: "Clinical practitioner specializing in obstetrics, gynecology, maternal care, antenatal care (ANC), family planning services, and female reproductive wellness in the Family Planning / ANC Unit under senior clinical supervision in the OBG Department.",
@@ -727,7 +727,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v31_saima_ceo_top1_only3_doctors";
+  const DATA_VERSION = "v32_simmyclinic_brand_update";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -800,21 +800,21 @@ export default function App() {
   const [pharmacists, setPharmacists] = useState(() => {
     const data = localStorage.getItem("simmy_pharmacists");
     return data ? JSON.parse(data) : [
-      { staffId: "SMC-PHARM-002", name: "Pharm. Bello Ibrahim", email: "pharmacist@simmycare.com", password: "password123", phone: "08012345678", pharmacyName: "SimmyCare Central Pharmacy", pharmacyLicense: "PCN/P/9482" }
+      { staffId: "SMC-PHARM-002", name: "Pharm. Bello Ibrahim", email: "pharmacist@simmyclinic.com", password: "password123", phone: "08012345678", pharmacyName: "SimmyClinic Central Pharmacy", pharmacyLicense: "PCN/P/9482" }
     ];
   });
 
   const [labs, setLabs] = useState(() => {
     const data = localStorage.getItem("simmy_labs");
     return data ? JSON.parse(data) : [
-      { staffId: "SMC-LAB-002", name: "MLS Wasila Goranduma", email: "lab@simmycare.com", password: "password123", phone: "08023456789", facilityName: "SimmyCare Diagnostics", labLicense: "MLSCN/L/3821" }
+      { staffId: "SMC-LAB-002", name: "MLS Wasila Goranduma", email: "lab@simmyclinic.com", password: "password123", phone: "08023456789", facilityName: "SimmyClinic Diagnostics", labLicense: "MLSCN/L/3821" }
     ];
   });
 
   const [logistics, setLogistics] = useState(() => {
     const data = localStorage.getItem("simmy_logistics");
     return data ? JSON.parse(data) : [
-      { staffId: "SMC-LOG-001", name: "Chinedu Okeke", email: "logistics@simmycare.com", password: "password123", phone: "08034567890", vehicleType: "Motorbike", dispatchArea: "Abuja Central" }
+      { staffId: "SMC-LOG-001", name: "Chinedu Okeke", email: "logistics@simmyclinic.com", password: "password123", phone: "08034567890", vehicleType: "Motorbike", dispatchArea: "Abuja Central" }
     ];
   });
 
@@ -988,7 +988,7 @@ export default function App() {
       const storedCreds = localStorage.getItem("simmy_admin_credentials");
       const creds = storedCreds ? JSON.parse(storedCreds) : { username: 'admin', password: 'admin' };
       return [
-        { staffId: 'ADM-0001', name: 'System Administrator', username: creds.username, email: 'admin@simmycare.com', password: creds.password }
+        { staffId: 'ADM-0001', name: 'System Administrator', username: creds.username, email: 'admin@simmyclinic.com', password: creds.password }
       ];
     }
   });
@@ -1149,7 +1149,7 @@ export default function App() {
 
   // Central Dispatch Hub Options & Selection State
   const DISPATCH_HUBS = [
-    { id: 'abuja', name: 'SimmyCare Central Hub (Abuja HQ)', city: 'Abuja (FCT)', lat: 9.0765, lng: 7.3986, sector: 'Abuja Metropolitan HQ' },
+    { id: 'abuja', name: 'SimmyClinic Central Hub (Abuja HQ)', city: 'Abuja (FCT)', lat: 9.0765, lng: 7.3986, sector: 'Abuja Metropolitan HQ' },
     { id: 'lagos-ikeja', name: 'Ikeja Capital Logistics Hub', city: 'Lagos State', lat: 6.6018, lng: 3.3515, sector: 'Ikeja Commercial Sector' },
     { id: 'lagos-vi', name: 'Victoria Island Logistics Station', city: 'Lagos Island', lat: 6.4281, lng: 3.4219, sector: 'VI Coastal Zone' },
     { id: 'kano', name: 'Kano Central Dispatch Command', city: 'Kano State', lat: 12.0022, lng: 8.5919, sector: 'Kano Metropolis Sector' },
@@ -1174,14 +1174,14 @@ export default function App() {
   const [logisticsActivityLogs, setLogisticsActivityLogs] = useState(() => {
     const data = localStorage.getItem("simmy_logistics_logs");
     return data ? JSON.parse(data) : [
-      { id: "LOG-101", timestamp: "23:35:10", tripId: "LAB-3829", riderName: "Chinedu Okeke", checkpoint: "Departed SimmyCare Depot", progress: "30%", sector: "Central Hub HQ" },
+      { id: "LOG-101", timestamp: "23:35:10", tripId: "LAB-3829", riderName: "Chinedu Okeke", checkpoint: "Departed SimmyClinic Depot", progress: "30%", sector: "Central Hub HQ" },
       { id: "LOG-102", timestamp: "23:42:05", tripId: "LAB-3829", riderName: "Chinedu Okeke", checkpoint: "Transiting Expressway", progress: "70%", sector: "Ring Expressway Axis" }
     ];
   });
 
   const addLogisticsActivityLog = (tripId, checkpoint, progress, sector = '') => {
     const timeStr = new Date().toTimeString().split(' ')[0];
-    const riderName = loggedInLogistics ? loggedInLogistics.name : (logisticsSelectedRider ? logisticsSelectedRider.name : "SimmyCare Dispatch");
+    const riderName = loggedInLogistics ? loggedInLogistics.name : (logisticsSelectedRider ? logisticsSelectedRider.name : "SimmyClinic Dispatch");
     const newEntry = {
       id: `LOG-${Date.now()}`,
       timestamp: timeStr,
@@ -1463,7 +1463,7 @@ export default function App() {
               <div style={{ fontWeight: 'bold', color: '#60a5fa', marginBottom: '0.5rem' }}>Direct Bank Transfer Account</div>
               <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '0.35rem' }}>
                 <span style={{ color: 'var(--color-text-muted)' }}>Bank Name:</span> <strong>Zenith Bank PLC</strong>
-                <span style={{ color: 'var(--color-text-muted)' }}>Account Name:</span> <strong>SimmyCare Digital Health Ltd</strong>
+                <span style={{ color: 'var(--color-text-muted)' }}>Account Name:</span> <strong>SimmyClinic Digital Health Ltd</strong>
                 <span style={{ color: 'var(--color-text-muted)' }}>Account No:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: '1rem' }}>1029384756</strong>
               </div>
               <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
@@ -1592,7 +1592,7 @@ export default function App() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                 <img src={logoSvg} alt="Logo" style={{ height: '32px' }} />
-                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.4rem', fontWeight: '800' }}>Simmy<span style={{ color: '#0284c7' }}>Care</span> Health</h2>
+                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.4rem', fontWeight: '800' }}>Simmy<span style={{ color: '#0284c7' }}>Clinic</span> Health</h2>
               </div>
               <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Official Digital Medical Receipt & Invoice</p>
             </div>
@@ -1738,7 +1738,7 @@ export default function App() {
           {/* Footer & Actions */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
             <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-              Thank you for trusting SimmyCare. Keep this receipt for medical record purposes.
+              Thank you for trusting SimmyClinic. Keep this receipt for medical record purposes.
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
@@ -2984,7 +2984,7 @@ export default function App() {
       console.log("Supabase Google Auth fallback:", err);
     }
 
-    const gEmail = patientLoginForm.email || "google.user@simmycare.com";
+    const gEmail = patientLoginForm.email || "google.user@simmyclinic.com";
     const gName = patientLoginForm.name || "Google Authenticated User";
     const userRole = registerRole || "patient";
 
@@ -3078,10 +3078,10 @@ export default function App() {
             metadata.reg_no = patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`;
             metadata.level = patientLoginForm.level || "Junior Doctor";
           } else if (registerRole === 'pharmacist') {
-            metadata.facility_name = patientLoginForm.pharmacyName || "SimmyCare Central Pharmacy";
+            metadata.facility_name = patientLoginForm.pharmacyName || "SimmyClinic Central Pharmacy";
             metadata.license_no = patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`;
           } else if (registerRole === 'lab') {
-            metadata.facility_name = patientLoginForm.facilityName || "SimmyCare Diagnostic Lab";
+            metadata.facility_name = patientLoginForm.facilityName || "SimmyClinic Diagnostic Lab";
             metadata.license_no = patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`;
           } else if (registerRole === 'logistics') {
             metadata.vehicle_type = patientLoginForm.vehicleType || "Motorbike";
@@ -3202,7 +3202,7 @@ export default function App() {
               name: patientLoginForm.name || "Pharm. Specialist",
               phone: patientLoginForm.phone || "",
               password: password,
-              pharmacyName: patientLoginForm.pharmacyName || "SimmyCare Pharmacy Partner",
+              pharmacyName: patientLoginForm.pharmacyName || "SimmyClinic Pharmacy Partner",
               pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
               verified: false,
               active: false
@@ -3216,7 +3216,7 @@ export default function App() {
               name: patientLoginForm.name || "MLS Specialist",
               phone: patientLoginForm.phone || "",
               password: password,
-              facilityName: patientLoginForm.facilityName || "SimmyCare Diagnostic Lab",
+              facilityName: patientLoginForm.facilityName || "SimmyClinic Diagnostic Lab",
               labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
               verified: false,
               active: false
@@ -3251,13 +3251,13 @@ export default function App() {
           (normEmail === a.email.toLowerCase().trim() || normEmail === (a.username || '').toLowerCase().trim()) && 
           password === a.password
         );
-        if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (normEmail === 'admin@simmycare.com' && (password === 'password123' || password === 'admin123' || password === 'admin'))) {
+        if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (normEmail === 'admin@simmyclinic.com' && (password === 'password123' || password === 'admin123' || password === 'admin'))) {
           setAuthRole('admin');
           sessionStorage.setItem("simmy_auth_role", "admin");
           if (matchedAdmin) {
             sessionStorage.setItem("simmy_auth_admin", JSON.stringify(matchedAdmin));
           } else {
-            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({ username: 'admin', name: 'System Administrator', email: 'admin@simmycare.com' }));
+            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({ username: 'admin', name: 'System Administrator', email: 'admin@simmyclinic.com' }));
           }
           clearForm();
           navigateTo('dashboard');
@@ -3666,7 +3666,7 @@ export default function App() {
 
     setSuccessModal({
       title: "Inquiry Sent Successfully",
-      message: "Thank you for reaching out to SimmyCare. Our clinical administration team will respond to your message shortly.",
+      message: "Thank you for reaching out to SimmyClinic. Our clinical administration team will respond to your message shortly.",
       ticket: ticketNumber
     });
   };
@@ -3782,7 +3782,7 @@ export default function App() {
     const updated = {
       username: adminSelfData.username.trim(),
       password: adminSelfData.password.trim(),
-      email: 'admin@simmycare.com',
+      email: 'admin@simmyclinic.com',
       name: 'System Administrator',
       role: 'admin'
     };
@@ -3852,7 +3852,7 @@ export default function App() {
         schedule: newDoctorData.schedule || "Mon - Fri (9am - 5pm)",
         experience: newDoctorData.experience || "5 Years",
         regNo: newDoctorData.regNo || "MDCN/" + Math.floor(1000 + Math.random() * 9000),
-        email: newDoctorData.email || `doc${newId}@simmycare.com`,
+        email: newDoctorData.email || `doc${newId}@simmyclinic.com`,
         password: newDoctorData.password || "password123",
         image: newDoctorData.image || '',
         phone: newDoctorData.phone || '',
@@ -3908,7 +3908,7 @@ export default function App() {
         email: newPharmacistData.email,
         password: newPharmacistData.password,
         phone: newPharmacistData.phone,
-        pharmacyName: newPharmacistData.pharmacyName || "SimmyCare Central Pharmacy",
+        pharmacyName: newPharmacistData.pharmacyName || "SimmyClinic Central Pharmacy",
         pharmacyLicense: newPharmacistData.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
         verified: true,
         active: true,
@@ -3955,7 +3955,7 @@ export default function App() {
         email: newLabData.email,
         password: newLabData.password,
         phone: newLabData.phone,
-        facilityName: newLabData.facilityName || "SimmyCare Lab Partner",
+        facilityName: newLabData.facilityName || "SimmyClinic Lab Partner",
         labLicense: newLabData.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
         verified: true,
         active: true,
@@ -4433,7 +4433,7 @@ export default function App() {
   };
 
   const getAbujaLocationData = (addressStr, tripId, startLocation = null) => {
-    let hub = { lat: 9.0765, lng: 7.3986, sector: 'SimmyCare Central Hub (Abuja HQ)' };
+    let hub = { lat: 9.0765, lng: 7.3986, sector: 'SimmyClinic Central Hub (Abuja HQ)' };
     
     const addr = (addressStr || '').toLowerCase();
     
@@ -4752,7 +4752,7 @@ const LeafletDispatchMap = ({
     });
 
     const hubIcon = createPin('🏥', '#10b981', 'Central Hub');
-    const hubTitle = centralDispatch ? centralDispatch.name : 'SimmyCare Central Hub';
+    const hubTitle = centralDispatch ? centralDispatch.name : 'SimmyClinic Central Hub';
     const hubCity = centralDispatch ? centralDispatch.city : 'Central Dispatch HQ — Abuja';
 
     hubMarkerRef.current = window.L.marker([centerLat, centerLng], { icon: hubIcon }).addTo(map);
@@ -5046,7 +5046,7 @@ const LeafletDispatchMap = ({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
                   <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                  <span>Departed SimmyCare Depot</span>
+                  <span>Departed SimmyClinic Depot</span>
                 </div>
                 {currentProgress === 0 && (
                   <button
@@ -5180,9 +5180,9 @@ const LeafletDispatchMap = ({
         <div className="header-container">
           <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
             <div className="logo-img-wrapper">
-              <img className="logo-img" src={logoSvg} alt="SimmyCare Logo" />
+              <img className="logo-img" src={logoSvg} alt="SimmyClinic Logo" />
             </div>
-            <span className="logo-text">Simmy<span>Care</span></span>
+            <span className="logo-text">Simmy<span>Clinic</span></span>
           </a>
 
           <nav aria-label="Main Navigation">
@@ -5236,7 +5236,7 @@ const LeafletDispatchMap = ({
                   <span>Our Priority</span>
                 </h1>
                 <p className="hero-subtitle">
-                  SimmyCare connects you directly with MDCN-certified specialists, general practitioners, and laboratory consultants. Access on-demand virtual sessions or book physical visits and home healthcare across Abuja, Kaduna, Kano, Bauchi, Gombe, and Damaturu.
+                  SimmyClinic connects you directly with MDCN-certified specialists, general practitioners, and laboratory consultants. Access on-demand virtual sessions or book physical visits and home healthcare across Abuja, Kaduna, Kano, Bauchi, Gombe, and Damaturu.
                 </p>
                 <div className="hero-ctas">
                   <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Consultation</button>
@@ -5261,7 +5261,7 @@ const LeafletDispatchMap = ({
 
                 <div className="hero-image-wrapper">
                   <div className="hero-shape-bg"></div>
-                  <img className="hero-main-img" src={heroPng} alt="SimmyCare Family Clinic Center" />
+                  <img className="hero-main-img" src={heroPng} alt="SimmyClinic Family Clinic Center" />
 
                   {/* Floating badges */}
                   <div className="floating-badge badge-top-right glassmorphic">
@@ -5479,7 +5479,7 @@ const LeafletDispatchMap = ({
             <div className="testimonials-section">
               <div className="section-header">
                 <h2>What our patients say</h2>
-                <p>Real stories from Nigerians who trust SimmyCare.</p>
+                <p>Real stories from Nigerians who trust SimmyClinic.</p>
               </div>
               <div className="testimonials-grid">
                 <div className="testimonial-card glassmorphic">
@@ -5512,7 +5512,7 @@ const LeafletDispatchMap = ({
                   <div className="testimonial-stars">
                     <i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i><i className="fa-solid fa-star"></i>
                   </div>
-                  <p className="testimonial-quote">"Living far from specialist hospitals, SimmyCare changed everything. My follow-ups happen from home."</p>
+                  <p className="testimonial-quote">"Living far from specialist hospitals, SimmyClinic changed everything. My follow-ups happen from home."</p>
                   <div className="testimonial-author">
                     <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg, #1F4A6F, #182B49)' }}>YI</div>
                     <div className="testimonial-author-info">
@@ -7025,7 +7025,7 @@ const LeafletDispatchMap = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
                     <h3 style={{ margin: 0 }}>Live Pharmacy Stock Price Directory</h3>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Real-time tariffs synced directly with SimmyCare central dispensary.</p>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Real-time tariffs synced directly with SimmyClinic central dispensary.</p>
                   </div>
                   {(authRole === 'pharmacist' || authRole === 'admin') && (
                     <span style={{ fontSize: '0.78rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.6rem', borderRadius: '6px', fontWeight: 'bold' }}>
@@ -7639,7 +7639,7 @@ const LeafletDispatchMap = ({
 
             <div className="booking-layout">
               <div className="booking-info-panel">
-                <h3>SimmyCare HQ</h3>
+                <h3>SimmyClinic HQ</h3>
                 <p>Need urgent assistance? Reach out via WhatsApp or call our administrative hotline directly.</p>
                 <div className="contact-details-box glassmorphic">
                   <p><strong><i className="fa-solid fa-phone"></i> Call Center:</strong> +234 901 432 4442</p>
@@ -7703,9 +7703,9 @@ const LeafletDispatchMap = ({
                 <div className="login-left-inner">
                   <div className="login-logo-row">
                     <div className="login-logo-box">
-                      <img className="logo-img" src={logoSvg} alt="SimmyCare Logo" />
+                      <img className="logo-img" src={logoSvg} alt="SimmyClinic Logo" />
                     </div>
-                    <span className="login-logo-text">SimmyCare</span>
+                    <span className="login-logo-text">SimmyClinic</span>
                   </div>
                   <h1 className="login-left-title">Connecting Patients to World-Class Medical Expertise.</h1>
                   <p className="login-left-desc">
@@ -7728,7 +7728,7 @@ const LeafletDispatchMap = ({
                   </div>
 
                   <div className="login-left-footer">
-                    <p>&copy; 2026 SimmyCare. All rights reserved.</p>
+                    <p>&copy; 2026 SimmyClinic. All rights reserved.</p>
                   </div>
                 </div>
               </div>
@@ -8608,7 +8608,7 @@ const LeafletDispatchMap = ({
                                                {courierName}
                                              </div>
                                              <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                                               SimmyCare Dispatcher • Motorbike
+                                               SimmyClinic Dispatcher • Motorbike
                                              </div>
                                            </div>
                                            <a href="tel:08012345678" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
@@ -8825,7 +8825,7 @@ const LeafletDispatchMap = ({
                                   <div className="diagnostic-report-card" style={{ border: '2px solid var(--color-indigo)', borderRadius: '12px', background: '#fff', overflow: 'hidden', boxShadow: '0 4px 12px rgba(24, 43, 73, 0.08)', color: '#1e293b' }}>
                                     <div style={{ background: 'var(--color-indigo)', color: '#fff', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>SimmyCare Labs</span>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>SimmyClinic Labs</span>
                                         <span style={{ fontSize: '0.65rem', opacity: '0.8' }}>MLSCN Licensed Facility #3821</span>
                                       </div>
                                       <span style={{ fontSize: '0.75rem', fontWeight: '600', background: 'rgba(255,255,255,0.15)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>OFFICIAL RECORD</span>
@@ -8834,7 +8834,7 @@ const LeafletDispatchMap = ({
                                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.75rem', borderBottom: '1px dashed #cbd5e1', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
                                         <div><strong>Patient:</strong> {selectedLabRequest.patientName}</div>
                                         <div><strong>Collected Date:</strong> {selectedLabRequest.date}</div>
-                                        <div><strong>Physician:</strong> SimmyCare Practitioner</div>
+                                        <div><strong>Physician:</strong> SimmyClinic Practitioner</div>
                                         <div><strong>Report ID:</strong> RPT-{selectedLabRequest.id}</div>
                                       </div>
 
@@ -9586,9 +9586,9 @@ const LeafletDispatchMap = ({
                                 {(() => {
                                   const query = availabilitySearchQuery.toLowerCase();
                                   const staffList = [
-                                    { name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmycare.com' },
-                                    { name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
-                                    { name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
+                                    { name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmyclinic.com' },
+                                    { name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmyclinic.com' },
+                                    { name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmyclinic.com' },
                                     ...doctors.map(d => ({
                                       name: d.name,
                                       role: d.specialty,
@@ -11212,7 +11212,7 @@ const LeafletDispatchMap = ({
                                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
                                           <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
-                                          <span>Departed SimmyCare Depot</span>
+                                          <span>Departed SimmyClinic Depot</span>
                                         </div>
                                         {currentProgress < 30 && (
                                           <button
@@ -11222,7 +11222,7 @@ const LeafletDispatchMap = ({
                                               const isOrder = mapTrackedTripId.startsWith('ORD-');
                                               const setList = isOrder ? setInquiries : setAppointments;
                                               setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
-                                              addLogisticsActivityLog(mapTrackedTripId, 'Departed SimmyCare Depot', 30, 'Central Hub HQ');
+                                              addLogisticsActivityLog(mapTrackedTripId, 'Departed SimmyClinic Depot', 30, 'Central Hub HQ');
                                             }}
                                             style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
                                           >
@@ -11645,7 +11645,7 @@ const LeafletDispatchMap = ({
               <div>
                 <div className="dashboard-header glassmorphic">
                   <div>
-                    <h2>SimmyCare Control Panel</h2>
+                    <h2>SimmyClinic Control Panel</h2>
                   </div>
                   <div className="dashboard-header-actions">
                     <button className="btn btn-outline" onClick={handleLogout}>Sign Out</button>
@@ -11970,9 +11970,9 @@ const LeafletDispatchMap = ({
                                 {(() => {
                                   const query = availabilitySearchQuery.toLowerCase();
                                   const staffList = [
-                                    { type: 'pharmacist', name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmycare.com' },
-                                    { type: 'lab', name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmycare.com' },
-                                    { type: 'logistics', name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmycare.com' },
+                                    { type: 'pharmacist', name: 'Pharmacy Dispense Hub', role: 'Pharmacist', available: isPharmacistAvailable, icon: 'fa-prescription-bottle-medical', email: 'pharmacist@simmyclinic.com' },
+                                    { type: 'lab', name: 'Mobile Lab Collection Unit', role: 'Lab Tech', available: isLabTechAvailable, icon: 'fa-vials', email: 'lab@simmyclinic.com' },
+                                    { type: 'logistics', name: 'Abuja Delivery Hub', role: 'Courier / Rider', available: isLogisticsAvailable, icon: 'fa-motorcycle', email: 'logistics@simmyclinic.com' },
                                     ...doctors.map(d => ({
                                       type: 'doctor',
                                       id: d.id,
@@ -12193,7 +12193,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="email"
                                 required
-                                placeholder="doctor@simmycare.com"
+                                placeholder="doctor@simmyclinic.com"
                                 value={newDoctorData.email}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, email: e.target.value })}
                               />
@@ -12804,7 +12804,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="text"
                                 required
-                                placeholder="e.g. SimmyCare Central Pharmacy"
+                                placeholder="e.g. SimmyClinic Central Pharmacy"
                                 value={newPharmacistData.pharmacyName}
                                 onChange={(e) => setNewPharmacistData({ ...newPharmacistData, pharmacyName: e.target.value })}
                               />
@@ -12827,7 +12827,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="email"
                                 required
-                                placeholder="pharmacist@simmycare.com"
+                                placeholder="pharmacist@simmyclinic.com"
                                 value={newPharmacistData.email}
                                 onChange={(e) => setNewPharmacistData({ ...newPharmacistData, email: e.target.value })}
                               />
@@ -12996,7 +12996,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="text"
                                 required
-                                placeholder="e.g. SimmyCare Diagnostics"
+                                placeholder="e.g. SimmyClinic Diagnostics"
                                 value={newLabData.facilityName}
                                 onChange={(e) => setNewLabData({ ...newLabData, facilityName: e.target.value })}
                               />
@@ -13019,7 +13019,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="email"
                                 required
-                                placeholder="lab@simmycare.com"
+                                placeholder="lab@simmyclinic.com"
                                 value={newLabData.email}
                                 onChange={(e) => setNewLabData({ ...newLabData, email: e.target.value })}
                               />
@@ -13204,7 +13204,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="email"
                                 required
-                                placeholder="rider@simmycare.com"
+                                placeholder="rider@simmyclinic.com"
                                 value={newLogisticsData.email}
                                 onChange={(e) => setNewLogisticsData({ ...newLogisticsData, email: e.target.value })}
                               />
@@ -13377,7 +13377,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="email"
                                 required
-                                placeholder="zainab@simmycare.com"
+                                placeholder="zainab@simmyclinic.com"
                                 value={newAdminData.email}
                                 onChange={(e) => setNewAdminData({ ...newAdminData, email: e.target.value })}
                               />
@@ -13572,9 +13572,9 @@ const LeafletDispatchMap = ({
           <div className="footer-brand">
             <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
               <div className="logo-img-wrapper">
-                <img className="logo-img" src={logoSvg} alt="SimmyCare Logo" />
+                <img className="logo-img" src={logoSvg} alt="SimmyClinic Logo" />
               </div>
-              <span className="logo-text">Simmy<span>Care</span></span>
+              <span className="logo-text">Simmy<span>Clinic</span></span>
             </a>
             <p>Nigeria's primary digital care network. Bridging the gap between patient care, diagnostics, and pharmaceutical logistics.</p>
             <div className="footer-social-icons">
@@ -13608,7 +13608,7 @@ const LeafletDispatchMap = ({
           <div className="footer-contact-col">
             <h4>CONTACT</h4>
             <p><i className="fa-solid fa-phone"></i> +234 901 432 4442</p>
-            <p><i className="fa-solid fa-envelope"></i> support@simmycare.com</p>
+            <p><i className="fa-solid fa-envelope"></i> support@simmyclinic.com</p>
             <p><i className="fa-regular fa-clock"></i> Mon - Fri: 8AM - 5PM</p>
             <p><i className="fa-regular fa-clock"></i> Sat: 9AM - 2PM</p>
           </div>
@@ -13618,7 +13618,7 @@ const LeafletDispatchMap = ({
       {/* Footer Copyright Bar */}
       <div className="footer-bottom-bar">
         <div className="footer-bottom-container">
-          <p>&copy; 2026 SimmyCare. All rights reserved.</p>
+          <p>&copy; 2026 SimmyClinic. All rights reserved.</p>
           <p>RC Number: RC 9198656 | Developed by Nexel Technologies</p>
         </div>
       </div>
@@ -14630,10 +14630,10 @@ const LeafletDispatchMap = ({
       <div className="whatsapp-float-wrapper">
         <div className={`whatsapp-popup ${whatsappPopupOpen ? 'open' : ''}`}>
           <div className="whatsapp-popup-header">
-            <i className="fa-brands fa-whatsapp"></i> SimmyCare WhatsApp
+            <i className="fa-brands fa-whatsapp"></i> SimmyClinic WhatsApp
           </div>
           <a
-            href="https://wa.me/2349014324442?text=Hello%20simmycare%20I%20will%20like%20to%20book%20for%20consultation.%20"
+            href="https://wa.me/2349014324442?text=Hello%20simmyclinic%20I%20will%20like%20to%20book%20for%20consultation.%20"
             className="whatsapp-popup-option"
             target="_blank"
             rel="noopener noreferrer"
@@ -14814,21 +14814,21 @@ const LeafletDispatchMap = ({
               style={{ fontSize: '0.9rem', lineHeight: '1.5', color: 'var(--color-text)', overflowY: 'auto', maxHeight: '320px', paddingRight: '0.5rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1rem' }}
             >
               <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '1px double var(--color-border)', paddingBottom: '1rem' }}>
-                <strong style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>SIMMYCARE CLINICAL WORKSPACE & TELEMEDICINE AGREEMENT</strong><br />
+                <strong style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>SIMMYCLINIC CLINICAL WORKSPACE & TELEMEDICINE AGREEMENT</strong><br />
                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>REGULATORY COMPLIANT DOCUMENT: NHA 2014 & NDPA 2023</strong>
               </div>
 
               <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-                <em>LAST REVISED: JULY 15, 2026. Please read this Patient User Agreement, Consent to Telehealth Services, and Privacy Policy (collectively, the "Agreement") carefully before accessing or using the SimmyCare health portal. By signing up, scheduling a consultation, or initiating an order, you agree to be bound by these legal terms.</em>
+                <em>LAST REVISED: JULY 15, 2026. Please read this Patient User Agreement, Consent to Telehealth Services, and Privacy Policy (collectively, the "Agreement") carefully before accessing or using the SimmyClinic health portal. By signing up, scheduling a consultation, or initiating an order, you agree to be bound by these legal terms.</em>
               </p>
 
               <h4>SECTION 1: CLINICAL SERVICES & TELEHEALTH CONSENT</h4>
-              <p>1.1 <strong>Scope of Service:</strong> SimmyCare (the "Portal", "Platform") facilitates remote medical consultations, laboratory diagnostic requests, pharmacy delivery dispatch, and clinical health services through licensed healthcare providers. By executing this Agreement, you grant consent to our clinical specialists to conduct virtual assessments, order laboratory evaluations, and write digital prescriptions.</p>
+              <p>1.1 <strong>Scope of Service:</strong> SimmyClinic (the "Portal", "Platform") facilitates remote medical consultations, laboratory diagnostic requests, pharmacy delivery dispatch, and clinical health services through licensed healthcare providers. By executing this Agreement, you grant consent to our clinical specialists to conduct virtual assessments, order laboratory evaluations, and write digital prescriptions.</p>
               <p>1.2 <strong>Clinical Limitations:</strong> Telehealth consultations utilize interactive audio, video, and electronic communications. You acknowledge and accept that a virtual consultation has inherent limitations compared to an in-person clinical examination (such as the inability to perform physical palpation, direct auscultation, or immediate clinical vitals verification). As a result, the accuracy of diagnostic assessments is highly dependent on the information you provide.</p>
-              <p>1.3 <strong>Emergency Disclaimer:</strong> SimmyCare IS NOT AN EMERGENCY MEDICAL PORTAL. Our clinicians do not treat acute, life-threatening medical emergencies. If you are experiencing symptoms of a severe nature (such as severe chest pain, shortness of breath, heavy bleeding, or sudden neurological deficits), you must immediately report to the nearest physical emergency facility or call local emergency services.</p>
+              <p>1.3 <strong>Emergency Disclaimer:</strong> SimmyClinic IS NOT AN EMERGENCY MEDICAL PORTAL. Our clinicians do not treat acute, life-threatening medical emergencies. If you are experiencing symptoms of a severe nature (such as severe chest pain, shortness of breath, heavy bleeding, or sudden neurological deficits), you must immediately report to the nearest physical emergency facility or call local emergency services.</p>
 
               <h4>SECTION 2: HEALTH DATA CONFIDENTIALITY & LEGAL STANDARDS</h4>
-              <p>2.1 <strong>Statutory Confidentiality:</strong> In accordance with Section 26 and 29 of the National Health Act (NHA), 2014, and the Medical and Dental Practitioners Act, all medical records, diagnostic results, and clinical logs compiled by SimmyCare are treated with the highest degree of confidentiality. No medical records will be disclosed to external parties without your prior written authorization, except where mandated by law or court order.</p>
+              <p>2.1 <strong>Statutory Confidentiality:</strong> In accordance with Section 26 and 29 of the National Health Act (NHA), 2014, and the Medical and Dental Practitioners Act, all medical records, diagnostic results, and clinical logs compiled by SimmyClinic are treated with the highest degree of confidentiality. No medical records will be disclosed to external parties without your prior written authorization, except where mandated by law or court order.</p>
               <p>2.2 <strong>Server Access Governance (RBAC & RLS):</strong> To protect patient security, we implement strict Role-Based Access Control (RBAC) and database-level Row-Level Security (RLS) on our servers. Access to clinical records is strictly compartmentalized:
                 <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
                   <li><strong>Medical Practitioners:</strong> Can access only their assigned patients' files, clinical logs, and symptom records.</li>
@@ -14908,7 +14908,7 @@ const LeafletDispatchMap = ({
                 };
                 setLogistics([...logistics, newRider]);
                 setShowRiderOnboardModal(false);
-                alert(`Rider "${riderForm.name}" successfully onboarded into SimmyCare Logistics network!`);
+                alert(`Rider "${riderForm.name}" successfully onboarded into SimmyClinic Logistics network!`);
               }}
               style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
             >
@@ -14930,7 +14930,7 @@ const LeafletDispatchMap = ({
                   <input
                     type="email"
                     required
-                    placeholder="name@simmycare.com"
+                    placeholder="name@simmyclinic.com"
                     value={riderForm.email}
                     onChange={(e) => setRiderForm({ ...riderForm, email: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}

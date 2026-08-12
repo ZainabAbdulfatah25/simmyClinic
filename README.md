@@ -1,4 +1,4 @@
-# SimmyCare Consultation Website
+# SimmyClinic Consultation Website
 
 A premium, highly responsive digital healthcare consultation portal and scheduling system. This application is modeled after the sleek, minimalist, and modern aesthetics of **Carevo.com.ng** (featuring a warm cream background, serif headings, deep navy accents, monospaced numbers, and smooth transitions).
 

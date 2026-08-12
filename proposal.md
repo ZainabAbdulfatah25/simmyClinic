@@ -1,7 +1,7 @@
 # Project Proposal, Timeline & Commercial Agreement
 
-**Project Title:** SimmyCare Consultation Website Development  
-**Prepared for:** Client (SimmyCare Online Clinic)  
+**Project Title:** SimmyClinic Consultation Website Development  
+**Prepared for:** Client (SimmyClinic Online Clinic)  
 **Prepared by:** Nexel Technologies  
 **Role:** Website Development Services  
 **Date:** June 18, 2026  

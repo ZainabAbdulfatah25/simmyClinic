@@ -1,5 +1,5 @@
 -- ============================================================
--- SIMMYCARE CLINIC - SUPABASE DATABASE SCHEMA
+-- SIMMYCLINIC CLINIC - SUPABASE DATABASE SCHEMA
 -- Run this entire file in Supabase Dashboard > SQL Editor
 -- ============================================================
 

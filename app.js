@@ -1,5 +1,5 @@
 /**
- * SimmyCare Clinic Web Application Core Engine
+ * SimmyClinic Clinic Web Application Core Engine
  * Client-side State, Routing, and Dynamic Component Rendering
  */
 
@@ -413,7 +413,7 @@ if (waClose && waWidget) {
 
 if (waSend) {
   waSend.addEventListener("click", () => {
-    const text = encodeURIComponent("Hello simmycare I will like to book for consultation. ");
+    const text = encodeURIComponent("Hello simmyclinic I will like to book for consultation. ");
     window.open(`https://wa.me/2349014324442?text=${text}`, "_blank");
     waWidget.classList.remove("open");
   });
