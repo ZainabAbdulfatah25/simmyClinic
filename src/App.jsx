@@ -2478,72 +2478,7 @@ export default function App() {
     );
   };
 
-  // Real-Time GPS Telemetry — strictly manual rider input (auto-timer only runs if manual simulation toggle is turned ON)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // 1. Update Pharmacy Orders (inquiries) in transit ONLY if manual simulation mode is enabled
-      setInquiries(prev => {
-        let changed = false;
-        const next = prev.map(inq => {
-          if (inq.id.startsWith('ORD-') && inq.isSimulating === true) {
-            const currentProg = inq.deliveryProgress !== undefined ? inq.deliveryProgress : 0;
-            if (currentProg < 100) {
-              changed = true;
-              return { ...inq, deliveryProgress: Math.min(100, currentProg + 5) };
-            }
-          }
-          return inq;
-        });
-        return changed ? next : prev;
-      });
 
-      // 2. Update Lab Trips (appointments) in transit ONLY if manual simulation mode is enabled
-      setAppointments(prev => {
-        let changed = false;
-        const next = prev.map(apt => {
-          if (apt.id.startsWith('LAB-') && apt.isSimulating === true) {
-            const currentProg = apt.deliveryProgress !== undefined ? apt.deliveryProgress : 0;
-            if (currentProg < 100) {
-              changed = true;
-              return { ...apt, deliveryProgress: Math.min(100, currentProg + 5) };
-            }
-          }
-          return apt;
-        });
-        return changed ? next : prev;
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Control Room Live Tracking Map Simulation Progress timer
-  useEffect(() => {
-    let timer;
-    if (isMapSimulating) {
-      timer = setInterval(() => {
-        setMapSimulationProgress(prev => {
-          if (prev >= 100) {
-            setIsMapSimulating(false);
-            if (mapTrackedTripId) {
-              const isOrder = mapTrackedTripId.startsWith('ORD-');
-              const setList = isOrder ? setInquiries : setAppointments;
-              setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
-            }
-            return 100;
-          }
-          const nextVal = Math.min(100, prev + 5);
-          if (mapTrackedTripId) {
-            const isOrder = mapTrackedTripId.startsWith('ORD-');
-            const setList = isOrder ? setInquiries : setAppointments;
-            setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: nextVal } : x));
-          }
-          return nextVal;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isMapSimulating, mapTrackedTripId]);
 
   // Sync to local storage
   useEffect(() => {
@@ -2847,20 +2782,20 @@ export default function App() {
   // Dynamic SEO Document Title & Meta Updates
   useEffect(() => {
     const titles = {
-      'home': 'SimmyCare Online Clinic — Virtual Healthcare & Doctor Consultations',
-      'doctors': 'Meet Specialist Doctors & Medical Consultants | SimmyCare',
-      'booking': 'Book Online Doctor Consultation & Physical Visits | SimmyCare',
-      'pricing': 'Consultation Plans & Healthcare Pricing | SimmyCare',
-      'contact': 'Contact SimmyCare Clinic & Support Team | SimmyCare',
-      'portal-login': 'Patient & Staff Portal Login | SimmyCare',
-      'dashboard': 'Healthcare Portal Dashboard | SimmyCare',
-      'service-online-consultation': 'Virtual Doctor Consultations | SimmyCare',
-      'service-mobile-lab': 'Mobile Diagnostics & Lab Tests | SimmyCare',
-      'service-pharmacy-delivery': 'Prescription Home Delivery | SimmyCare',
-      'service-home-services': 'Home Healthcare & Companion Visits | SimmyCare',
-      'service-physical-consult': 'In-Person Specialist Consultations | SimmyCare'
+      'home': 'SimmyClinic | Virtual Healthcare & Doctor Consultations',
+      'doctors': 'Meet Specialist Doctors & Medical Consultants | SimmyClinic',
+      'booking': 'Book Online Doctor Consultation & Physical Visits | SimmyClinic',
+      'pricing': 'Consultation Plans & Healthcare Pricing | SimmyClinic',
+      'contact': 'Contact SimmyClinic & Support Team | SimmyClinic',
+      'portal-login': 'Patient & Staff Portal Login | SimmyClinic',
+      'dashboard': 'Healthcare Portal Dashboard | SimmyClinic',
+      'service-online-consultation': 'Virtual Doctor Consultations | SimmyClinic',
+      'service-mobile-lab': 'Mobile Diagnostics & Lab Tests | SimmyClinic',
+      'service-pharmacy-delivery': 'Prescription Home Delivery | SimmyClinic',
+      'service-home-services': 'Home Healthcare & Companion Visits | SimmyClinic',
+      'service-physical-consult': 'In-Person Specialist Consultations | SimmyClinic'
     };
-    document.title = titles[currentView] || 'SimmyCare Online Clinic — Virtual Healthcare';
+    document.title = titles[currentView] || 'SimmyClinic | Virtual Healthcare';
   }, [currentView]);
 
   // Restore modals or nested tabs from URL/session on initial load or doctors change
@@ -5097,44 +5032,10 @@ const LeafletDispatchMap = ({
               <div style={{ width: `${currentProgress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #06b6d4)', transition: 'width 0.3s' }}></div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  const isOrder = mapTrackedTripId.startsWith('ORD-');
-                  let targetList = isOrder ? inquiries : appointments;
-                  let setList = isOrder ? setInquiries : setAppointments;
-                  
-                  setList(targetList.map(x => {
-                    if (x.id === mapTrackedTripId) {
-                      const currentProg = x.deliveryProgress || 0;
-                      return { 
-                        ...x, 
-                        isSimulating: !x.isSimulating, 
-                        deliveryProgress: currentProg >= 100 ? 0 : currentProg 
-                      };
-                    }
-                    return x;
-                  }));
-                }}
-                style={{ flex: 1, padding: '0.35rem', fontSize: '0.75rem' }}
-              >
-                <i className={activeItem && activeItem.isSimulating ? "fa-solid fa-pause" : "fa-solid fa-play"}></i> {activeItem && activeItem.isSimulating ? 'Pause Simulation' : 'Start Simulation'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => {
-                  const isOrder = mapTrackedTripId.startsWith('ORD-');
-                  let targetList = isOrder ? inquiries : appointments;
-                  let setList = isOrder ? setInquiries : setAppointments;
-                  setList(targetList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 0, isSimulating: false } : x));
-                }}
-                style={{ padding: '0.35rem', fontSize: '0.75rem' }}
-              >
-                <i className="fa-solid fa-rotate-left"></i> Reset
-              </button>
+            <div style={{ marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.2)', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                <i className="fa-solid fa-hand-pointer"></i> Manual Rider Checkpoint Mode Active
+              </div>
             </div>
 
             {/* Route Checkpoints with Manual Logging */}
@@ -10953,8 +10854,6 @@ const LeafletDispatchMap = ({
                                                     style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                                                     onClick={() => {
                                                       setMapTrackedTripId(ship.id);
-                                                      setMapSimulationProgress(0);
-                                                      setIsMapSimulating(true);
                                                     }}
                                                     title="Track Live on Map"
                                                   >
@@ -11100,8 +10999,6 @@ const LeafletDispatchMap = ({
                                                     style={{ color: 'var(--color-accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
                                                     onClick={() => {
                                                       setMapTrackedTripId(trip.id);
-                                                      setMapSimulationProgress(0);
-                                                      setIsMapSimulating(true);
                                                     }}
                                                     title="Track Live on Map"
                                                   >
@@ -11230,8 +11127,6 @@ const LeafletDispatchMap = ({
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   setMapTrackedTripId(val);
-                                  setMapSimulationProgress(0);
-                                  setIsMapSimulating(false);
                                   if (val) {
                                     const matchedOrder = inquiries.find(i => i.id === val);
                                     const matchedTrip = appointments.find(a => a.id === val);
@@ -11266,6 +11161,7 @@ const LeafletDispatchMap = ({
                             {mapTrackedTripId ? (() => {
                               const activeOrder = inquiries.find(inq => inq.id === mapTrackedTripId);
                               const activeTrip = appointments.find(apt => apt.id === mapTrackedTripId);
+                              const currentProgress = activeOrder ? (activeOrder.deliveryProgress || 0) : (activeTrip ? (activeTrip.deliveryProgress || 0) : 0);
 
                               let clientName = "N/A";
                               let phone = "N/A";
@@ -11293,56 +11189,19 @@ const LeafletDispatchMap = ({
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                                   <div style={{ background: 'rgba(255,255,255,0.04)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}>TRACKING SIMULATION</strong>
-                                      <span style={{ fontSize: '0.75rem', color: isMapSimulating ? '#10b981' : '#eab308', fontWeight: 'bold' }}>
-                                        {isMapSimulating ? '● ON THE ROAD' : '● PAUSED'}
+                                      <strong style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}>RIDER TELEMETRY CHECKPOINT</strong>
+                                      <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold' }}>
+                                        ● MANUAL RIDER INPUT
                                       </span>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                      <button
-                                        type="button"
-                                        className="btn btn-xs btn-primary"
-                                        onClick={() => {
-                                          if (mapSimulationProgress >= 100) {
-                                            setMapSimulationProgress(0);
-                                          }
-                                          setIsMapSimulating(true);
-                                        }}
-                                        disabled={isMapSimulating}
-                                        style={{ flex: 1, padding: '0.3rem', fontSize: '0.75rem' }}
-                                      >
-                                        <i className="fa-solid fa-play"></i> Start Track
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-xs btn-outline"
-                                        onClick={() => setIsMapSimulating(false)}
-                                        disabled={!isMapSimulating}
-                                        style={{ flex: 1, padding: '0.3rem', fontSize: '0.75rem' }}
-                                      >
-                                        <i className="fa-solid fa-pause"></i> Pause
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-xs btn-outline"
-                                        onClick={() => {
-                                          setIsMapSimulating(false);
-                                          setMapSimulationProgress(0);
-                                        }}
-                                        style={{ padding: '0.3rem', fontSize: '0.75rem' }}
-                                      >
-                                        <i className="fa-solid fa-rotate-left"></i>
-                                      </button>
                                     </div>
 
                                     {/* Route Progress Bar */}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>
-                                      <span>Progress: {mapSimulationProgress}%</span>
-                                      <span>ETA: {Math.max(0, Math.ceil((100 - mapSimulationProgress) / 5))} mins</span>
+                                      <span>Progress: {currentProgress}%</span>
+                                      <span>Checkpoint: {currentProgress === 100 ? 'Delivered' : currentProgress >= 70 ? 'Destination Area' : currentProgress >= 30 ? 'In Transit' : 'At Depot'}</span>
                                     </div>
                                     <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden', marginBottom: '0.5rem' }}>
-                                      <div style={{ width: `${mapSimulationProgress}%`, height: '100%', background: 'var(--color-accent)', borderRadius: '3px' }}></div>
+                                      <div style={{ width: `${currentProgress}%`, height: '100%', background: 'var(--color-accent)', borderRadius: '3px' }}></div>
                                     </div>
 
                                     {/* Route Checkpoints with Manual Logging */}
@@ -11351,79 +11210,76 @@ const LeafletDispatchMap = ({
 
                                       {/* Checkpoint 1: Depot Departure */}
                                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
-                                          <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 0 ? '#fff' : 'var(--color-text-muted)' }}>
+                                          <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 0 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
                                           <span>Departed SimmyCare Depot</span>
                                         </div>
-                                        {mapSimulationProgress === 0 && (
+                                        {currentProgress < 30 && (
                                           <button
                                             type="button"
                                             className="btn btn-xs btn-accent"
                                             onClick={() => {
-                                              setMapSimulationProgress(30);
                                               const isOrder = mapTrackedTripId.startsWith('ORD-');
                                               const setList = isOrder ? setInquiries : setAppointments;
                                               setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 30, status: isOrder ? 'Out for Delivery' : 'Sample Collected' } : x));
                                               addLogisticsActivityLog(mapTrackedTripId, 'Departed SimmyCare Depot', 30, 'Central Hub HQ');
                                             }}
-                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
                                           >
-                                            Log Depart
+                                            Log Depart (30%)
                                           </button>
                                         )}
                                       </div>
 
                                       {/* Checkpoint 2: Abuja Ring Expressway */}
                                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
-                                          <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 30 ? '#fff' : 'var(--color-text-muted)' }}>
+                                          <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 30 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
                                           <span>Transiting Expressway</span>
                                         </div>
-                                        {mapSimulationProgress === 30 && (
+                                        {currentProgress >= 30 && currentProgress < 70 && (
                                           <button
                                             type="button"
                                             className="btn btn-xs btn-accent"
                                             onClick={() => {
-                                              setMapSimulationProgress(70);
                                               const isOrder = mapTrackedTripId.startsWith('ORD-');
                                               const setList = isOrder ? setInquiries : setAppointments;
                                               setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 70 } : x));
                                               addLogisticsActivityLog(mapTrackedTripId, 'Transiting Expressway', 70, 'Expressway Transit Corridor');
                                             }}
-                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
                                           >
-                                            Log Transit
+                                            Log Transit (70%)
                                           </button>
                                         )}
                                       </div>
 
                                       {/* Checkpoint 3: Destination Ward */}
                                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.8rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: mapSimulationProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
-                                          <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: currentProgress >= 70 ? '#fff' : 'var(--color-text-muted)' }}>
+                                          <i className="fa-solid fa-circle-check" style={{ color: currentProgress >= 70 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
                                           <span>Entering Destination Area</span>
                                         </div>
-                                        {mapSimulationProgress === 70 && (
+                                        {currentProgress >= 70 && currentProgress < 100 && (
                                           <button
                                             type="button"
                                             className="btn btn-xs btn-accent"
                                             onClick={() => {
-                                              setMapSimulationProgress(100);
                                               const isOrder = mapTrackedTripId.startsWith('ORD-');
                                               const setList = isOrder ? setInquiries : setAppointments;
                                               setList(currentList => currentList.map(x => x.id === mapTrackedTripId ? { ...x, deliveryProgress: 100, status: isOrder ? 'Delivered' : 'Completed' } : x));
                                               addLogisticsActivityLog(mapTrackedTripId, 'Entering Destination Area', 100, address);
                                             }}
-                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHighlight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
+                                            style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', height: 'auto', lineHeight: '1', background: 'var(--color-accent)', border: 'none', color: '#000', borderRadius: '4px', cursor: 'pointer' }}
                                           >
-                                            Log Arrival
+                                            Log Arrival (100%)
                                           </button>
                                         )}
                                       </div>
 
                                       {/* Checkpoint 4: Delivered */}
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: mapSimulationProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
-                                        <i className="fa-solid fa-circle-check" style={{ color: mapSimulationProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: currentProgress === 100 ? '#fff' : 'var(--color-text-muted)' }}>
+                                        <i className="fa-solid fa-circle-check" style={{ color: currentProgress === 100 ? '#10b981' : 'rgba(255,255,255,0.2)' }}></i>
                                         <span>Delivered & Handed Over</span>
                                       </div>
                                     </div>
