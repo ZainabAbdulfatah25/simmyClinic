@@ -675,7 +675,7 @@ export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
     const validViews = [
-      'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
+      'home', 'about', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
       'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
     ];
@@ -2832,7 +2832,7 @@ export default function App() {
       const params = new URLSearchParams(queryPart || '');
 
       const validViews = [
-        'home', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
+        'home', 'about', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
         'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
         'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
       ];
@@ -5189,6 +5189,7 @@ const LeafletDispatchMap = ({
             {currentView !== 'dashboard' && (
               <ul className="nav-links">
                 <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
+                <li><a href="#about" className={currentView === 'about' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('about'); }}>About Us</a></li>
                 <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Staff & Specialists</a></li>
                 <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
                 <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
@@ -5342,13 +5343,28 @@ const LeafletDispatchMap = ({
                       <span>Skip wait times with scheduled or direct-dial consultations</span>
                     </div>
                   </div>
-                  <div className="benefit-item" onClick={() => navigateTo('doctors')} style={{ cursor: 'pointer' }}>
-                    <div className="benefit-icon"><i className="fa-solid fa-hand-holding-medical"></i></div>
-                    <div className="benefit-text">
-                      <strong>Professional Care You Can Trust</strong>
-                      <span>MDCN verified practitioners</span>
-                    </div>
                   </div>
+                </div>
+              </div>
+
+            {/* About SimmyClinic Highlight Section */}
+            <div className="glassmorphic" style={{ padding: '2rem', borderRadius: '16px', margin: '2rem 0', border: '1px solid rgba(255, 255, 255, 0.1)', background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.5), rgba(15, 23, 42, 0.7))' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
+                <div style={{ flex: '1 1 500px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.75rem' }}>
+                    <i className="fa-solid fa-hospital-user"></i> Certified Virtual Care & Telehealth Platform
+                  </div>
+                  <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#f8fafc', margin: '0 0 0.75rem 0' }}>
+                    About SimmyClinic
+                  </h2>
+                  <p style={{ color: '#cbd5e1', fontSize: '1rem', lineHeight: '1.6', margin: 0 }}>
+                    SimmyClinic connects patients with MDCN-certified specialist doctors, PCN-registered pharmacists, and laboratory diagnostics for virtual consultations, home visits, and prescription doorstep delivery across Nigeria.
+                  </p>
+                </div>
+                <div>
+                  <button className="btn btn-outline" onClick={() => navigateTo('about')} style={{ whiteSpace: 'nowrap' }}>
+                    Read Full About Us <i className="fa-solid fa-arrow-right" style={{ marginLeft: '6px' }}></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -5531,6 +5547,126 @@ const LeafletDispatchMap = ({
               <button className="btn btn-cta-outline" onClick={() => navigateTo('booking')}>
                 Book Your Consultation <i className="fa-solid fa-arrow-right"></i>
               </button>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: ABOUT US --- */}
+        {currentView === 'about' && (
+          <section id="about-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Home
+            </button>
+
+            <div className="section-header" style={{ textAlign: 'left', marginBottom: '2.5rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '6px 16px', borderRadius: '20px', fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem' }}>
+                <i className="fa-solid fa-hospital-user"></i> Certified Telehealth Portal & Healthcare Network
+              </div>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: '800', lineHeight: '1.2', margin: '0 0 1rem 0' }}>
+                About SimmyClinic
+              </h1>
+              <p style={{ fontSize: '1.125rem', color: '#94a3b8', maxWidth: '800px', lineHeight: '1.6' }}>
+                SimmyClinic is an online virtual healthcare platform and medical consultation portal connecting patients directly with MDCN-certified doctors, specialists, diagnostic laboratories, and pharmaceutical delivery services across Nigeria.
+              </p>
+            </div>
+
+            {/* Core Pillars / Mission Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+              <div className="glassmorphic" style={{ padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#818cf8', marginBottom: '1.25rem' }}>
+                  <i className="fa-solid fa-user-doctor"></i>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem', color: '#f8fafc' }}>MDCN-Certified Clinicians</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  Every doctor on our portal holds active credentials with the Medical and Dental Council of Nigeria (MDCN), delivering trusted general and specialist care.
+                </p>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#34d399', marginBottom: '1.25rem' }}>
+                  <i className="fa-solid fa-pills"></i>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem', color: '#f8fafc' }}>PCN Pharmacy Delivery</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  Integrated pharmaceutical care managed by PCN-accredited pharmacists, offering direct home delivery for prescribed medications.
+                </p>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#fbbf24', marginBottom: '1.25rem' }}>
+                  <i className="fa-solid fa-microscope"></i>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem', color: '#f8fafc' }}>Mobile Diagnostics & Labs</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  Professional lab specimen collection at home for full blood counts, metabolic panels, infectious disease screening, and routine diagnostics.
+                </p>
+              </div>
+            </div>
+
+            {/* Our Story & Clinical Leadership Section */}
+            <div className="glassmorphic" style={{ padding: '2.5rem', borderRadius: '20px', marginBottom: '3rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#f8fafc', marginBottom: '1rem' }}>
+                <i className="fa-solid fa-hospital" style={{ color: '#818cf8', marginRight: '10px' }}></i> Healthcare Leadership & Medical Board
+              </h2>
+              <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '2rem' }}>
+                Led by <strong>Mohammed Sa'ima Jibril (CEO & ENT Specialist / MPH)</strong> alongside a multidisciplinary medical board of general practitioners, gynecologists, public health specialists, and clinical care officers, SimmyClinic provides modern tele-health solutions to bridge the geographical gap in healthcare access across Nigeria.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <DoctorAvatar name="Mohammed Sa'ima Jibril" size={54} />
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', color: '#f8fafc', fontSize: '1.05rem' }}>Mohammed Sa'ima Jibril</h4>
+                    <span style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: '600' }}>CEO • ENT / MPH Specialist</span>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>MDCN/4521</p>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <DoctorAvatar name="Pharm. Mashkuratu Jibril" size={54} />
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', color: '#f8fafc', fontSize: '1.05rem' }}>Pharm. Mashkuratu Jibril</h4>
+                    <span style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: '600' }}>Head Pharmacist</span>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>PCN/P/1042</p>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <DoctorAvatar name="Dr. Wasila Goranduma" size={54} />
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', color: '#f8fafc', fontSize: '1.05rem' }}>Dr. Wasila Goranduma</h4>
+                    <span style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: '600' }}>Diagnostic Specialist / MPH</span>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>MLS/REG/6831</p>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <DoctorAvatar name="Fatima Yahaya Maiauduga" size={54} />
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', color: '#f8fafc', fontSize: '1.05rem' }}>Fatima Yahaya Maiauduga</h4>
+                    <span style={{ fontSize: '0.85rem', color: '#f472b6', fontWeight: '600' }}>OBG Clinical Specialist (ANC Unit)</span>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>MDCN/8431</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Registration & Legal Accreditation Card */}
+            <div className="glassmorphic" style={{ padding: '2rem', borderRadius: '16px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', border: '1px solid rgba(99, 102, 241, 0.25)', background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.8))' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.35rem' }}>Official Business Registration & Accreditation</h3>
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem' }}>
+                  Registered Entity: <strong>SimmyClinic Medical Operations</strong> | RC Number: <strong>RC 9198656</strong>
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button className="btn btn-primary" onClick={() => navigateTo('booking')}>
+                  Book Consultation
+                </button>
+                <button className="btn btn-outline" onClick={() => navigateTo('doctors')}>
+                  View Specialists
+                </button>
+              </div>
             </div>
           </section>
         )}
@@ -13589,6 +13725,7 @@ const LeafletDispatchMap = ({
             <h4>QUICK LINKS</h4>
             <ul>
               <li><a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
+              <li><a href="#about" onClick={(e) => { e.preventDefault(); navigateTo('about'); }}>About SimmyClinic</a></li>
               <li><a href="#doctors" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Find Staff & Specialists</a></li>
               <li><a href="#booking" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Book Appointment</a></li>
               <li><a href="#contact" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact Us</a></li>
