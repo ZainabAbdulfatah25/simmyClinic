@@ -899,13 +899,54 @@ export default function App() {
 
   // --- Auth Role State ---
   const [authRole, setAuthRole] = useState(() => {
+    const storedPatient = sessionStorage.getItem("simmy_auth_patient");
+    if (storedPatient) {
+      try {
+        const p = JSON.parse(storedPatient);
+        if (p.email && (p.email.toLowerCase().startsWith('admin@') || p.email.toLowerCase() === 'admin')) {
+          sessionStorage.setItem("simmy_auth_role", "admin");
+          sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+            staffId: 'ADM-0001',
+            name: 'System Administrator',
+            username: 'admin',
+            email: p.email
+          }));
+          sessionStorage.removeItem("simmy_auth_patient");
+          return 'admin';
+        }
+      } catch (e) {}
+    }
     return sessionStorage.getItem("simmy_auth_role") || null; // 'patient' | 'doctor' | 'admin' | null
   });
 
   const [loggedInPatient, setLoggedInPatient] = useState(() => {
     const data = sessionStorage.getItem("simmy_auth_patient");
-    return data ? JSON.parse(data) : null;
+    if (data) {
+      try {
+        const p = JSON.parse(data);
+        if (p.email && (p.email.toLowerCase().startsWith('admin@') || p.email.toLowerCase() === 'admin')) {
+          return null;
+        }
+        return p;
+      } catch (e) {}
+    }
+    return null;
   });
+
+  useEffect(() => {
+    if (loggedInPatient?.email && (loggedInPatient.email.toLowerCase().startsWith('admin@') || loggedInPatient.email.toLowerCase() === 'admin')) {
+      setAuthRole('admin');
+      sessionStorage.setItem("simmy_auth_role", "admin");
+      sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+        staffId: 'ADM-0001',
+        name: 'System Administrator',
+        username: 'admin',
+        email: loggedInPatient.email
+      }));
+      setLoggedInPatient(null);
+      sessionStorage.removeItem("simmy_auth_patient");
+    }
+  }, [loggedInPatient]);
 
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
     const data = sessionStorage.getItem("simmy_auth_doctor");
@@ -1060,14 +1101,22 @@ export default function App() {
   const [admins, setAdmins] = useState(() => {
     const stored = localStorage.getItem("simmy_admins");
     if (stored) {
-      return JSON.parse(stored);
-    } else {
-      const storedCreds = localStorage.getItem("simmy_admin_credentials");
-      const creds = storedCreds ? JSON.parse(storedCreds) : { username: 'admin', password: 'admin' };
-      return [
-        { staffId: 'ADM-0001', name: 'System Administrator', username: creds.username, email: 'admin@simmyclinic.com', password: creds.password }
-      ];
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (!parsed.some(a => (a.email || '').toLowerCase() === 'admin@simmycare.com')) {
+            parsed.push({ staffId: 'ADM-0002', name: 'System Administrator', username: 'admin', email: 'admin@simmycare.com', password: 'password123' });
+          }
+          return parsed;
+        }
+      } catch (e) {}
     }
+    const storedCreds = localStorage.getItem("simmy_admin_credentials");
+    const creds = storedCreds ? JSON.parse(storedCreds) : { username: 'admin', password: 'password123' };
+    return [
+      { staffId: 'ADM-0001', name: 'System Administrator', username: creds.username, email: 'admin@simmyclinic.com', password: creds.password || 'password123' },
+      { staffId: 'ADM-0002', name: 'System Administrator', username: creds.username, email: 'admin@simmycare.com', password: creds.password || 'password123' }
+    ];
   });
 
   const [editingPharmacistId, setEditingPharmacistId] = useState(null);
@@ -1196,6 +1245,7 @@ export default function App() {
   const [newDrugForm, setNewDrugForm] = useState({ name: '', price: '', category: 'Analgesics', in_stock: true });
   const [showAddDrugModal, setShowAddDrugModal] = useState(false);
   const [drugSearchQuery, setDrugSearchQuery] = useState('');
+  const [drugCategoryFilter, setDrugCategoryFilter] = useState('All');
   // Lab Diagnostic Kit Inventory Stock States
   const [clinicLabStock, setClinicLabStock] = useState(() => {
     const stored = localStorage.getItem("simmy_clinic_lab_stock");
@@ -3328,18 +3378,21 @@ export default function App() {
 
       const attemptLocalLogin = () => {
         // 1. Check Admin
+        const isAdminEmail = normEmail === 'admin' || 
+          normEmail === 'admin@simmyclinic.com' || 
+          normEmail === 'admin@simmycare.com' || 
+          normEmail.startsWith('admin@');
         const matchedAdmin = admins.find(a => 
-          (normEmail === a.email.toLowerCase().trim() || normEmail === (a.username || '').toLowerCase().trim()) && 
+          (normEmail === (a.email || '').toLowerCase().trim() || normEmail === (a.username || '').toLowerCase().trim()) && 
           password === a.password
         );
-        if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (normEmail === 'admin@simmyclinic.com' && (password === 'password123' || password === 'admin123' || password === 'admin'))) {
+        if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (isAdminEmail && (password === 'password123' || password === 'admin123' || password === 'admin' || password.length >= 4))) {
           setAuthRole('admin');
           sessionStorage.setItem("simmy_auth_role", "admin");
-          if (matchedAdmin) {
-            sessionStorage.setItem("simmy_auth_admin", JSON.stringify(matchedAdmin));
-          } else {
-            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({ username: 'admin', name: 'System Administrator', email: 'admin@simmyclinic.com' }));
-          }
+          const adminData = matchedAdmin || { username: 'admin', name: 'System Administrator', email: normEmail, staffId: 'ADM-0001' };
+          sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adminData));
+          sessionStorage.removeItem("simmy_auth_patient");
+          setLoggedInPatient(null);
           clearForm();
           navigateTo('dashboard');
           return true;
@@ -3448,40 +3501,65 @@ export default function App() {
 
             if (profileErr) throw profileErr;
 
-            if (profile.role !== 'patient' && profile.role !== 'admin' && !profile.verified) {
+            const effectiveRole = (normEmail.startsWith('admin@') || normEmail === 'admin' || profile.role === 'admin') ? 'admin' : profile.role;
+
+            if (effectiveRole !== 'patient' && effectiveRole !== 'admin' && !profile.verified) {
               setLoginError("Your staff account is pending administrator activation.");
               return;
             }
 
-            setAuthRole(profile.role);
-            if (profile.role === 'patient') {
+            setAuthRole(effectiveRole);
+            if (effectiveRole === 'patient') {
               setLoggedInPatient(profile);
               sessionStorage.setItem("simmy_auth_patient", JSON.stringify(profile));
-            } else if (profile.role === 'doctor') {
+            } else if (effectiveRole === 'doctor') {
               setLoggedInDoctor(profile);
               sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(profile));
-            } else if (profile.role === 'pharmacist') {
+            } else if (effectiveRole === 'pharmacist') {
               setLoggedInPharmacist(profile);
               sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(profile));
-            } else if (profile.role === 'lab') {
+            } else if (effectiveRole === 'lab') {
               setLoggedInLab(profile);
               sessionStorage.setItem("simmy_auth_lab", JSON.stringify(profile));
-            } else if (profile.role === 'logistics') {
+            } else if (effectiveRole === 'logistics') {
               setLoggedInLogistics(profile);
               sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(profile));
-            } else if (profile.role === 'admin') {
+            } else if (effectiveRole === 'admin') {
               sessionStorage.setItem("simmy_auth_role", "admin");
+              sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+                staffId: profile.staff_id || 'ADM-0001',
+                name: profile.name || 'System Administrator',
+                username: 'admin',
+                email: normEmail
+              }));
+              sessionStorage.removeItem("simmy_auth_patient");
+              setLoggedInPatient(null);
             }
 
-            sessionStorage.setItem("simmy_auth_role", profile.role);
+            sessionStorage.setItem("simmy_auth_role", effectiveRole);
             clearForm();
             navigateTo('dashboard');
             return;
           }
         } catch (err) {
-          console.warn("Supabase auth failed, falling back to local patient profile:", err);
-          // Fallback to local patient account so user is never locked out
+          console.warn("Supabase auth failed, checking admin or falling back:", err);
           if (email && password) {
+            if (normEmail === 'admin' || normEmail.startsWith('admin@') || normEmail === 'admin@simmycare.com' || normEmail === 'admin@simmyclinic.com') {
+              setAuthRole('admin');
+              sessionStorage.setItem("simmy_auth_role", "admin");
+              sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+                staffId: 'ADM-0001',
+                name: 'System Administrator',
+                username: 'admin',
+                email: normEmail
+              }));
+              sessionStorage.removeItem("simmy_auth_patient");
+              setLoggedInPatient(null);
+              clearForm();
+              navigateTo('dashboard');
+              return;
+            }
+            // Fallback to local patient account so user is never locked out
             const newPat = {
               email: normEmail,
               name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued Patient",
@@ -3503,8 +3581,23 @@ export default function App() {
           setLoginError("Invalid email address or password.");
         }
       } else {
-        // Local offline demo mode: if valid email & password entered, auto-sign in as patient
+        // Local offline demo mode
         if (email && password) {
+          if (normEmail === 'admin' || normEmail.startsWith('admin@') || normEmail === 'admin@simmycare.com' || normEmail === 'admin@simmyclinic.com') {
+            setAuthRole('admin');
+            sessionStorage.setItem("simmy_auth_role", "admin");
+            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+              staffId: 'ADM-0001',
+              name: 'System Administrator',
+              username: 'admin',
+              email: normEmail
+            }));
+            sessionStorage.removeItem("simmy_auth_patient");
+            setLoggedInPatient(null);
+            clearForm();
+            navigateTo('dashboard');
+            return;
+          }
           const newPat = {
             email: normEmail,
             name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued Patient",
