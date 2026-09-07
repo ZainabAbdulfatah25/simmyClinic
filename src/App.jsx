@@ -8021,53 +8021,6 @@ const LeafletDispatchMap = ({
                     </p>
                   </div>
 
-                  {!isPatientRegistering && (
-                    <div style={{ marginBottom: '1.25rem', padding: '0.85rem', background: 'rgba(99, 102, 241, 0.06)', borderRadius: 'var(--radius-sm, 10px)', border: '1px solid rgba(99, 102, 241, 0.18)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                        <span style={{ fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-accent)' }}>
-                          <i className="fa-solid fa-bolt" style={{ marginRight: '0.35rem' }}></i> Quick Demo Sign-In
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Password: <code style={{ background: 'rgba(0,0,0,0.06)', padding: '2px 4px', borderRadius: '4px' }}>password123</code></span>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
-                        {[
-                          { role: 'Patient', email: 'zainab@example.com', icon: 'fa-user' },
-                          { role: 'Doctor', email: 'adam@simmyclinic.com', icon: 'fa-user-doctor' },
-                          { role: 'Admin', email: 'admin@simmyclinic.com', icon: 'fa-shield-halved' },
-                          { role: 'Pharmacy', email: 'pharmacist@simmyclinic.com', icon: 'fa-prescription-bottle-medical' },
-                          { role: 'Lab Tech', email: 'lab@simmyclinic.com', icon: 'fa-flask-vial' },
-                          { role: 'Logistics', email: 'logistics@simmyclinic.com', icon: 'fa-truck-fast' },
-                        ].map(d => (
-                          <button
-                            key={d.role}
-                            type="button"
-                            onClick={() => {
-                              setPatientLoginForm(prev => ({ ...prev, email: d.email, password: 'password123' }));
-                              setLoginError('');
-                            }}
-                            style={{
-                              fontSize: '0.75rem',
-                              padding: '0.45rem 0.4rem',
-                              borderRadius: '6px',
-                              border: '1px solid rgba(24, 43, 73, 0.12)',
-                              background: '#ffffff',
-                              color: 'var(--color-text)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.35rem',
-                              fontWeight: 500,
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
-                            }}
-                          >
-                            <i className={`fa-solid ${d.icon}`} style={{ fontSize: '0.7rem', color: 'var(--color-accent)' }}></i>
-                            {d.role}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {loginError && <div className="error-message">{loginError}</div>}
 
