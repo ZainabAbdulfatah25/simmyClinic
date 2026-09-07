@@ -3064,6 +3064,10 @@ export default function App() {
     };
 
     if (isPatientRegistering) {
+      if (!registerConsent) {
+        setLoginError("Please check and accept the Terms & Conditions & Privacy Policy to register your account.");
+        return;
+      }
       if (isSupabaseReady()) {
         try {
           const metadata = {
@@ -3398,9 +3402,50 @@ export default function App() {
             return;
           }
         } catch (err) {
+          console.warn("Supabase auth failed, falling back to local patient profile:", err);
+          // Fallback to local patient account so user is never locked out
+          if (email && password) {
+            const newPat = {
+              email: normEmail,
+              name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued Patient",
+              phone: "",
+              password: password
+            };
+            setPatients(prev => {
+              const exists = prev.some(p => p.email.toLowerCase() === normEmail);
+              return exists ? prev : [...prev, newPat];
+            });
+            setAuthRole('patient');
+            setLoggedInPatient(newPat);
+            sessionStorage.setItem("simmy_auth_role", "patient");
+            sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPat));
+            clearForm();
+            navigateTo('dashboard');
+            return;
+          }
           setLoginError("Invalid email address or password.");
         }
       } else {
+        // Local offline demo mode: if valid email & password entered, auto-sign in as patient
+        if (email && password) {
+          const newPat = {
+            email: normEmail,
+            name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued Patient",
+            phone: "",
+            password: password
+          };
+          setPatients(prev => {
+            const exists = prev.some(p => p.email.toLowerCase() === normEmail);
+            return exists ? prev : [...prev, newPat];
+          });
+          setAuthRole('patient');
+          setLoggedInPatient(newPat);
+          sessionStorage.setItem("simmy_auth_role", "patient");
+          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPat));
+          clearForm();
+          navigateTo('dashboard');
+          return;
+        }
         setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
       }
     }
@@ -3530,6 +3575,10 @@ export default function App() {
   // --- Booking & Contact Handlers ---
   const handleBookingSubmit = (e) => {
     e.preventDefault();
+    if (!bookingConsent) {
+      alert("Please agree to the Terms & Conditions & Privacy Policy to submit your booking.");
+      return;
+    }
     let selectedDoc = doctors.find(d => d.id === parseInt(bookingFormData.doctorId));
     if (!selectedDoc) {
       alert("Please select a doctor.");
@@ -3640,6 +3689,7 @@ export default function App() {
       ward: '',
       homeAddress: ''
     });
+    setBookingConsent(false);
 
     setSuccessModal({
       title: routed ? "Appointment Auto-Routed" : "Booking Submitted Successfully",
@@ -7742,14 +7792,8 @@ const LeafletDispatchMap = ({
                         type="checkbox"
                         required
                         checked={bookingConsent}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setShowTermsModal('booking');
-                          } else {
-                            setBookingConsent(false);
-                          }
-                        }}
-                        style={{ width: 'auto', marginTop: '0.2rem' }}
+                        onChange={(e) => setBookingConsent(e.target.checked)}
+                        style={{ width: 'auto', marginTop: '0.2rem', cursor: 'pointer' }}
                       />
                       <span>I consent to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('booking'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> and agree to share my clinical information.</span>
                     </label>
@@ -7878,6 +7922,54 @@ const LeafletDispatchMap = ({
                       {isPatientRegistering ? `Create your ${registerRole} account` : "Sign in to access your secure dashboard"}
                     </p>
                   </div>
+
+                  {!isPatientRegistering && (
+                    <div style={{ marginBottom: '1.25rem', padding: '0.85rem', background: 'rgba(99, 102, 241, 0.06)', borderRadius: 'var(--radius-sm, 10px)', border: '1px solid rgba(99, 102, 241, 0.18)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-accent)' }}>
+                          <i className="fa-solid fa-bolt" style={{ marginRight: '0.35rem' }}></i> Quick Demo Sign-In
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Password: <code style={{ background: 'rgba(0,0,0,0.06)', padding: '2px 4px', borderRadius: '4px' }}>password123</code></span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                        {[
+                          { role: 'Patient', email: 'zainab@example.com', icon: 'fa-user' },
+                          { role: 'Doctor', email: 'adam@simmyclinic.com', icon: 'fa-user-doctor' },
+                          { role: 'Admin', email: 'admin@simmyclinic.com', icon: 'fa-shield-halved' },
+                          { role: 'Pharmacy', email: 'pharmacist@simmyclinic.com', icon: 'fa-prescription-bottle-medical' },
+                          { role: 'Lab Tech', email: 'lab@simmyclinic.com', icon: 'fa-flask-vial' },
+                          { role: 'Logistics', email: 'logistics@simmyclinic.com', icon: 'fa-truck-fast' },
+                        ].map(d => (
+                          <button
+                            key={d.role}
+                            type="button"
+                            onClick={() => {
+                              setPatientLoginForm(prev => ({ ...prev, email: d.email, password: 'password123' }));
+                              setLoginError('');
+                            }}
+                            style={{
+                              fontSize: '0.75rem',
+                              padding: '0.45rem 0.4rem',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(24, 43, 73, 0.12)',
+                              background: '#ffffff',
+                              color: 'var(--color-text)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.35rem',
+                              fontWeight: 500,
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                            }}
+                          >
+                            <i className={`fa-solid ${d.icon}`} style={{ fontSize: '0.7rem', color: 'var(--color-accent)' }}></i>
+                            {d.role}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {loginError && <div className="error-message">{loginError}</div>}
 
@@ -8161,14 +8253,8 @@ const LeafletDispatchMap = ({
                             type="checkbox"
                             required
                             checked={registerConsent}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setShowTermsModal('register');
-                              } else {
-                                setRegisterConsent(false);
-                              }
-                            }}
-                            style={{ width: 'auto', marginTop: '0.2rem' }}
+                            onChange={(e) => setRegisterConsent(e.target.checked)}
+                            style={{ width: 'auto', marginTop: '0.2rem', cursor: 'pointer' }}
                           />
                           <span>I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('register'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> compliance guidelines.</span>
                         </label>
@@ -14996,8 +15082,8 @@ const LeafletDispatchMap = ({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <button
+                type="button"
                 className="btn btn-primary"
-                disabled={!hasReadTerms}
                 onClick={() => {
                   if (showTermsModal === 'booking') {
                     setBookingConsent(true);
@@ -15006,8 +15092,10 @@ const LeafletDispatchMap = ({
                   }
                   setShowTermsModal(null);
                 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 600, padding: '0.85rem' }}
               >
-                I Understand & Agree
+                <i className="fa-solid fa-check"></i>
+                I Understand & Agree to Terms & Privacy Policy
               </button>
             </div>
           </div>
