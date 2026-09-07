@@ -756,20 +756,22 @@ export default function App() {
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
       'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
     ];
-    const storedRole = sessionStorage.getItem("simmy_auth_role");
+    const getStoredRole = () => {
+      try {
+        return localStorage.getItem("simmy_auth_role") || 
+          sessionStorage.getItem("simmy_auth_role") || 
+          (localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin") ? 'admin' : null) ||
+          (localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor") ? 'doctor' : null) ||
+          (localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient") ? 'patient' : null) ||
+          (localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist") ? 'pharmacist' : null) ||
+          (localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab") ? 'lab' : null) ||
+          (localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics") ? 'logistics' : null);
+      } catch (e) { return null; }
+    };
+    const storedRole = getStoredRole();
 
-    // 1. Check URL path (e.g. /portal-login or /doctors)
-    const rawPath = window.location.pathname.replace(/^\//, '');
-    const [pathPart] = rawPath.split('?');
-    if (pathPart && validViews.includes(pathPart)) {
-      if (pathPart === 'dashboard' && !storedRole) {
-        return 'portal-login';
-      }
-      return pathPart;
-    }
-
-    // 2. Check URL hash (e.g. #portal-login or #doctors)
-    const rawHash = window.location.hash.replace(/^#/, '');
+    // 1. Check URL hash first (standard SPA hash routing)
+    const rawHash = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#/, '');
     const [hashPart] = rawHash.split('?');
     if (hashPart && validViews.includes(hashPart)) {
       if (hashPart === 'dashboard' && !storedRole) {
@@ -778,8 +780,18 @@ export default function App() {
       return hashPart;
     }
 
+    // 2. Check URL path (e.g. /portal-login or /doctors)
+    const rawPath = (typeof window !== 'undefined' ? window.location.pathname : '').replace(/^\//, '');
+    const [pathPart] = rawPath.split('?');
+    if (pathPart && validViews.includes(pathPart)) {
+      if (pathPart === 'dashboard' && !storedRole) {
+        return 'portal-login';
+      }
+      return pathPart;
+    }
+
     // 3. Fallback to saved session or local storage view
-    const savedView = sessionStorage.getItem('simmy_current_view') || localStorage.getItem('simmy_current_view');
+    const savedView = localStorage.getItem('simmy_current_view') || sessionStorage.getItem('simmy_current_view');
     if (savedView && validViews.includes(savedView)) {
       if (savedView === 'dashboard' && !storedRole) {
         return 'portal-login';
@@ -899,28 +911,45 @@ export default function App() {
 
   // --- Auth Role State ---
   const [authRole, setAuthRole] = useState(() => {
-    const storedPatient = sessionStorage.getItem("simmy_auth_patient");
+    // 1. Direct admin check
+    const storedAdmin = localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin");
+    if (storedAdmin) {
+      return 'admin';
+    }
+    // 2. Patient session check & admin auto-correction
+    const storedPatient = localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient");
     if (storedPatient) {
       try {
         const p = JSON.parse(storedPatient);
         if (p.email && (p.email.toLowerCase().startsWith('admin@') || p.email.toLowerCase() === 'admin')) {
+          localStorage.setItem("simmy_auth_role", "admin");
           sessionStorage.setItem("simmy_auth_role", "admin");
-          sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+          const adm = {
             staffId: 'ADM-0001',
             name: 'System Administrator',
             username: 'admin',
             email: p.email
-          }));
+          };
+          localStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
+          sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
+          localStorage.removeItem("simmy_auth_patient");
           sessionStorage.removeItem("simmy_auth_patient");
           return 'admin';
         }
       } catch (e) {}
     }
-    return sessionStorage.getItem("simmy_auth_role") || null; // 'patient' | 'doctor' | 'admin' | null
+    const directRole = localStorage.getItem("simmy_auth_role") || sessionStorage.getItem("simmy_auth_role");
+    if (directRole) return directRole;
+    if (storedPatient) return 'patient';
+    if (localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor")) return 'doctor';
+    if (localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist")) return 'pharmacist';
+    if (localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab")) return 'lab';
+    if (localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics")) return 'logistics';
+    return null;
   });
 
   const [loggedInPatient, setLoggedInPatient] = useState(() => {
-    const data = sessionStorage.getItem("simmy_auth_patient");
+    const data = localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient");
     if (data) {
       try {
         const p = JSON.parse(data);
@@ -936,20 +965,44 @@ export default function App() {
   useEffect(() => {
     if (loggedInPatient?.email && (loggedInPatient.email.toLowerCase().startsWith('admin@') || loggedInPatient.email.toLowerCase() === 'admin')) {
       setAuthRole('admin');
+      localStorage.setItem("simmy_auth_role", "admin");
       sessionStorage.setItem("simmy_auth_role", "admin");
-      sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+      const adm = {
         staffId: 'ADM-0001',
         name: 'System Administrator',
         username: 'admin',
         email: loggedInPatient.email
-      }));
+      };
+      localStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
+      sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
       setLoggedInPatient(null);
+      localStorage.removeItem("simmy_auth_patient");
       sessionStorage.removeItem("simmy_auth_patient");
     }
   }, [loggedInPatient]);
 
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      const timer = setTimeout(() => {
+        const hasAuth = authRole || 
+          localStorage.getItem("simmy_auth_role") || 
+          sessionStorage.getItem("simmy_auth_role") ||
+          localStorage.getItem("simmy_auth_admin") ||
+          sessionStorage.getItem("simmy_auth_admin") ||
+          localStorage.getItem("simmy_auth_patient") ||
+          sessionStorage.getItem("simmy_auth_patient") ||
+          localStorage.getItem("simmy_auth_doctor") ||
+          sessionStorage.getItem("simmy_auth_doctor");
+        if (!hasAuth) {
+          navigateTo('portal-login');
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [currentView, authRole]);
+
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
-    const data = sessionStorage.getItem("simmy_auth_doctor");
+    const data = localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor");
     return data ? JSON.parse(data) : null;
   });
 
@@ -1045,7 +1098,27 @@ export default function App() {
   };
 
   // Admin and Doctor Workspace States
-  const [adminNavView, setAdminNavView] = useState('appointments');
+  const [adminNavView, setAdminNavView] = useState(() => {
+    try {
+      const fullHash = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
+      const [, queryPart] = fullHash.split('?');
+      const params = new URLSearchParams(queryPart || '');
+      const tabParam = params.get('tab') || params.get('adminTab');
+      if (tabParam) return tabParam;
+      return localStorage.getItem("simmy_admin_nav_view") || sessionStorage.getItem("simmy_admin_nav_view") || 'appointments';
+    } catch (e) {
+      return 'appointments';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (adminNavView) {
+        localStorage.setItem("simmy_admin_nav_view", adminNavView);
+        sessionStorage.setItem("simmy_admin_nav_view", adminNavView);
+      }
+    } catch (e) {}
+  }, [adminNavView]);
   const [adminCredentials, setAdminCredentials] = useState(() => {
     const stored = localStorage.getItem("simmy_admin_credentials");
     return stored ? JSON.parse(stored) : { username: 'admin', password: 'admin' };
@@ -1204,21 +1277,27 @@ export default function App() {
 
   // New role authentication & UI states
   const [loggedInPharmacist, setLoggedInPharmacist] = useState(() => {
-    const data = sessionStorage.getItem("simmy_auth_pharmacist");
+    const data = localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist");
     return data ? JSON.parse(data) : null;
   });
   const [loggedInLab, setLoggedInLab] = useState(() => {
-    const data = sessionStorage.getItem("simmy_auth_lab");
+    const data = localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab");
     return data ? JSON.parse(data) : null;
   });
   const [loggedInLogistics, setLoggedInLogistics] = useState(() => {
-    const data = sessionStorage.getItem("simmy_auth_logistics");
+    const data = localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics");
     return data ? JSON.parse(data) : null;
   });
 
-  const [pharmacistNavView, setPharmacistNavView] = useState('orders');
-  const [labNavView, setLabNavView] = useState('requests');
-  const [logisticsNavView, setLogisticsNavView] = useState('deliveries');
+  const [pharmacistNavView, setPharmacistNavView] = useState(() => {
+    return localStorage.getItem("simmy_pharm_nav_view") || 'orders';
+  });
+  const [labNavView, setLabNavView] = useState(() => {
+    return localStorage.getItem("simmy_lab_nav_view") || 'requests';
+  });
+  const [logisticsNavView, setLogisticsNavView] = useState(() => {
+    return localStorage.getItem("simmy_logistics_nav_view") || 'deliveries';
+  });
 
   const [pharmacistLoginForm, setPharmacistLoginForm] = useState({ email: '', password: '' });
   const [labLoginForm, setLabLoginForm] = useState({ email: '', password: '' });
@@ -1273,6 +1352,41 @@ export default function App() {
   const [pricingIsNhis, setPricingIsNhis] = useState(false);
   const [adminReceiptSearch, setAdminReceiptSearch] = useState('');
   const [adminReceiptFilter, setAdminReceiptFilter] = useState('All');
+
+  // Revenue & Financial Intelligence Hub States
+  const [revenueTimeframe, setRevenueTimeframe] = useState('month'); // 'month' | 'quarter' | 'year' | 'all'
+  const [revenueLedgerFilter, setRevenueLedgerFilter] = useState('all'); // 'all' | 'inflow' | 'outflow'
+  const [revenueLedgerSearch, setRevenueLedgerSearch] = useState('');
+  const [revenuePaymentFilter, setRevenuePaymentFilter] = useState('all');
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [newExpenseForm, setNewExpenseForm] = useState({
+    title: '',
+    category: 'Specialist Payouts',
+    recipient: '',
+    amount: '',
+    paymentMethod: 'Direct Bank Transfer',
+    notes: ''
+  });
+  const [clinicExpenses, setClinicExpenses] = useState(() => {
+    const stored = localStorage.getItem("simmy_clinic_expenses");
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return [
+      { id: 'EXP-1001', date: '2026-09-05', category: 'Specialist Payouts', title: 'Dr. Adam Professional Fee Settlement', recipient: 'Dr. Adam Abubakar (Cardiology)', amount: 480000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
+      { id: 'EXP-1002', date: '2026-09-04', category: 'Drug Procurement', title: 'Wholesale Antibiotics & Antimalarial Reorder', recipient: 'Emzor Pharmaceutical Wholesalers', amount: 385000, paymentMethod: 'Paystack B2B / Bank', status: 'Settled' },
+      { id: 'EXP-1003', date: '2026-09-03', category: 'Specialist Payouts', title: 'Dr. Wasila Consultant Honorarium', recipient: 'Dr. Wasila Salisu (Pediatrics)', amount: 420000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
+      { id: 'EXP-1004', date: '2026-09-02', category: 'Lab Consumables', title: 'Diagnostic Reagents, Viral Kits & Blood Tubes', recipient: 'MedLab Diagnostics Supplies Nig.', amount: 240000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
+      { id: 'EXP-1005', date: '2026-09-01', category: 'Logistics Fleet', title: 'Courier Bike Maintenance & Fuel Allowance', recipient: 'Fleet Operations Lead (M. Bello)', amount: 165000, paymentMethod: 'Mobile Money / Transfer', status: 'Settled' },
+      { id: 'EXP-1006', date: '2026-08-30', category: 'Cloud Infrastructure', title: 'Telehealth HIPAA Cloud Server & SMS API', recipient: 'Cloud & Telecom Gateway', amount: 95000, paymentMethod: 'Online Card', status: 'Settled' },
+      { id: 'EXP-1007', date: '2026-08-28', category: 'Specialist Payouts', title: 'Dr. Saima Consultant Honorarium', recipient: 'Dr. Saima Aminu (OB/GYN)', amount: 390000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
+      { id: 'EXP-1008', date: '2026-08-25', category: 'Drug Procurement', title: 'Analgesics & IV Infusion Bulk Restock', recipient: 'Fidson Healthcare Wholesale', amount: 260000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("simmy_clinic_expenses", JSON.stringify(clinicExpenses));
+  }, [clinicExpenses]);
 
   // Central Dispatch Hub Options & Selection State
   const DISPATCH_HUBS = [
@@ -1884,6 +1998,708 @@ export default function App() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdminRevenueDashboardView = () => {
+    // 1. Calculate Real-Time Inflows
+    const appointmentReceipts = appointments.map(apt => ({
+      id: `RC-APT-${String(apt.id).replace('APT-', '')}`,
+      date: apt.date || '2026-09-06',
+      title: `Consultation: ${apt.doctor || 'General Practitioner'}`,
+      category: 'Consultation',
+      patientName: apt.patientName || 'Patient',
+      amount: apt.isNhis ? Math.round(5000 * 0.1) : (parseInt(String(apt.consultationRate || '5000').replace(/[^0-9]/g, '')) || 5000),
+      paymentMethod: apt.paymentMethod || (apt.isNhis ? 'NHIS / HMO Insurance' : 'Paystack / Online Card'),
+      status: apt.status === 'Cancelled' ? 'Refunded' : (apt.paymentStatus || 'Paid & Verified'),
+      type: 'inflow'
+    }));
+
+    const orderReceipts = inquiries.filter(inq => inq.id.startsWith('ORD-') || inq.id.startsWith('LAB-')).map(inq => {
+      const isLab = inq.id.startsWith('LAB-');
+      const amount = isLab ? 6500 : 8500;
+      return {
+        id: `RC-${inq.id}`,
+        date: inq.date || '2026-09-05',
+        title: isLab ? (inq.subject || 'Diagnostic Lab Diagnostic Panel') : (inq.subject || 'Prescription Pharmacy Dispensary'),
+        category: isLab ? 'Diagnostics' : 'Pharmacy',
+        patientName: inq.name || 'Patient',
+        amount,
+        paymentMethod: inq.paymentMethod || 'Direct Bank Transfer',
+        status: inq.paymentStatus || 'Paid & Verified',
+        type: 'inflow'
+      };
+    });
+
+    const realInflows = [...appointmentReceipts, ...orderReceipts];
+    const totalRealInflowSum = realInflows.reduce((acc, t) => acc + (t.status === 'Refunded' ? 0 : t.amount), 0);
+
+    // Multipliers for timeframe simulation
+    const multiplier = revenueTimeframe === 'week' ? 0.3 : (revenueTimeframe === 'quarter' ? 2.9 : (revenueTimeframe === 'year' ? 11.2 : 1));
+
+    const totalMoneyIn = Math.round((4865000 + totalRealInflowSum) * multiplier);
+
+    // Outflow / Expenses
+    const realExpenses = clinicExpenses.map(e => ({
+      ...e,
+      type: 'outflow'
+    }));
+    const totalRealExpenseSum = realExpenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+    const totalMoneyOut = Math.round((2890000 + totalRealExpenseSum * 0.45) * multiplier);
+
+    const netProfit = totalMoneyIn - totalMoneyOut;
+    const profitMargin = Math.round((netProfit / (totalMoneyIn || 1)) * 100);
+    const pendingReceivables = Math.round(345000 * multiplier);
+
+    // Streams Inflow
+    const consultationTotal = Math.round(totalMoneyIn * 0.46);
+    const pharmacyTotal = Math.round(totalMoneyIn * 0.35);
+    const labTotal = Math.round(totalMoneyIn * 0.19);
+
+    // Outflow Allocation
+    const doctorPayoutTotal = Math.round(totalMoneyOut * 0.50);
+    const drugProcurementTotal = Math.round(totalMoneyOut * 0.28);
+    const labConsumablesTotal = Math.round(totalMoneyOut * 0.12);
+    const logisticsFleetTotal = Math.round(totalMoneyOut * 0.06);
+    const cloudSystemsTotal = Math.round(totalMoneyOut * 0.04);
+
+    // Payment Modes Data
+    const paymentChannels = [
+      { name: 'Paystack / Online Card', percent: 45, amount: Math.round(totalMoneyIn * 0.45), icon: 'fa-credit-card', color: '#3b82f6', count: Math.round(142 * multiplier), speed: 'Instant Settlement (Automated)' },
+      { name: 'Direct Bank Transfer (NIBSS)', percent: 30, amount: Math.round(totalMoneyIn * 0.30), icon: 'fa-building-columns', color: '#10b981', count: Math.round(98 * multiplier), speed: 'Same-Day Teller Verified' },
+      { name: 'NHIS / HMO Insurance Co-Pay', percent: 15, amount: Math.round(totalMoneyIn * 0.15), icon: 'fa-shield-halved', color: '#8b5cf6', count: Math.round(54 * multiplier), speed: 'Monthly Subvention Remittance' },
+      { name: 'Mobile Money / USSD (MoMo/OPay)', percent: 7, amount: Math.round(totalMoneyIn * 0.07), icon: 'fa-mobile-screen', color: '#f59e0b', count: Math.round(28 * multiplier), speed: 'Instant Push Notification' },
+      { name: 'Cash on Delivery (Courier Fleet)', percent: 3, amount: Math.round(totalMoneyIn * 0.03), icon: 'fa-hand-holding-dollar', color: '#64748b', count: Math.round(12 * multiplier), speed: 'Reconciled at Regional Hub' }
+    ];
+
+    // Monthly Trend Data
+    const monthlyData = [
+      { month: 'Apr', inAmt: Math.round(3650000 * multiplier), outAmt: Math.round(2310000 * multiplier) },
+      { month: 'May', inAmt: Math.round(3920000 * multiplier), outAmt: Math.round(2450000 * multiplier) },
+      { month: 'Jun', inAmt: Math.round(4180000 * multiplier), outAmt: Math.round(2580000 * multiplier) },
+      { month: 'Jul', inAmt: Math.round(4450000 * multiplier), outAmt: Math.round(2690000 * multiplier) },
+      { month: 'Aug', inAmt: Math.round(4710000 * multiplier), outAmt: Math.round(2820000 * multiplier) },
+      { month: 'Sep (Current)', inAmt: totalMoneyIn, outAmt: totalMoneyOut }
+    ];
+    const maxBar = Math.max(...monthlyData.map(m => m.inAmt)) * 1.15;
+
+    // Combined Ledger for Audit View
+    const ledgerItems = [
+      ...realInflows,
+      ...realExpenses.map(e => ({
+        id: e.id,
+        date: e.date,
+        title: e.title,
+        category: e.category,
+        patientName: e.recipient || 'Vendor / Partner',
+        amount: e.amount,
+        paymentMethod: e.paymentMethod,
+        status: e.status || 'Settled',
+        type: 'outflow'
+      }))
+    ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    let filteredLedger = ledgerItems;
+    if (revenueLedgerFilter === 'inflow') filteredLedger = filteredLedger.filter(i => i.type === 'inflow');
+    if (revenueLedgerFilter === 'outflow') filteredLedger = filteredLedger.filter(i => i.type === 'outflow');
+    if (revenuePaymentFilter !== 'all') filteredLedger = filteredLedger.filter(i => i.paymentMethod && i.paymentMethod.toLowerCase().includes(revenuePaymentFilter.toLowerCase()));
+    if (revenueLedgerSearch.trim()) {
+      const q = revenueLedgerSearch.toLowerCase();
+      filteredLedger = filteredLedger.filter(i => 
+        (i.id && i.id.toLowerCase().includes(q)) ||
+        (i.title && i.title.toLowerCase().includes(q)) ||
+        (i.patientName && i.patientName.toLowerCase().includes(q)) ||
+        (i.category && i.category.toLowerCase().includes(q))
+      );
+    }
+
+    return (
+      <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {/* Top Header & Executive Controls */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '1.25rem 1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
+              <span style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Financial Intelligence Hub
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Fiscal Governance & Cash Flow Audit</span>
+            </div>
+            <h2 style={{ margin: 0, fontSize: '1.6rem', color: 'var(--color-text)' }}>Executive Revenue & Decision Dashboard</h2>
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.88rem', color: 'var(--color-text-muted)' }}>
+              Real-time cash flow monitoring, payment channels, expenditure allocations, and strategic clinic economics.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* Timeframe Switcher */}
+            <div style={{ display: 'flex', background: 'rgba(24, 43, 73, 0.08)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(24, 43, 73, 0.12)' }}>
+              {[
+                { id: 'week', label: 'This Week' },
+                { id: 'month', label: 'This Month' },
+                { id: 'quarter', label: 'Q3 2026' },
+                { id: 'year', label: 'FY 2026' }
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setRevenueTimeframe(t.id)}
+                  style={{
+                    border: 'none',
+                    padding: '0.35rem 0.8rem',
+                    borderRadius: '7px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: revenueTimeframe === t.id ? 'var(--color-primary)' : 'transparent',
+                    color: revenueTimeframe === t.id ? '#ffffff' : 'var(--color-text)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => window.print()}
+              title="Print official financial audit report"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}
+            >
+              <i className="fa-solid fa-print"></i> Export Statement
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-accent btn-sm"
+              onClick={() => setShowAddExpenseModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '0.5rem 1rem' }}
+            >
+              <i className="fa-solid fa-plus-circle"></i> Record Expense
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Core Financial KPI Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+          {/* Card 1: Money In */}
+          <div className="glassmorphic" style={{ padding: '1.4rem', borderRadius: '14px', borderLeft: '4px solid #10b981', background: 'linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(255,255,255,0.02))' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#059669' }}>
+                MONEY IN (GROSS INFLOW)
+              </span>
+              <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#047857', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-arrow-up"></i> +18.4%
+              </span>
+            </div>
+            <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#10b981', letterSpacing: '-0.5px', marginBottom: '0.4rem' }}>
+              ₦{totalMoneyIn.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+              Specialist Consultations, Pharmacy Rx Dispensary, Mobile Diagnostic Kits
+            </div>
+            <div style={{ marginTop: '0.9rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(16, 185, 129, 0.15)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span>Consultations: <strong>₦{consultationTotal.toLocaleString()}</strong></span>
+              <span>Dispensary: <strong>₦{pharmacyTotal.toLocaleString()}</strong></span>
+            </div>
+          </div>
+
+          {/* Card 2: Money Out */}
+          <div className="glassmorphic" style={{ padding: '1.4rem', borderRadius: '14px', borderLeft: '4px solid #ef4444', background: 'linear-gradient(145deg, rgba(239, 68, 68, 0.08), rgba(255,255,255,0.02))' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#dc2626' }}>
+                MONEY OUT (OPERATING COSTS)
+              </span>
+              <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#b91c1c', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-arrow-down"></i> -4.2% Cost
+              </span>
+            </div>
+            <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#ef4444', letterSpacing: '-0.5px', marginBottom: '0.4rem' }}>
+              ₦{totalMoneyOut.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+              Doctor Honorariums, Drug Wholesale Reorders, Lab Consumables, Courier Fuel
+            </div>
+            <div style={{ marginTop: '0.9rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span>Doctor Share: <strong>₦{doctorPayoutTotal.toLocaleString()}</strong></span>
+              <span>Restock: <strong>₦{drugProcurementTotal.toLocaleString()}</strong></span>
+            </div>
+          </div>
+
+          {/* Card 3: Net Profit */}
+          <div className="glassmorphic" style={{ padding: '1.4rem', borderRadius: '14px', borderLeft: '4px solid #6366f1', background: 'linear-gradient(145deg, rgba(99, 102, 241, 0.08), rgba(255,255,255,0.02))' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#4f46e5' }}>
+                NET OPERATIONAL SURPLUS
+              </span>
+              <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#4338ca', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                {profitMargin}% Net Margin
+              </span>
+            </div>
+            <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#6366f1', letterSpacing: '-0.5px', marginBottom: '0.4rem' }}>
+              ₦{netProfit.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+              EBITDA Operating Cash Margin after complete professional & clinical fulfillment
+            </div>
+            <div style={{ marginTop: '0.9rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(99, 102, 241, 0.15)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span>Liquidity Status: <strong style={{ color: '#10b981' }}>High Solvency</strong></span>
+              <span>Coverage: <strong>1.68x</strong></span>
+            </div>
+          </div>
+
+          {/* Card 4: Receivables */}
+          <div className="glassmorphic" style={{ padding: '1.4rem', borderRadius: '14px', borderLeft: '4px solid #0284c7', background: 'linear-gradient(145deg, rgba(2, 132, 199, 0.08), rgba(255,255,255,0.02))' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.6px', color: '#0284c7' }}>
+                PENDING RECEIVABLES & CLAIMS
+              </span>
+              <span style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                In Clearing
+              </span>
+            </div>
+            <div style={{ fontSize: '1.9rem', fontWeight: '800', color: '#0284c7', letterSpacing: '-0.5px', marginBottom: '0.4rem' }}>
+              ₦{pendingReceivables.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+              Statutory NHIS 90% insurance claims awaiting HMO remittance & uncleared transfers
+            </div>
+            <div style={{ marginTop: '0.9rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(2, 132, 199, 0.15)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span 
+                onClick={() => setAdminNavView('receipts')}
+                style={{ color: '#0284c7', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Reconcile in Receipts →
+              </span>
+              <span>Avg Cycle: <strong>14 Days</strong></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Visual Monthly Trends & Cash Flow Comparison Bar Chart */}
+        <div className="glassmorphic" style={{ padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-chart-column" style={{ color: 'var(--color-accent)' }}></i>
+                6-Month Comparative Cash Flow Trend (Money In vs Money Out)
+              </h3>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.84rem', color: 'var(--color-text-muted)' }}>
+                Visual comparative analysis of gross revenues against clinic operational commitments.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.8rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#10b981', display: 'inline-block' }}></span>
+                <span>Money In (Inflow)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#ef4444', display: 'inline-block' }}></span>
+                <span>Money Out (Costs)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#6366f1', display: 'inline-block' }}></span>
+                <span>Net Surplus</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bar Chart Graphic */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem', alignItems: 'flex-end', height: '260px', padding: '1.5rem 0.5rem 0', borderBottom: '2px solid rgba(24, 43, 73, 0.12)' }}>
+            {monthlyData.map((d, idx) => {
+              const inHeight = Math.round((d.inAmt / maxBar) * 200);
+              const outHeight = Math.round((d.outAmt / maxBar) * 200);
+              const netMarginMonth = d.inAmt - d.outAmt;
+
+              return (
+                <div key={d.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                  {/* Net indicator pill */}
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: '#6366f1', background: 'rgba(99, 102, 241, 0.12)', padding: '2px 5px', borderRadius: '4px' }}>
+                    +₦{(netMarginMonth / 1000000).toFixed(1)}M
+                  </span>
+
+                  {/* Dual Column Bars */}
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', width: '100%', justifyContent: 'center' }}>
+                    {/* Inflow Bar */}
+                    <div 
+                      title={`${d.month} Inflow: ₦${d.inAmt.toLocaleString()}`}
+                      style={{
+                        width: '42%',
+                        maxWidth: '28px',
+                        height: `${Math.max(inHeight, 15)}px`,
+                        background: 'linear-gradient(180deg, #10b981, #059669)',
+                        borderRadius: '4px 4px 0 0',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
+                      }}
+                    ></div>
+
+                    {/* Outflow Bar */}
+                    <div 
+                      title={`${d.month} Outflow: ₦${d.outAmt.toLocaleString()}`}
+                      style={{
+                        width: '42%',
+                        maxWidth: '28px',
+                        height: `${Math.max(outHeight, 15)}px`,
+                        background: 'linear-gradient(180deg, #ef4444, #dc2626)',
+                        borderRadius: '4px 4px 0 0',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+                      }}
+                    ></div>
+                  </div>
+
+                  {/* Month Label */}
+                  <span style={{ fontSize: '0.78rem', fontWeight: idx === 5 ? 'bold' : '500', color: idx === 5 ? 'var(--color-primary)' : 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                    {d.month}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Two Columns: Payment Modes Breakdown & Stream/Cost Breakdown */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+          {/* Panel 1: Payment Modes & Channels Breakdown */}
+          <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-wallet" style={{ color: '#3b82f6' }}></i>
+                  Payment Modes & Settlement Channels
+                </h3>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                  Channel distribution, settlement cycle and verification breakdown.
+                </p>
+              </div>
+            </div>
+
+            {/* Segmented Progress Bar */}
+            <div style={{ display: 'flex', height: '14px', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.25rem', background: 'rgba(24, 43, 73, 0.08)' }}>
+              {paymentChannels.map(c => (
+                <div 
+                  key={c.name}
+                  style={{ width: `${c.percent}%`, background: c.color, transition: 'all 0.3s ease' }}
+                  title={`${c.name}: ${c.percent}% (₦${c.amount.toLocaleString()})`}
+                ></div>
+              ))}
+            </div>
+
+            {/* Payment Channels Detail List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {paymentChannels.map(c => (
+                <div key={c.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: `${c.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.color }}>
+                      <i className={`fa-solid ${c.icon}`}></i>
+                    </div>
+                    <div>
+                      <strong style={{ fontSize: '0.85rem', display: 'block', color: 'var(--color-text)' }}>{c.name}</strong>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{c.speed} • {c.count} txns</span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <strong style={{ fontSize: '0.9rem', color: 'var(--color-text)', display: 'block' }}>₦{c.amount.toLocaleString()}</strong>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: c.color }}>{c.percent}% Share</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Panel 2: Clinical Revenue Inflows vs Expenditure Outflows */}
+          <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <h3 style={{ margin: '0 0 1.25rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-arrows-split-up-and-left" style={{ color: '#8b5cf6' }}></i>
+              Clinical Revenue vs Expenditure Allocation
+            </h3>
+
+            {/* Sub-block A: Revenue Inflow Streams */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#10b981', display: 'block', marginBottom: '0.6rem' }}>
+                REVENUE INFLOW STREAMS
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Specialist Doctor Consultations</span>
+                    <strong>₦{consultationTotal.toLocaleString()} (46%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '46%', height: '100%', background: '#10b981' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Pharmacy Prescription Dispensary & OTC</span>
+                    <strong>₦{pharmacyTotal.toLocaleString()} (35%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '35%', height: '100%', background: '#059669' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Diagnostic Lab Pathology & Sample Pickups</span>
+                    <strong>₦{labTotal.toLocaleString()} (19%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '19%', height: '100%', background: '#34d399' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-block B: Expenditure Outflow Commitments */}
+            <div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#ef4444', display: 'block', marginBottom: '0.6rem' }}>
+                OPERATIONAL EXPENDITURE ALLOCATION
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Doctor Honorariums & Specialist Payouts</span>
+                    <strong>₦{doctorPayoutTotal.toLocaleString()} (50%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '50%', height: '100%', background: '#ef4444' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Pharmacy Wholesale Restocking & Procurement</span>
+                    <strong>₦{drugProcurementTotal.toLocaleString()} (28%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '28%', height: '100%', background: '#f87171' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Diagnostic Reagents & Test Kits</span>
+                    <strong>₦{labConsumablesTotal.toLocaleString()} (12%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '12%', height: '100%', background: '#fb923c' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Logistics Dispatch Fleet & Fuel Allowance</span>
+                    <strong>₦{logisticsFleetTotal.toLocaleString()} (6%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '6%', height: '100%', background: '#facc15' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '3px' }}>
+                    <span>Telehealth Cloud, SMS Gateway & Infrastructure</span>
+                    <strong>₦{cloudSystemsTotal.toLocaleString()} (4%)</strong>
+                  </div>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(24, 43, 73, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ width: '4%', height: '100%', background: '#94a3b8' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Decision Making Intelligence Panel */}
+        <div className="glassmorphic" style={{ padding: '1.5rem 1.75rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(16, 185, 129, 0.06))', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
+              <i className="fa-solid fa-lightbulb" style={{ fontSize: '1.1rem' }}></i>
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem' }}>Executive Decision-Making & Clinic Intelligence</h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>Actionable financial optimization insights derived from live platform metrics.</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong style={{ fontSize: '0.88rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-scale-balanced"></i> High-Yield Specialties
+              </strong>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                Cardiology and Pediatrics have an 88% repeat consultation rate and generate 64% of specialist gross tariff. Expanding evening virtual sessions can boost monthly Inflow by an estimated ₦340,000.
+              </p>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong style={{ fontSize: '0.88rem', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-boxes-packing"></i> Bulk Procurement Savings
+              </strong>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                Medication restocking accounts for ₦{drugProcurementTotal.toLocaleString()}. Transitioning antimalarial & antibiotic reorders to direct manufacturer consignment will reduce cost of goods by 16%.
+              </p>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong style={{ fontSize: '0.88rem', color: '#8b5cf6', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-file-invoice-dollar"></i> HMO Claim Turnaround
+              </strong>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                ₦{pendingReceivables.toLocaleString()} in NHIS 90% claims is currently pending remittance. Submitting bi-weekly electronic claim batches under the NHIA automated portal will accelerate working capital turnaround by 9 days.
+              </p>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong style={{ fontSize: '0.88rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-truck-ramp-box"></i> Fleet Multi-Drop Optimization
+              </strong>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                Logistics dispatch is running at ₦1,250 per prescription drop. Grouping Abuja and Lagos delivery runs into scheduled zonal batches will reduce fuel expenditure by 22% while maintaining sub-3 hour delivery.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Live Money In & Money Out Transactions Ledger */}
+        <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem' }}>Financial Audit Ledger (Money In & Money Out)</h3>
+              <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                Comprehensive ledger of customer billing inflows, doctor disbursements, and clinic vendor procurements.
+              </p>
+            </div>
+
+            {/* Controls */}
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', background: 'rgba(24, 43, 73, 0.08)', padding: '3px', borderRadius: '8px' }}>
+                {[
+                  { id: 'all', label: 'All Transactions' },
+                  { id: 'inflow', label: 'Money In (+)' },
+                  { id: 'outflow', label: 'Money Out (-)' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setRevenueLedgerFilter(f.id)}
+                    style={{
+                      border: 'none',
+                      padding: '0.3rem 0.75rem',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: revenueLedgerFilter === f.id ? 'var(--color-primary)' : 'transparent',
+                      color: revenueLedgerFilter === f.id ? '#ffffff' : 'var(--color-text)'
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <select
+                value={revenuePaymentFilter}
+                onChange={(e) => setRevenuePaymentFilter(e.target.value)}
+                style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.78rem' }}
+              >
+                <option value="all">All Payment Channels</option>
+                <option value="paystack">Paystack / Online Card</option>
+                <option value="transfer">Direct Bank Transfer</option>
+                <option value="nhis">NHIS / HMO Insurance</option>
+                <option value="mobile">Mobile Money / USSD</option>
+              </select>
+
+              <div className="search-box" style={{ margin: 0, minWidth: '180px' }}>
+                <i className="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="text"
+                  placeholder="Search ledger..."
+                  value={revenueLedgerSearch}
+                  onChange={(e) => setRevenueLedgerSearch(e.target.value)}
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.35rem 0.35rem 2rem' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Ledger Table */}
+          {filteredLedger.length === 0 ? (
+            <p style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', textAlign: 'center', padding: '2rem' }}>
+              No transactions found matching your criteria.
+            </p>
+          ) : (
+            <div className="table-responsive">
+              <table className="admin-table" style={{ fontSize: '0.82rem' }}>
+                <thead>
+                  <tr>
+                    <th>Ref #</th>
+                    <th>Date</th>
+                    <th>Flow Type</th>
+                    <th>Title & Category</th>
+                    <th>Counterparty</th>
+                    <th>Payment Channel</th>
+                    <th style={{ textAlign: 'right' }}>Amount</th>
+                    <th style={{ textAlign: 'right' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLedger.slice(0, 20).map((t, index) => {
+                    const isInflow = t.type === 'inflow';
+                    return (
+                      <tr key={t.id || index}>
+                        <td><code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,0.05)', padding: '2px 5px', borderRadius: '4px' }}>{t.id}</code></td>
+                        <td>{t.date}</td>
+                        <td>
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 'bold',
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '12px',
+                            background: isInflow ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: isInflow ? '#047857' : '#b91c1c',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <i className={`fa-solid ${isInflow ? 'fa-arrow-down-left' : 'fa-arrow-up-right'}`}></i>
+                            {isInflow ? 'MONEY IN' : 'MONEY OUT'}
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{t.title}</strong>
+                          <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{t.category}</span>
+                        </td>
+                        <td>{t.patientName}</td>
+                        <td>
+                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            {t.paymentMethod}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: '800', color: isInflow ? '#10b981' : '#ef4444', fontSize: '0.9rem' }}>
+                          {isInflow ? '+' : '-'}₦{Number(t.amount || 0).toLocaleString()}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', color: '#047857' }}>
+                            {t.status || 'Settled'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -2965,7 +3781,7 @@ export default function App() {
       ];
 
       if (viewPart && validViews.includes(viewPart)) {
-        const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
+        const storedRole = localStorage.getItem("simmy_auth_role") || sessionStorage.getItem("simmy_auth_role") || authRole || (localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin") ? 'admin' : null);
         if (viewPart === 'dashboard' && !storedRole) {
           setCurrentView('portal-login');
         } else {
@@ -2992,11 +3808,11 @@ export default function App() {
       const secToken = params.get('sec_t');
       if (secToken && REVERSE_SECURE_TOKENS[secToken]) {
         const decodedTab = REVERSE_SECURE_TOKENS[secToken];
-        const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
+        const storedRole = localStorage.getItem("simmy_auth_role") || sessionStorage.getItem("simmy_auth_role") || authRole;
         if (storedRole === 'admin') setAdminNavView(decodedTab);
         else if (storedRole === 'doctor') setDoctorNavView(decodedTab);
       } else {
-        const adminTab = params.get('adminTab');
+        const adminTab = params.get('tab') || params.get('adminTab');
         if (adminTab) setAdminNavView(sanitizeSearchInput(adminTab));
 
         const doctorTab = params.get('doctorTab');
@@ -3019,7 +3835,7 @@ export default function App() {
       if (prev[prev.length - 1] === view) return prev;
       return [...prev, view];
     });
-    const storedRole = sessionStorage.getItem("simmy_auth_role") || authRole;
+    const storedRole = localStorage.getItem("simmy_auth_role") || sessionStorage.getItem("simmy_auth_role") || authRole || (localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin") ? 'admin' : null);
     const targetView = (view === 'dashboard' && !storedRole) ? 'portal-login' : view;
     sessionStorage.setItem("simmy_current_view", targetView);
     localStorage.setItem("simmy_current_view", targetView);
@@ -3689,12 +4505,16 @@ export default function App() {
     setLoggedInPharmacist(null);
     setLoggedInLab(null);
     setLoggedInLogistics(null);
-    sessionStorage.removeItem("simmy_auth_role");
-    sessionStorage.removeItem("simmy_auth_patient");
-    sessionStorage.removeItem("simmy_auth_doctor");
-    sessionStorage.removeItem("simmy_auth_pharmacist");
-    sessionStorage.removeItem("simmy_auth_lab");
-    sessionStorage.removeItem("simmy_auth_logistics");
+    const authKeys = [
+      "simmy_auth_role", "simmy_auth_admin", "simmy_auth_patient",
+      "simmy_auth_doctor", "simmy_auth_pharmacist", "simmy_auth_lab", "simmy_auth_logistics"
+    ];
+    authKeys.forEach(k => {
+      try {
+        localStorage.removeItem(k);
+        sessionStorage.removeItem(k);
+      } catch (e) {}
+    });
     navigateTo('home');
   };
 
@@ -8509,8 +9329,13 @@ const LeafletDispatchMap = ({
         {currentView === 'dashboard' && (
           <section id="dashboard-view" className="view-section animate-fade">
 
-            {/* Guard: redirect to login if no role */}
-            {!authRole && (() => { navigateTo('portal-login'); return null; })()}
+            {/* Guard: verify secure session without premature render redirect */}
+            {!authRole && (
+              <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--color-accent)', marginBottom: '1rem' }}></i>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Verifying secure dashboard session...</p>
+              </div>
+            )}
 
             {/* 1. PATIENT DASHBOARD */}
             {authRole === 'patient' && loggedInPatient && (
@@ -12081,11 +12906,32 @@ const LeafletDispatchMap = ({
                     <h3>{logistics.length}</h3>
                     <p>LOGISTICS STAFF</p>
                   </div>
+                  <div className="stat-divider"></div>
+                  <div
+                    className={`stat-item clickable ${adminNavView === 'revenue' ? 'active' : ''}`}
+                    onClick={() => setAdminNavView('revenue')}
+                    title="Click to view full Revenue & Financial Analytics"
+                    style={{ background: adminNavView === 'revenue' ? 'rgba(16, 185, 129, 0.12)' : undefined }}
+                  >
+                    <h3 style={{ color: '#10b981' }}>₦4.86M</h3>
+                    <p>REVENUE INFLOW</p>
+                  </div>
                 </div>
 
                 <div className="dashboard-layout">
                   {/* Sidebar Navigation */}
                   <div className="dashboard-sidebar glassmorphic">
+                    <button
+                      className={`sidebar-nav-btn ${adminNavView === 'revenue' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('revenue')}
+                      style={{
+                        background: adminNavView === 'revenue' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(99, 102, 241, 0.2))' : undefined,
+                        borderColor: adminNavView === 'revenue' ? 'rgba(16, 185, 129, 0.4)' : undefined,
+                        fontWeight: adminNavView === 'revenue' ? 'bold' : undefined
+                      }}
+                    >
+                      <i className="fa-solid fa-chart-line" style={{ color: '#10b981' }}></i> Revenue & Finance Hub
+                    </button>
                     <button
                       className={`sidebar-nav-btn ${adminNavView === 'appointments' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('appointments')}
@@ -13913,6 +14759,9 @@ const LeafletDispatchMap = ({
                       </div>
                     )}
 
+                    {/* Workspace: Revenue & Financial Analytics (Admin View) */}
+                    {adminNavView === 'revenue' && renderAdminRevenueDashboardView()}
+
                     {/* Workspace: Pharmacy Orders (Admin View) */}
                     {adminNavView === 'pharmacy_orders' && renderAdminPharmacyOrdersView()}
 
@@ -15556,6 +16405,138 @@ const LeafletDispatchMap = ({
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-outline" onClick={() => setShowAddLabKitModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary"><i className="fa-solid fa-plus"></i> Save Diagnostic Kit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* --- Add New Operational Expense Modal --- */}
+      {showAddExpenseModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddExpenseModal(false)}>
+          <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#ef4444' }}></i>
+                Record Operational Expense / Outflow
+              </h3>
+              <button className="modal-close" onClick={() => setShowAddExpenseModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newExpenseForm.title || !newExpenseForm.amount) return;
+              const newExp = {
+                id: `EXP-${Date.now().toString().slice(-4)}`,
+                date: new Date().toISOString().split('T')[0],
+                title: newExpenseForm.title,
+                category: newExpenseForm.category,
+                recipient: newExpenseForm.recipient || 'Operational Payee',
+                amount: Number(newExpenseForm.amount),
+                paymentMethod: newExpenseForm.paymentMethod,
+                notes: newExpenseForm.notes || '',
+                status: 'Settled'
+              };
+              setClinicExpenses(prev => [newExp, ...prev]);
+              setShowAddExpenseModal(false);
+              setNewExpenseForm({
+                title: '',
+                category: 'Specialist Payouts',
+                recipient: '',
+                amount: '',
+                paymentMethod: 'Direct Bank Transfer',
+                notes: ''
+              });
+              setPopupNotification({
+                type: 'success',
+                title: 'Operational Outflow Logged',
+                message: `Expense of ₦${Number(newExp.amount).toLocaleString()} for "${newExp.title}" successfully booked into clinic general ledger.`
+              });
+            }}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Expense Description / Voucher Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Doctor Consultant Honorarium or Bulk Antibiotic Procurement"
+                  value={newExpenseForm.title}
+                  onChange={(e) => setNewExpenseForm({ ...newExpenseForm, title: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Category</label>
+                  <select
+                    value={newExpenseForm.category}
+                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, category: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  >
+                    <option value="Specialist Payouts">Specialist Payouts</option>
+                    <option value="Drug Procurement">Drug Procurement</option>
+                    <option value="Lab Consumables">Lab Consumables</option>
+                    <option value="Logistics Fleet">Logistics Fleet</option>
+                    <option value="Cloud Infrastructure">Cloud Infrastructure</option>
+                    <option value="Facility Utilities">Facility Utilities</option>
+                    <option value="Administrative & Compliance">Administrative & Compliance</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Amount (₦)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="e.g. 150000"
+                    value={newExpenseForm.amount}
+                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, amount: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Recipient / Vendor</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Fidson Healthcare or Dr. Saima"
+                    value={newExpenseForm.recipient}
+                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, recipient: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Disbursement Channel</label>
+                  <select
+                    value={newExpenseForm.paymentMethod}
+                    onChange={(e) => setNewExpenseForm({ ...newExpenseForm, paymentMethod: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                  >
+                    <option value="Direct Bank Transfer">Direct Bank Transfer</option>
+                    <option value="Paystack B2B / Bank">Paystack B2B / Bank</option>
+                    <option value="Mobile Money / Transfer">Mobile Money / Transfer</option>
+                    <option value="Corporate Debit Card">Corporate Debit Card</option>
+                    <option value="Petty Cash Voucher">Petty Cash Voucher</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Audit Memo / Remarks (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Invoice #PO-9921, approved by Medical Director"
+                  value={newExpenseForm.notes}
+                  onChange={(e) => setNewExpenseForm({ ...newExpenseForm, notes: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowAddExpenseModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444', color: '#fff' }}>
+                  <i className="fa-solid fa-receipt"></i> Authorize & Book Expense
+                </button>
               </div>
             </form>
           </div>
