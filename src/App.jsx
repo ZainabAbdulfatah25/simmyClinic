@@ -671,6 +671,83 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
   );
 }
 
+// Resilient in-memory storage fallback when Tracking Prevention or Privacy Mode blocks localStorage/sessionStorage
+const memoryStore = new Map();
+
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (e) {}
+    return memoryStore.get(`local_${key}`) ?? null;
+  },
+  setItem: (key, value) => {
+    const valStr = String(value);
+    memoryStore.set(`local_${key}`, valStr);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, valStr);
+      }
+    } catch (e) {}
+  },
+  removeItem: (key) => {
+    memoryStore.delete(`local_${key}`);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
+    } catch (e) {}
+  },
+  clear: () => {
+    memoryStore.clear();
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.clear();
+      }
+    } catch (e) {}
+  }
+};
+
+const safeSessionStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        return window.sessionStorage.getItem(key);
+      }
+    } catch (e) {}
+    return memoryStore.get(`session_${key}`) ?? null;
+  },
+  setItem: (key, value) => {
+    const valStr = String(value);
+    memoryStore.set(`session_${key}`, valStr);
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(key, valStr);
+      }
+    } catch (e) {}
+  },
+  removeItem: (key) => {
+    memoryStore.delete(`session_${key}`);
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.removeItem(key);
+      }
+    } catch (e) {}
+  },
+  clear: () => {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.clear();
+      }
+    } catch (e) {}
+  }
+};
+
+const localStorage = safeLocalStorage;
+const sessionStorage = safeSessionStorage;
+
 export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
@@ -3579,7 +3656,28 @@ export default function App() {
       alert("Please agree to the Terms & Conditions & Privacy Policy to submit your booking.");
       return;
     }
-    let selectedDoc = doctors.find(d => d.id === parseInt(bookingFormData.doctorId));
+    let selectedDoc = doctors.find(d => 
+      (bookingFormData.doctorId && (
+        String(d.id) === String(bookingFormData.doctorId) || 
+        d.name === bookingFormData.doctorId ||
+        d.email === bookingFormData.doctorId ||
+        (d.staffId && d.staffId === bookingFormData.doctorId) ||
+        (!isNaN(parseInt(bookingFormData.doctorId)) && Number(d.id) === parseInt(bookingFormData.doctorId))
+      ))
+    );
+
+    // Fallback: match by doctor name if ID shifted
+    if (!selectedDoc && bookingFormData.doctorId && doctors.length > 0) {
+      selectedDoc = doctors.find(d => 
+        (d.name && d.name.toLowerCase().includes(String(bookingFormData.doctorId).toLowerCase())) ||
+        (d.email && d.email.toLowerCase().includes(String(bookingFormData.doctorId).toLowerCase()))
+      );
+    }
+
+    if (!selectedDoc && doctors.length > 0) {
+      selectedDoc = doctors.find(d => d.active !== false) || doctors[0];
+    }
+
     if (!selectedDoc) {
       alert("Please select a doctor.");
       return;
@@ -3591,12 +3689,12 @@ export default function App() {
     // Check if selected doctor is unavailable or not verified
     if (selectedDoc.active === false || selectedDoc.verified === false) {
       // Find active, verified candidates in same specialty
-      const candidates = doctors.filter(d => d.specialty === selectedDoc.specialty && d.active !== false && d.verified !== false && d.id !== selectedDoc.id);
+      const candidates = doctors.filter(d => d.specialty === selectedDoc.specialty && d.active !== false && d.verified !== false && String(d.id) !== String(selectedDoc.id));
       if (candidates.length > 0) {
         // Choose candidate with lowest active workload
         const candidateWorkloads = candidates.map(doc => {
           const activeCount = appointments.filter(a =>
-            (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) &&
+            (a.doctor === doc.name || String(a.doctorId) === String(doc.id)) &&
             (a.status === 'Pending' || a.status === 'Approved')
           ).length;
           return { doc, activeCount };
@@ -3606,11 +3704,11 @@ export default function App() {
         routed = true;
       } else {
         // Fallback to ANY active, verified doctor
-        const generalCandidates = doctors.filter(d => d.active !== false && d.verified !== false && d.id !== selectedDoc.id);
+        const generalCandidates = doctors.filter(d => d.active !== false && d.verified !== false && String(d.id) !== String(selectedDoc.id));
         if (generalCandidates.length > 0) {
           const candidateWorkloads = generalCandidates.map(doc => {
             const activeCount = appointments.filter(a =>
-              (a.doctor === doc.name || parseInt(a.doctorId) === doc.id) &&
+              (a.doctor === doc.name || String(a.doctorId) === String(doc.id)) &&
               (a.status === 'Pending' || a.status === 'Approved')
             ).length;
             return { doc, activeCount };
@@ -7624,7 +7722,7 @@ const LeafletDispatchMap = ({
                       >
                         <option value="">Choose Specialist...</option>
                         {doctors.filter(d => d.active !== false).map(d => (
-                          <option key={d.id} value={d.id}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
+                          <option key={d.id || d.name} value={d.id || d.name}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
                         ))}
                       </select>
                     </div>
@@ -8567,7 +8665,7 @@ const LeafletDispatchMap = ({
                               >
                                 <option value="">Choose Specialist...</option>
                                 {doctors.filter(d => d.active !== false).map(d => (
-                                  <option key={d.id} value={d.id}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
+                                  <option key={d.id || d.name} value={d.id || d.name}>{d.name} ({getSpecialtyTitle(d.specialty)})</option>
                                 ))}
                               </select>
                             </div>
