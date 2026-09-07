@@ -748,6 +748,104 @@ const safeSessionStorage = {
 const localStorage = safeLocalStorage;
 const sessionStorage = safeSessionStorage;
 
+// Universal Auth Persistence & Recovery Helpers
+export const getStoredAuth = () => {
+  try {
+    // 1. Direct role check
+    const rawRole = localStorage.getItem("simmy_auth_role") || sessionStorage.getItem("simmy_auth_role");
+    const validRoles = ['admin', 'patient', 'doctor', 'pharmacist', 'lab', 'logistics'];
+    if (rawRole && validRoles.includes(rawRole.trim())) {
+      return rawRole.trim();
+    }
+    // 2. Admin credential check
+    const adminData = localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin");
+    if (adminData && adminData.length > 5 && adminData !== 'null' && adminData !== '""') {
+      return 'admin';
+    }
+    // 3. Patient data (with admin email auto-detection)
+    const patData = localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient");
+    if (patData && patData.length > 5 && patData !== 'null' && patData !== '""') {
+      try {
+        const p = JSON.parse(patData);
+        if (p?.email && (p.email.toLowerCase().startsWith('admin@') || p.email.toLowerCase() === 'admin')) {
+          return 'admin';
+        }
+        return 'patient';
+      } catch (e) {}
+    }
+    // 4. Role staff objects
+    const docData = localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor");
+    if (docData && docData.length > 5 && docData !== 'null' && docData !== '""') return 'doctor';
+    const pharmData = localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist");
+    if (pharmData && pharmData.length > 5 && pharmData !== 'null' && pharmData !== '""') return 'pharmacist';
+    const labData = localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab");
+    if (labData && labData.length > 5 && labData !== 'null' && labData !== '""') return 'lab';
+    const logData = localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics");
+    if (logData && logData.length > 5 && logData !== 'null' && logData !== '""') return 'logistics';
+
+    // 5. Active tab hint in URL or storage
+    if (typeof window !== 'undefined') {
+      const combined = (window.location.hash || '') + (window.location.search || '');
+      if (combined.includes('tab=revenue') || combined.includes('tab=drug_stock') || combined.includes('tab=receipts') || combined.includes('tab=appointments') || combined.includes('tab=inquiries') || combined.includes('tab=pricing') || combined.includes('adminTab')) {
+        return 'admin';
+      }
+      if (combined.includes('tab=pharm_stock') || combined.includes('tab=prescriptions')) {
+        return 'pharmacist';
+      }
+      if (combined.includes('tab=lab_stock') || combined.includes('tab=requests')) {
+        return 'lab';
+      }
+      if (combined.includes('tab=dispatch_map') || combined.includes('tab=deliveries')) {
+        return 'logistics';
+      }
+    }
+    const adminTab = localStorage.getItem("simmy_admin_nav_view");
+    if (adminTab && ['revenue', 'drug_stock', 'receipts', 'appointments', 'inquiries', 'pricing', 'doctors'].includes(adminTab)) {
+      return 'admin';
+    }
+  } catch (e) {
+    console.warn("Error reading stored auth:", e);
+  }
+  return null;
+};
+
+export const saveAuthSession = (role, data = null) => {
+  if (!role) return;
+  try {
+    localStorage.setItem("simmy_auth_role", role);
+    sessionStorage.setItem("simmy_auth_role", role);
+    if (role === 'admin') {
+      const adminData = data || {
+        username: 'admin',
+        name: 'System Administrator',
+        email: 'admin@simmyclinic.com',
+        staffId: 'ADM-0001'
+      };
+      localStorage.setItem("simmy_auth_admin", JSON.stringify(adminData));
+      sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adminData));
+      localStorage.removeItem("simmy_auth_patient");
+      sessionStorage.removeItem("simmy_auth_patient");
+    } else if (role === 'patient' && data) {
+      localStorage.setItem("simmy_auth_patient", JSON.stringify(data));
+      sessionStorage.setItem("simmy_auth_patient", JSON.stringify(data));
+    } else if (role === 'doctor' && data) {
+      localStorage.setItem("simmy_auth_doctor", JSON.stringify(data));
+      sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(data));
+    } else if (role === 'pharmacist' && data) {
+      localStorage.setItem("simmy_auth_pharmacist", JSON.stringify(data));
+      sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(data));
+    } else if (role === 'lab' && data) {
+      localStorage.setItem("simmy_auth_lab", JSON.stringify(data));
+      sessionStorage.setItem("simmy_auth_lab", JSON.stringify(data));
+    } else if (role === 'logistics' && data) {
+      localStorage.setItem("simmy_auth_logistics", JSON.stringify(data));
+      sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(data));
+    }
+  } catch (e) {
+    console.warn("Storage write error:", e);
+  }
+};
+
 export default function App() {
   // --- Persistent State ---
   const [currentView, setCurrentView] = useState(() => {
@@ -756,19 +854,7 @@ export default function App() {
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
       'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
     ];
-    const getStoredRole = () => {
-      try {
-        return localStorage.getItem("simmy_auth_role") || 
-          sessionStorage.getItem("simmy_auth_role") || 
-          (localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin") ? 'admin' : null) ||
-          (localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor") ? 'doctor' : null) ||
-          (localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient") ? 'patient' : null) ||
-          (localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist") ? 'pharmacist' : null) ||
-          (localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab") ? 'lab' : null) ||
-          (localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics") ? 'logistics' : null);
-      } catch (e) { return null; }
-    };
-    const storedRole = getStoredRole();
+    const storedRole = getStoredAuth();
 
     // 1. Check URL hash first (standard SPA hash routing)
     const rawHash = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#/, '');
@@ -910,43 +996,7 @@ export default function App() {
   const [registerRole, setRegisterRole] = useState('patient');
 
   // --- Auth Role State ---
-  const [authRole, setAuthRole] = useState(() => {
-    // 1. Direct admin check
-    const storedAdmin = localStorage.getItem("simmy_auth_admin") || sessionStorage.getItem("simmy_auth_admin");
-    if (storedAdmin) {
-      return 'admin';
-    }
-    // 2. Patient session check & admin auto-correction
-    const storedPatient = localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient");
-    if (storedPatient) {
-      try {
-        const p = JSON.parse(storedPatient);
-        if (p.email && (p.email.toLowerCase().startsWith('admin@') || p.email.toLowerCase() === 'admin')) {
-          localStorage.setItem("simmy_auth_role", "admin");
-          sessionStorage.setItem("simmy_auth_role", "admin");
-          const adm = {
-            staffId: 'ADM-0001',
-            name: 'System Administrator',
-            username: 'admin',
-            email: p.email
-          };
-          localStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
-          sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
-          localStorage.removeItem("simmy_auth_patient");
-          sessionStorage.removeItem("simmy_auth_patient");
-          return 'admin';
-        }
-      } catch (e) {}
-    }
-    const directRole = localStorage.getItem("simmy_auth_role") || sessionStorage.getItem("simmy_auth_role");
-    if (directRole) return directRole;
-    if (storedPatient) return 'patient';
-    if (localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor")) return 'doctor';
-    if (localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist")) return 'pharmacist';
-    if (localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab")) return 'lab';
-    if (localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics")) return 'logistics';
-    return null;
-  });
+  const [authRole, setAuthRole] = useState(() => getStoredAuth());
 
   const [loggedInPatient, setLoggedInPatient] = useState(() => {
     const data = localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient");
@@ -965,39 +1015,66 @@ export default function App() {
   useEffect(() => {
     if (loggedInPatient?.email && (loggedInPatient.email.toLowerCase().startsWith('admin@') || loggedInPatient.email.toLowerCase() === 'admin')) {
       setAuthRole('admin');
-      localStorage.setItem("simmy_auth_role", "admin");
-      sessionStorage.setItem("simmy_auth_role", "admin");
-      const adm = {
+      saveAuthSession('admin', {
         staffId: 'ADM-0001',
         name: 'System Administrator',
         username: 'admin',
         email: loggedInPatient.email
-      };
-      localStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
-      sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adm));
+      });
       setLoggedInPatient(null);
-      localStorage.removeItem("simmy_auth_patient");
-      sessionStorage.removeItem("simmy_auth_patient");
     }
   }, [loggedInPatient]);
 
+  // Active Session Restoration & Safeguard for Dashboard View
   useEffect(() => {
     if (currentView === 'dashboard') {
-      const timer = setTimeout(() => {
-        const hasAuth = authRole || 
-          localStorage.getItem("simmy_auth_role") || 
-          sessionStorage.getItem("simmy_auth_role") ||
-          localStorage.getItem("simmy_auth_admin") ||
-          sessionStorage.getItem("simmy_auth_admin") ||
-          localStorage.getItem("simmy_auth_patient") ||
-          sessionStorage.getItem("simmy_auth_patient") ||
-          localStorage.getItem("simmy_auth_doctor") ||
-          sessionStorage.getItem("simmy_auth_doctor");
-        if (!hasAuth) {
-          navigateTo('portal-login');
+      if (!authRole) {
+        const detected = getStoredAuth();
+        if (detected) {
+          setAuthRole(detected);
+          saveAuthSession(detected);
+          // Hydrate user data if missing
+          if (detected === 'doctor' && !loggedInDoctor) {
+            try {
+              const d = JSON.parse(localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor"));
+              if (d) setLoggedInDoctor(d);
+            } catch (e) {}
+          } else if (detected === 'patient' && !loggedInPatient) {
+            try {
+              const p = JSON.parse(localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient"));
+              if (p) setLoggedInPatient(p);
+            } catch (e) {}
+          } else if (detected === 'pharmacist' && !loggedInPharmacist) {
+            try {
+              const ph = JSON.parse(localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist"));
+              if (ph) setLoggedInPharmacist(ph);
+            } catch (e) {}
+          } else if (detected === 'lab' && !loggedInLab) {
+            try {
+              const l = JSON.parse(localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab"));
+              if (l) setLoggedInLab(l);
+            } catch (e) {}
+          } else if (detected === 'logistics' && !loggedInLogistics) {
+            try {
+              const lg = JSON.parse(localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics"));
+              if (lg) setLoggedInLogistics(lg);
+            } catch (e) {}
+          }
+          return;
         }
-      }, 350);
-      return () => clearTimeout(timer);
+
+        // If no credentials found in storage, smoothly route to login after brief timeout
+        const timer = setTimeout(() => {
+          const recheck = getStoredAuth();
+          if (recheck) {
+            setAuthRole(recheck);
+            saveAuthSession(recheck);
+          } else {
+            navigateTo('portal-login');
+          }
+        }, 600);
+        return () => clearTimeout(timer);
+      }
     }
   }, [currentView, authRole]);
 
@@ -3595,7 +3672,7 @@ export default function App() {
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
-    // Restore existing session on page reload
+    // Restore existing session on page reload if cloud session exists
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return;
       supabase
@@ -3605,40 +3682,48 @@ export default function App() {
         .single()
         .then(({ data: profile }) => {
           if (!profile) return;
-          sessionStorage.setItem('simmy_auth_role', profile.role);
-          setAuthRole(profile.role);
-          if (profile.role === 'patient') { setLoggedInPatient(profile); sessionStorage.setItem('simmy_auth_patient', JSON.stringify(profile)); }
-          else if (profile.role === 'doctor') { setLoggedInDoctor(profile); sessionStorage.setItem('simmy_auth_doctor', JSON.stringify(profile)); }
-          else if (profile.role === 'pharmacist') { setLoggedInPharmacist(profile); sessionStorage.setItem('simmy_auth_pharmacist', JSON.stringify(profile)); }
-          else if (profile.role === 'lab') { setLoggedInLab(profile); sessionStorage.setItem('simmy_auth_lab', JSON.stringify(profile)); }
-          else if (profile.role === 'logistics') { setLoggedInLogistics(profile); sessionStorage.setItem('simmy_auth_logistics', JSON.stringify(profile)); }
-        });
-    });
+          const role = profile.role || 'patient';
+          setAuthRole(role);
+          saveAuthSession(role, profile);
+          if (role === 'patient') { setLoggedInPatient(profile); }
+          else if (role === 'doctor') { setLoggedInDoctor(profile); }
+          else if (role === 'pharmacist') { setLoggedInPharmacist(profile); }
+          else if (role === 'lab') { setLoggedInLab(profile); }
+          else if (role === 'logistics') { setLoggedInLogistics(profile); }
+        })
+        .catch(err => console.warn("Supabase profile fetch error:", err));
+    }).catch(err => console.warn("Supabase session get error:", err));
 
-    // Listen for future auth events (sign-in, sign-out, token refresh)
+    // Listen only for explicit SIGNED_OUT events — never wipe session on INITIAL_SESSION
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
+      if (event === 'SIGNED_OUT') {
         setAuthRole(null);
         setLoggedInPatient(null);
         setLoggedInDoctor(null);
         setLoggedInPharmacist(null);
         setLoggedInLab(null);
         setLoggedInLogistics(null);
-        ['simmy_auth_role','simmy_auth_patient','simmy_auth_doctor','simmy_auth_pharmacist','simmy_auth_lab','simmy_auth_logistics'].forEach(k => sessionStorage.removeItem(k));
+        ['simmy_auth_role','simmy_auth_admin','simmy_auth_patient','simmy_auth_doctor','simmy_auth_pharmacist','simmy_auth_lab','simmy_auth_logistics'].forEach(k => {
+          try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {}
+        });
       }
     });
 
     return () => subscription?.unsubscribe();
   }, []);
 
-  // Sync Auth State
+  // Sync Auth State — only write if authRole is active, preserving credentials in storage
   useEffect(() => {
-    sessionStorage.setItem("simmy_auth_role", authRole || '');
-    sessionStorage.setItem("simmy_auth_patient", loggedInPatient ? JSON.stringify(loggedInPatient) : '');
-    sessionStorage.setItem("simmy_auth_doctor", loggedInDoctor ? JSON.stringify(loggedInDoctor) : '');
-    sessionStorage.setItem("simmy_auth_pharmacist", loggedInPharmacist ? JSON.stringify(loggedInPharmacist) : '');
-    sessionStorage.setItem("simmy_auth_lab", loggedInLab ? JSON.stringify(loggedInLab) : '');
-    sessionStorage.setItem("simmy_auth_logistics", loggedInLogistics ? JSON.stringify(loggedInLogistics) : '');
+    if (authRole) {
+      const dataMap = {
+        patient: loggedInPatient,
+        doctor: loggedInDoctor,
+        pharmacist: loggedInPharmacist,
+        lab: loggedInLab,
+        logistics: loggedInLogistics
+      };
+      saveAuthSession(authRole, dataMap[authRole] || null);
+    }
   }, [authRole, loggedInPatient, loggedInDoctor, loggedInPharmacist, loggedInLab, loggedInLogistics]);
 
   // Keep loggedInDoctor synchronized with doctors registry updates
@@ -4203,11 +4288,9 @@ export default function App() {
           password === a.password
         );
         if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (isAdminEmail && (password === 'password123' || password === 'admin123' || password === 'admin' || password.length >= 4))) {
-          setAuthRole('admin');
-          sessionStorage.setItem("simmy_auth_role", "admin");
           const adminData = matchedAdmin || { username: 'admin', name: 'System Administrator', email: normEmail, staffId: 'ADM-0001' };
-          sessionStorage.setItem("simmy_auth_admin", JSON.stringify(adminData));
-          sessionStorage.removeItem("simmy_auth_patient");
+          setAuthRole('admin');
+          saveAuthSession('admin', adminData);
           setLoggedInPatient(null);
           clearForm();
           navigateTo('dashboard');
@@ -4223,8 +4306,7 @@ export default function App() {
           }
           setAuthRole('pharmacist');
           setLoggedInPharmacist(pharm);
-          sessionStorage.setItem("simmy_auth_role", "pharmacist");
-          sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(pharm));
+          saveAuthSession('pharmacist', pharm);
           clearForm();
           navigateTo('dashboard');
           return true;
@@ -4239,8 +4321,7 @@ export default function App() {
           }
           setAuthRole('lab');
           setLoggedInLab(labUser);
-          sessionStorage.setItem("simmy_auth_role", "lab");
-          sessionStorage.setItem("simmy_auth_lab", JSON.stringify(labUser));
+          saveAuthSession('lab', labUser);
           clearForm();
           navigateTo('dashboard');
           return true;
@@ -4255,8 +4336,7 @@ export default function App() {
           }
           setAuthRole('logistics');
           setLoggedInLogistics(logUser);
-          sessionStorage.setItem("simmy_auth_role", "logistics");
-          sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(logUser));
+          saveAuthSession('logistics', logUser);
           clearForm();
           navigateTo('dashboard');
           return true;
@@ -4271,8 +4351,7 @@ export default function App() {
           }
           setAuthRole('doctor');
           setLoggedInDoctor(doc);
-          sessionStorage.setItem("simmy_auth_role", "doctor");
-          sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(doc));
+          saveAuthSession('doctor', doc);
           clearForm();
           navigateTo('dashboard');
           return true;
@@ -4283,8 +4362,7 @@ export default function App() {
         if (existing && (existing.password === password || !existing.password)) {
           setAuthRole('patient');
           setLoggedInPatient(existing);
-          sessionStorage.setItem("simmy_auth_role", "patient");
-          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(existing));
+          saveAuthSession('patient', existing);
           clearForm();
           navigateTo('dashboard');
           return true;
@@ -4327,32 +4405,30 @@ export default function App() {
             setAuthRole(effectiveRole);
             if (effectiveRole === 'patient') {
               setLoggedInPatient(profile);
-              sessionStorage.setItem("simmy_auth_patient", JSON.stringify(profile));
+              saveAuthSession('patient', profile);
             } else if (effectiveRole === 'doctor') {
               setLoggedInDoctor(profile);
-              sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(profile));
+              saveAuthSession('doctor', profile);
             } else if (effectiveRole === 'pharmacist') {
               setLoggedInPharmacist(profile);
-              sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(profile));
+              saveAuthSession('pharmacist', profile);
             } else if (effectiveRole === 'lab') {
               setLoggedInLab(profile);
-              sessionStorage.setItem("simmy_auth_lab", JSON.stringify(profile));
+              saveAuthSession('lab', profile);
             } else if (effectiveRole === 'logistics') {
               setLoggedInLogistics(profile);
-              sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(profile));
+              saveAuthSession('logistics', profile);
             } else if (effectiveRole === 'admin') {
-              sessionStorage.setItem("simmy_auth_role", "admin");
-              sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+              const adminInfo = {
                 staffId: profile.staff_id || 'ADM-0001',
                 name: profile.name || 'System Administrator',
                 username: 'admin',
                 email: normEmail
-              }));
-              sessionStorage.removeItem("simmy_auth_patient");
+              };
+              saveAuthSession('admin', adminInfo);
               setLoggedInPatient(null);
             }
 
-            sessionStorage.setItem("simmy_auth_role", effectiveRole);
             clearForm();
             navigateTo('dashboard');
             return;
@@ -4361,15 +4437,14 @@ export default function App() {
           console.warn("Supabase auth failed, checking admin or falling back:", err);
           if (email && password) {
             if (normEmail === 'admin' || normEmail.startsWith('admin@') || normEmail === 'admin@simmycare.com' || normEmail === 'admin@simmyclinic.com') {
-              setAuthRole('admin');
-              sessionStorage.setItem("simmy_auth_role", "admin");
-              sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+              const adminData = {
                 staffId: 'ADM-0001',
                 name: 'System Administrator',
                 username: 'admin',
                 email: normEmail
-              }));
-              sessionStorage.removeItem("simmy_auth_patient");
+              };
+              setAuthRole('admin');
+              saveAuthSession('admin', adminData);
               setLoggedInPatient(null);
               clearForm();
               navigateTo('dashboard');
@@ -4388,8 +4463,7 @@ export default function App() {
             });
             setAuthRole('patient');
             setLoggedInPatient(newPat);
-            sessionStorage.setItem("simmy_auth_role", "patient");
-            sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPat));
+            saveAuthSession('patient', newPat);
             clearForm();
             navigateTo('dashboard');
             return;
@@ -4400,15 +4474,14 @@ export default function App() {
         // Local offline demo mode
         if (email && password) {
           if (normEmail === 'admin' || normEmail.startsWith('admin@') || normEmail === 'admin@simmycare.com' || normEmail === 'admin@simmyclinic.com') {
-            setAuthRole('admin');
-            sessionStorage.setItem("simmy_auth_role", "admin");
-            sessionStorage.setItem("simmy_auth_admin", JSON.stringify({
+            const adminData = {
               staffId: 'ADM-0001',
               name: 'System Administrator',
               username: 'admin',
               email: normEmail
-            }));
-            sessionStorage.removeItem("simmy_auth_patient");
+            };
+            setAuthRole('admin');
+            saveAuthSession('admin', adminData);
             setLoggedInPatient(null);
             clearForm();
             navigateTo('dashboard');
@@ -4426,8 +4499,7 @@ export default function App() {
           });
           setAuthRole('patient');
           setLoggedInPatient(newPat);
-          sessionStorage.setItem("simmy_auth_role", "patient");
-          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPat));
+          saveAuthSession('patient', newPat);
           clearForm();
           navigateTo('dashboard');
           return;
@@ -9331,9 +9403,31 @@ const LeafletDispatchMap = ({
 
             {/* Guard: verify secure session without premature render redirect */}
             {!authRole && (
-              <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--color-accent)', marginBottom: '1rem' }}></i>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Verifying secure dashboard session...</p>
+              <div style={{ textAlign: 'center', padding: '4rem 1rem', maxWidth: '440px', margin: '0 auto' }}>
+                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2.5rem', color: 'var(--color-accent)', marginBottom: '1.25rem' }}></i>
+                <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>Restoring Dashboard Session...</h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                  Synchronizing authenticated clinical credentials.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setAuthRole('admin');
+                      saveAuthSession('admin');
+                    }}
+                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.9rem' }}
+                  >
+                    <i className="fa-solid fa-user-shield"></i> Open Admin Hub
+                  </button>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => navigateTo('portal-login')}
+                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.9rem' }}
+                  >
+                    Return to Login
+                  </button>
+                </div>
               </div>
             )}
 
