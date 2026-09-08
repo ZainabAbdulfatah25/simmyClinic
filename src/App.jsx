@@ -17,6 +17,7 @@ import logoSvg from './assets/logo.svg';
 // --- Seed Data ---
 const ALL_SERVICES = [
   "Online Consultation",
+  "Diagnostic / Lab Results Review",
   "Mobile Laboratory",
   "Pharmacy Delivery",
   "Home Services",
@@ -180,9 +181,10 @@ const INITIAL_DOCTORS = [
     license: "MDCN/4521",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation", "Home Services"],
+    services: ["Online Consultation", "Diagnostic / Lab Results Review", "Physical Consultation", "Home Services"],
     verified: true,
-    level: "CEO",
+    active: true,
+    level: "CEO & ENT Specialist / MPH",
     patientCapacity: "Flexible / Unlimited",
     remunerationNotes: "Executive consultations & home services fees are negotiable."
   },
@@ -203,8 +205,9 @@ const INITIAL_DOCTORS = [
     license: "MLS/REG/6831",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Mobile Laboratory"],
+    services: ["Online Consultation", "Diagnostic / Lab Results Review", "Mobile Laboratory"],
     verified: true,
+    active: true,
     level: "Diagnostic Specialist / MPH",
     patientCapacity: "25 patients/month",
     remunerationNotes: "Negotiable for specialized diagnostic procedures"
@@ -226,9 +229,10 @@ const INITIAL_DOCTORS = [
     license: "MDCN/7123",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Mobile Laboratory"],
+    services: ["Online Consultation", "Diagnostic / Lab Results Review", "Mobile Laboratory"],
     verified: true,
-    level: "Consultant",
+    active: true,
+    level: "Consultant Family Physician",
     patientCapacity: "40 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -249,9 +253,10 @@ const INITIAL_DOCTORS = [
     license: "MDCN/5890",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"],
+    services: ["Online Consultation", "Diagnostic / Lab Results Review", "Physical Consultation"],
     verified: true,
-    level: "Senior Consultant",
+    active: true,
+    level: "Senior Consultant (OB/GYN)",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -276,7 +281,8 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
-    level: "Clinical Specialist (Family Planning / ANC Unit)",
+    active: true,
+    level: "Clinical Specialist (Family Planning / ANC)",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -297,8 +303,9 @@ const INITIAL_DOCTORS = [
     license: "MDCN/6203",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation"],
+    services: ["Online Consultation", "Diagnostic / Lab Results Review", "Physical Consultation"],
     verified: true,
+    active: true,
     level: "Public Health Specialist",
     patientCapacity: "35 patients/month",
     remunerationNotes: "Special project consultancy rate negotiable"
@@ -322,6 +329,7 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation"],
     verified: true,
+    active: true,
     level: "Senior Mental Health Specialist",
     patientCapacity: "5 patients/month",
     remunerationNotes: "Flexible consultancy rates based on nature and scope of assignment."
@@ -345,6 +353,7 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Physical Consultation", "Home Services"],
     verified: true,
+    active: true,
     level: "Community Health Officer",
     patientCapacity: "30 patients/month",
     remunerationNotes: "Negotiable based on scope of services, location, workload, and contract terms."
@@ -368,7 +377,8 @@ const INITIAL_DOCTORS = [
     consultationDuration: "30 mins",
     services: ["Pharmacy Delivery", "Online Consultation"],
     verified: true,
-    level: "Head Pharmacist",
+    active: true,
+    level: "Licensed Superintendent Pharmacist",
     patientCapacity: "50 patients/month",
     remunerationNotes: "Standard clinical rate"
   },
@@ -389,9 +399,10 @@ const INITIAL_DOCTORS = [
     license: "NMCN/REG/4819",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
-    services: ["Online Consultation", "Physical Consultation", "Home Services"],
+    services: ["Online Consultation", "Diagnostic / Lab Results Review", "Physical Consultation", "Home Services"],
     verified: true,
-    level: "Senior Care Officer",
+    active: true,
+    level: "Senior Care Officer / Midwife",
     patientCapacity: "40 patients/month",
     remunerationNotes: "Standard clinical rate"
   }
@@ -852,7 +863,8 @@ export default function App() {
     const validViews = [
       'home', 'about', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
       'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
-      'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
+      'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry',
+      'payment', 'legal-compliance'
     ];
     const storedRole = getStoredAuth();
 
@@ -902,7 +914,7 @@ export default function App() {
   };
 
   // Data version - increment to force localStorage refresh and remove stale/dummy data
-  const DATA_VERSION = "v32_simmyclinic_brand_update";
+  const DATA_VERSION = "v33_stakeholder_banktransfer_update";
 
   const [doctors, setDoctors] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
@@ -1451,7 +1463,7 @@ export default function App() {
     }
     return [
       { id: 'EXP-1001', date: '2026-09-05', category: 'Specialist Payouts', title: 'Dr. Adam Professional Fee Settlement', recipient: 'Dr. Adam Abubakar (Cardiology)', amount: 480000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
-      { id: 'EXP-1002', date: '2026-09-04', category: 'Drug Procurement', title: 'Wholesale Antibiotics & Antimalarial Reorder', recipient: 'Emzor Pharmaceutical Wholesalers', amount: 385000, paymentMethod: 'Paystack B2B / Bank', status: 'Settled' },
+      { id: 'EXP-1002', date: '2026-09-04', category: 'Drug Procurement', title: 'Wholesale Antibiotics & Antimalarial Reorder', recipient: 'Emzor Pharmaceutical Wholesalers', amount: 385000, paymentMethod: 'Direct Bank Transfer (Corporate)', status: 'Settled' },
       { id: 'EXP-1003', date: '2026-09-03', category: 'Specialist Payouts', title: 'Dr. Wasila Consultant Honorarium', recipient: 'Dr. Wasila Salisu (Pediatrics)', amount: 420000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
       { id: 'EXP-1004', date: '2026-09-02', category: 'Lab Consumables', title: 'Diagnostic Reagents, Viral Kits & Blood Tubes', recipient: 'MedLab Diagnostics Supplies Nig.', amount: 240000, paymentMethod: 'Direct Bank Transfer', status: 'Settled' },
       { id: 'EXP-1005', date: '2026-09-01', category: 'Logistics Fleet', title: 'Courier Bike Maintenance & Fuel Allowance', recipient: 'Fleet Operations Lead (M. Bello)', amount: 165000, paymentMethod: 'Mobile Money / Transfer', status: 'Settled' },
@@ -1548,10 +1560,44 @@ export default function App() {
     dispatchArea: ''
   });
 
-  // Payment & Receipt Management States
+  // Payment & Receipt Management States (Strictly Bank Transfer Only)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalItem, setPaymentModalItem] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('bank_transfer');
+  const [copiedAccount, setCopiedAccount] = useState(null);
+  const [paymentTransferDetails, setPaymentTransferDetails] = useState({
+    senderName: '',
+    senderBank: 'Zenith Bank',
+    refNumber: ''
+  });
+
+  // Dedicated Payment Portal States (#payment)
+  const [paymentLookupQuery, setPaymentLookupQuery] = useState('');
+  const [paymentSelectedTicket, setPaymentSelectedTicket] = useState(null);
+  const [paymentPortalNotice, setPaymentPortalNotice] = useState(null);
+  const [paymentSubmissionForm, setPaymentSubmissionForm] = useState({
+    ticketId: '',
+    patientName: '',
+    serviceTitle: '',
+    senderName: '',
+    senderBank: 'Zenith Bank PLC',
+    amount: '',
+    refNumber: '',
+    notes: ''
+  });
+
+  // Patient Walkthrough Video Guide Modal States
+  const [showPatientGuideModal, setShowPatientGuideModal] = useState(false);
+  const [guideActiveStep, setGuideActiveStep] = useState(1);
+  const [guideVideoPlaying, setGuideVideoPlaying] = useState(false);
+
+  const copyToClipboard = (text, key) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+    }
+    setCopiedAccount(key);
+    setTimeout(() => setCopiedAccount(null), 2500);
+  };
 
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
@@ -1559,6 +1605,11 @@ export default function App() {
   const handleOpenPayment = (item, type = 'appointment') => {
     setPaymentModalItem({ item, type });
     setSelectedPaymentMethod('bank_transfer');
+    setPaymentTransferDetails({
+      senderName: item.patientName || item.name || '',
+      senderBank: 'Zenith Bank PLC',
+      refNumber: ''
+    });
     setShowPaymentModal(true);
   };
 
@@ -1676,7 +1727,7 @@ export default function App() {
               onClick={(e) => { e.stopPropagation(); handleOpenPayment(item, type); }}
               style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 'bold' }}
             >
-              <i className="fa-solid fa-credit-card"></i> Pay Now
+              <i className="fa-solid fa-building-columns"></i> Pay via Transfer
             </button>
           ) : (
             <>
@@ -1726,7 +1777,7 @@ export default function App() {
       <div className="modal-backdrop" onClick={() => setShowPaymentModal(false)}>
         <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', textAlign: 'left' }}>
           <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h3 style={{ margin: 0 }}><i className="fa-solid fa-credit-card" style={{ color: 'var(--color-accent)', marginRight: '8px' }}></i> Pay for {title}</h3>
+            <h3 style={{ margin: 0 }}><i className="fa-solid fa-building-columns" style={{ color: 'var(--color-accent)', marginRight: '8px' }}></i> Direct Bank Transfer — {title}</h3>
             <button onClick={() => setShowPaymentModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
           </div>
 
@@ -1741,112 +1792,327 @@ export default function App() {
             </div>
           </div>
 
-          {/* Payment Method Selector */}
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Select Payment Option</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          {/* Bank Transfer Exclusivity Notice */}
+          <div className="bank-transfer-only-banner" style={{ margin: '0 0 1.25rem 0', padding: '0.85rem 1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b45309', fontWeight: 'bold', fontSize: '0.85rem' }}>
+              <i className="fa-solid fa-building-columns"></i> Official Clinic Payment Policy
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#92400e', marginTop: '0.25rem', lineHeight: '1.4' }}>
+              Card gateways and cash payments are disabled for platform audit. Please make direct bank transfer to either official SimmyClinic corporate bank account below.
+            </div>
+          </div>
+
+          {/* NHIS Enrollee Co-Pay Note if applicable */}
+          {(item.isNhis || item.nhisNumber) && (
+            <div style={{ background: 'rgba(2, 132, 199, 0.08)', padding: '0.85rem', borderRadius: '8px', border: '1px solid rgba(2, 132, 199, 0.25)', marginBottom: '1.25rem', fontSize: '0.82rem' }}>
+              <div style={{ fontWeight: 'bold', color: '#0284c7', marginBottom: '0.35rem' }}>
+                <i className="fa-solid fa-shield-halved"></i> NHIS 10% Co-Pay Patient Share
+              </div>
+              <div>Enrollee ID: <strong>{item.nhisNumber || 'NHIS-VERIFIED'}</strong> | Transfer Co-Pay Share: <strong style={{ color: '#0284c7' }}>₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.1)).toLocaleString()}</strong></div>
+            </div>
+          )}
+
+          {/* Verified Clinic Bank Accounts with 1-Click Copy */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div className="bank-account-box" style={{ padding: '0.85rem', border: '1px solid #10b981' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#047857', fontWeight: 'bold' }}>Mobile Transfer</span>
+                <span style={{ fontSize: '0.65rem', background: '#dcfce7', color: '#15803d', padding: '0.1rem 0.4rem', borderRadius: '8px', fontWeight: '700' }}>Active</span>
+              </div>
+              <div style={{ fontWeight: '800', color: 'var(--color-indigo)', fontSize: '0.95rem', marginTop: '0.2rem' }}>Kuda Bank</div>
+              <div style={{ margin: '0.35rem 0' }}>
+                <span className="bank-account-number" style={{ fontSize: '1.05rem', letterSpacing: '1px' }}>2085817667</span>
+              </div>
+              <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>Sa'ima Mohammed Jibril</div>
               <button
                 type="button"
-                className={`btn ${selectedPaymentMethod === 'bank_transfer' ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => setSelectedPaymentMethod('bank_transfer')}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.85rem', height: 'auto', gap: '0.35rem' }}
+                className={`copy-badge-btn ${copiedAccount === 'kuda' ? 'copied' : ''}`}
+                onClick={() => copyToClipboard('2085817667', 'kuda')}
               >
-                <i className="fa-solid fa-building-columns" style={{ fontSize: '1.3rem' }}></i>
-                <span>Bank Transfer</span>
+                <i className={`fa-solid ${copiedAccount === 'kuda' ? 'fa-check' : 'fa-copy'}`}></i>
+                {copiedAccount === 'kuda' ? 'Copied!' : 'Copy Kuda Account'}
               </button>
+            </div>
+
+            <div className="bank-account-box" style={{ padding: '0.85rem' }}>
+              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Primary Bank</div>
+              <div style={{ fontWeight: '800', color: 'var(--color-indigo)', fontSize: '0.95rem', marginTop: '0.2rem' }}>Zenith Bank PLC</div>
+              <div style={{ margin: '0.35rem 0' }}>
+                <span className="bank-account-number" style={{ fontSize: '1.05rem', letterSpacing: '1px' }}>1029384756</span>
+              </div>
+              <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>SimmyClinic Digital Health Ltd</div>
               <button
                 type="button"
-                className={`btn ${selectedPaymentMethod === 'card_gateway' ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => setSelectedPaymentMethod('card_gateway')}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.85rem', height: 'auto', gap: '0.35rem' }}
+                className={`copy-badge-btn ${copiedAccount === 'zenith' ? 'copied' : ''}`}
+                onClick={() => copyToClipboard('1029384756', 'zenith')}
               >
-                <i className="fa-solid fa-credit-card" style={{ fontSize: '1.3rem' }}></i>
-                <span>Card Gateway</span>
+                <i className={`fa-solid ${copiedAccount === 'zenith' ? 'fa-check' : 'fa-copy'}`}></i>
+                {copiedAccount === 'zenith' ? 'Copied!' : 'Copy Account'}
               </button>
+            </div>
+
+            <div className="bank-account-box" style={{ padding: '0.85rem' }}>
+              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Secondary Bank</div>
+              <div style={{ fontWeight: '800', color: 'var(--color-indigo)', fontSize: '0.95rem', marginTop: '0.2rem' }}>Stanbic IBTC Bank</div>
+              <div style={{ margin: '0.35rem 0' }}>
+                <span className="bank-account-number" style={{ fontSize: '1.05rem', letterSpacing: '1px' }}>0049218392</span>
+              </div>
+              <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>SimmyClinic Digital Health Ltd</div>
               <button
                 type="button"
-                className={`btn ${selectedPaymentMethod === 'nhis_copay' ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => setSelectedPaymentMethod('nhis_copay')}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0.85rem', height: 'auto', gap: '0.35rem', gridColumn: 'span 2' }}
+                className={`copy-badge-btn ${copiedAccount === 'stanbic' ? 'copied' : ''}`}
+                onClick={() => copyToClipboard('0049218392', 'stanbic')}
               >
-                <i className="fa-solid fa-shield-halved" style={{ fontSize: '1.3rem', color: '#0284c7' }}></i>
-                <span>NHIS / HMO Insurance Claim (10% Patient Co-Pay)</span>
+                <i className={`fa-solid ${copiedAccount === 'stanbic' ? 'fa-check' : 'fa-copy'}`}></i>
+                {copiedAccount === 'stanbic' ? 'Copied!' : 'Copy Account'}
               </button>
             </div>
           </div>
 
-          {/* Details based on selected payment method */}
-          {selectedPaymentMethod === 'bank_transfer' ? (
-            <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-              <div style={{ fontWeight: 'bold', color: '#60a5fa', marginBottom: '0.5rem' }}>Direct Bank Transfer Account</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '0.35rem' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Bank Name:</span> <strong>Zenith Bank PLC</strong>
-                <span style={{ color: 'var(--color-text-muted)' }}>Account Name:</span> <strong>SimmyClinic Digital Health Ltd</strong>
-                <span style={{ color: 'var(--color-text-muted)' }}>Account No:</span> <strong style={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: '1rem' }}>1029384756</strong>
+          {/* Transfer Proof Submission Form */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 'bold', marginBottom: '0.75rem', color: 'var(--color-heading)' }}>
+              Submit Transfer Particulars for Instant Matching:
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Payer / Account Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Zainab Abdulfatah"
+                  value={paymentTransferDetails.senderName}
+                  onChange={(e) => setPaymentTransferDetails({ ...paymentTransferDetails, senderName: e.target.value })}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.85rem' }}
+                />
               </div>
-              <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                Transfer exact amount <strong>{amount}</strong> and click "Confirm Payment Sent" below. Staff will verify your payment instantly.
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Your Sending Bank *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. GTBank, Access, Zenith, OPay"
+                  value={paymentTransferDetails.senderBank}
+                  onChange={(e) => setPaymentTransferDetails({ ...paymentTransferDetails, senderBank: e.target.value })}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.85rem' }}
+                />
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Bank Transfer Reference / Session ID (Optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. 000013260907000000000000000000"
+                value={paymentTransferDetails.refNumber}
+                onChange={(e) => setPaymentTransferDetails({ ...paymentTransferDetails, refNumber: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.85rem', fontFamily: 'monospace' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+              Staff reconciles credits within 15–30 mins.
+            </span>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button className="btn btn-outline" onClick={() => setShowPaymentModal(false)}>Cancel</button>
+              <button
+                className="btn btn-accent"
+                onClick={() => {
+                  const updatedStatus = 'Payment Pending Approval';
+                  const methodLabel = 'Direct Bank Transfer';
+                  const receiptId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+
+                  setInquiries(prev => prev.map(inq => inq.id === item.id ? {
+                    ...inq,
+                    paymentStatus: updatedStatus,
+                    paymentMethod: methodLabel,
+                    receiptNo: receiptId,
+                    transferSender: paymentTransferDetails.senderName,
+                    transferBank: paymentTransferDetails.senderBank,
+                    transferRef: paymentTransferDetails.refNumber
+                  } : inq));
+
+                  setAppointments(prev => prev.map(apt => apt.id === item.id ? {
+                    ...apt,
+                    paymentStatus: updatedStatus,
+                    paymentMethod: methodLabel,
+                    receiptNo: receiptId,
+                    transferSender: paymentTransferDetails.senderName,
+                    transferBank: paymentTransferDetails.senderBank,
+                    transferRef: paymentTransferDetails.refNumber
+                  } : apt));
+
+                  setShowPaymentModal(false);
+                  setPopupNotification({
+                    type: 'success',
+                    title: 'Transfer Details Submitted',
+                    message: `Payment confirmation queued under reference ${receiptId}. Our finance desk is verifying credit with Kuda Bank / Zenith / Stanbic IBTC.`
+                  });
+                }}
+              >
+                <i className="fa-solid fa-paper-plane"></i> Confirm Bank Transfer Sent
+              </button>
+            </div>
+          </div>
+          {/* Direct Support Hotline inside Payment Modal */}
+          <div style={{ marginTop: '0.85rem', padding: '0.6rem 0.85rem', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', color: '#065f46' }}>
+              <i className="fa-solid fa-headset" style={{ marginRight: '5px' }}></i> Need instant payment confirmation help?
+            </span>
+            <a href="tel:+2349014324442" style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <i className="fa-solid fa-phone-volume"></i> Call Support: +234 901 432 4442
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPatientGuideModal = () => {
+    if (!showPatientGuideModal) return null;
+
+    const steps = [
+      {
+        num: 1,
+        title: "1. Select Specialist & Care Service",
+        desc: "Choose between Online Video Consultation (₦3,000), Diagnostic Results Review (₦1,500), or Home Healthcare Visit across our verified MDCN, PCN, and NMCN practitioner directory.",
+        icon: "fa-user-doctor",
+        badge: "Specialist Selection"
+      },
+      {
+        num: 2,
+        title: "2. Pick Date & Describe Clinical Symptoms",
+        desc: "Pick your preferred consultation date and slot. Provide your symptoms, recent diagnostic panel readings, or medical history for clinical review.",
+        icon: "fa-calendar-check",
+        badge: "Clinical Details"
+      },
+      {
+        num: 3,
+        title: "3. Direct Bank Transfer (Zenith / Stanbic IBTC)",
+        desc: "Make payment directly into SimmyClinic Digital Health Ltd official accounts (Zenith Bank: 1029384756 or Stanbic IBTC: 0049218392). Zero card or cash fees. Submit your sender name & reference.",
+        icon: "fa-building-columns",
+        badge: "Secure Bank Transfer"
+      },
+      {
+        num: 4,
+        title: "4. Receive Verified Ticket & Join Session",
+        desc: "Our clinical administrative team reconciles and approves your slot. You receive an automated SMS/WhatsApp confirmation with your consultation room link and digitally signed receipt.",
+        icon: "fa-circle-check",
+        badge: "Access & Care"
+      }
+    ];
+
+    const currentStep = steps[guideActiveStep - 1] || steps[0];
+
+    return (
+      <div className="modal-backdrop" onClick={() => setShowPatientGuideModal(false)}>
+        <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px', textAlign: 'left', padding: '1.75rem', borderRadius: '16px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="fa-solid fa-play"></i>
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>SimmyClinic Patient Guide & Walkthrough</h3>
+              </div>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                Official video walkthrough & 4-step booking workflow presented by Zainab Abdulfatah
               </p>
             </div>
-          ) : selectedPaymentMethod === 'nhis_copay' ? (
-            <div style={{ background: 'rgba(2, 132, 199, 0.08)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(2, 132, 199, 0.25)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-              <div style={{ fontWeight: 'bold', color: '#0284c7', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <i className="fa-solid fa-shield-halved"></i> National Health Insurance (NHIS) Subvention
+            <button onClick={() => setShowPatientGuideModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
+          </div>
+
+          {/* Interactive Simulated Video Player */}
+          <div className="video-guide-player" style={{ marginBottom: '1.25rem' }}>
+            <div style={{ position: 'relative', width: '100%', height: '220px', background: 'linear-gradient(135deg, #0b1727, #182b49)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1rem', color: '#fff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ background: 'rgba(239, 68, 68, 0.85)', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }}></span>
+                  {guideVideoPlaying ? 'PLAYING TUTORIAL' : 'PAUSED'}
+                </span>
+                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
+                  Stage {guideActiveStep} of 4 • 0{guideActiveStep}:15 / 04:00
+                </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>NHIS Covered Benefit (90%):</span>
-                  <strong style={{ color: '#16a34a', fontSize: '1rem' }}>
-                    ₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.9)).toLocaleString()}
-                  </strong>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem', cursor: 'pointer' }} onClick={() => setGuideVideoPlaying(!guideVideoPlaying)}>
+                  <i className={`fa-solid ${guideVideoPlaying ? 'fa-circle-pause' : 'fa-circle-play'}`} style={{ color: 'var(--color-accent)' }}></i>
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>Patient Co-Pay Payable (10%):</span>
-                  <strong style={{ color: '#0284c7', fontSize: '1rem' }}>
-                    ₦{Math.round((parseInt(amount.replace(/[^0-9]/g, '') || 3000) * 0.1)).toLocaleString()}
-                  </strong>
+                <div style={{ fontSize: '1.05rem', fontWeight: 'bold' }}>{currentStep.title}</div>
+                <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)', marginTop: '0.25rem' }}>
+                  {guideVideoPlaying ? 'Simulating live screen demonstration...' : 'Click play to watch full walkthrough demo'}
                 </div>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                Enrollee ID: <strong>{item.nhisNumber || 'NHIS-VERIFIED'}</strong> | Scheme: <strong>{item.nhisHmo || 'NHIA Primary Scheme'}</strong>
-              </div>
-            </div>
-          ) : (
-            <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-              <div style={{ fontWeight: 'bold', color: '#34d399', marginBottom: '0.5rem' }}>Paystack / Instant Card Gateway</div>
-              <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Card Number</label>
-                <input type="text" defaultValue="5399 •••• •••• 4211" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Expiry Date</label>
-                  <input type="text" defaultValue="12/28" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>CVV</label>
-                  <input type="text" defaultValue="842" style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
+
+              {/* Progress bar */}
+              <div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden', cursor: 'pointer' }}>
+                  <div style={{ width: `${(guideActiveStep / 4) * 100}%`, height: '100%', background: 'var(--color-accent)', transition: 'width 0.3s ease' }}></div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
-            <button className="btn btn-outline" onClick={() => setShowPaymentModal(false)}>Cancel</button>
-            <button
-              className="btn btn-accent"
-              onClick={() => {
-                // All payment methods go to 'Payment Pending Approval' — staff must approve before receipt is released
-                const updatedStatus = selectedPaymentMethod === 'nhis_copay' ? 'Paid via NHIS Co-pay (Pending)' : 'Payment Pending Approval';
-                const methodLabel = selectedPaymentMethod === 'bank_transfer' ? 'Bank Transfer' : selectedPaymentMethod === 'nhis_copay' ? 'NHIS Co-pay Claim' : 'Card Gateway';
-                const receiptId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+          {/* Interactive Steps Navigator */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            {steps.map(s => (
+              <button
+                key={s.num}
+                type="button"
+                onClick={() => setGuideActiveStep(s.num)}
+                style={{
+                  padding: '0.6rem 0.4rem',
+                  borderRadius: '8px',
+                  border: guideActiveStep === s.num ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                  background: guideActiveStep === s.num ? 'rgba(51, 102, 255, 0.08)' : 'transparent',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <i className={`fa-solid ${s.icon}`} style={{ display: 'block', fontSize: '1.1rem', color: guideActiveStep === s.num ? 'var(--color-accent)' : 'var(--color-text-muted)', marginBottom: '0.35rem' }}></i>
+                <span style={{ fontSize: '0.72rem', fontWeight: 'bold', color: guideActiveStep === s.num ? 'var(--color-heading)' : 'var(--color-text-muted)' }}>Step {s.num}</span>
+              </button>
+            ))}
+          </div>
 
-                setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || inq.isNhis } : inq));
-                setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, paymentStatus: updatedStatus, paymentMethod: methodLabel, receiptNo: receiptId, isNhis: selectedPaymentMethod === 'nhis_copay' || apt.isNhis } : apt));
-                setShowPaymentModal(false);
-              }}
-            >
-              <i className="fa-solid fa-paper-plane"></i> {selectedPaymentMethod === 'nhis_copay' ? 'Submit NHIS Claim' : 'Confirm Payment Sent — Awaiting Approval'}
+          {/* Current Step Description Card */}
+          <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--color-indigo)' }}>{currentStep.title}</strong>
+              <span style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', fontWeight: 'bold' }}>{currentStep.badge}</span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.5', margin: 0 }}>
+              {currentStep.desc}
+            </p>
+          </div>
+
+          {/* 24/7 Care Coordinator Direct Call Support & WhatsApp Bar */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(2, 132, 199, 0.08))', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-headset"></i> Need Immediate Assistance Booking?
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                Our Care Coordinator Zainab & support team are on standby.
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <a href="tel:+2349014324442" className="btn btn-sm" style={{ background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-phone-volume"></i> Direct Call Support
+              </a>
+              <a href="https://wa.me/2349014324442?text=Hello%20SimmyClinic,%20I%20need%20help%20booking%20an%20appointment" target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ borderColor: '#25D366', color: '#25D366', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-brands fa-whatsapp"></i> WhatsApp
+              </a>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
+            <button className="btn btn-outline btn-sm" onClick={() => setShowPatientGuideModal(false)}>Close Guide</button>
+            <button className="btn btn-primary btn-sm" onClick={() => { setShowPatientGuideModal(false); navigateTo('booking'); }}>
+              <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i> Proceed to Book Consultation
             </button>
           </div>
         </div>
@@ -2089,7 +2355,7 @@ export default function App() {
       category: 'Consultation',
       patientName: apt.patientName || 'Patient',
       amount: apt.isNhis ? Math.round(5000 * 0.1) : (parseInt(String(apt.consultationRate || '5000').replace(/[^0-9]/g, '')) || 5000),
-      paymentMethod: apt.paymentMethod || (apt.isNhis ? 'NHIS / HMO Insurance' : 'Paystack / Online Card'),
+      paymentMethod: apt.paymentMethod || (apt.isNhis ? 'NHIS / HMO Insurance (Transfer)' : 'Direct Bank Transfer'),
       status: apt.status === 'Cancelled' ? 'Refunded' : (apt.paymentStatus || 'Paid & Verified'),
       type: 'inflow'
     }));
@@ -2142,13 +2408,11 @@ export default function App() {
     const logisticsFleetTotal = Math.round(totalMoneyOut * 0.06);
     const cloudSystemsTotal = Math.round(totalMoneyOut * 0.04);
 
-    // Payment Modes Data
+    // Payment Modes Data (Direct Bank Transfer Only Policy)
     const paymentChannels = [
-      { name: 'Paystack / Online Card', percent: 45, amount: Math.round(totalMoneyIn * 0.45), icon: 'fa-credit-card', color: '#3b82f6', count: Math.round(142 * multiplier), speed: 'Instant Settlement (Automated)' },
-      { name: 'Direct Bank Transfer (NIBSS)', percent: 30, amount: Math.round(totalMoneyIn * 0.30), icon: 'fa-building-columns', color: '#10b981', count: Math.round(98 * multiplier), speed: 'Same-Day Teller Verified' },
-      { name: 'NHIS / HMO Insurance Co-Pay', percent: 15, amount: Math.round(totalMoneyIn * 0.15), icon: 'fa-shield-halved', color: '#8b5cf6', count: Math.round(54 * multiplier), speed: 'Monthly Subvention Remittance' },
-      { name: 'Mobile Money / USSD (MoMo/OPay)', percent: 7, amount: Math.round(totalMoneyIn * 0.07), icon: 'fa-mobile-screen', color: '#f59e0b', count: Math.round(28 * multiplier), speed: 'Instant Push Notification' },
-      { name: 'Cash on Delivery (Courier Fleet)', percent: 3, amount: Math.round(totalMoneyIn * 0.03), icon: 'fa-hand-holding-dollar', color: '#64748b', count: Math.round(12 * multiplier), speed: 'Reconciled at Regional Hub' }
+      { name: 'Direct Bank Transfer (Kuda / Zenith / Stanbic)', percent: 85, amount: Math.round(totalMoneyIn * 0.85), icon: 'fa-building-columns', color: '#10b981', count: Math.round(240 * multiplier), speed: 'Verified Electronic Transfer (Primary)' },
+      { name: 'NHIS / HMO Insurance Co-Pay (Transfer)', percent: 15, amount: Math.round(totalMoneyIn * 0.15), icon: 'fa-shield-halved', color: '#0284c7', count: Math.round(54 * multiplier), speed: 'Statutory Co-Pay Subvention' },
+      { name: 'Card & Cash Channels (Deactivated)', percent: 0, amount: 0, icon: 'fa-ban', color: '#94a3b8', count: 0, speed: 'Disabled (Bank Transfer Policy)' }
     ];
 
     // Monthly Trend Data
@@ -2689,11 +2953,9 @@ export default function App() {
                 onChange={(e) => setRevenuePaymentFilter(e.target.value)}
                 style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.78rem' }}
               >
-                <option value="all">All Payment Channels</option>
-                <option value="paystack">Paystack / Online Card</option>
-                <option value="transfer">Direct Bank Transfer</option>
-                <option value="nhis">NHIS / HMO Insurance</option>
-                <option value="mobile">Mobile Money / USSD</option>
+                <option value="all">All Channels (Bank Transfer Policy)</option>
+                <option value="transfer">Direct Bank Transfer (Active Primary)</option>
+                <option value="nhis">NHIS / HMO Insurance (Transfer Co-Pay)</option>
               </select>
 
               <div className="search-box" style={{ margin: 0, minWidth: '180px' }}>
@@ -3862,7 +4124,8 @@ export default function App() {
       const validViews = [
         'home', 'about', 'doctors', 'booking', 'contact', 'portal-login', 'dashboard', 'pricing',
         'service-online-consultation', 'service-mobile-lab', 'service-pharmacy-delivery', 'service-home-services', 'service-physical-consult',
-        'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry'
+        'specialty-general-medicine', 'specialty-pediatrics', 'specialty-gynaecology', 'specialty-psychology', 'specialty-dentistry',
+        'payment', 'legal-compliance'
       ];
 
       if (viewPart && validViews.includes(viewPart)) {
@@ -5239,6 +5502,8 @@ export default function App() {
       schedule: docSelfData.schedule,
       experience: docSelfData.experience,
       regNo: docSelfData.regNo,
+      level: docSelfData.level !== undefined ? docSelfData.level : (loggedInDoctor.level || 'Specialist'),
+      active: docSelfData.active !== undefined ? docSelfData.active : (loggedInDoctor.active !== false),
       email: docSelfData.email,
       password: docSelfData.password,
       image: docSelfData.image,
@@ -6326,12 +6591,40 @@ const LeafletDispatchMap = ({
                 <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Staff & Specialists</a></li>
                 <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
                 <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
+                <li><a href="#payment" className={currentView === 'payment' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('payment'); }}>Payments</a></li>
+                <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }}>Compliance</a></li>
                 <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact</a></li>
               </ul>
             )}
           </nav>
 
           <div className="header-actions">
+            <a
+              href="tel:+2349014324442"
+              className="btn btn-sm"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#10b981',
+                color: '#fff',
+                borderColor: '#10b981',
+                fontWeight: '700',
+                padding: '0.4rem 0.85rem'
+              }}
+              title="Direct Call Support (+234 901 432 4442)"
+            >
+              <i className="fa-solid fa-phone-volume"></i>
+              <span>Call Support</span>
+            </a>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowPatientGuideModal(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+              title="Watch Patient Video Walkthrough & Booking Guide"
+            >
+              <i className="fa-solid fa-circle-play"></i> Patient Guide
+            </button>
             {authRole ? (
               <div className="auth-profile-badge">
                 <span className="auth-badge-name">
@@ -7176,7 +7469,7 @@ const LeafletDispatchMap = ({
                       onChange={(e) => setLabCheckout({ ...labCheckout, notes: e.target.value })}
                     />
                   </div>
-                  <button type="submit" className="btn btn-primary btn-block">Confirm Lab Booking (Pay on Collection)</button>
+                  <button type="submit" className="btn btn-primary btn-block">Confirm Lab Booking (Direct Bank Transfer)</button>
                 </form>
               </div>
             </div>
@@ -7311,7 +7604,7 @@ const LeafletDispatchMap = ({
                       setPharmacyCheckout({ name: '', email: '', phone: '', address: '', notes: '' });
                       setSuccessModal({
                         title: "Medication Order Placed",
-                        message: "Your medication delivery order has been received. Our pharmacist will review it and dispatch your courier. You will pay cash/card on delivery.",
+                        message: "Your medication delivery order has been received. Our pharmacist will review it and dispatch your courier. Please settle order payment via direct bank transfer to our verified clinic accounts.",
                         ticket: orderId
                       });
                     }}>
@@ -7788,6 +8081,16 @@ const LeafletDispatchMap = ({
                                 {doc.active !== false ? 'Online' : 'Offline'}
                               </span>
                             </h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '0.35rem 0' }}>
+                              <span className="badge-council-reg" title="Official Regulatory Council Registration Number">
+                                <i className="fa-solid fa-id-card"></i> {doc.regNo || doc.license || 'Council Reg'}
+                              </span>
+                              {doc.level && (
+                                <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>
+                                  • {doc.level}
+                                </span>
+                              )}
+                            </div>
                             <div className="doctor-specialty">
                               {(() => {
                                 const sub = getDoctorCardSubheading(doc);
@@ -7954,6 +8257,16 @@ const LeafletDispatchMap = ({
                               {doc.active !== false ? 'Online' : 'Offline'}
                             </span>
                           </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '0.35rem 0' }}>
+                            <span className="badge-council-reg" title="Official Regulatory Council Registration Number">
+                              <i className="fa-solid fa-id-card"></i> {doc.regNo || doc.license || 'Council Reg'}
+                            </span>
+                            {doc.level && (
+                              <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>
+                                • {doc.level}
+                              </span>
+                            )}
+                          </div>
                           <div className="doctor-specialty">
                             {(() => {
                               const sub = getDoctorCardSubheading(doc);
@@ -8121,6 +8434,14 @@ const LeafletDispatchMap = ({
             {pricingCategory === 'consultations' && (
               <div className="pricing-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: '1.5rem' }}>
                 {[
+                  {
+                    title: "Diagnostic / Results Review",
+                    standardPrice: 1500,
+                    desc: "Dedicated lab result & diagnostic report review with an MDCN doctor or registered scientist. Fast review of blood panels, scans, and clinical assays.",
+                    features: ["15-min Telehealth Review", "Lab & Imaging Interpretation", "Pathology Explanation", "Follow-up Recommendations"],
+                    badge: "Low-Cost Tariff",
+                    icon: "fa-microscope"
+                  },
                   {
                     title: "General Practitioner (GP)",
                     standardPrice: 3000,
@@ -8469,6 +8790,522 @@ const LeafletDispatchMap = ({
           </section>
         )}
 
+        {/* --- VIEW: DEDICATED BILLING & DIRECT BANK TRANSFER DESK --- */}
+        {currentView === 'payment' && (
+          <section id="payment-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+
+            {/* Hero Header */}
+            <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2rem' }}>
+              <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '20px', display: 'inline-block', marginBottom: '0.75rem' }}>
+                <i className="fa-solid fa-building-columns" style={{ marginRight: '6px' }}></i> Financial Settlement Desk
+              </span>
+              <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>SimmyClinic Billing & Bank Transfer Portal</h2>
+              <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                Reconcile booking invoices, pay for diagnostic lab tests, medication deliveries, and consultation slots strictly through official direct bank transfer.
+              </p>
+            </div>
+
+            {/* Direct Bank Transfer Policy Banner */}
+            <div className="bank-transfer-only-banner" style={{ maxWidth: '900px', margin: '0 auto 2.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#b45309', fontWeight: 'bold', fontSize: '1rem' }}>
+                <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.2rem' }}></i> Direct Bank Transfer Policy Notice
+              </div>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.88rem', color: '#92400e', lineHeight: '1.5' }}>
+                <strong>Card gateways and cash-on-delivery payments are temporarily disabled for platform audit.</strong> All patient payments for consultations, home visits, mobile lab sampling, and pharmacy logistics are processed strictly via direct bank transfer into SimmyClinic Digital Health Ltd official accounts.
+              </p>
+            </div>
+
+            {/* 3 Verified Clinic Bank Accounts with 1-Click Copy */}
+            <div style={{ maxWidth: '950px', margin: '0 auto 2.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--color-indigo)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-shield-halved" style={{ color: 'var(--color-accent)' }}></i> Verified Clinic Accounts & Mobile Banking
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                {/* Account 1: Kuda Bank */}
+                <div className="bank-account-box glassmorphic" style={{ border: '2px solid #10b981' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#047857', fontWeight: 'bold' }}>Instant Mobile Banking</span>
+                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.5rem', borderRadius: '12px', fontWeight: '700' }}>Active Instant Credit</span>
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-indigo)', marginBottom: '0.35rem' }}>Kuda Bank</div>
+                  <div style={{ marginBottom: '0.65rem' }}>
+                    <span className="bank-account-number">2085817667</span>
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '0.85rem' }}>
+                    Account Name: <strong>Sa'ima Mohammed Jibril</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className={`copy-badge-btn ${copiedAccount === 'kuda-page' ? 'copied' : ''}`}
+                    onClick={() => copyToClipboard('2085817667', 'kuda-page')}
+                  >
+                    <i className={`fa-solid ${copiedAccount === 'kuda-page' ? 'fa-check' : 'fa-copy'}`}></i>
+                    {copiedAccount === 'kuda-page' ? 'Copied to Clipboard!' : 'Copy Kuda Account'}
+                  </button>
+                </div>
+
+                {/* Account 2: Zenith Bank */}
+                <div className="bank-account-box glassmorphic">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Primary Commercial Bank</span>
+                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.5rem', borderRadius: '12px', fontWeight: '700' }}>Active Instant Credit</span>
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-indigo)', marginBottom: '0.35rem' }}>Zenith Bank PLC</div>
+                  <div style={{ marginBottom: '0.65rem' }}>
+                    <span className="bank-account-number">1029384756</span>
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '0.85rem' }}>
+                    Account Name: <strong>SimmyClinic Digital Health Ltd</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className={`copy-badge-btn ${copiedAccount === 'zenith-page' ? 'copied' : ''}`}
+                    onClick={() => copyToClipboard('1029384756', 'zenith-page')}
+                  >
+                    <i className={`fa-solid ${copiedAccount === 'zenith-page' ? 'fa-check' : 'fa-copy'}`}></i>
+                    {copiedAccount === 'zenith-page' ? 'Copied to Clipboard!' : 'Copy Zenith Account'}
+                  </button>
+                </div>
+
+                {/* Account 3: Stanbic IBTC */}
+                <div className="bank-account-box glassmorphic">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Secondary Corporate Bank</span>
+                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.5rem', borderRadius: '12px', fontWeight: '700' }}>Active Instant Credit</span>
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-indigo)', marginBottom: '0.35rem' }}>Stanbic IBTC Bank</div>
+                  <div style={{ marginBottom: '0.65rem' }}>
+                    <span className="bank-account-number">0049218392</span>
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '0.85rem' }}>
+                    Account Name: <strong>SimmyClinic Digital Health Ltd</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className={`copy-badge-btn ${copiedAccount === 'stanbic-page' ? 'copied' : ''}`}
+                    onClick={() => copyToClipboard('0049218392', 'stanbic-page')}
+                  >
+                    <i className={`fa-solid ${copiedAccount === 'stanbic-page' ? 'fa-check' : 'fa-copy'}`}></i>
+                    {copiedAccount === 'stanbic-page' ? 'Copied!' : 'Copy Stanbic Account'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Ticket Search & Payment Settlement Grid */}
+            <div style={{ maxWidth: '900px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+              {/* Left Column: Ticket Search & Quick Pick */}
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.15rem' }}>
+                  <i className="fa-solid fa-magnifying-glass" style={{ color: 'var(--color-accent)', marginRight: '6px' }}></i> Find Your Invoice or Ticket
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                  Enter your Appointment Ticket (APT-XXXX), Lab Request (LAB-XXXX), Pharmacy Order (ORD-XXXX), or patient name.
+                </p>
+
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <input
+                    type="text"
+                    placeholder="Search e.g. APT-1001, LAB-3829, or your phone..."
+                    value={paymentLookupQuery}
+                    onChange={(e) => setPaymentLookupQuery(e.target.value)}
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '0.9rem' }}
+                  />
+                </div>
+
+                {/* Search Matching Items */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '340px', overflowY: 'auto' }}>
+                  {(() => {
+                    const allPendingItems = [
+                      ...appointments.map(apt => ({
+                        id: apt.id,
+                        type: 'appointment',
+                        title: `Consultation (${apt.doctor || 'Doctor'})`,
+                        patient: apt.patientName,
+                        phone: apt.phone,
+                        amount: apt.isNhis ? '₦500 (NHIS Co-Pay)' : (apt.consultationRate || apt.price || '₦3,000'),
+                        status: apt.paymentStatus || 'Payment Pending'
+                      })),
+                      ...inquiries.filter(i => i.id.startsWith('ORD-') || i.id.startsWith('LAB-')).map(inq => {
+                        const isLab = inq.id.startsWith('LAB-');
+                        return {
+                          id: inq.id,
+                          type: isLab ? 'lab' : 'order',
+                          title: isLab ? 'Mobile Lab Diagnostics' : 'Medication Order',
+                          patient: inq.name,
+                          phone: inq.phone,
+                          amount: isLab ? '₦7,500' : '₦5,500',
+                          status: inq.paymentStatus || 'Payment Pending'
+                        };
+                      })
+                    ];
+
+                    const matched = allPendingItems.filter(item => {
+                      if (!paymentLookupQuery) return true;
+                      const q = paymentLookupQuery.toLowerCase();
+                      return item.id.toLowerCase().includes(q) ||
+                        (item.patient && item.patient.toLowerCase().includes(q)) ||
+                        (item.phone && item.phone.includes(q));
+                    });
+
+                    if (matched.length === 0) {
+                      return (
+                        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                          No matching appointments or orders found. You can fill in your ticket number manually on the right.
+                        </div>
+                      );
+                    }
+
+                    return matched.slice(0, 5).map(item => (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          setPaymentSelectedTicket(item);
+                          setPaymentSubmissionForm(prev => ({
+                            ...prev,
+                            ticketId: item.id,
+                            patientName: item.patient,
+                            serviceTitle: item.title,
+                            amount: item.amount.replace(/[^0-9]/g, '')
+                          }));
+                        }}
+                        style={{
+                          padding: '0.85rem',
+                          borderRadius: '8px',
+                          border: paymentSelectedTicket?.id === item.id ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                          background: paymentSelectedTicket?.id === item.id ? 'rgba(2, 132, 199, 0.08)' : 'rgba(255,255,255,0.4)',
+                          cursor: 'pointer',
+                          transition: 'all 0.1s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                          <strong style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--color-indigo)' }}>{item.id}</strong>
+                          <span style={{ fontWeight: 'bold', color: 'var(--color-accent)', fontSize: '0.9rem' }}>{item.amount}</span>
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--color-text-main)' }}>{item.title}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                          <span>Patient: {item.patient}</span>
+                          <span style={{ color: item.status.includes('Paid') ? '#16a34a' : '#ea580c' }}>{item.status}</span>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Right Column: Transfer Submission Form */}
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.15rem' }}>
+                  <i className="fa-solid fa-receipt" style={{ color: 'var(--color-accent)', marginRight: '6px' }}></i> Submit Transfer Confirmation
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                  Transferred to Kuda Bank, Zenith, or Stanbic IBTC? Submit details below to notify our financial desk.
+                </p>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!paymentSubmissionForm.ticketId) {
+                    alert("Please enter or select a ticket reference number (e.g. APT-XXXX).");
+                    return;
+                  }
+                  const receiptNo = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+
+                  setAppointments(prev => prev.map(apt => apt.id === paymentSubmissionForm.ticketId ? {
+                    ...apt,
+                    paymentStatus: 'Payment Pending Approval',
+                    paymentMethod: 'Direct Bank Transfer',
+                    receiptNo: receiptNo,
+                    transferSender: paymentSubmissionForm.senderName,
+                    transferBank: paymentSubmissionForm.senderBank,
+                    transferRef: paymentSubmissionForm.refNumber
+                  } : apt));
+
+                  setInquiries(prev => prev.map(inq => inq.id === paymentSubmissionForm.ticketId ? {
+                    ...inq,
+                    paymentStatus: 'Payment Pending Approval',
+                    paymentMethod: 'Direct Bank Transfer',
+                    receiptNo: receiptNo,
+                    transferSender: paymentSubmissionForm.senderName,
+                    transferBank: paymentSubmissionForm.senderBank,
+                    transferRef: paymentSubmissionForm.refNumber
+                  } : inq));
+
+                  setPaymentPortalNotice({
+                    ticket: paymentSubmissionForm.ticketId,
+                    receipt: receiptNo,
+                    amount: paymentSubmissionForm.amount || '3,000'
+                  });
+
+                  setPaymentSubmissionForm({
+                    ticketId: '',
+                    patientName: '',
+                    serviceTitle: '',
+                    senderName: '',
+                    senderBank: 'Kuda Bank',
+                    amount: '',
+                    refNumber: '',
+                    notes: ''
+                  });
+                  setPaymentSelectedTicket(null);
+                }}>
+                  <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Ticket Number / Reference *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. APT-1001 or LAB-3829"
+                      value={paymentSubmissionForm.ticketId}
+                      onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, ticketId: e.target.value.toUpperCase() })}
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)', fontFamily: 'monospace', fontWeight: 'bold' }}
+                    />
+                  </div>
+
+                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Payer / Sender Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Zainab Abdulfatah"
+                        value={paymentSubmissionForm.senderName}
+                        onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, senderName: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Sending Bank *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Kuda, Zenith, GTBank, Access, OPay"
+                        value={paymentSubmissionForm.senderBank}
+                        onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, senderBank: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Amount Transferred (₦) *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="e.g. 3000"
+                        value={paymentSubmissionForm.amount}
+                        onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, amount: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Transfer Reference / Session ID</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 090123456789"
+                        value={paymentSubmissionForm.refNumber}
+                        onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, refNumber: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)', fontFamily: 'monospace' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>Additional Remarks / Narration</label>
+                    <textarea
+                      rows="2"
+                      placeholder="e.g. Paid for Dr. Wasila lab consultation"
+                      value={paymentSubmissionForm.notes}
+                      onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, notes: e.target.value })}
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                  </div>
+
+                  <button type="submit" className="btn btn-primary btn-block">
+                    <i className="fa-solid fa-paper-plane"></i> Submit Transfer for Approval
+                  </button>
+                </form>
+
+                {paymentPortalNotice && (
+                  <div style={{ marginTop: '1.25rem', background: '#dcfce7', border: '1px solid #86efac', padding: '1rem', borderRadius: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', fontWeight: 'bold' }}>
+                      <i className="fa-solid fa-circle-check"></i> Transfer Submission Queued!
+                    </div>
+                    <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.82rem', color: '#14532d' }}>
+                      Receipt Tracking Code: <strong>{paymentPortalNotice.receipt}</strong> for Ticket <strong>{paymentPortalNotice.ticket}</strong>. Our finance desk is verifying credit with bank statements. Your appointment status will update within 15–30 minutes.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Direct Support Hotline Footer */}
+            <div style={{ maxWidth: '900px', margin: '3rem auto 0', padding: '1.25rem', background: 'rgba(28,43,73,0.04)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <strong style={{ fontSize: '0.95rem', color: 'var(--color-indigo)', display: 'block' }}>Need Instant Transfer Verification?</strong>
+                <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>Send proof of transfer directly to our 24/7 financial verification coordinator.</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <a
+                  href="https://wa.me/2349014324442?text=Hello%20SimmyClinic%20Billing,%20I%20have%20completed%20a%20bank%20transfer%20and%20need%20verification."
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-outline btn-sm"
+                  style={{ borderColor: '#22c55e', color: '#15803d' }}
+                >
+                  <i className="fa-brands fa-whatsapp"></i> WhatsApp Finance Desk
+                </a>
+                <a href="tel:+2349014324442" className="btn btn-outline btn-sm">
+                  <i className="fa-solid fa-phone"></i> +234 901 432 4442
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- VIEW: LEGAL, LICENSING & COMPLIANCE --- */}
+        {currentView === 'legal-compliance' && (
+          <section id="compliance-view" className="view-section animate-fade">
+            <button className="back-nav-btn" onClick={navigateBack} style={{ marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-arrow-left"></i> Back to Previous
+            </button>
+
+            {/* Header Hero */}
+            <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
+              <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '20px', display: 'inline-block', marginBottom: '0.75rem' }}>
+                <i className="fa-solid fa-scale-balanced" style={{ marginRight: '6px' }}></i> Regulatory Transparency & Governance
+              </span>
+              <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>Legal Disclosures, Licensure & Clinical Compliance</h2>
+              <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
+                SimmyClinic Digital Health Ltd (CAC RC 9198656) operates in strict compliance with Nigerian health legislation, professional council standards, and the Nigeria Data Protection Act (NDPA 2023).
+              </p>
+            </div>
+
+            {/* Corporate Registration & Accreditation Badges */}
+            <div style={{ maxWidth: '1000px', margin: '0 auto 2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Corporate Entity</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>RC 9198656</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Incorporated under CAMA by Corporate Affairs Commission (CAC), Nigeria.</div>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Medical Practice Council</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>MDCN Verified</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Medical & Dental Council of Nigeria telehealth and clinical standards compliant.</div>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Data Protection</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>NDPR / NDPA 2023</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Full statutory data privacy, HIPAA-grade cloud encryption, and patient confidentiality.</div>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Pharmacy & Laboratory</div>
+                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>PCN & MLSCN</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Licensed pharmacy dispensing & medical laboratory science diagnostic assays.</div>
+              </div>
+            </div>
+
+            {/* Official Medical Practitioner Council Directory */}
+            <div style={{ maxWidth: '1000px', margin: '0 auto 3rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', color: 'var(--color-indigo)' }}>
+                  <i className="fa-solid fa-user-doctor" style={{ color: 'var(--color-accent)', marginRight: '8px' }}></i> Medical Staff & Specialist Council Register
+                </h3>
+                <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                  Public verification of professional licensure and council IDs
+                </span>
+              </div>
+
+              <div className="compliance-table-wrapper glassmorphic">
+                <table className="compliance-table">
+                  <thead>
+                    <tr>
+                      <th>Practitioner Name</th>
+                      <th>Designation / Title</th>
+                      <th>Specialty Area</th>
+                      <th>Accrediting Council</th>
+                      <th>Council Registration ID</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {doctors.map(doc => (
+                      <tr key={doc.id}>
+                        <td>
+                          <strong>{doc.name}</strong>
+                          {doc.isCeo && <span style={{ marginLeft: '6px', fontSize: '0.7rem', background: '#0284c7', color: '#fff', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>CEO</span>}
+                        </td>
+                        <td style={{ color: 'var(--color-text-muted)' }}>{doc.level || 'Clinical Specialist'}</td>
+                        <td>{doc.specialty}</td>
+                        <td>
+                          {doc.regNo?.startsWith('MDCN') ? 'Medical & Dental Council (MDCN)' :
+                           doc.regNo?.startsWith('MLS') ? 'Medical Lab Science Council (MLSCN)' :
+                           doc.regNo?.startsWith('PCN') ? 'Pharmacy Council of Nigeria (PCN)' :
+                           doc.regNo?.startsWith('NMCN') ? 'Nursing & Midwifery Council (NMCN)' :
+                           doc.regNo?.startsWith('CHO') ? 'Community Health Practitioners (CHPRBN)' :
+                           doc.regNo?.startsWith('MNCP') ? 'Nigerian Psychological Association (MNCP)' : 'National Health Council'}
+                        </td>
+                        <td>
+                          <span className="badge-council-reg">{doc.regNo || doc.license || 'N/A'}</span>
+                        </td>
+                        <td>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#15803d', fontWeight: 'bold' }}>
+                            <i className="fa-solid fa-circle-check"></i> Verified
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Regulatory Policy Accordion / Sections */}
+            <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <h4 style={{ color: 'var(--color-indigo)', fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-headset" style={{ color: 'var(--color-accent)' }}></i> 1. Telehealth Scope & Clinical Non-Emergency Protocol
+                </h4>
+                <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: '1.6', margin: 0 }}>
+                  SimmyClinic telehealth services are designed for non-emergency medical evaluations, chronic disease follow-ups, diagnostic lab interpretations, and medication prescription renewals. Teleconsultations do not replace acute hospital trauma care or emergency resuscitation. Patients presenting with severe chest pain, acute respiratory arrest, active hemorrhaging, or stroke symptoms are instructed to call emergency services or report immediately to the nearest tertiary hospital accident and emergency (A&E) department.
+                </p>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <h4 style={{ color: 'var(--color-indigo)', fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-building-columns" style={{ color: 'var(--color-accent)' }}></i> 2. Direct Bank Transfer Billing Policy
+                </h4>
+                <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: '1.6', margin: 0 }}>
+                  In adherence to clinical governance and anti-fraud financial controls, all platform fees must be paid exclusively into SimmyClinic verified accounts (Kuda Bank: 2085817667 - Sa'ima Mohammed Jibril, Zenith Bank PLC: 1029384756, or Stanbic IBTC: 0049218392). No practitioner, lab technician, or courier agent is authorized to collect personal cash payments or request transfers to unlisted individual accounts. All receipts are digitally certified under RC 9198656.
+                </p>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <h4 style={{ color: 'var(--color-indigo)', fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-shield-halved" style={{ color: 'var(--color-accent)' }}></i> 3. Data Protection & NDPR Compliance Statement
+                </h4>
+                <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: '1.6', margin: 0 }}>
+                  In accordance with the Nigeria Data Protection Act (NDPA 2023) and the Nigeria Data Protection Regulation (NDPR 2019), patient electronic health records (EHR), clinical notes, and diagnostic test results are encrypted both in transit and at rest. Patient identifiable information (PII) is never shared, sold, or distributed to non-clinical third parties without explicit legal or informed patient consent.
+                </p>
+              </div>
+
+              <div className="glassmorphic" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <h4 style={{ color: 'var(--color-indigo)', fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-gavel" style={{ color: 'var(--color-accent)' }}></i> 4. Professional Indemnity & Clinical Accountability
+                </h4>
+                <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: '1.6', margin: 0 }}>
+                  All medical doctors, laboratory scientists, and pharmacists practicing on the SimmyClinic platform maintain active individual professional indemnity insurance and valid practicing licenses issued by their respective statutory councils. For clinical inquiries, ethics complaints, or regulatory verifications, contact our Medical Director at <strong>compliance@simmyclinic.com</strong>.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* --- VIEW: BOOKING FORM --- */}
         {currentView === 'booking' && (
           <section id="booking-view" className="view-section animate-fade">
@@ -8496,45 +9333,100 @@ const LeafletDispatchMap = ({
                     </div>
                   </div>
                 </div>
+
+                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => setShowPatientGuideModal(true)}
+                    style={{ width: '100%', borderColor: 'var(--color-accent)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600' }}
+                  >
+                    <i className="fa-solid fa-circle-play"></i> Watch How-To Book Video Guide
+                  </button>
+                  <a
+                    href="tel:+2349014324442"
+                    className="btn"
+                    style={{ width: '100%', background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '700' }}
+                    title="Direct Hotline to Care Support Coordinator"
+                  >
+                    <i className="fa-solid fa-phone-volume"></i> Direct Call Support (+234 901 432 4442)
+                  </a>
+                </div>
               </div>
 
               <div className="booking-form-wrapper glassmorphic">
-                {/* Booking Mode Tabs */}
-                <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
+                {/* Booking Mode Tabs: Online Consult | Diagnostic Review (₦1,500) | Home Visit */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0', marginBottom: '1.5rem', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
                   <button
                     type="button"
-                    onClick={() => setBookingFormData(prev => ({ ...prev, consultationMode: 'Virtual Consultation' }))}
+                    onClick={() => setBookingFormData(prev => ({
+                      ...prev,
+                      consultationMode: 'Virtual Consultation',
+                      serviceType: 'Virtual Consultation',
+                      packageTitle: '',
+                      price: '₦3,000'
+                    }))}
                     style={{
-                      flex: 1,
-                      padding: '0.65rem 1rem',
+                      padding: '0.75rem 0.5rem',
                       border: 'none',
                       borderRight: '1px solid var(--color-border)',
                       cursor: 'pointer',
                       fontWeight: '600',
-                      fontSize: '0.88rem',
-                      transition: 'background 0.2s',
-                      background: bookingFormData.consultationMode !== 'Home Visit' ? 'var(--color-primary)' : 'transparent',
-                      color: bookingFormData.consultationMode !== 'Home Visit' ? '#fff' : 'var(--color-text-muted)'
+                      fontSize: '0.84rem',
+                      transition: 'background 0.15s',
+                      background: (bookingFormData.consultationMode !== 'Home Visit' && bookingFormData.consultationMode !== 'Diagnostic Review') ? 'var(--color-primary)' : 'transparent',
+                      color: (bookingFormData.consultationMode !== 'Home Visit' && bookingFormData.consultationMode !== 'Diagnostic Review') ? '#fff' : 'var(--color-text-muted)',
+                      textAlign: 'center'
                     }}
                   >
-                    <i className="fa-solid fa-video" style={{ marginRight: '6px' }}></i> Online Consultation
+                    <i className="fa-solid fa-video" style={{ marginRight: '5px' }}></i> Online Consult (₦3,000)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setBookingFormData(prev => ({ ...prev, consultationMode: 'Home Visit' }))}
+                    onClick={() => setBookingFormData(prev => ({
+                      ...prev,
+                      consultationMode: 'Diagnostic Review',
+                      serviceType: 'Diagnostic / Lab Results Review',
+                      packageTitle: 'Diagnostic / Lab Results Review',
+                      price: '₦1,500'
+                    }))}
                     style={{
-                      flex: 1,
-                      padding: '0.65rem 1rem',
+                      padding: '0.75rem 0.5rem',
+                      border: 'none',
+                      borderRight: '1px solid var(--color-border)',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.84rem',
+                      transition: 'background 0.15s',
+                      background: bookingFormData.consultationMode === 'Diagnostic Review' ? 'var(--color-primary)' : 'transparent',
+                      color: bookingFormData.consultationMode === 'Diagnostic Review' ? '#fff' : 'var(--color-text-muted)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <i className="fa-solid fa-file-medical" style={{ marginRight: '5px' }}></i> Results Review (₦1,500)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingFormData(prev => ({
+                      ...prev,
+                      consultationMode: 'Home Visit',
+                      serviceType: 'Home Visit Consultation',
+                      packageTitle: '',
+                      price: 'Negotiable'
+                    }))}
+                    style={{
+                      padding: '0.75rem 0.5rem',
                       border: 'none',
                       cursor: 'pointer',
                       fontWeight: '600',
-                      fontSize: '0.88rem',
-                      transition: 'background 0.2s',
+                      fontSize: '0.84rem',
+                      transition: 'background 0.15s',
                       background: bookingFormData.consultationMode === 'Home Visit' ? 'var(--color-primary)' : 'transparent',
-                      color: bookingFormData.consultationMode === 'Home Visit' ? '#fff' : 'var(--color-text-muted)'
+                      color: bookingFormData.consultationMode === 'Home Visit' ? '#fff' : 'var(--color-text-muted)',
+                      textAlign: 'center'
                     }}
                   >
-                    <i className="fa-solid fa-house" style={{ marginRight: '6px' }}></i> Home Visit
+                    <i className="fa-solid fa-house" style={{ marginRight: '5px' }}></i> Home Visit (Standard)
                   </button>
                 </div>
 
@@ -8565,6 +9457,17 @@ const LeafletDispatchMap = ({
                     </button>
                   </div>
                 ) : null}
+                {bookingFormData.consultationMode === 'Diagnostic Review' && (
+                  <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '0.85rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <i className="fa-solid fa-microscope" style={{ fontSize: '1.4rem', color: 'var(--color-accent)' }}></i>
+                    <div>
+                      <strong style={{ fontSize: '0.9rem', color: 'var(--color-indigo)', display: 'block' }}>Results-Only Diagnostic Review (Special Tariff: ₦1,500)</strong>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                        Ideal for interpreting previous laboratory panels, imaging scans, and histology reports. Paste or summarize your test findings below for evaluation by Dr. Adam Muhammad, Dr. Fatima, or a designated specialist.
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {(bookingFormData.packageTitle || bookingFormData.serviceType) && (
                   <div
                     style={{
@@ -8814,11 +9717,17 @@ const LeafletDispatchMap = ({
                   )}
 
                   <div className="form-group">
-                    <label htmlFor="symptoms">Brief Description of Symptoms</label>
+                    <label htmlFor="symptoms">
+                      {bookingFormData.consultationMode === 'Diagnostic Review' ? (
+                        <span><i className="fa-solid fa-file-lines" style={{ color: 'var(--color-accent)', marginRight: '6px' }}></i> Diagnostic Test Values & Clinical Findings (Paste or Summarize Results)</span>
+                      ) : (
+                        "Brief Description of Symptoms"
+                      )}
+                    </label>
                     <textarea
                       id="symptoms"
                       rows="4"
-                      placeholder="Explain symptoms, diagnostic questions..."
+                      placeholder={bookingFormData.consultationMode === 'Diagnostic Review' ? "Paste laboratory report text, test readings (e.g. FBC: WBC 11.2, Hb 10.4, Platelets 220), imaging conclusions, or specific diagnostic questions..." : "Explain symptoms, diagnostic questions..."}
                       value={bookingFormData.symptoms}
                       onChange={(e) => setBookingFormData({ ...bookingFormData, symptoms: e.target.value })}
                     />
@@ -10498,7 +11407,8 @@ const LeafletDispatchMap = ({
                         license: loggedInDoctor.license || '',
                         consultationRate: loggedInDoctor.consultationRate || '',
                         services: loggedInDoctor.services || [],
-                        level: loggedInDoctor.level || 'Junior Doctor',
+                        level: loggedInDoctor.level || 'Specialist',
+                        active: loggedInDoctor.active !== false,
                         verified: loggedInDoctor.verified || false
                       });
                       setIsEditingDocSelf(false);
@@ -10538,7 +11448,8 @@ const LeafletDispatchMap = ({
                           license: loggedInDoctor.license || '',
                           consultationRate: loggedInDoctor.consultationRate || '',
                           services: loggedInDoctor.services || [],
-                          level: loggedInDoctor.level || 'Junior Doctor',
+                          level: loggedInDoctor.level || 'Specialist',
+                          active: loggedInDoctor.active !== false,
                           verified: loggedInDoctor.verified || false
                         });
                         setIsEditingDocSelf(false);
@@ -11090,7 +12001,9 @@ const LeafletDispatchMap = ({
                                   clinicRoom: loggedInDoctor.clinicRoom || '',
                                   license: loggedInDoctor.license || '',
                                   consultationRate: loggedInDoctor.consultationRate || '',
-                                  services: loggedInDoctor.services || []
+                                  services: loggedInDoctor.services || [],
+                                  level: loggedInDoctor.level || 'Specialist',
+                                  active: loggedInDoctor.active !== false
                                 });
                                 setIsEditingDocSelf(true);
                               }}>
@@ -11148,7 +12061,7 @@ const LeafletDispatchMap = ({
                                 />
                               </div>
                               <div className="form-group">
-                                <label>MDCN Register Code</label>
+                                <label>Council Registration Code (MDCN / PCN / MLSCN / NMCN / CHO / MNCP)</label>
                                 <input
                                   type="text"
                                   required
@@ -11157,13 +12070,23 @@ const LeafletDispatchMap = ({
                                 />
                               </div>
                               <div className="form-group">
-                                <label>Professional Level (Admin Managed)</label>
+                                <label>Professional Title & Clinical Designation</label>
                                 <input
                                   type="text"
-                                  disabled
-                                  value={docSelfData.level || 'Junior Doctor'}
-                                  style={{ background: 'rgba(28,43,73,0.08)', cursor: 'not-allowed', color: 'var(--color-text-muted)' }}
+                                  value={docSelfData.level || ''}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, level: e.target.value })}
+                                  placeholder="e.g. CEO & ENT Specialist / MPH, Senior Consultant"
                                 />
+                              </div>
+                              <div className="form-group">
+                                <label>Clinical Availability (Online / Offline Status)</label>
+                                <select
+                                  value={docSelfData.active !== false ? 'online' : 'offline'}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, active: e.target.value === 'online' })}
+                                >
+                                  <option value="online">🟢 Online & Accepting Consultations</option>
+                                  <option value="offline">⚪ Offline / On Duty</option>
+                                </select>
                               </div>
                             </div>
 
@@ -14901,6 +15824,8 @@ const LeafletDispatchMap = ({
               <li><a href="#about" onClick={(e) => { e.preventDefault(); navigateTo('about'); }}>About SimmyClinic</a></li>
               <li><a href="#doctors" onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Find Staff & Specialists</a></li>
               <li><a href="#booking" onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Book Appointment</a></li>
+              <li><a href="#payment" onClick={(e) => { e.preventDefault(); navigateTo('payment'); }}>Bank Transfer & Billing Desk</a></li>
+              <li><a href="#legal-compliance" onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }}>Licensing & Compliance Directory</a></li>
               <li><a href="#contact" onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact Us</a></li>
             </ul>
           </div>
@@ -14916,11 +15841,15 @@ const LeafletDispatchMap = ({
           </div>
 
           <div className="footer-contact-col">
-            <h4>CONTACT</h4>
-            <p><i className="fa-solid fa-phone"></i> +234 901 432 4442</p>
+            <h4>24/7 SUPPORT & CARE</h4>
+            <p>
+              <a href="tel:+2349014324442" style={{ color: '#10b981', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }} title="Click to call SimmyClinic support directly">
+                <i className="fa-solid fa-phone-volume"></i> Call Direct: +234 901 432 4442
+              </a>
+            </p>
             <p><i className="fa-solid fa-envelope"></i> support@simmyclinic.com</p>
-            <p><i className="fa-regular fa-clock"></i> Mon - Fri: 8AM - 5PM</p>
-            <p><i className="fa-regular fa-clock"></i> Sat: 9AM - 2PM</p>
+            <p><i className="fa-brands fa-whatsapp"></i> WhatsApp Care Hotline</p>
+            <p><i className="fa-regular fa-clock"></i> Mon - Fri: 8AM - 8PM | Sat: 9AM - 4PM</p>
           </div>
         </div>
       </footer>
@@ -14929,7 +15858,9 @@ const LeafletDispatchMap = ({
       <div className="footer-bottom-bar">
         <div className="footer-bottom-container">
           <p>&copy; 2026 SimmyClinic. All rights reserved.</p>
-          <p>RC Number: RC 9198656 | Developed by Nexel Technologies</p>
+          <p>
+            RC Number: RC 9198656 | <a href="#legal-compliance" onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Statutory Compliance & Legal Policies</a> | <a href="#payment" onClick={(e) => { e.preventDefault(); navigateTo('payment'); }} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Bank Billing Desk</a>
+          </p>
         </div>
       </div>
 
@@ -14944,7 +15875,21 @@ const LeafletDispatchMap = ({
               <span>CONFIRMATION TICKET:</span>
               <strong>{successModal.ticket}</strong>
             </div>
-            <button className="btn btn-primary" onClick={() => setSuccessModal(null)}>Dismiss Portal</button>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  const t = successModal.ticket;
+                  setSuccessModal(null);
+                  setPaymentLookupQuery(t);
+                  navigateTo('payment');
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <i className="fa-solid fa-building-columns"></i> Pay via Bank Transfer
+              </button>
+              <button className="btn btn-outline" onClick={() => setSuccessModal(null)}>Dismiss Portal</button>
+            </div>
           </div>
         </div>
       )}
@@ -16606,11 +17551,10 @@ const LeafletDispatchMap = ({
                     onChange={(e) => setNewExpenseForm({ ...newExpenseForm, paymentMethod: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
                   >
-                    <option value="Direct Bank Transfer">Direct Bank Transfer</option>
-                    <option value="Paystack B2B / Bank">Paystack B2B / Bank</option>
-                    <option value="Mobile Money / Transfer">Mobile Money / Transfer</option>
-                    <option value="Corporate Debit Card">Corporate Debit Card</option>
-                    <option value="Petty Cash Voucher">Petty Cash Voucher</option>
+                    <option value="Direct Bank Transfer">Direct Bank Transfer (Official)</option>
+                    <option value="Zenith Corporate Transfer">Zenith Corporate Transfer</option>
+                    <option value="Stanbic IBTC Transfer">Stanbic IBTC Transfer</option>
+                    <option value="Official Bank Electronic Transfer">Official Bank Electronic Transfer</option>
                   </select>
                 </div>
               </div>
@@ -16637,8 +17581,58 @@ const LeafletDispatchMap = ({
         </div>
       )}
       {renderPaymentModal()}
+      {renderPatientGuideModal()}
       {renderReceiptModal()}
       {renderEditPriceModal()}
+
+      {/* Floating Direct Call Support Button (Visible globally) */}
+      <aside aria-label="Direct Support Call Line" style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 9990,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '8px'
+      }}>
+        <a
+          href="tel:+2349014324442"
+          id="btn-direct-call-support"
+          className="floating-call-btn"
+          title="Direct Call Support Line: +234 901 432 4442"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '50px',
+            backgroundColor: '#10b981',
+            color: '#ffffff',
+            fontWeight: '700',
+            fontSize: '0.92rem',
+            boxShadow: '0 10px 25px -3px rgba(16, 185, 129, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            textDecoration: 'none',
+            border: '2px solid rgba(255, 255, 255, 0.35)',
+            cursor: 'pointer',
+            transition: 'all 0.1s ease',
+            touchAction: 'manipulation'
+          }}
+        >
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255, 255, 255, 0.25)'
+          }}>
+            <i className="fa-solid fa-phone-volume"></i>
+          </span>
+          <span>Call Support</span>
+        </a>
+      </aside>
 
       {/* Global Page Popup Notification Modal */}
       {popupNotification && (

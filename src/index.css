@@ -300,10 +300,17 @@ html, body {
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
-  transition: var(--transition-smooth);
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.96) translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
 }
 
 .btn-primary {
@@ -317,6 +324,10 @@ html, body {
   box-shadow: 0 4px 12px rgba(24, 43, 73, 0.15);
 }
 
+.btn-primary:active {
+  transform: scale(0.96) translateY(1px) !important;
+}
+
 .btn-outline {
   background-color: transparent;
   color: var(--color-indigo);
@@ -326,6 +337,10 @@ html, body {
 .btn-outline:hover {
   background-color: rgba(24, 43, 73, 0.05);
   border-color: var(--color-indigo);
+}
+
+.btn-outline:active {
+  transform: scale(0.96) translateY(1px) !important;
 }
 
 .btn-block {
@@ -3743,3 +3758,235 @@ input[type="checkbox"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   SHARPEST & FASTEST CLICK INTERACTIONS & TACTILE RESPONSIVENESS
+   ========================================================================== */
+
+button,
+.btn,
+.filter-btn,
+.nav-links a,
+.sidebar-link,
+.tab-btn,
+.doctor-card,
+.pricing-card,
+.action-btn,
+.clickable-item {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+.btn:not(:disabled),
+.filter-btn:not(:disabled),
+.back-nav-btn {
+  cursor: pointer;
+}
+
+button:active:not(:disabled),
+.btn:active:not(:disabled),
+.filter-btn:active:not(:disabled),
+.back-nav-btn:active {
+  transform: scale(0.96) translateY(1px) !important;
+  transition: transform 0.04s cubic-bezier(0.1, 0.9, 0.2, 1) !important;
+}
+
+/* Quick copy button feedback */
+.copy-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+
+.copy-badge-btn:hover {
+  background: rgba(2, 132, 199, 0.18);
+  color: #0369a1;
+}
+
+.copy-badge-btn:active {
+  transform: scale(0.94);
+}
+
+.copy-badge-btn.copied {
+  background: #15803d !important;
+  color: #ffffff !important;
+  border-color: #15803d !important;
+}
+
+/* Bank Transfer Account Card */
+.bank-account-box {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(240, 249, 255, 0.9));
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bank-account-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.12);
+}
+
+.bank-account-number {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #0f172a;
+  background: rgba(2, 132, 199, 0.08);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px dashed rgba(2, 132, 199, 0.35);
+  display: inline-block;
+}
+
+/* Direct Transfer Policy Notice Banner */
+.bank-transfer-only-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.12));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-left: 5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Patient Video Guide Walkthrough */
+.video-guide-player {
+  background: #0f172a;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.video-guide-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+  color: #fff;
+  text-align: center;
+  padding: 2rem;
+}
+
+.video-guide-controls {
+  position: relative;
+  z-index: 10;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  padding: 1rem 1.25rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #fff;
+}
+
+.video-scrub-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.video-scrub-progress {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 3px;
+  transition: width 0.2s linear;
+}
+
+/* Council Registration Badges */
+.badge-council-reg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+}
+
+/* Compliance Directory Table */
+.compliance-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.compliance-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.compliance-table th {
+  background: rgba(24, 43, 73, 0.06);
+  color: var(--color-indigo);
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compliance-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(24, 43, 73, 0.05);
+  color: var(--color-text-main);
+}
+
+.compliance-table tr:hover td {
+  background: rgba(2, 132, 199, 0.03);
+}
+
+/* Floating Direct Call Support Button */
+.floating-call-btn {
+  animation: call-pulse 3s infinite;
+  text-decoration: none;
+}
+
+.floating-call-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.55), 0 6px 10px -2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.floating-call-btn:active {
+  transform: scale(0.95) translateY(1px) !important;
+}
+
+@keyframes call-pulse {
+  0%, 100% {
+    box-shadow: 0 10px 25px -3px rgba(16, 185, 129, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 14px 28px -2px rgba(16, 185, 129, 0.65), 0 6px 8px -1px rgba(0, 0, 0, 0.1);
+  }
+}
+
+
