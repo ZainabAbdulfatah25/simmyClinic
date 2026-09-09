@@ -444,8 +444,8 @@ const INITIAL_APPOINTMENTS = [
 const INITIAL_INQUIRIES = [
   {
     id: "ORD-8291",
-    name: "Zainab Abdulfatah",
-    email: "zainab@example.com",
+    name: "Amina Bello",
+    email: "amina@example.com",
     phone: "08012345678",
     message: "Pharmacy Purchase Order: [Insulin Pen (x2), Metformin 500mg (x1)]. Shipping Address: [Plot 824, Wuse II, Abuja]. Rx Notes: [Keep refrigerated]. Total Cost: ₦18,500",
     date: new Date().toISOString().split('T')[0],
@@ -980,7 +980,7 @@ export default function App() {
   const [patients, setPatients] = useState(() => {
     const data = localStorage.getItem("simmy_patients");
     return data ? JSON.parse(data) : [
-      { email: "zainab@example.com", name: "Zainab Abdulfatah", phone: "08012345678", password: "password123" }
+      { email: "amina@example.com", name: "Amina Bello", phone: "08012345678", password: "password123" }
     ];
   });
 
@@ -1590,10 +1590,26 @@ export default function App() {
     notes: ''
   });
 
-  // Patient Walkthrough Video Guide Modal States
+  // Responsive Mobile Navigation State
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Patient Booking Guide Slideshow Modal States
   const [showPatientGuideModal, setShowPatientGuideModal] = useState(false);
   const [guideActiveStep, setGuideActiveStep] = useState(1);
-  const [guideVideoPlaying, setGuideVideoPlaying] = useState(false);
+  const [guideAutoplay, setGuideAutoplay] = useState(true);
+
+  // Slideshow auto-advance timer
+  useEffect(() => {
+    let timer;
+    if (showPatientGuideModal && guideAutoplay) {
+      timer = setInterval(() => {
+        setGuideActiveStep((prev) => (prev >= 4 ? 1 : prev + 1));
+      }, 4500);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [showPatientGuideModal, guideAutoplay]);
 
   const copyToClipboard = (text, key) => {
     if (navigator?.clipboard?.writeText) {
@@ -1883,7 +1899,7 @@ export default function App() {
                 <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Payer / Account Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Zainab Abdulfatah"
+                  placeholder="e.g. Amina Bello"
                   value={paymentTransferDetails.senderName}
                   onChange={(e) => setPaymentTransferDetails({ ...paymentTransferDetails, senderName: e.target.value })}
                   style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.85rem' }}
@@ -1983,31 +1999,67 @@ export default function App() {
     const steps = [
       {
         num: 1,
-        title: "1. Select Specialist & Care Service",
-        desc: "Choose between Online Video Consultation (₦3,000), Diagnostic Results Review (₦1,500), or Home Healthcare Visit across our verified MDCN, PCN, and NMCN practitioner directory.",
+        title: "1. Select Specialist & Consultation Mode",
+        subtitle: "Choose the consultation type that matches your health needs",
+        desc: "Choose between an Online Video Consultation (₦3,000), Diagnostic Results Review (₦1,500), or Physical Doctor Visit across our verified practitioner network.",
         icon: "fa-user-doctor",
-        badge: "Specialist Selection"
+        badge: "Step 1 of 4",
+        category: "Specialist Selection",
+        color: "#0284c7",
+        bgLight: "rgba(2, 132, 199, 0.08)",
+        highlights: [
+          "Licensed MDCN medical officers, gynecologists & pediatricians",
+          "Virtual video consultations from the comfort of home",
+          "Zero waiting room delays with scheduled slots"
+        ]
       },
       {
         num: 2,
-        title: "2. Pick Date & Describe Clinical Symptoms",
-        desc: "Pick your preferred consultation date and slot. Provide your symptoms, recent diagnostic panel readings, or medical history for clinical review.",
+        title: "2. Pick Appointment Date & Describe Symptoms",
+        subtitle: "Choose a convenient appointment slot and share your symptoms",
+        desc: "Select your preferred date and consultation time slot. Briefly share your symptoms or medical history so your assigned physician is fully prepared for your session.",
         icon: "fa-calendar-check",
-        badge: "Clinical Details"
+        badge: "Step 2 of 4",
+        category: "Clinical Details",
+        color: "#8b5cf6",
+        bgLight: "rgba(139, 92, 246, 0.08)",
+        highlights: [
+          "Real-time schedule calendar with morning and evening slots",
+          "Encrypted, confidential clinical symptom notes",
+          "Option to attach previous lab results or prescription history"
+        ]
       },
       {
         num: 3,
         title: "3. Direct Bank Transfer (Zenith / Stanbic IBTC)",
-        desc: "Make payment directly into SimmyClinic Digital Health Ltd official accounts (Zenith Bank: 1029384756 or Stanbic IBTC: 0049218392). Zero card or cash fees. Submit your sender name & reference.",
+        subtitle: "Pay directly into official SimmyClinic corporate bank accounts",
+        desc: "Transfer directly into official SimmyClinic Digital Health accounts (Zenith Bank: 1029384756 or Stanbic IBTC: 0049218392). Zero card deductions or processing surcharges.",
         icon: "fa-building-columns",
-        badge: "Secure Bank Transfer"
+        badge: "Step 3 of 4",
+        category: "Secure Payment",
+        color: "#10b981",
+        bgLight: "rgba(16, 185, 129, 0.08)",
+        highlights: [
+          "Zero third-party debit card processing fees",
+          "100% verified corporate accounts at top tier-1 Nigerian banks",
+          "Instant payment matching via sender name & bank reference"
+        ]
       },
       {
         num: 4,
-        title: "4. Receive Verified Ticket & Join Session",
-        desc: "Our clinical administrative team reconciles and approves your slot. You receive an automated SMS/WhatsApp confirmation with your consultation room link and digitally signed receipt.",
+        title: "4. Receive Verified Ticket & Join Consultation",
+        subtitle: "Receive your appointment ticket and join your private session",
+        desc: "Our clinical coordination desk confirms your booking. You instantly receive an SMS and WhatsApp alert with your secure consultation room link and digital receipt.",
         icon: "fa-circle-check",
-        badge: "Access & Care"
+        badge: "Step 4 of 4",
+        category: "Access & Care",
+        color: "#f59e0b",
+        bgLight: "rgba(245, 158, 11, 0.08)",
+        highlights: [
+          "Automated SMS & WhatsApp confirmation with room link",
+          "Downloadable, digitally signed official clinical receipt",
+          "One-click encrypted video access when your slot begins"
+        ]
       }
     ];
 
@@ -2015,123 +2067,215 @@ export default function App() {
 
     return (
       <div className="modal-backdrop" onClick={() => setShowPatientGuideModal(false)}>
-        <div className="modal-content glassmorphic animate-fade" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px', textAlign: 'left', padding: '1.75rem', borderRadius: '16px' }}>
+        <div
+          className="modal-content glassmorphic animate-fade"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '680px',
+            width: '92vw',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            textAlign: 'left',
+            padding: '1.75rem',
+            borderRadius: '16px',
+            boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5)'
+          }}
+        >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <i className="fa-solid fa-play"></i>
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>SimmyClinic Patient Guide & Walkthrough</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary, #0284c7)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
+                <i className="fa-solid fa-clipboard-list"></i>
               </div>
-              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-                Official video walkthrough & 4-step booking workflow presented by Zainab Abdulfatah
-              </p>
-            </div>
-            <button onClick={() => setShowPatientGuideModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>&times;</button>
-          </div>
-
-          {/* Interactive Simulated Video Player */}
-          <div className="video-guide-player" style={{ marginBottom: '1.25rem' }}>
-            <div style={{ position: 'relative', width: '100%', height: '220px', background: 'linear-gradient(135deg, #0b1727, #182b49)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1rem', color: '#fff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ background: 'rgba(239, 68, 68, 0.85)', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }}></span>
-                  {guideVideoPlaying ? 'PLAYING TUTORIAL' : 'PAUSED'}
-                </span>
-                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
-                  Stage {guideActiveStep} of 4 • 0{guideActiveStep}:15 / 04:00
-                </span>
-              </div>
-
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem', cursor: 'pointer' }} onClick={() => setGuideVideoPlaying(!guideVideoPlaying)}>
-                  <i className={`fa-solid ${guideVideoPlaying ? 'fa-circle-pause' : 'fa-circle-play'}`} style={{ color: 'var(--color-accent)' }}></i>
-                </div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 'bold' }}>{currentStep.title}</div>
-                <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)', marginTop: '0.25rem' }}>
-                  {guideVideoPlaying ? 'Simulating live screen demonstration...' : 'Click play to watch full walkthrough demo'}
-                </div>
-              </div>
-
-              {/* Progress bar */}
               <div>
-                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden', cursor: 'pointer' }}>
-                  <div style={{ width: `${(guideActiveStep / 4) * 100}%`, height: '100%', background: 'var(--color-accent)', transition: 'width 0.3s ease' }}></div>
-                </div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-heading)' }}>How Booking Works</h3>
+                <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                  4 simple steps to schedule your specialist consultation
+                </p>
               </div>
             </div>
+            <button
+              onClick={() => setShowPatientGuideModal(false)}
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1 }}
+              aria-label="Close"
+            >
+              &times;
+            </button>
           </div>
 
-          {/* Interactive Steps Navigator */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.25rem' }}>
-            {steps.map(s => (
-              <button
-                key={s.num}
-                type="button"
-                onClick={() => setGuideActiveStep(s.num)}
-                style={{
-                  padding: '0.6rem 0.4rem',
-                  borderRadius: '8px',
-                  border: guideActiveStep === s.num ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                  background: guideActiveStep === s.num ? 'rgba(51, 102, 255, 0.08)' : 'transparent',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <i className={`fa-solid ${s.icon}`} style={{ display: 'block', fontSize: '1.1rem', color: guideActiveStep === s.num ? 'var(--color-accent)' : 'var(--color-text-muted)', marginBottom: '0.35rem' }}></i>
-                <span style={{ fontSize: '0.72rem', fontWeight: 'bold', color: guideActiveStep === s.num ? 'var(--color-heading)' : 'var(--color-text-muted)' }}>Step {s.num}</span>
-              </button>
-            ))}
+          {/* Interactive Stepper Tabs */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+            {steps.map(s => {
+              const isActive = guideActiveStep === s.num;
+              const isCompleted = guideActiveStep > s.num;
+              return (
+                <button
+                  key={s.num}
+                  type="button"
+                  onClick={() => setGuideActiveStep(s.num)}
+                  style={{
+                    padding: '0.6rem 0.35rem',
+                    borderRadius: '10px',
+                    border: isActive ? `2px solid ${s.color}` : isCompleted ? '1px solid #10b981' : '1px solid var(--color-border)',
+                    background: isActive ? s.bgLight : isCompleted ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
+                  }}
+                >
+                  <i
+                    className={`fa-solid ${isCompleted ? 'fa-check' : s.icon}`}
+                    style={{
+                      display: 'block',
+                      fontSize: '1rem',
+                      color: isActive ? s.color : isCompleted ? '#10b981' : 'var(--color-text-muted)',
+                      marginBottom: '0.3rem'
+                    }}
+                  ></i>
+                  <span style={{ fontSize: '0.72rem', fontWeight: '700', color: isActive ? 'var(--color-heading)' : 'var(--color-text-muted)', display: 'block' }}>
+                    Step {s.num}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Current Step Description Card */}
-          <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <strong style={{ fontSize: '0.95rem', color: 'var(--color-indigo)' }}>{currentStep.title}</strong>
-              <span style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(2, 132, 199, 0.12)', color: '#0284c7', fontWeight: 'bold' }}>{currentStep.badge}</span>
+          {/* Stepper Progress Line */}
+          <div style={{ width: '100%', height: '4px', background: 'var(--color-border, #e2e8f0)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1.25rem' }}>
+            <div style={{ width: `${(guideActiveStep / 4) * 100}%`, height: '100%', background: currentStep.color, transition: 'width 0.35s ease' }}></div>
+          </div>
+
+          {/* Animated Slideshow Showcase Card */}
+          <div
+            key={currentStep.num}
+            className="slideshow-slide-card"
+            style={{
+              background: currentStep.bgLight,
+              border: `1px solid ${currentStep.color}35`,
+              borderRadius: '14px',
+              padding: '1.35rem',
+              marginBottom: '1.25rem',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: currentStep.color,
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  boxShadow: `0 6px 14px -2px ${currentStep.color}50`
+                }}>
+                  <i className={`fa-solid ${currentStep.icon}`}></i>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--color-heading)' }}>{currentStep.title}</h4>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{currentStep.subtitle}</span>
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: currentStep.color, color: '#ffffff', fontWeight: 'bold' }}>
+                {currentStep.category}
+              </span>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.5', margin: 0 }}>
+
+            <p style={{ fontSize: '0.88rem', color: 'var(--color-text)', lineHeight: '1.55', margin: '0 0 1rem 0' }}>
               {currentStep.desc}
             </p>
+
+            {/* Checkmark Highlights */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(255, 255, 255, 0.65)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+              {currentStep.highlights.map((point, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.82rem', color: '#334155' }}>
+                  <i className="fa-solid fa-circle-check" style={{ color: currentStep.color, marginTop: '2px', fontSize: '0.85rem', flexShrink: 0 }}></i>
+                  <span>{point}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Slideshow Controls Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.15rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setGuideActiveStep(prev => Math.max(1, prev - 1))}
+                disabled={guideActiveStep === 1}
+                style={{ opacity: guideActiveStep === 1 ? 0.45 : 1, cursor: guideActiveStep === 1 ? 'not-allowed' : 'pointer', fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+              >
+                <i className="fa-solid fa-arrow-left" style={{ marginRight: '4px' }}></i> Previous
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-text-muted)' }}>
+                  Step {guideActiveStep} of 4
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setGuideAutoplay(!guideAutoplay)}
+                  style={{ background: 'none', border: 'none', color: guideAutoplay ? '#10b981' : 'var(--color-text-muted)', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: '600' }}
+                  title={guideAutoplay ? 'Pause auto slideshow' : 'Play auto slideshow'}
+                >
+                  <i className={`fa-solid ${guideAutoplay ? 'fa-circle-pause' : 'fa-circle-play'}`}></i>
+                  <span>{guideAutoplay ? 'Autoplay' : 'Paused'}</span>
+                </button>
+              </div>
+
+              {guideActiveStep < 4 ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setGuideActiveStep(prev => Math.min(4, prev + 1))}
+                  style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+                >
+                  Next Step <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => { setShowPatientGuideModal(false); navigateTo('booking'); }}
+                  style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', background: '#10b981', borderColor: '#10b981' }}
+                >
+                  Book Now <i className="fa-solid fa-calendar-check" style={{ marginLeft: '4px' }}></i>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* 24/7 Care Coordinator Direct Call Support & WhatsApp Bar */}
-          <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(2, 132, 199, 0.08))', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* 24/7 Care Coordinator Direct Support Bar */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(2, 132, 199, 0.08))', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <i className="fa-solid fa-headset"></i> Need Immediate Assistance Booking?
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                Our Care Coordinator Zainab & support team are on standby.
+                Our patient care coordination team is available to assist you 24/7.
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => setShowCallSupportModal(true)}
                 className="btn btn-sm"
-                style={{ background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                style={{ background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '0.78rem', padding: '0.35rem 0.7rem' }}
               >
-                <i className="fa-solid fa-phone-volume"></i> Direct Call Support
+                <i className="fa-solid fa-phone-volume"></i> Direct Call
               </button>
-              <a href="tel:+2347035729109" className="btn btn-sm btn-outline" style={{ borderColor: '#10b981', color: '#047857', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Call Mobile: +234 703 572 9109">
-                <i className="fa-solid fa-phone-volume"></i> Mobile
-              </a>
-              <a href="tel:+2348123861557" className="btn btn-sm btn-outline" style={{ borderColor: '#2563eb', color: '#1d4ed8', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Call Home: +234 812 386 1557">
-                <i className="fa-solid fa-phone"></i> Home
-              </a>
-              <a href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20help%20booking%20an%20appointment" target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ borderColor: '#25D366', color: '#25D366', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <a href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20help%20booking%20an%20appointment" target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ borderColor: '#25D366', color: '#25D366', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', padding: '0.35rem 0.7rem' }}>
                 <i className="fa-brands fa-whatsapp"></i> WhatsApp
               </a>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
-            <button className="btn btn-outline btn-sm" onClick={() => setShowPatientGuideModal(false)}>Close Guide</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.15rem' }}>
+            <button className="btn btn-outline btn-sm" onClick={() => setShowPatientGuideModal(false)}>Close</button>
             <button className="btn btn-primary btn-sm" onClick={() => { setShowPatientGuideModal(false); navigateTo('booking'); }}>
               <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i> Proceed to Book Consultation
             </button>
@@ -4410,6 +4554,7 @@ export default function App() {
   const [viewHistory, setViewHistory] = useState(['home']);
 
   const navigateTo = (view) => {
+    setMobileMenuOpen(false);
     setViewHistory(prev => {
       if (prev[prev.length - 1] === view) return prev;
       return [...prev, view];
@@ -6814,7 +6959,8 @@ const LeafletDispatchMap = ({
             <span className="logo-text">Simmy<span>Clinic</span></span>
           </a>
 
-          <nav aria-label="Main Navigation">
+          {/* Desktop Navigation */}
+          <nav className="desktop-nav" aria-label="Main Navigation">
             {currentView !== 'dashboard' && (
               <ul className="nav-links">
                 <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
@@ -6832,7 +6978,7 @@ const LeafletDispatchMap = ({
           <div className="header-actions">
             <button
               type="button"
-              className="btn btn-sm"
+              className="btn btn-sm desktop-only-btn"
               onClick={() => setShowCallSupportModal(true)}
               style={{
                 display: 'inline-flex',
@@ -6851,7 +6997,7 @@ const LeafletDispatchMap = ({
               <span>Call Support</span>
             </button>
             <button
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm desktop-only-btn"
               onClick={() => setShowPatientGuideModal(true)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
               title="Watch Patient Video Walkthrough & Booking Guide"
@@ -6875,12 +7021,123 @@ const LeafletDispatchMap = ({
               </div>
             ) : (
               <>
-                <button className="btn btn-outline" onClick={() => navigateTo('portal-login')}>Portal Access →</button>
+                <button className="btn btn-outline desktop-only-btn" onClick={() => navigateTo('portal-login')}>Portal Access →</button>
                 <button className="btn btn-primary" onClick={() => navigateTo('booking')}>Book Now</button>
               </>
             )}
+
+            {/* Mobile Hamburger Toggle Button */}
+            <button
+              type="button"
+              className="mobile-hamburger-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer Overlay */}
+        {mobileMenuOpen && (
+          <div className="mobile-nav-drawer-backdrop" onClick={() => setMobileMenuOpen(false)}>
+            <div className="mobile-nav-drawer animate-fade" onClick={(e) => e.stopPropagation()}>
+              <div className="mobile-nav-drawer-header">
+                <div className="logo" style={{ cursor: 'pointer' }} onClick={() => { navigateTo('home'); setMobileMenuOpen(false); }}>
+                  <div className="logo-img-wrapper" style={{ width: '32px', height: '32px' }}>
+                    <img className="logo-img" src={logoSvg} alt="SimmyClinic Logo" />
+                  </div>
+                  <span className="logo-text" style={{ fontSize: '1.15rem' }}>Simmy<span>Clinic</span></span>
+                </div>
+                <button
+                  type="button"
+                  className="mobile-nav-close-btn"
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-label="Close navigation menu"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              {/* Direct Support Notice inside Mobile Drawer */}
+              <div className="mobile-drawer-support-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.4rem' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                  <strong style={{ fontSize: '0.8rem', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.5px' }}>24/7 Clinical Support</strong>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.82rem' }}>
+                  <a href="tel:+2347035729109" style={{ color: 'var(--color-heading)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '7px' }}>
+                    <i className="fa-solid fa-phone" style={{ color: '#10b981', fontSize: '0.8rem' }}></i> +234 703 572 9109 (Mobile)
+                  </a>
+                  <a href="tel:+2348123861557" style={{ color: 'var(--color-heading)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '7px' }}>
+                    <i className="fa-solid fa-phone" style={{ color: '#0284c7', fontSize: '0.8rem' }}></i> +234 812 386 1557 (Home)
+                  </a>
+                  <a href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20assistance" target="_blank" rel="noopener noreferrer" style={{ color: '#15803d', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '7px', fontWeight: '600' }}>
+                    <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '0.9rem' }}></i> Chat on WhatsApp
+                  </a>
+                </div>
+              </div>
+
+              {/* Navigation Links */}
+              <ul className="mobile-nav-links">
+                <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); setMobileMenuOpen(false); }}><i className="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="#about" className={currentView === 'about' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('about'); setMobileMenuOpen(false); }}><i className="fa-solid fa-hospital"></i> About Us</a></li>
+                <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); setMobileMenuOpen(false); }}><i className="fa-solid fa-user-doctor"></i> Staff & Specialists</a></li>
+                <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); setMobileMenuOpen(false); }}><i className="fa-solid fa-tag"></i> Pricing</a></li>
+                <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); setMobileMenuOpen(false); }}><i className="fa-solid fa-calendar-plus"></i> Booking</a></li>
+                <li><a href="#payment" className={currentView === 'payment' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('payment'); setMobileMenuOpen(false); }}><i className="fa-solid fa-credit-card"></i> Payments</a></li>
+                <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); setMobileMenuOpen(false); }}><i className="fa-solid fa-shield-halved"></i> Compliance</a></li>
+                <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); setMobileMenuOpen(false); }}><i className="fa-solid fa-envelope"></i> Contact</a></li>
+              </ul>
+
+              {/* Drawer Action CTAs */}
+              <div className="mobile-nav-drawer-actions">
+                <button
+                  type="button"
+                  className="btn btn-block"
+                  onClick={() => { setShowCallSupportModal(true); setMobileMenuOpen(false); }}
+                  style={{ background: '#10b981', color: '#ffffff', borderColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0.75rem', fontWeight: '700' }}
+                >
+                  <i className="fa-solid fa-phone-volume"></i> Direct Call Support
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-block"
+                  onClick={() => { setShowPatientGuideModal(true); setMobileMenuOpen(false); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0.75rem', borderColor: 'var(--color-accent)', color: 'var(--color-accent)', fontWeight: '700' }}
+                >
+                  <i className="fa-solid fa-circle-play"></i> Patient Booking Guide
+                </button>
+                {authRole ? (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-block"
+                    onClick={() => { navigateTo('dashboard'); setMobileMenuOpen(false); }}
+                  >
+                    Open Dashboard
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-block"
+                    onClick={() => { navigateTo('portal-login'); setMobileMenuOpen(false); }}
+                  >
+                    Portal Access →
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-primary btn-block"
+                  onClick={() => { navigateTo('booking'); setMobileMenuOpen(false); }}
+                  style={{ padding: '0.75rem', fontWeight: '700' }}
+                >
+                  Book Consultation Now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* --- 2. Main Content Routing --- */}
@@ -7647,7 +7904,7 @@ const LeafletDispatchMap = ({
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Zainab Abdulfatah"
+                      placeholder="e.g. Amina Bello"
                       value={labCheckout.name}
                       onChange={(e) => setLabCheckout({ ...labCheckout, name: e.target.value })}
                     />
@@ -7846,7 +8103,7 @@ const LeafletDispatchMap = ({
                         <input
                           type="text"
                           required
-                          placeholder="e.g. Zainab Abdulfatah"
+                          placeholder="e.g. Amina Bello"
                           value={pharmacyCheckout.name}
                           onChange={(e) => setPharmacyCheckout({ ...pharmacyCheckout, name: e.target.value })}
                         />
@@ -7999,7 +8256,7 @@ const LeafletDispatchMap = ({
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Zainab Abdulfatah"
+                      placeholder="e.g. Amina Bello"
                       value={homeServiceCheckout.name}
                       onChange={(e) => setHomeServiceCheckout({ ...homeServiceCheckout, name: e.target.value })}
                     />
@@ -9302,7 +9559,7 @@ const LeafletDispatchMap = ({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Zainab Abdulfatah"
+                        placeholder="e.g. Amina Bello"
                         value={paymentSubmissionForm.senderName}
                         onChange={(e) => setPaymentSubmissionForm({ ...paymentSubmissionForm, senderName: e.target.value })}
                         style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}
@@ -9823,7 +10080,7 @@ const LeafletDispatchMap = ({
                       type="text"
                       id="patientName"
                       required
-                      placeholder="e.g. Zainab Abdulfatah"
+                      placeholder="e.g. Amina Bello"
                       value={bookingFormData.patientName}
                       onChange={(e) => setBookingFormData({ ...bookingFormData, patientName: e.target.value })}
                     />
@@ -9847,7 +10104,7 @@ const LeafletDispatchMap = ({
                         type="email"
                         id="email"
                         required
-                        placeholder="zainab@example.com"
+                        placeholder="amina@example.com"
                         value={bookingFormData.email}
                         onChange={(e) => setBookingFormData({ ...bookingFormData, email: e.target.value })}
                       />
@@ -15039,7 +15296,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="text"
                                 required
-                                placeholder="e.g. Zainab Abdulfatah"
+                                placeholder="e.g. Amina Bello"
                                 value={newPatientData.name}
                                 onChange={(e) => setNewPatientData({ ...newPatientData, name: e.target.value })}
                               />
@@ -15857,7 +16114,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="text"
                                 required
-                                placeholder="e.g. Zainab Abdulfatah"
+                                placeholder="e.g. Amina Bello"
                                 value={newAdminData.name}
                                 onChange={(e) => setNewAdminData({ ...newAdminData, name: e.target.value })}
                               />
@@ -15867,7 +16124,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="text"
                                 required
-                                placeholder="e.g. zainab_admin"
+                                placeholder="e.g. clinic_admin"
                                 value={newAdminData.username}
                                 onChange={(e) => setNewAdminData({ ...newAdminData, username: e.target.value })}
                               />
@@ -15880,7 +16137,7 @@ const LeafletDispatchMap = ({
                               <input
                                 type="email"
                                 required
-                                placeholder="zainab@simmyclinic.com"
+                                placeholder="admin@simmyclinic.com"
                                 value={newAdminData.email}
                                 onChange={(e) => setNewAdminData({ ...newAdminData, email: e.target.value })}
                               />
@@ -17865,8 +18122,24 @@ const LeafletDispatchMap = ({
       {renderReceiptModal()}
       {renderEditPriceModal()}
 
-      {/* Floating Direct Call Support Button (Visible globally) */}
-      <aside aria-label="Direct Support Call Line" style={{
+      {/* Minimal Floating Support Button (1 Icon with 2 Options: Call or WhatsApp) */}
+      {floatingCallOpen && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9988,
+            background: 'transparent'
+          }}
+          onClick={() => setFloatingCallOpen(false)}
+        />
+      )}
+
+      <aside aria-label="Direct Support Contact Options" style={{
         position: 'fixed',
         bottom: '24px',
         right: '24px',
@@ -17874,171 +18147,195 @@ const LeafletDispatchMap = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
-        gap: '10px'
+        gap: '8px'
       }}>
-        {/* Expandable Support Card */}
+        {/* 2 Options Popover Menu */}
         {floatingCallOpen && (
           <div
             className="floating-support-card animate-fade"
             style={{
-              width: '300px',
-              padding: '1.15rem',
+              width: '280px',
+              padding: '0.85rem',
               borderRadius: '16px',
-              boxShadow: '0 20px 45px -8px rgba(0, 0, 0, 0.45)',
+              boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.45)',
               background: '#ffffff',
-              border: '2px solid rgba(16, 185, 129, 0.3)',
+              border: '1.5px solid rgba(16, 185, 129, 0.3)',
               marginBottom: '2px',
               color: '#1e293b'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.6rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
-                  <i className="fa-solid fa-phone-volume"></i>
-                </span>
-                <div>
-                  <strong style={{ fontSize: '0.92rem', color: '#0f172a', display: 'block', lineHeight: 1.2 }}>Direct Support Lines</strong>
-                  <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold' }}>● 24/7 Lines Active</span>
-                </div>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.45rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                <strong style={{ fontSize: '0.82rem', color: '#0f172a' }}>Direct Support Line</strong>
               </div>
               <button
                 type="button"
                 onClick={() => setFloatingCallOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b', lineHeight: 1, padding: '2px' }}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#94a3b8', lineHeight: 1, padding: 0 }}
                 aria-label="Close"
               >
                 &times;
               </button>
             </div>
 
-            <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>
-              Choose a direct care line to call SimmyClinic support immediately:
+            <p style={{ margin: '0 0 0.65rem 0', fontSize: '0.72rem', color: '#64748b' }}>
+              Select an option below to connect with us:
             </p>
 
-            {/* Mobile Support Line */}
-            <a
-              href="tel:+2347035729109"
-              className="direct-call-item"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.65rem 0.75rem',
-                borderRadius: '10px',
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                textDecoration: 'none',
-                marginBottom: '0.5rem',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem' }}>
-                  <i className="fa-solid fa-phone-volume"></i>
-                </div>
-                <div>
-                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#0f172a' }}>+234 703 572 9109</div>
-                  <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: '600' }}>Mobile Direct Support</div>
-                </div>
+            {/* Option 1: Call Support */}
+            <div style={{ marginBottom: '0.6rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#059669', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <i className="fa-solid fa-phone" style={{ fontSize: '0.7rem' }}></i> 1. Call Support
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#10b981', color: '#fff', padding: '4px 9px', borderRadius: '6px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <i className="fa-solid fa-phone" style={{ fontSize: '0.65rem' }}></i> Call
-              </span>
-            </a>
 
-            {/* Home Support Line */}
-            <a
-              href="tel:+2348123861557"
-              className="direct-call-item"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.65rem 0.75rem',
-                borderRadius: '10px',
-                background: 'rgba(59, 130, 246, 0.08)',
-                border: '1px solid rgba(59, 130, 246, 0.25)',
-                textDecoration: 'none',
-                marginBottom: '0.5rem',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem' }}>
-                  <i className="fa-solid fa-phone"></i>
+              {/* Mobile Line */}
+              <a
+                href="tel:+2347035729109"
+                className="direct-call-item"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.48rem 0.65rem',
+                  borderRadius: '8px',
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  textDecoration: 'none',
+                  marginBottom: '0.3rem',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Call Mobile Line (+234 703 572 9109)"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem' }}>
+                    <i className="fa-solid fa-phone-volume"></i>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.78rem', color: '#0f172a' }}>+234 703 572 9109</div>
+                    <div style={{ fontSize: '0.65rem', color: '#059669', fontWeight: '600' }}>Mobile Line</div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#0f172a' }}>+234 812 386 1557</div>
-                  <div style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: '600' }}>Home Direct Support</div>
+                <span style={{ fontSize: '0.66rem', background: '#10b981', color: '#fff', padding: '3px 8px', borderRadius: '5px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <i className="fa-solid fa-phone" style={{ fontSize: '0.56rem' }}></i> Call
+                </span>
+              </a>
+
+              {/* Home Line */}
+              <a
+                href="tel:+2348123861557"
+                className="direct-call-item"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.48rem 0.65rem',
+                  borderRadius: '8px',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  textDecoration: 'none',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Call Home Line (+234 812 386 1557)"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem' }}>
+                    <i className="fa-solid fa-phone"></i>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.78rem', color: '#0f172a' }}>+234 812 386 1557</div>
+                    <div style={{ fontSize: '0.65rem', color: '#2563eb', fontWeight: '600' }}>Home Line</div>
+                  </div>
                 </div>
+                <span style={{ fontSize: '0.66rem', background: '#2563eb', color: '#fff', padding: '3px 8px', borderRadius: '5px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <i className="fa-solid fa-phone" style={{ fontSize: '0.56rem' }}></i> Call
+                </span>
+              </a>
+            </div>
+
+            {/* Option 2: WhatsApp */}
+            <div>
+              <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.75rem', color: '#25D366' }}></i> 2. WhatsApp
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#2563eb', color: '#fff', padding: '4px 9px', borderRadius: '6px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <i className="fa-solid fa-phone" style={{ fontSize: '0.65rem' }}></i> Call
-              </span>
-            </a>
-
-            {/* WhatsApp Link inside popup */}
-            <a
-              href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20support%20assistance."
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                padding: '0.45rem',
-                borderRadius: '8px',
-                background: 'rgba(37, 211, 102, 0.08)',
-                border: '1px solid rgba(37, 211, 102, 0.25)',
-                color: '#15803d',
-                fontSize: '0.74rem',
-                fontWeight: '600',
-                textDecoration: 'none'
-              }}
-            >
-              <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '0.9rem' }}></i> WhatsApp Care Desk
-            </a>
+              <a
+                href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20support%20assistance."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="direct-call-item"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.52rem 0.65rem',
+                  borderRadius: '8px',
+                  background: 'rgba(37, 211, 102, 0.1)',
+                  border: '1px solid rgba(37, 211, 102, 0.3)',
+                  textDecoration: 'none',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Chat with SimmyClinic on WhatsApp"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem' }}>
+                    <i className="fa-brands fa-whatsapp"></i>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.78rem', color: '#065f46' }}>+234 703 572 9109</div>
+                    <div style={{ fontSize: '0.65rem', color: '#047857' }}>WhatsApp Support Chat</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.66rem', background: '#25D366', color: '#fff', padding: '3px 8px', borderRadius: '5px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.65rem' }}></i> Chat
+                </span>
+              </a>
+            </div>
           </div>
         )}
 
-        {/* Floating Toggle Button */}
+        {/* Minimal Single Circular Floating Action Button */}
         <button
           type="button"
           onClick={() => setFloatingCallOpen(!floatingCallOpen)}
           id="btn-direct-call-support"
           className="floating-call-btn"
-          title="Direct Call Support Lines: +234 703 572 9109 (Mobile) | +234 812 386 1557 (Home)"
+          title="Direct Support: Call or WhatsApp"
+          aria-label="Direct Support: Call or WhatsApp"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '10px',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '50px',
+            justifyContent: 'center',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
             backgroundColor: '#10b981',
             color: '#ffffff',
-            fontWeight: '700',
-            fontSize: '0.92rem',
-            boxShadow: '0 10px 25px -3px rgba(16, 185, 129, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            border: '2px solid rgba(255, 255, 255, 0.35)',
+            boxShadow: '0 8px 24px -2px rgba(16, 185, 129, 0.5), 0 3px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: '2px solid rgba(255, 255, 255, 0.45)',
             cursor: 'pointer',
-            transition: 'all 0.1s ease',
-            touchAction: 'manipulation'
+            transition: 'all 0.15s ease',
+            touchAction: 'manipulation',
+            position: 'relative',
+            padding: 0
           }}
         >
+          {floatingCallOpen ? (
+            <i className="fa-solid fa-xmark" style={{ fontSize: '1.05rem' }}></i>
+          ) : (
+            <i className="fa-solid fa-headset" style={{ fontSize: '1.05rem' }}></i>
+          )}
+          {/* Active online indicator */}
           <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '24px',
-            height: '24px',
+            position: 'absolute',
+            top: '1px',
+            right: '1px',
+            width: '10px',
+            height: '10px',
             borderRadius: '50%',
-            backgroundColor: 'rgba(255, 255, 255, 0.25)'
-          }}>
-            <i className="fa-solid fa-phone-volume"></i>
-          </span>
-          <span>Call Support</span>
-          <i className={`fa-solid ${floatingCallOpen ? 'fa-chevron-down' : 'fa-chevron-up'}`} style={{ fontSize: '0.75rem', marginLeft: '2px' }}></i>
+            backgroundColor: '#22c55e',
+            border: '2px solid #ffffff'
+          }}></span>
         </button>
       </aside>
 
