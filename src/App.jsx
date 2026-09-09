@@ -1357,7 +1357,6 @@ export default function App() {
   const [modalTempValues, setModalTempValues] = useState({});
   const [followUpApt, setFollowUpApt] = useState(null);
   const [followUpData, setFollowUpData] = useState({ date: '', time: '10:00 AM', reason: '2-Week Observation Follow-up' });
-  const [whatsappPopupOpen, setWhatsappPopupOpen] = useState(false);
   const [popupNotification, setPopupNotification] = useState(null); // { title, message, type }
 
   const showPopup = (message, title = "System Notification", type = "success") => {
@@ -6976,26 +6975,6 @@ const LeafletDispatchMap = ({
           </nav>
 
           <div className="header-actions">
-            <button
-              type="button"
-              className="btn btn-sm desktop-only-btn"
-              onClick={() => setShowCallSupportModal(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                background: '#10b981',
-                color: '#fff',
-                borderColor: '#10b981',
-                fontWeight: '700',
-                padding: '0.4rem 0.85rem',
-                cursor: 'pointer'
-              }}
-              title="Direct Call Support Lines: +234 703 572 9109 (Mobile) | +234 812 386 1557 (Home)"
-            >
-              <i className="fa-solid fa-phone-volume"></i>
-              <span>Call Support</span>
-            </button>
             <button
               className="btn btn-outline btn-sm desktop-only-btn"
               onClick={() => setShowPatientGuideModal(true)}
@@ -17416,48 +17395,6 @@ const LeafletDispatchMap = ({
           </div>
         </div>
       )}
-
-      {/* --- 7. WhatsApp Floating Widget with Dual Options --- */}
-      <div className="whatsapp-float-wrapper">
-        <div className={`whatsapp-popup ${whatsappPopupOpen ? 'open' : ''}`}>
-          <div className="whatsapp-popup-header">
-            <i className="fa-brands fa-whatsapp"></i> SimmyClinic WhatsApp
-          </div>
-          <a
-            href="https://wa.me/2349014324442?text=Hello%20simmyclinic%20I%20will%20like%20to%20book%20for%20consultation.%20"
-            className="whatsapp-popup-option"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setWhatsappPopupOpen(false)}
-          >
-            <div className="option-icon dm"><i className="fa-solid fa-message"></i></div>
-            <div className="option-info">
-              Send Direct Message
-              <span>Chat with our team directly</span>
-            </div>
-          </a>
-          <a
-            href="https://chat.whatsapp.com/C73ZsPudjxaAYzA20f3yJm?s=sh&p=a&ilr=4"
-            className="whatsapp-popup-option"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setWhatsappPopupOpen(false)}
-          >
-            <div className="option-icon group"><i className="fa-solid fa-users"></i></div>
-            <div className="option-info">
-              Join WhatsApp Group
-              <span>Health community & updates</span>
-            </div>
-          </a>
-        </div>
-        <button
-          className="whatsapp-widget"
-          onClick={() => setWhatsappPopupOpen(!whatsappPopupOpen)}
-          title="WhatsApp Options"
-        >
-          <i className={`fa-${whatsappPopupOpen ? 'solid fa-xmark' : 'brands fa-whatsapp'}`}></i>
-        </button>
-      </div>
 
       {/* --- Doctor Booking Details Preview Modal --- */}
       {previewBookingDoc && (
