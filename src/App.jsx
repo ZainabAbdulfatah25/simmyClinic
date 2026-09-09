@@ -6975,14 +6975,6 @@ const LeafletDispatchMap = ({
           </nav>
 
           <div className="header-actions">
-            <button
-              className="btn btn-outline btn-sm desktop-only-btn"
-              onClick={() => setShowPatientGuideModal(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
-              title="Watch Patient Video Walkthrough & Booking Guide"
-            >
-              <i className="fa-solid fa-circle-play"></i> Patient Guide
-            </button>
             {authRole ? (
               <div className="auth-profile-badge">
                 <span className="auth-badge-name">
@@ -7079,14 +7071,6 @@ const LeafletDispatchMap = ({
                   style={{ background: '#10b981', color: '#ffffff', borderColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0.75rem', fontWeight: '700' }}
                 >
                   <i className="fa-solid fa-phone-volume"></i> Direct Call Support
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-block"
-                  onClick={() => { setShowPatientGuideModal(true); setMobileMenuOpen(false); }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0.75rem', borderColor: 'var(--color-accent)', color: 'var(--color-accent)', fontWeight: '700' }}
-                >
-                  <i className="fa-solid fa-circle-play"></i> Patient Booking Guide
                 </button>
                 {authRole ? (
                   <button
