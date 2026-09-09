@@ -3989,4 +3989,20 @@ button:active:not(:disabled),
   }
 }
 
+.floating-support-card {
+  transform-origin: bottom right;
+  animation: slideUpFade 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.direct-call-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  filter: brightness(0.98);
+}
+
+.direct-call-item:active {
+  transform: scale(0.98);
+}
+
+
 

@@ -1560,6 +1560,10 @@ export default function App() {
     dispatchArea: ''
   });
 
+  // Direct Support Lines State & Modal
+  const [showCallSupportModal, setShowCallSupportModal] = useState(false);
+  const [floatingCallOpen, setFloatingCallOpen] = useState(false);
+
   // Payment & Receipt Management States (Strictly Bank Transfer Only)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalItem, setPaymentModalItem] = useState(null);
@@ -1958,9 +1962,15 @@ export default function App() {
             <span style={{ fontSize: '0.78rem', color: '#065f46' }}>
               <i className="fa-solid fa-headset" style={{ marginRight: '5px' }}></i> Need instant payment confirmation help?
             </span>
-            <a href="tel:+2349014324442" style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <i className="fa-solid fa-phone-volume"></i> Call Support: +234 901 432 4442
-            </a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <a href="tel:+2347035729109" style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Call Mobile Direct Support: +234 703 572 9109">
+                <i className="fa-solid fa-phone-volume"></i> Mobile: +234 703 572 9109
+              </a>
+              <span style={{ color: '#10b981', fontSize: '0.75rem' }}>|</span>
+              <a href="tel:+2348123861557" style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Call Home Direct Support: +234 812 386 1557">
+                <i className="fa-solid fa-phone"></i> Home: +234 812 386 1557
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -2098,11 +2108,22 @@ export default function App() {
                 Our Care Coordinator Zainab & support team are on standby.
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <a href="tel:+2349014324442" className="btn btn-sm" style={{ background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setShowCallSupportModal(true)}
+                className="btn btn-sm"
+                style={{ background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+              >
                 <i className="fa-solid fa-phone-volume"></i> Direct Call Support
+              </button>
+              <a href="tel:+2347035729109" className="btn btn-sm btn-outline" style={{ borderColor: '#10b981', color: '#047857', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Call Mobile: +234 703 572 9109">
+                <i className="fa-solid fa-phone-volume"></i> Mobile
               </a>
-              <a href="https://wa.me/2349014324442?text=Hello%20SimmyClinic,%20I%20need%20help%20booking%20an%20appointment" target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ borderColor: '#25D366', color: '#25D366', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <a href="tel:+2348123861557" className="btn btn-sm btn-outline" style={{ borderColor: '#2563eb', color: '#1d4ed8', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title="Call Home: +234 812 386 1557">
+                <i className="fa-solid fa-phone"></i> Home
+              </a>
+              <a href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20help%20booking%20an%20appointment" target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline" style={{ borderColor: '#25D366', color: '#25D366', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <i className="fa-brands fa-whatsapp"></i> WhatsApp
               </a>
             </div>
@@ -2113,6 +2134,216 @@ export default function App() {
             <button className="btn btn-outline btn-sm" onClick={() => setShowPatientGuideModal(false)}>Close Guide</button>
             <button className="btn btn-primary btn-sm" onClick={() => { setShowPatientGuideModal(false); navigateTo('booking'); }}>
               <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i> Proceed to Book Consultation
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCallSupportModal = () => {
+    if (!showCallSupportModal) return null;
+
+    return (
+      <div className="modal-backdrop" onClick={() => setShowCallSupportModal(false)}>
+        <div
+          className="modal-content glassmorphic animate-fade"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '460px',
+            textAlign: 'left',
+            padding: '1.75rem',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)'
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: '#10b981',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.15rem'
+              }}>
+                <i className="fa-solid fa-phone-volume"></i>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-heading)' }}>Direct Support Line</h3>
+                <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                  24/7 Clinical Support Lines Active
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowCallSupportModal(false)}
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+          </div>
+
+          <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+            Select a direct support contact below to connect immediately with our patient care coordinators:
+          </p>
+
+          {/* Contact 1: Mobile */}
+          <div style={{
+            background: 'var(--color-surface, #ffffff)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem',
+            marginBottom: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: '#059669',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem'
+              }}>
+                <i className="fa-solid fa-phone-volume"></i>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--color-heading)' }}>+234 703 572 9109</span>
+                  <span style={{ fontSize: '0.7rem', padding: '2px 7px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#059669', fontWeight: '700' }}>Mobile</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                  Mobile Direct Support Line
+                </div>
+              </div>
+            </div>
+            <a
+              href="tel:+2347035729109"
+              className="btn btn-sm"
+              style={{
+                background: '#10b981',
+                color: '#fff',
+                border: 'none',
+                fontWeight: '700',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.5rem 0.95rem',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <i className="fa-solid fa-phone"></i> Call Mobile
+            </a>
+          </div>
+
+          {/* Contact 2: Home */}
+          <div style={{
+            background: 'var(--color-surface, #ffffff)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem',
+            marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'rgba(59, 130, 246, 0.12)',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem'
+              }}>
+                <i className="fa-solid fa-phone"></i>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--color-heading)' }}>+234 812 386 1557</span>
+                  <span style={{ fontSize: '0.7rem', padding: '2px 7px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.15)', color: '#2563eb', fontWeight: '700' }}>Home</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                  Home Direct Support Line
+                </div>
+              </div>
+            </div>
+            <a
+              href="tel:+2348123861557"
+              className="btn btn-sm"
+              style={{
+                background: '#2563eb',
+                color: '#fff',
+                border: 'none',
+                fontWeight: '700',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.5rem 0.95rem',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <i className="fa-solid fa-phone"></i> Call Home
+            </a>
+          </div>
+
+          {/* Quick WhatsApp Support Option */}
+          <div style={{
+            background: 'rgba(37, 211, 102, 0.08)',
+            border: '1px solid rgba(37, 211, 102, 0.25)',
+            borderRadius: '10px',
+            padding: '0.75rem 1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem'
+          }}>
+            <div style={{ fontSize: '0.8rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '1.1rem' }}></i>
+              <span>Need WhatsApp messaging support?</span>
+            </div>
+            <a
+              href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20support%20assistance."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-sm"
+              style={{ background: '#25D366', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+            >
+              WhatsApp
+            </a>
+          </div>
+
+          {/* Close button */}
+          <div style={{ marginTop: '1.25rem', textAlign: 'right' }}>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowCallSupportModal(false)}
+            >
+              Close
             </button>
           </div>
         </div>
@@ -6599,9 +6830,10 @@ const LeafletDispatchMap = ({
           </nav>
 
           <div className="header-actions">
-            <a
-              href="tel:+2349014324442"
+            <button
+              type="button"
               className="btn btn-sm"
+              onClick={() => setShowCallSupportModal(true)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -6610,13 +6842,14 @@ const LeafletDispatchMap = ({
                 color: '#fff',
                 borderColor: '#10b981',
                 fontWeight: '700',
-                padding: '0.4rem 0.85rem'
+                padding: '0.4rem 0.85rem',
+                cursor: 'pointer'
               }}
-              title="Direct Call Support (+234 901 432 4442)"
+              title="Direct Call Support Lines: +234 703 572 9109 (Mobile) | +234 812 386 1557 (Home)"
             >
               <i className="fa-solid fa-phone-volume"></i>
               <span>Call Support</span>
-            </a>
+            </button>
             <button
               className="btn btn-outline btn-sm"
               onClick={() => setShowPatientGuideModal(true)}
@@ -7917,7 +8150,7 @@ const LeafletDispatchMap = ({
                 <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-indigo)', fontSize: '1.4rem' }}>Our Active Clinical Branches</h3>
                 <div className="clinic-locations-grid">
                   {[
-                    { city: 'Abuja (HQ)', address: 'Suite 12, Garki Mall, Garki, Abuja', phone: '+234 901 432 4442' },
+                    { city: 'Abuja (HQ)', address: 'Suite 12, Garki Mall, Garki, Abuja', phone: '+234 703 572 9109 / +234 812 386 1557' },
                     { city: 'Kaduna', address: '4, Constitution Road, Kaduna', phone: '+234 802 112 3344' },
                     { city: 'Kano', address: '45, Zoo Road, Kano', phone: '+234 803 556 6778' },
                     { city: 'Bauchi', address: '12, Yakubun Bauchi Road, Bauchi', phone: '+234 805 776 6554' },
@@ -9157,8 +9390,11 @@ const LeafletDispatchMap = ({
                 >
                   <i className="fa-brands fa-whatsapp"></i> WhatsApp Finance Desk
                 </a>
-                <a href="tel:+2349014324442" className="btn btn-outline btn-sm">
-                  <i className="fa-solid fa-phone"></i> +234 901 432 4442
+                <a href="tel:+2347035729109" className="btn btn-outline btn-sm" style={{ borderColor: '#10b981', color: '#047857', fontWeight: '600' }} title="Call Mobile Direct Support (+234 703 572 9109)">
+                  <i className="fa-solid fa-phone-volume"></i> Mobile: +234 703 572 9109
+                </a>
+                <a href="tel:+2348123861557" className="btn btn-outline btn-sm" style={{ borderColor: '#2563eb', color: '#1d4ed8', fontWeight: '600' }} title="Call Home Direct Support (+234 812 386 1557)">
+                  <i className="fa-solid fa-phone"></i> Home: +234 812 386 1557
                 </a>
               </div>
             </div>
@@ -9343,14 +9579,33 @@ const LeafletDispatchMap = ({
                   >
                     <i className="fa-solid fa-circle-play"></i> Watch How-To Book Video Guide
                   </button>
-                  <a
-                    href="tel:+2349014324442"
+                  <button
+                    type="button"
                     className="btn"
-                    style={{ width: '100%', background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '700' }}
+                    onClick={() => setShowCallSupportModal(true)}
+                    style={{ width: '100%', background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '700', border: 'none', cursor: 'pointer' }}
                     title="Direct Hotline to Care Support Coordinator"
                   >
-                    <i className="fa-solid fa-phone-volume"></i> Direct Call Support (+234 901 432 4442)
-                  </a>
+                    <i className="fa-solid fa-phone-volume"></i> Direct Call Support
+                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '6px' }}>
+                    <a
+                      href="tel:+2347035729109"
+                      className="btn btn-outline btn-sm"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', borderColor: '#10b981', color: '#047857', fontWeight: '600', padding: '0.45rem 0.5rem', fontSize: '0.78rem' }}
+                      title="Call Mobile: +234 703 572 9109"
+                    >
+                      <i className="fa-solid fa-phone-volume"></i> Mobile Line
+                    </a>
+                    <a
+                      href="tel:+2348123861557"
+                      className="btn btn-outline btn-sm"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', borderColor: '#2563eb', color: '#1d4ed8', fontWeight: '600', padding: '0.45rem 0.5rem', fontSize: '0.78rem' }}
+                      title="Call Home: +234 812 386 1557"
+                    >
+                      <i className="fa-solid fa-phone"></i> Home Line
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -9814,7 +10069,26 @@ const LeafletDispatchMap = ({
                 <h3>SimmyClinic HQ</h3>
                 <p>Need urgent assistance? Reach out via WhatsApp or call our administrative hotline directly.</p>
                 <div className="contact-details-box glassmorphic">
-                  <p><strong><i className="fa-solid fa-phone"></i> Call Center:</strong> +234 901 432 4442</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <p style={{ margin: 0 }}>
+                        <strong><i className="fa-solid fa-phone-volume" style={{ color: '#10b981', marginRight: '6px' }}></i> Direct Support (Mobile):</strong>{' '}
+                        <a href="tel:+2347035729109" style={{ color: '#10b981', fontWeight: 'bold' }}>+234 703 572 9109</a>
+                      </p>
+                      <a href="tel:+2347035729109" className="btn btn-sm" style={{ background: '#10b981', color: '#fff', padding: '0.25rem 0.65rem', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-solid fa-phone"></i> Call Mobile
+                      </a>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <p style={{ margin: 0 }}>
+                        <strong><i className="fa-solid fa-phone" style={{ color: '#2563eb', marginRight: '6px' }}></i> Direct Support (Home):</strong>{' '}
+                        <a href="tel:+2348123861557" style={{ color: '#2563eb', fontWeight: 'bold' }}>+234 812 386 1557</a>
+                      </p>
+                      <a href="tel:+2348123861557" className="btn btn-sm" style={{ background: '#2563eb', color: '#fff', padding: '0.25rem 0.65rem', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-solid fa-phone"></i> Call Home
+                      </a>
+                    </div>
+                  </div>
                   <p><strong><i className="fa-solid fa-envelope"></i> Email Inquiries:</strong> Simmyclinic@gmail.com</p>
                   <p><strong><i className="fa-solid fa-location-dot"></i> Locations:</strong> Abuja, Kaduna, Kano, Bauchi, Gombe (P.M.B: 3511)</p>
                 </div>
@@ -15843,8 +16117,13 @@ const LeafletDispatchMap = ({
           <div className="footer-contact-col">
             <h4>24/7 SUPPORT & CARE</h4>
             <p>
-              <a href="tel:+2349014324442" style={{ color: '#10b981', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }} title="Click to call SimmyClinic support directly">
-                <i className="fa-solid fa-phone-volume"></i> Call Direct: +234 901 432 4442
+              <a href="tel:+2347035729109" style={{ color: '#10b981', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }} title="Call Mobile Direct Support Line">
+                <i className="fa-solid fa-phone-volume"></i> Direct (Mobile): +234 703 572 9109
+              </a>
+            </p>
+            <p>
+              <a href="tel:+2348123861557" style={{ color: '#10b981', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }} title="Call Home Direct Support Line">
+                <i className="fa-solid fa-phone"></i> Direct (Home): +234 812 386 1557
               </a>
             </p>
             <p><i className="fa-solid fa-envelope"></i> support@simmyclinic.com</p>
@@ -17582,6 +17861,7 @@ const LeafletDispatchMap = ({
       )}
       {renderPaymentModal()}
       {renderPatientGuideModal()}
+      {renderCallSupportModal()}
       {renderReceiptModal()}
       {renderEditPriceModal()}
 
@@ -17594,13 +17874,141 @@ const LeafletDispatchMap = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
-        gap: '8px'
+        gap: '10px'
       }}>
-        <a
-          href="tel:+2349014324442"
+        {/* Expandable Support Card */}
+        {floatingCallOpen && (
+          <div
+            className="floating-support-card animate-fade"
+            style={{
+              width: '300px',
+              padding: '1.15rem',
+              borderRadius: '16px',
+              boxShadow: '0 20px 45px -8px rgba(0, 0, 0, 0.45)',
+              background: '#ffffff',
+              border: '2px solid rgba(16, 185, 129, 0.3)',
+              marginBottom: '2px',
+              color: '#1e293b'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                  <i className="fa-solid fa-phone-volume"></i>
+                </span>
+                <div>
+                  <strong style={{ fontSize: '0.92rem', color: '#0f172a', display: 'block', lineHeight: 1.2 }}>Direct Support Lines</strong>
+                  <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold' }}>● 24/7 Lines Active</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFloatingCallOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b', lineHeight: 1, padding: '2px' }}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>
+              Choose a direct care line to call SimmyClinic support immediately:
+            </p>
+
+            {/* Mobile Support Line */}
+            <a
+              href="tel:+2347035729109"
+              className="direct-call-item"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.65rem 0.75rem',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                textDecoration: 'none',
+                marginBottom: '0.5rem',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#10b981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem' }}>
+                  <i className="fa-solid fa-phone-volume"></i>
+                </div>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#0f172a' }}>+234 703 572 9109</div>
+                  <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: '600' }}>Mobile Direct Support</div>
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#10b981', color: '#fff', padding: '4px 9px', borderRadius: '6px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-phone" style={{ fontSize: '0.65rem' }}></i> Call
+              </span>
+            </a>
+
+            {/* Home Support Line */}
+            <a
+              href="tel:+2348123861557"
+              className="direct-call-item"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.65rem 0.75rem',
+                borderRadius: '10px',
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                textDecoration: 'none',
+                marginBottom: '0.5rem',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem' }}>
+                  <i className="fa-solid fa-phone"></i>
+                </div>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#0f172a' }}>+234 812 386 1557</div>
+                  <div style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: '600' }}>Home Direct Support</div>
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#2563eb', color: '#fff', padding: '4px 9px', borderRadius: '6px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-phone" style={{ fontSize: '0.65rem' }}></i> Call
+              </span>
+            </a>
+
+            {/* WhatsApp Link inside popup */}
+            <a
+              href="https://wa.me/2347035729109?text=Hello%20SimmyClinic,%20I%20need%20support%20assistance."
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '0.45rem',
+                borderRadius: '8px',
+                background: 'rgba(37, 211, 102, 0.08)',
+                border: '1px solid rgba(37, 211, 102, 0.25)',
+                color: '#15803d',
+                fontSize: '0.74rem',
+                fontWeight: '600',
+                textDecoration: 'none'
+              }}
+            >
+              <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '0.9rem' }}></i> WhatsApp Care Desk
+            </a>
+          </div>
+        )}
+
+        {/* Floating Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setFloatingCallOpen(!floatingCallOpen)}
           id="btn-direct-call-support"
           className="floating-call-btn"
-          title="Direct Call Support Line: +234 901 432 4442"
+          title="Direct Call Support Lines: +234 703 572 9109 (Mobile) | +234 812 386 1557 (Home)"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -17612,7 +18020,6 @@ const LeafletDispatchMap = ({
             fontWeight: '700',
             fontSize: '0.92rem',
             boxShadow: '0 10px 25px -3px rgba(16, 185, 129, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            textDecoration: 'none',
             border: '2px solid rgba(255, 255, 255, 0.35)',
             cursor: 'pointer',
             transition: 'all 0.1s ease',
@@ -17631,7 +18038,8 @@ const LeafletDispatchMap = ({
             <i className="fa-solid fa-phone-volume"></i>
           </span>
           <span>Call Support</span>
-        </a>
+          <i className={`fa-solid ${floatingCallOpen ? 'fa-chevron-down' : 'fa-chevron-up'}`} style={{ fontSize: '0.75rem', marginLeft: '2px' }}></i>
+        </button>
       </aside>
 
       {/* Global Page Popup Notification Modal */}
