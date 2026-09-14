@@ -162,6 +162,99 @@ const getDoctorCardSubheading = (doc) => {
   };
 };
 
+export const CLINIC_PROFESSIONAL_ROLES = [
+  {
+    category: "Executive & Clinical Leadership",
+    roles: [
+      "Chief Executive Officer (CEO) / Medical Director",
+      "CEO & ENT Specialist / MPH",
+      "Clinical Director / Head of Clinical Services",
+      "Chief Medical Officer (CMO)"
+    ]
+  },
+  {
+    category: "Senior Consultants & Specialists",
+    roles: [
+      "Senior Consultant",
+      "Senior Consultant (OB/GYN)",
+      "Senior Consultant Physician",
+      "Senior Consultant Paediatrician",
+      "Senior Consultant Surgeon",
+      "Consultant",
+      "Consultant Family Physician",
+      "Clinical Specialist",
+      "Clinical Specialist (Family Planning / ANC)"
+    ]
+  },
+  {
+    category: "General Practice & Medical Officers",
+    roles: [
+      "General Practitioner",
+      "Medical Officer",
+      "Junior Doctor",
+      "Resident Doctor",
+      "House Officer"
+    ]
+  },
+  {
+    category: "Diagnostics & Medical Laboratory",
+    roles: [
+      "Diagnostic Specialist / Medical Laboratory Scientist (MLS)",
+      "Diagnostic Specialist / MPH",
+      "Senior Medical Laboratory Scientist",
+      "Medical Laboratory Technologist",
+      "Laboratory Technician / Phlebotomist"
+    ]
+  },
+  {
+    category: "Pharmaceutical Care",
+    roles: [
+      "Licensed Superintendent Pharmacist",
+      "Clinical Pharmacist",
+      "Hospital Pharmacist",
+      "Pharmacy Technician"
+    ]
+  },
+  {
+    category: "Nursing, Midwifery & Inpatient Care",
+    roles: [
+      "Senior Care Officer / Midwife",
+      "Nursing Officer / Registered Nurse (RN)",
+      "Registered Midwife (RM)",
+      "Clinical Care Officer",
+      "Community Health Nurse"
+    ]
+  },
+  {
+    category: "Public & Community Health",
+    roles: [
+      "Public Health Specialist",
+      "Community Health Officer (CHO)",
+      "Community Health Extension Worker (CHEW)",
+      "Health Educator / Field Officer"
+    ]
+  },
+  {
+    category: "Mental Health & Psychology",
+    roles: [
+      "Senior Mental Health Specialist / Clinical Psychologist",
+      "Clinical Psychologist",
+      "Psychotherapist / Mental Health Counselor"
+    ]
+  },
+  {
+    category: "Operations, Administration & Support",
+    roles: [
+      "Logistics Lead / Dispatch Courier",
+      "Medical Dispatch Rider",
+      "Healthcare Administrator / Operations Manager",
+      "Front Desk & Patient Care Coordinator"
+    ]
+  }
+];
+
+export const ALL_CLINIC_ROLE_VALUES = CLINIC_PROFESSIONAL_ROLES.flatMap(c => c.roles);
+
 const INITIAL_DOCTORS = [
   {
     id: 1,
@@ -10502,11 +10595,19 @@ const LeafletDispatchMap = ({
                                     style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
                                   >
                                     <option value="General Medicine">General Medicine</option>
+                                    <option value="Obstetrics & Gynaecology">Obstetrics & Gynaecology</option>
                                     <option value="Gynaecology">Gynaecology</option>
                                     <option value="Pediatrics">Pediatrics</option>
                                     <option value="Public Health">Public Health</option>
+                                    <option value="ENT">ENT</option>
+                                    <option value="Psychology">Psychology</option>
+                                    <option value="Laboratory">Laboratory</option>
+                                    <option value="Pharmacy">Pharmacy</option>
+                                    <option value="Nursing & Midwifery">Nursing & Midwifery</option>
+                                    <option value="Community Health">Community Health</option>
                                     <option value="Cardiology">Cardiology</option>
                                     <option value="Dermatology">Dermatology</option>
+                                    <option value="Dentistry">Dentistry</option>
                                   </select>
                                 </div>
                               </div>
@@ -10535,10 +10636,18 @@ const LeafletDispatchMap = ({
                                     onChange={(e) => setPatientLoginForm({ ...patientLoginForm, level: e.target.value })}
                                     style={{ width: '100%', padding: '0.75rem 0.75rem 0.75rem 2.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(24, 43, 73, 0.12)', background: 'var(--color-bg)', fontSize: '0.88rem' }}
                                   >
-                                    <option value="Junior Doctor">Junior Doctor</option>
-                                    <option value="General Practitioner">General Practitioner</option>
-                                    <option value="Consultant">Consultant / Specialist</option>
-                                    <option value="Senior Consultant">Senior Consultant / Specialist</option>
+                                    {patientLoginForm.level && !ALL_CLINIC_ROLE_VALUES.includes(patientLoginForm.level) && (
+                                      <option value={patientLoginForm.level}>{patientLoginForm.level} (Custom)</option>
+                                    )}
+                                    {CLINIC_PROFESSIONAL_ROLES.map((group) => (
+                                      <optgroup key={group.category} label={`── ${group.category} ──`}>
+                                        {group.roles.map((role) => (
+                                          <option key={role} value={role}>
+                                            {role}
+                                          </option>
+                                        ))}
+                                      </optgroup>
+                                    ))}
                                   </select>
                                 </div>
                               </div>
@@ -12593,10 +12702,16 @@ const LeafletDispatchMap = ({
                                 <label>Professional Title & Clinical Designation</label>
                                 <input
                                   type="text"
+                                  list="clinic-roles-datalist"
                                   value={docSelfData.level || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, level: e.target.value })}
                                   placeholder="e.g. CEO & ENT Specialist / MPH, Senior Consultant"
                                 />
+                                <datalist id="clinic-roles-datalist">
+                                  {ALL_CLINIC_ROLE_VALUES.map(role => (
+                                    <option key={role} value={role} />
+                                  ))}
+                                </datalist>
                               </div>
                               <div className="form-group">
                                 <label>Clinical Availability (Online / Offline Status)</label>
@@ -14887,9 +15002,17 @@ const LeafletDispatchMap = ({
                                 <option value="General Medicine">General Medicine</option>
                                 <option value="Public Health">Public Health</option>
                                 <option value="ENT">ENT</option>
+                                <option value="ENT / MPH">ENT / MPH</option>
                                 <option value="Psychology">Psychology</option>
                                 <option value="Laboratory">Laboratory</option>
+                                <option value="Laboratory / MPH">Laboratory / MPH</option>
                                 <option value="Pharmacy">Pharmacy</option>
+                                <option value="Nursing & Midwifery">Nursing & Midwifery</option>
+                                <option value="Community Health">Community Health</option>
+                                <option value="Cardiology">Cardiology</option>
+                                <option value="Dermatology">Dermatology</option>
+                                <option value="Dentistry">Dentistry</option>
+                                <option value="Operations & Logistics">Operations & Logistics</option>
                               </select>
                             </div>
                             <div className="form-group">
@@ -14898,10 +15021,18 @@ const LeafletDispatchMap = ({
                                 value={newDoctorData.level || 'Junior Doctor'}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, level: e.target.value })}
                               >
-                                <option value="Junior Doctor">Junior Doctor</option>
-                                <option value="General Practitioner">General Practitioner</option>
-                                <option value="Consultant">Consultant</option>
-                                <option value="Senior Consultant">Senior Consultant</option>
+                                {newDoctorData.level && !ALL_CLINIC_ROLE_VALUES.includes(newDoctorData.level) && (
+                                  <option value={newDoctorData.level}>{newDoctorData.level} (Current)</option>
+                                )}
+                                {CLINIC_PROFESSIONAL_ROLES.map((group) => (
+                                  <optgroup key={group.category} label={`── ${group.category} ──`}>
+                                    {group.roles.map((role) => (
+                                      <option key={role} value={role}>
+                                        {role}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                ))}
                               </select>
                             </div>
                           </div>
