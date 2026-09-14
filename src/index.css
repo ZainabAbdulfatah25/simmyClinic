@@ -2370,17 +2370,26 @@ table td .action-btn,
     width: 32px;
     height: 32px;
   }
+  .auth-header-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
   .auth-profile-badge {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
-    width: 100%;
-    gap: 0.5rem;
+    width: auto;
+    gap: 0.4rem;
+    padding: 0.25rem 0.55rem;
   }
   .auth-badge-name {
-    width: 100%;
-    text-align: center;
-    font-size: 0.8rem;
-    margin-bottom: 0.25rem;
+    width: auto;
+    font-size: 0.76rem;
+    margin-bottom: 0;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .filter-bar {
     flex-direction: column;
@@ -2814,22 +2823,37 @@ input[type="checkbox"] {
 }
 
 /* --- Navigation Header Role Badge --- */
-.auth-profile-badge {
-  display: flex;
+.auth-header-group {
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 0.65rem;
+}
+
+.auth-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(24, 43, 73, 0.05);
+  border: 1px solid rgba(24, 43, 73, 0.12);
   padding: 0.35rem 0.85rem;
   border-radius: 50px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  transition: var(--transition-smooth);
+}
+
+.auth-profile-badge:hover {
+  background: rgba(24, 43, 73, 0.08);
+  border-color: rgba(0, 153, 214, 0.3);
 }
 
 .auth-badge-name {
   font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-indigo);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .logout-btn {
@@ -2839,7 +2863,7 @@ input[type="checkbox"] {
   cursor: pointer;
   font-size: 0.9rem;
   padding: 0.2rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: var(--transition-smooth);
@@ -2847,6 +2871,7 @@ input[type="checkbox"] {
 
 .logout-btn:hover {
   transform: scale(1.15);
+  color: #DC2626;
 }
 
 /* --- Consultation Notes & Rx Box --- */
@@ -4243,6 +4268,14 @@ html, body, #root, .app-layout {
   .header-actions .btn-primary {
     font-size: 0.75rem !important;
     padding: 0.4rem 0.65rem !important;
+  }
+
+  .auth-badge-name {
+    display: none !important;
+  }
+
+  .auth-profile-badge {
+    padding: 0.25rem 0.45rem !important;
   }
 
   .stats-row {

@@ -6960,35 +6960,50 @@ const LeafletDispatchMap = ({
 
           {/* Desktop Navigation */}
           <nav className="desktop-nav" aria-label="Main Navigation">
-            {currentView !== 'dashboard' && (
-              <ul className="nav-links">
-                <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
-                <li><a href="#about" className={currentView === 'about' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('about'); }}>About Us</a></li>
-                <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Staff & Specialists</a></li>
-                <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
-                <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
-                <li><a href="#payment" className={currentView === 'payment' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('payment'); }}>Payments</a></li>
-                <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }}>Compliance</a></li>
-                <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact</a></li>
-              </ul>
-            )}
+            <ul className="nav-links">
+              <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
+              <li><a href="#about" className={currentView === 'about' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('about'); }}>About Us</a></li>
+              <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Staff & Specialists</a></li>
+              <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
+              <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
+              <li><a href="#payment" className={currentView === 'payment' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('payment'); }}>Payments</a></li>
+              <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }}>Compliance</a></li>
+              <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact</a></li>
+            </ul>
           </nav>
 
           <div className="header-actions">
             {authRole ? (
-              <div className="auth-profile-badge">
-                <span className="auth-badge-name">
-                  {authRole === 'patient' && `${loggedInPatient?.name || 'User'} (Patient)`}
-                  {authRole === 'doctor' && `${loggedInDoctor?.name || 'Dr.'} (Doctor)`}
-                  {authRole === 'pharmacist' && `${loggedInPharmacist?.name || 'Pharm.'} (Pharmacist)`}
-                  {authRole === 'lab' && `${loggedInLab?.name || 'MLS.'} (Lab Specialist)`}
-                  {authRole === 'logistics' && `${loggedInLogistics?.name || 'Courier'} (Logistics Lead)`}
-                  {authRole === 'admin' && 'Admin Console'}
-                </span>
-                <button className="btn btn-outline btn-sm" onClick={() => navigateTo('dashboard')}>Dashboard</button>
-                <button className="logout-btn" onClick={handleLogout} title="Sign Out">
-                  <i className="fa-solid fa-right-from-bracket"></i>
+              <div className="auth-header-group">
+                <button
+                  type="button"
+                  className={`btn ${currentView === 'dashboard' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                  onClick={() => navigateTo('dashboard')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: '600' }}
+                >
+                  <i className="fa-solid fa-gauge-high"></i>
+                  <span>Dashboard</span>
                 </button>
+                <div className="auth-profile-badge">
+                  <span className="auth-badge-name">
+                    <i className="fa-solid fa-circle-user" style={{ color: 'var(--color-accent)' }}></i>
+                    {authRole === 'patient' && `${loggedInPatient?.name || 'User'} (Patient)`}
+                    {authRole === 'doctor' && `${loggedInDoctor?.name || 'Dr.'} (Doctor)`}
+                    {authRole === 'pharmacist' && `${loggedInPharmacist?.name || 'Pharm.'} (Pharmacist)`}
+                    {authRole === 'lab' && `${loggedInLab?.name || 'MLS.'} (Lab Specialist)`}
+                    {authRole === 'logistics' && `${loggedInLogistics?.name || 'Courier'} (Logistics Lead)`}
+                    {authRole === 'admin' && 'Admin Console'}
+                  </span>
+                  <button
+                    type="button"
+                    className="logout-btn"
+                    onClick={handleLogout}
+                    title="Sign Out"
+                    aria-label="Sign Out"
+                  >
+                    <i className="fa-solid fa-right-from-bracket"></i>
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -7073,13 +7088,24 @@ const LeafletDispatchMap = ({
                   <i className="fa-solid fa-phone-volume"></i> Direct Call Support
                 </button>
                 {authRole ? (
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-block"
-                    onClick={() => { navigateTo('dashboard'); setMobileMenuOpen(false); }}
-                  >
-                    Open Dashboard
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-block"
+                      onClick={() => { navigateTo('dashboard'); setMobileMenuOpen(false); }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontWeight: '600' }}
+                    >
+                      <i className="fa-solid fa-gauge-high"></i> Open Dashboard
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-block"
+                      onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontWeight: '600', color: '#DC2626', borderColor: 'rgba(220, 38, 38, 0.3)' }}
+                    >
+                      <i className="fa-solid fa-right-from-bracket"></i> Sign Out
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"
