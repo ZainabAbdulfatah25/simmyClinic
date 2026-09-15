@@ -14,6 +14,7 @@ import pharmMashkuratuImg from './assets/pharm_mashkuratu_jibril.jpg';
 import firdausiSaniImg from './assets/firdausi_sani_usman.jpg';
 import heroPng from './assets/hero.png';
 import logoSvg from './assets/logo.svg';
+import cacCertificateImg from './assets/cac_certificate.jpg';
 
 // --- Seed Data ---
 const ALL_SERVICES = [
@@ -7341,48 +7342,31 @@ const LeafletDispatchMap = ({
             <span className="logo-text">Simmy<span>Clinic</span></span>
           </a>
 
-          {/* Streamlined Desktop Navigation Bar */}
-          <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          {/* Header Navigation Menu Toggle (Clean Icon Only - No Text) */}
+          <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center' }}>
             <button
               type="button"
-              className="btn btn-outline btn-sm nav-menu-toggle-btn"
+              className="nav-menu-icon-btn"
               onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open Navigation Menu"
+              title="Open Navigation Menu"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '0.45rem 1rem',
-                borderRadius: '8px',
-                borderColor: 'rgba(2, 132, 199, 0.3)',
+                justifyContent: 'center',
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                border: '1px solid rgba(2, 132, 199, 0.3)',
                 color: 'var(--color-heading)',
-                fontWeight: '600',
-                fontSize: '0.88rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                cursor: 'pointer'
+                background: 'rgba(2, 132, 199, 0.06)',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
-              title="Open Navigation Menu"
             >
               <i className="fa-solid fa-bars-staggered" style={{ color: 'var(--color-accent)' }}></i>
-              <span>Navigation Menu</span>
-              <span style={{ fontSize: '0.72rem', background: 'var(--color-primary)', color: '#fff', padding: '0.15rem 0.5rem', borderRadius: '10px', textTransform: 'capitalize' }}>
-                {currentView === 'home' ? 'Home' : currentView === 'legal-compliance' ? 'Compliance' : currentView.replace('-', ' ')}
-              </span>
             </button>
-
-            {/* Breadcrumb Indicator */}
-            <div className="nav-breadcrumb-trail" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: 'var(--color-text-muted)' }}>
-              <a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }} style={{ color: currentView === 'home' ? 'var(--color-accent)' : 'inherit', textDecoration: 'none', fontWeight: currentView === 'home' ? 'bold' : 'normal' }}>
-                <i className="fa-solid fa-house" style={{ fontSize: '0.75rem', marginRight: '3px' }}></i> Home
-              </a>
-              {currentView !== 'home' && (
-                <>
-                  <span style={{ opacity: 0.4 }}>/</span>
-                  <span style={{ color: 'var(--color-heading)', fontWeight: 'bold', textTransform: 'capitalize' }}>
-                    {currentView === 'legal-compliance' ? 'Compliance' : currentView.replace('-', ' ')}
-                  </span>
-                </>
-              )}
-            </div>
           </div>
 
           <div className="header-actions">
@@ -7438,7 +7422,7 @@ const LeafletDispatchMap = ({
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer Overlay */}
+        {/* Navigation Drawer Overlay */}
         {mobileMenuOpen && (
           <div className="mobile-nav-drawer-backdrop" onClick={() => setMobileMenuOpen(false)}>
             <div className="mobile-nav-drawer animate-fade" onClick={(e) => e.stopPropagation()}>
@@ -7457,6 +7441,21 @@ const LeafletDispatchMap = ({
                 >
                   <i className="fa-solid fa-xmark"></i>
                 </button>
+              </div>
+
+              {/* Breadcrumb Path inside Sidebar Drawer */}
+              <div style={{ padding: '0.65rem 1.25rem', background: 'rgba(2, 132, 199, 0.08)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                <a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); setMobileMenuOpen(false); }} style={{ color: currentView === 'home' ? 'var(--color-accent)' : 'inherit', textDecoration: 'none', fontWeight: currentView === 'home' ? 'bold' : 'normal' }}>
+                  <i className="fa-solid fa-house" style={{ fontSize: '0.75rem', marginRight: '3px' }}></i> Home
+                </a>
+                {currentView !== 'home' && (
+                  <>
+                    <span style={{ opacity: 0.4 }}>/</span>
+                    <span style={{ color: 'var(--color-heading)', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                      {currentView === 'legal-compliance' ? 'Compliance' : currentView.replace('-', ' ')}
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* Direct Support Notice inside Mobile Drawer */}
@@ -7970,7 +7969,7 @@ const LeafletDispatchMap = ({
               <div>
                 <h3 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.35rem' }}>Official Business Registration & Accreditation</h3>
                 <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem' }}>
-                  Registered Entity: <strong>SimmyClinic Medical Operations</strong> | RC Number: <strong>RC 9198656</strong>
+                  Registered Entity: <strong>SIMMYCARE ONLINE CLINIC</strong> | Business Registration No: <strong>BN 8237677</strong> (CAC Nigeria)
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '1rem' }}>
@@ -10091,7 +10090,7 @@ const LeafletDispatchMap = ({
             <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
               <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>Legal Disclosures, Licensure & Clinical Compliance</h2>
               <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
-                SimmyClinic Digital Health Ltd (CAC RC 9198656) operates in strict compliance with Nigerian health legislation, professional council standards, and the Nigeria Data Protection Act (NDPA 2023).
+                SimmyCare Online Clinic (BN 8237677) operates in strict compliance with the Companies and Allied Matters Act 2020, professional council guidelines, and the Nigeria Data Protection Act (NDPA 2023).
               </p>
             </div>
 
@@ -10105,21 +10104,26 @@ const LeafletDispatchMap = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: 'bold' }}>
                     <i className="fa-solid fa-building"></i> Corporate Entity
                   </div>
-                  <div style={{ fontWeight: '800', fontSize: '1.25rem', color: 'var(--color-indigo)', margin: '0.4rem 0 0.2rem 0' }}>RC 9198656</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>Incorporated under CAMA by Corporate Affairs Commission (CAC), Federal Republic of Nigeria.</div>
+                  <div style={{ fontWeight: '800', fontSize: '1.25rem', color: 'var(--color-indigo)', margin: '0.4rem 0 0.2rem 0' }}>BN 8237677</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                    <strong>SIMMYCARE ONLINE CLINIC</strong> • Certified Business Name under CAMA 2020 by Corporate Affairs Commission (CAC), Nigeria.
+                  </div>
                 </div>
                 <button
                   type="button"
                   className="btn btn-outline btn-sm"
                   onClick={() => setShowCertificateModal({
-                    title: 'CAC Certificate of Incorporation',
-                    body: 'Corporate Affairs Commission (Federal Republic of Nigeria)',
-                    regNo: 'RC 9198656',
-                    issuer: 'Registrar-General of Companies',
-                    issuedTo: 'SimmyClinic Digital Health Ltd',
-                    date: '14th October 2020',
-                    category: 'Incorporated Telehealth & Digital Medical Provider',
-                    status: 'Active & In Good Standing',
+                    title: 'CAC Certificate of Registration',
+                    body: 'Federal Republic of Nigeria • Corporate Affairs Commission',
+                    regNo: 'BN 8237677',
+                    issuer: 'Hussaini Ishaq Magaji SAN (Registrar - General)',
+                    issuedTo: 'SIMMYCARE ONLINE CLINIC',
+                    date: '4th February, 2025',
+                    category: 'Online Health Care Consultation, Home, Rejuvenation Services & General Merchandise',
+                    address: 'No. 55 Sokoto Road, Nasarawa Kano, Kano State',
+                    tin: '32779544-0001',
+                    image: cacCertificateImg,
+                    status: 'Registered & Certified',
                     sealColor: '#0284c7'
                   })}
                   style={{ marginTop: '1rem', width: '100%', fontSize: '0.78rem', padding: '0.4rem 0.5rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '600' }}
@@ -10317,7 +10321,7 @@ const LeafletDispatchMap = ({
                   <i className="fa-solid fa-building-columns" style={{ color: 'var(--color-accent)' }}></i> 2. Direct Bank Transfer Billing Policy
                 </h4>
                 <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: '1.6', margin: 0 }}>
-                  In adherence to clinical governance and anti-fraud financial controls, all platform fees must be paid exclusively into SimmyClinic verified accounts (Kuda Bank: 2085817667 - Sa'ima Mohammed Jibril, Zenith Bank PLC: 1029384756, or Stanbic IBTC: 0049218392). No practitioner, lab technician, or courier agent is authorized to collect personal cash payments or request transfers to unlisted individual accounts. All receipts are digitally certified under RC 9198656.
+                  In adherence to clinical governance and anti-fraud financial controls, all platform fees must be paid exclusively into SimmyClinic verified accounts (Kuda Bank: 2085817667 - Sa'ima Mohammed Jibril, Zenith Bank PLC: 1029384756, or Stanbic IBTC: 0049218392). No practitioner, lab technician, or courier agent is authorized to collect personal cash payments or request transfers to unlisted individual accounts. All receipts are digitally certified under BN 8237677 (SIMMYCARE ONLINE CLINIC).
                 </p>
               </div>
 
@@ -17550,7 +17554,7 @@ const LeafletDispatchMap = ({
         <div className="footer-bottom-container">
           <p>&copy; 2026 SimmyClinic. All rights reserved.</p>
           <p>
-            RC Number: RC 9198656 | <a href="#legal-compliance" onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Statutory Compliance & Legal Policies</a> | <a href="#payment" onClick={(e) => { e.preventDefault(); navigateTo('payment'); }} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Bank Billing Desk</a>
+            CAC Registration: BN 8237677 (SIMMYCARE ONLINE CLINIC) | <a href="#legal-compliance" onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Statutory Compliance & Legal Policies</a> | <a href="#payment" onClick={(e) => { e.preventDefault(); navigateTo('payment'); }} style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Bank Billing Desk</a>
           </p>
         </div>
       </div>
@@ -19483,6 +19487,31 @@ const LeafletDispatchMap = ({
               </div>
             </div>
 
+            {/* If official original image is attached, show preview */}
+            {showCertificateModal.image && (
+              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                <a href={showCertificateModal.image} target="_blank" rel="noopener noreferrer" title="Click to view full original certificate document">
+                  <img
+                    src={showCertificateModal.image}
+                    alt={showCertificateModal.title}
+                    style={{
+                      maxHeight: '350px',
+                      width: 'auto',
+                      maxWidth: '100%',
+                      borderRadius: '8px',
+                      border: '2px solid #10b981',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      cursor: 'zoom-in',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </a>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-accent)', marginTop: '0.4rem', fontWeight: '600' }}>
+                  <i className="fa-solid fa-magnifying-glass-plus" style={{ marginRight: '4px' }}></i> Click image to open original certified document in full resolution
+                </div>
+              </div>
+            )}
+
             {/* Certificate Body Attributes */}
             <div style={{ background: 'rgba(248, 250, 252, 0.8)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
@@ -19495,8 +19524,20 @@ const LeafletDispatchMap = ({
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
                 <span style={{ color: 'var(--color-text-muted)' }}>Category of Licensure:</span>
-                <span>{showCertificateModal.category}</span>
+                <span style={{ textAlign: 'right', maxWidth: '65%' }}>{showCertificateModal.category}</span>
               </div>
+              {showCertificateModal.address && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                  <span style={{ color: 'var(--color-text-muted)' }}>Principal Place of Business:</span>
+                  <span style={{ textAlign: 'right', maxWidth: '65%' }}>{showCertificateModal.address}</span>
+                </div>
+              )}
+              {showCertificateModal.tin && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                  <span style={{ color: 'var(--color-text-muted)' }}>Tax Identification No (TIN):</span>
+                  <strong style={{ fontFamily: 'monospace', color: 'var(--color-heading)' }}>{showCertificateModal.tin}</strong>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
                 <span style={{ color: 'var(--color-text-muted)' }}>Issuing Authority:</span>
                 <span>{showCertificateModal.issuer}</span>
@@ -19514,7 +19555,17 @@ const LeafletDispatchMap = ({
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              {showCertificateModal.image && (
+                <a
+                  href={showCertificateModal.image}
+                  download="SIMMYCARE_ONLINE_CLINIC_CAC_CERTIFICATE.jpg"
+                  className="btn btn-outline"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+                >
+                  <i className="fa-solid fa-download"></i> Download Certificate
+                </a>
+              )}
               <button
                 type="button"
                 className="btn btn-outline"
