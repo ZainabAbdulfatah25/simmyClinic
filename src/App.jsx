@@ -1868,6 +1868,44 @@ export default function App() {
     });
   };
 
+  const handleSaveDoctorLicense = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!updateLicenseModalDoc) return;
+
+    const newRegNo = (updateLicenseForm.regNo || '').trim();
+    if (!newRegNo) {
+      setPopupNotification({
+        type: 'warning',
+        title: 'License Required',
+        message: 'Please enter a valid Council Registration ID / Folio No.'
+      });
+      return;
+    }
+
+    const updatedDoc = {
+      ...updateLicenseModalDoc,
+      regNo: newRegNo,
+      license: newRegNo
+    };
+
+    setDoctors(prev => {
+      const next = prev.map(d => (d.id === updateLicenseModalDoc.id || d.name === updateLicenseModalDoc.name) ? updatedDoc : d);
+      try { localStorage.setItem("simmy_doctors", JSON.stringify(next)); } catch (err) {}
+      return next;
+    });
+
+    if (loggedInDoctor && (loggedInDoctor.id === updateLicenseModalDoc.id || loggedInDoctor.name === updateLicenseModalDoc.name)) {
+      setLoggedInDoctor(updatedDoc);
+    }
+
+    setUpdateLicenseModalDoc(null);
+    setPopupNotification({
+      type: 'success',
+      title: 'Practicing License Updated',
+      message: `Official council registration for ${updateLicenseModalDoc.name} updated to ${newRegNo} (${updateLicenseForm.council}).`
+    });
+  };
+
   const renderPaymentStatusBadge = (item, type = 'appointment', role = 'patient') => {
     const status = item.paymentStatus || '';
     const isPaid = status === 'Paid & Verified' || status === 'Paid via NHIS Co-pay';
@@ -11525,7 +11563,7 @@ const LeafletDispatchMap = ({
                     <h3 style={{ color: '#0284c7' }}>
                       {[...myPatientAppointments, ...myPatientLabRequests, ...myPatientPharmacyOrders].length}
                     </h3>
-                    <p>PAYMENT PROGRESS</p>
+                    <p>MY PAYMENTS</p>
                   </div>
                 </div>
 
@@ -11547,7 +11585,7 @@ const LeafletDispatchMap = ({
                         fontWeight: patientNavView === 'payments' ? 'bold' : undefined
                       }}
                     >
-                      <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7' }}></i> Payment Progress
+                      <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7' }}></i> My Payments
                     </button>
                     <button
                       className={`sidebar-nav-btn ${patientNavView === 'orders' ? 'active' : ''}`}
@@ -12412,23 +12450,8 @@ const LeafletDispatchMap = ({
                         <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.5rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                             <div>
-                              <h3 style={{ margin: 0, fontSize: '1.3rem' }}><i className="fa-solid fa-route" style={{ color: '#0284c7', marginRight: '8px' }}></i> Clinical Payment Progress & Route Tracker</h3>
-                              <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                                Real-time lifecycle tracking: Client Payment ➔ Doctor / Specialist Endorsement ➔ Admin Final Clearance & Receipt.
-                              </p>
+                              <h3 style={{ margin: 0, fontSize: '1.3rem' }}><i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7', marginRight: '8px' }}></i> My Payments</h3>
                             </div>
-                            <button
-                              className="btn btn-outline btn-sm"
-                              onClick={() => {
-                                setPopupNotification({
-                                  type: 'info',
-                                  title: 'Payment Route Verification',
-                                  message: 'Payments follow a secure clinical audit trail: Once submitted by the client, the assigned doctor verifies the booking, followed by final credit clearance from Admin.'
-                                });
-                              }}
-                            >
-                              <i className="fa-solid fa-circle-question"></i> How Approvals Work
-                            </button>
                           </div>
 
                           {/* Bank Details & Scan to Pay QR Section */}
