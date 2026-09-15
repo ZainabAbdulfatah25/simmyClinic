@@ -509,27 +509,76 @@ const INITIAL_APPOINTMENTS = [
     patientName: "Chinedu Eze",
     phone: "08098765432",
     email: "chinedueze@example.com",
+    doctor: "Dr. Wasila Goranduma",
+    doctorName: "Dr. Wasila Goranduma",
     symptoms: "Lab Request: Full Blood Count, Fasting Blood Sugar. Address: [12 Garki Road, Area 11, Abuja]. Special Instructions: [Fasting from 8pm previous night].",
     status: "Sample Collected",
     assignedRider: "Chinedu Okeke",
     date: new Date().toISOString().split('T')[0],
     time: "10:00 AM",
-    doctorName: "Dr. Wasila Goranduma",
+    consultationFee: 7500,
+    paymentStatus: "Paid & Verified",
+    receiptNo: "RC-992140",
     isNhis: true,
     nhisNumber: "NHIS-928415-NG",
     nhisHmo: "NHIA Primary Scheme"
+  },
+  {
+    id: "APT-8821",
+    patientName: "Zainab Bello",
+    phone: "08031234567",
+    email: "zainabbello@example.com",
+    doctor: "Dr. Wasila Goranduma",
+    doctorName: "Dr. Wasila Goranduma",
+    specialty: "Consultant Physician",
+    serviceType: "Virtual Consultation",
+    symptoms: "Cardiology follow-up and blood pressure management review.",
+    status: "Approved",
+    assignedRider: "",
+    date: new Date().toISOString().split('T')[0],
+    time: "11:30 AM",
+    consultationFee: 5000,
+    paymentStatus: "Doctor Approved - Pending Admin Verification",
+    paymentApprovedBy: "Dr. Wasila Goranduma (Specialist Physician)",
+    doctorApprovedBy: "Dr. Wasila Goranduma (Specialist Physician)",
+    isNhis: false,
+    nhisNumber: "",
+    nhisHmo: ""
+  },
+  {
+    id: "APT-9310",
+    patientName: "Ibrahim Danladi",
+    phone: "08069871234",
+    email: "ibrahim@example.com",
+    doctor: "Dr. Fatima Sanusi",
+    doctorName: "Dr. Fatima Sanusi",
+    specialty: "General Medicine",
+    serviceType: "Physical Consultation",
+    symptoms: "Fever and mild persistent cough over 3 days.",
+    status: "Pending",
+    assignedRider: "",
+    date: new Date().toISOString().split('T')[0],
+    time: "01:00 PM",
+    consultationFee: 3500,
+    paymentStatus: "Payment Pending Doctor Approval",
+    isNhis: false,
+    nhisNumber: "",
+    nhisHmo: ""
   },
   {
     id: "LAB-7712",
     patientName: "Hadiza Musa",
     phone: "08044433322",
     email: "hadiza@example.com",
+    doctor: "Dr. Wasila Goranduma",
+    doctorName: "Dr. Wasila Goranduma",
     symptoms: "Lab Request: Malaria Smear, Widal Typhoid Test. Address: [Suite B12, Banex Plaza, Wuse II, Abuja]. Special Instructions: [Urgent testing required].",
     status: "Pending",
     assignedRider: "",
     date: new Date().toISOString().split('T')[0],
     time: "02:00 PM",
-    doctorName: "Dr. Wasila Goranduma",
+    consultationFee: 6000,
+    paymentStatus: "Payment Pending Doctor Approval",
     isNhis: false,
     nhisNumber: "",
     nhisHmo: ""
@@ -545,7 +594,10 @@ const INITIAL_INQUIRIES = [
     message: "Pharmacy Purchase Order: [Insulin Pen (x2), Metformin 500mg (x1)]. Shipping Address: [Plot 824, Wuse II, Abuja]. Rx Notes: [Keep refrigerated]. Total Cost: ₦18,500",
     date: new Date().toISOString().split('T')[0],
     status: "Out for Delivery",
-    assignedRider: "Chinedu Okeke"
+    assignedRider: "Chinedu Okeke",
+    paymentStatus: "Paid & Verified",
+    receiptNo: "RC-441920",
+    cost: 18500
   },
   {
     id: "ORD-4921",
@@ -555,7 +607,9 @@ const INITIAL_INQUIRIES = [
     message: "Pharmacy Purchase Order: [Amoxicillin 500mg (x2), Vitamin C 1000mg (x3)]. Shipping Address: [Aso Drive, Maitama, Abuja]. Rx Notes: [None]. Total Cost: ₦12,200",
     date: new Date().toISOString().split('T')[0],
     status: "Awaiting Dispatch",
-    assignedRider: ""
+    assignedRider: "",
+    paymentStatus: "Payment Pending Pharmacist Approval",
+    cost: 12200
   }
 ];
 
@@ -1056,20 +1110,57 @@ export default function App() {
 
   const [appointments, setAppointments] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
-    if (storedVersion !== DATA_VERSION) {
-      return INITIAL_APPOINTMENTS;
+    let list = INITIAL_APPOINTMENTS;
+    if (storedVersion === DATA_VERSION) {
+      try {
+        const data = localStorage.getItem("simmy_appointments");
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+        }
+      } catch (e) {}
     }
-    const data = localStorage.getItem("simmy_appointments");
-    return data ? JSON.parse(data) : INITIAL_APPOINTMENTS;
+    const existingIds = new Set(list.map(a => a.id));
+    const merged = list.map(item => {
+      if (item.paymentStatus) return item;
+      if (item.status === 'Completed' || item.status === 'Sample Collected') {
+        return { ...item, paymentStatus: 'Paid & Verified', receiptNo: item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}` };
+      }
+      if (item.status === 'Approved') {
+        return { ...item, paymentStatus: 'Doctor Approved - Pending Admin Verification' };
+      }
+      return { ...item, paymentStatus: 'Payment Pending Doctor Approval' };
+    });
+    INITIAL_APPOINTMENTS.forEach(seed => {
+      if (!existingIds.has(seed.id)) merged.unshift(seed);
+    });
+    return merged;
   });
 
   const [inquiries, setInquiries] = useState(() => {
     const storedVersion = localStorage.getItem("simmy_data_version");
-    if (storedVersion !== DATA_VERSION) {
-      return INITIAL_INQUIRIES;
+    let list = INITIAL_INQUIRIES;
+    if (storedVersion === DATA_VERSION) {
+      try {
+        const data = localStorage.getItem("simmy_inquiries");
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+        }
+      } catch (e) {}
     }
-    const data = localStorage.getItem("simmy_inquiries");
-    return data ? JSON.parse(data) : INITIAL_INQUIRIES;
+    const existingIds = new Set(list.map(i => i.id));
+    const merged = list.map(item => {
+      if (item.paymentStatus) return item;
+      if (item.status === 'Delivered' || item.status === 'Completed') {
+        return { ...item, paymentStatus: 'Paid & Verified', receiptNo: item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}` };
+      }
+      return { ...item, paymentStatus: 'Payment Pending Pharmacist Approval' };
+    });
+    INITIAL_INQUIRIES.forEach(seed => {
+      if (!existingIds.has(seed.id)) merged.unshift(seed);
+    });
+    return merged;
   });
 
   const [patients, setPatients] = useState(() => {
@@ -1784,6 +1875,10 @@ export default function App() {
       receiptNo: receiptId
     };
 
+    try {
+      localStorage.setItem(`simmy_pay_${item.id}`, JSON.stringify(updatedFields));
+    } catch (e) {}
+
     setAppointments(prev => {
       const next = prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt);
       try { localStorage.setItem("simmy_appointments", JSON.stringify(next)); } catch (e) {}
@@ -2161,7 +2256,7 @@ export default function App() {
             </div>
             <div style={{ display: 'inline-block', padding: '8px', background: '#fff', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
               <QRCodeSVG
-                value={`SIMMYCLINIC HEALTHCARE BILLING\nBeneficiary: SimmyClinic Digital Health Ltd\nPrimary Bank: Zenith Bank PLC (Account: 1029384756)\nSecondary Bank: Stanbic IBTC Bank (Account: 0049218392)\nReference ID: ${item.id}\nTotal Payable: ${amount}\nService: ${title}`}
+                value={`SIMMYCLINIC HEALTHCARE BILLING\nBeneficiary: SimmyCare Online Clinic (BN 8237677)\nPrimary Bank: Zenith Bank PLC (Account: 1029384756)\nSecondary Bank: Stanbic IBTC Bank (Account: 0049218392)\nMobile/WhatsApp: +234 703 572 9109\nDirect Hotline (Home): +234 812 386 1557\nReference ID: ${item.id}\nTotal Payable: ${amount}\nService: ${title}`}
                 size={140}
                 level="M"
                 includeMargin={false}
@@ -4571,7 +4666,27 @@ export default function App() {
         if (apts && apts.length > 0) {
           setAppointments(prev => {
             const map = new Map();
-            apts.forEach(a => map.set(a.id, a));
+            prev.forEach(p => map.set(p.id, p));
+
+            apts.forEach(a => {
+              let cachedPay = null;
+              try {
+                const pData = localStorage.getItem(`simmy_pay_${a.id}`);
+                if (pData) cachedPay = JSON.parse(pData);
+              } catch (e) {}
+
+              const localExisting = map.get(a.id);
+              const combined = { ...a, ...(localExisting || {}), ...(cachedPay || {}) };
+              if (cachedPay && cachedPay.paymentStatus) {
+                combined.paymentStatus = cachedPay.paymentStatus;
+              } else if (localExisting && localExisting.paymentStatus && localExisting.paymentStatus !== 'Unpaid') {
+                combined.paymentStatus = localExisting.paymentStatus;
+              } else if (!combined.paymentStatus) {
+                combined.paymentStatus = 'Payment Pending Doctor Approval';
+              }
+              map.set(a.id, combined);
+            });
+
             (labReqs || []).forEach(lr => {
               const labId = (lr.id && String(lr.id).startsWith('LAB-')) ? lr.id : `LAB-${String(lr.id).substring(0, 4).toUpperCase()}`;
               if (!map.has(labId)) {
@@ -4592,9 +4707,6 @@ export default function App() {
                   serviceType: "Mobile Laboratory"
                 });
               }
-            });
-            prev.forEach(p => {
-              if (!map.has(p.id)) map.set(p.id, p);
             });
             return Array.from(map.values());
           });
@@ -5702,6 +5814,7 @@ export default function App() {
       : (bookingFormData.symptoms || "None provided");
 
     const ticketNumber = "APT-" + Math.floor(1000 + Math.random() * 9000);
+    const feeAmount = bookingFormData.price || 3000;
     const newAppointment = {
       id: ticketNumber,
       patientName: bookingFormData.patientName,
@@ -5713,7 +5826,9 @@ export default function App() {
       consultationMode: isHome ? "Home Visit" : (bookingFormData.consultationMode || "Virtual Consultation"),
       serviceType: bookingFormData.serviceType || (isHome ? "Home Visit Consultation" : "Virtual Consultation"),
       packageTitle: bookingFormData.packageTitle || "",
-      price: bookingFormData.price || "",
+      price: feeAmount,
+      consultationFee: feeAmount,
+      paymentStatus: 'Payment Pending Doctor Approval',
       date: bookingFormData.date,
       time: bookingFormData.time,
       symptoms: fullSymptoms,
@@ -5729,7 +5844,14 @@ export default function App() {
       nhisHmo: bookingFormData.isNhis ? bookingFormData.nhisHmo : ''
     };
 
-    setAppointments([newAppointment, ...appointments]);
+    try {
+      localStorage.setItem(`simmy_pay_${ticketNumber}`, JSON.stringify({
+        paymentStatus: 'Payment Pending Doctor Approval',
+        consultationFee: feeAmount
+      }));
+    } catch (e) {}
+
+    setAppointments(prev => [newAppointment, ...prev]);
     if (isSupabaseConfigured()) {
       appointmentsApi.create(newAppointment).catch(err => console.info('Supabase appointment creation sync:', err));
     }
@@ -5755,13 +5877,7 @@ export default function App() {
     });
     setBookingConsent(false);
 
-    setSuccessModal({
-      title: routed ? "Appointment Auto-Routed" : "Booking Submitted Successfully",
-      message: routed
-        ? `Your requested specialist (${originalDocName}) is currently offline or unverified. Your appointment has been automatically routed to ${selectedDoc.name} (${getSpecialtyTitle(selectedDoc.specialty)} - ${selectedDoc.level || 'Specialist'}) to ensure you receive immediate clinical care.`
-        : `Your appointment request with ${selectedDoc.name} has been received and is currently under review.`,
-      ticket: ticketNumber
-    });
+    handleOpenPayment(newAppointment, 'appointment');
   };
 
   const handleContactSubmit = (e) => {
@@ -10926,7 +11042,40 @@ const LeafletDispatchMap = ({
                     </div>
                   )}
 
-                  <button type="submit" className="btn btn-primary btn-block">Submit Booking Request</button>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', marginTop: '1rem' }}>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      style={{
+                        padding: '0.85rem 1rem',
+                        fontWeight: '700',
+                        fontSize: '0.92rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <i className="fa-solid fa-qrcode" style={{ fontSize: '1.1rem' }}></i> Scan QR to Pay
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-outline"
+                      style={{
+                        padding: '0.85rem 1rem',
+                        fontWeight: '700',
+                        fontSize: '0.92rem',
+                        borderColor: 'var(--color-primary)',
+                        color: 'var(--color-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <i className="fa-solid fa-credit-card" style={{ fontSize: '1.1rem' }}></i> Pay via Pop-up Page
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
@@ -11579,13 +11728,8 @@ const LeafletDispatchMap = ({
                     <button
                       className={`sidebar-nav-btn ${patientNavView === 'payments' ? 'active' : ''}`}
                       onClick={() => setPatientNavView('payments')}
-                      style={{
-                        background: patientNavView === 'payments' ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(16, 185, 129, 0.2))' : undefined,
-                        borderColor: patientNavView === 'payments' ? 'rgba(2, 132, 199, 0.4)' : undefined,
-                        fontWeight: patientNavView === 'payments' ? 'bold' : undefined
-                      }}
                     >
-                      <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7' }}></i> My Payments
+                      <i className="fa-solid fa-file-invoice-dollar"></i> My Payments
                     </button>
                     <button
                       className={`sidebar-nav-btn ${patientNavView === 'orders' ? 'active' : ''}`}
@@ -12463,7 +12607,7 @@ const LeafletDispatchMap = ({
                               </div>
                               <div style={{ display: 'inline-block', padding: '10px', background: '#fff', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
                                 <QRCodeSVG
-                                  value={`SIMMYCLINIC HEALTHCARE BILLING\nBeneficiary: SimmyClinic Digital Health Ltd\nPrimary: Zenith Bank PLC (1029384756)\nSecondary: Stanbic IBTC Bank (0049218392)\nPatient: ${loggedInPatient.name}\nEmail: ${loggedInPatient.email}`}
+                                  value={`SIMMYCLINIC HEALTHCARE BILLING\nBeneficiary: SimmyCare Online Clinic (BN 8237677)\nPrimary: Zenith Bank PLC (1029384756)\nSecondary: Stanbic IBTC Bank (0049218392)\nMobile/WhatsApp: +234 703 572 9109\nDirect Hotline (Home): +234 812 386 1557\nPatient: ${loggedInPatient.name}\nEmail: ${loggedInPatient.email}`}
                                   size={140}
                                   level="M"
                                   includeMargin={false}
@@ -12847,13 +12991,8 @@ const LeafletDispatchMap = ({
                     <button
                       className={`sidebar-nav-btn ${doctorNavView === 'payments' ? 'active' : ''}`}
                       onClick={() => setDoctorNavView('payments')}
-                      style={{
-                        background: doctorNavView === 'payments' ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(16, 185, 129, 0.2))' : undefined,
-                        borderColor: doctorNavView === 'payments' ? 'rgba(2, 132, 199, 0.4)' : undefined,
-                        fontWeight: doctorNavView === 'payments' ? 'bold' : undefined
-                      }}
                     >
-                      <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7' }}></i> Payment Approvals
+                      <i className="fa-solid fa-file-invoice-dollar"></i> Payment Approvals
                       {myDoctorAppointments.filter(a => a.paymentStatus === 'Payment Pending Doctor Approval' || a.paymentStatus === 'Payment Pending Approval' || a.paymentStatus === 'Pending Verification').length > 0 && (
                         <span className="badge-count" style={{ marginLeft: 'auto', background: '#f59e0b', color: '#fff', fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: '10px' }}>
                           {myDoctorAppointments.filter(a => a.paymentStatus === 'Payment Pending Doctor Approval' || a.paymentStatus === 'Payment Pending Approval' || a.paymentStatus === 'Pending Verification').length}
@@ -15487,30 +15626,8 @@ const LeafletDispatchMap = ({
                     <button
                       className={`sidebar-nav-btn ${adminNavView === 'payment_approvals' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('payment_approvals')}
-                      style={{
-                        background: adminNavView === 'payment_approvals' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(99, 102, 241, 0.2))' : undefined,
-                        borderColor: adminNavView === 'payment_approvals' ? 'rgba(245, 158, 11, 0.4)' : undefined,
-                        fontWeight: adminNavView === 'payment_approvals' ? 'bold' : undefined,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}
                     >
-                      <span>
-                        <i className="fa-solid fa-money-check-dollar" style={{ color: '#f59e0b', marginRight: '6px' }}></i> Payment Approvals
-                      </span>
-                      {(() => {
-                        const count = appointments.filter(a =>
-                          a.paymentStatus === 'Doctor Approved - Pending Admin Verification' ||
-                          a.paymentStatus === 'Payment Pending Doctor Approval' ||
-                          a.paymentStatus === 'Client Marked Paid'
-                        ).length;
-                        return count > 0 ? (
-                          <span style={{ background: '#f59e0b', color: '#000', fontSize: '0.7rem', fontWeight: 'bold', padding: '0.1rem 0.45rem', borderRadius: '10px' }}>
-                            {count}
-                          </span>
-                        ) : null;
-                      })()}
+                      <i className="fa-solid fa-money-check-dollar"></i> Payment Approvals
                     </button>
                     <button
                       className={`sidebar-nav-btn ${adminNavView === 'appointments' ? 'active' : ''}`}

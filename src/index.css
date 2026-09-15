@@ -239,16 +239,19 @@ html, body {
 
 .logo-text {
   font-family: var(--font-serif);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-indigo);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #ffffff !important;
   letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
 }
 
 .logo-text span {
   font-family: var(--font-display);
-  color: var(--color-accent);
-  font-weight: 700;
+  color: #38bdf8 !important;
+  font-weight: 800;
+  margin-left: 1px;
 }
 
 .desktop-nav {
