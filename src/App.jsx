@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { supabase, uploadAvatarToSupabase, isSupabaseConfigured } from './supabaseClient';
 import { appointmentsApi, pharmacyOrdersApi, labRequestsApi, clinicDrugsApi, profilesApi } from './services/api';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
@@ -1246,6 +1247,12 @@ export default function App() {
   const [bookingConsent, setBookingConsent] = useState(false);
   const [registerConsent, setRegisterConsent] = useState(false);
 
+  // Navigation Drawer & Modals
+  const [publicNavDrawerOpen, setPublicNavDrawerOpen] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(null);
+  const [updateLicenseModalDoc, setUpdateLicenseModalDoc] = useState(null);
+  const [updateLicenseForm, setUpdateLicenseForm] = useState({ council: 'Medical & Dental Council (MDCN)', regNo: '', status: 'Verified' });
+
   // Rider Onboarding Modal states
   const [showRiderOnboardModal, setShowRiderOnboardModal] = useState(false);
   const [riderForm, setRiderForm] = useState({
@@ -1455,6 +1462,21 @@ export default function App() {
   const showPopup = (message, title = "System Notification", type = "success") => {
     setPopupNotification({ title, message, type });
   };
+
+  // Prevent any browser native alert dialogs ("www.simmyclinic.com says...")
+  useEffect(() => {
+    const originalAlert = window.alert;
+    window.alert = (msg) => {
+      setPopupNotification({
+        title: "SimmyClinic Notice",
+        message: typeof msg === 'string' ? msg : String(msg),
+        type: "warning"
+      });
+    };
+    return () => {
+      window.alert = originalAlert;
+    };
+  }, []);
 
   // New role authentication & UI states
   const [loggedInPharmacist, setLoggedInPharmacist] = useState(() => {
@@ -1744,6 +1766,74 @@ export default function App() {
     return { name: role || 'Staff', label: 'Clinic Staff' };
   };
 
+  const handleClientMarkPaid = (item, type = 'appointment', customDetails = {}) => {
+    const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+    const now = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' });
+    const isLab = type === 'lab' || String(item.id || '').startsWith('LAB-');
+    const isOrder = type === 'order' || String(item.id || '').startsWith('ORD-');
+    const targetStatus = isLab ? 'Payment Pending Lab Officer Approval' : (isOrder ? 'Payment Pending Pharmacist Approval' : 'Payment Pending Doctor Approval');
+
+    const updatedFields = {
+      paymentStatus: targetStatus,
+      paymentMethod: 'Direct Bank Transfer',
+      clientPaidAt: now,
+      transferSender: customDetails.senderName || item.patientName || item.name || 'Patient',
+      transferBank: customDetails.senderBank || 'Zenith Bank PLC',
+      transferRef: customDetails.refNumber || `TRF-${Math.floor(100000 + Math.random() * 900000)}`,
+      receiptNo: receiptId
+    };
+
+    setAppointments(prev => {
+      const next = prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt);
+      try { localStorage.setItem("simmy_appointments", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    setInquiries(prev => {
+      const next = prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq);
+      try { localStorage.setItem("simmy_inquiries", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    if (showPaymentModal) setShowPaymentModal(false);
+
+    setPopupNotification({
+      type: 'success',
+      title: 'Payment Logged by Client',
+      message: `Your payment was submitted for ${item.id}. Forwarded along the clinical approval route for staff verification.`
+    });
+  };
+
+  const handleDoctorApprovePayment = (item, type = 'appointment') => {
+    const verifier = getVerifierIdentity('doctor');
+    const verifiedAt = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' });
+    const doctorStamp = `${verifier.name} (${verifier.label})`;
+
+    const updatedFields = {
+      paymentStatus: 'Doctor Approved - Pending Admin Verification',
+      doctorApprovedBy: doctorStamp,
+      doctorApprovedAt: verifiedAt
+    };
+
+    setAppointments(prev => {
+      const next = prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt);
+      try { localStorage.setItem("simmy_appointments", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    setInquiries(prev => {
+      const next = prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq);
+      try { localStorage.setItem("simmy_inquiries", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    setPopupNotification({
+      type: 'success',
+      title: 'Doctor Endorsement Approved',
+      message: `Ticket ${item.id} endorsed by ${doctorStamp}. Forwarded to Admin Billing Desk for final clearance & receipt release.`
+    });
+  };
+
   const handleStaffApprovePayment = (item, type = 'appointment', staffRole = 'admin') => {
     const receiptId = item.receiptNo || `RC-${Math.floor(100000 + Math.random() * 900000)}`;
     const verifier = getVerifierIdentity(staffRole);
@@ -1753,19 +1843,41 @@ export default function App() {
     const updatedFields = {
       paymentStatus: 'Paid & Verified',
       paidApprovedBy: verifierStamp,
+      adminApprovedBy: verifierStamp,
       verifiedAt,
       receiptNo: receiptId
     };
 
-    setAppointments(prev => prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt));
-    setInquiries(prev => prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq));
+    setAppointments(prev => {
+      const next = prev.map(apt => apt.id === item.id ? { ...apt, ...updatedFields } : apt);
+      try { localStorage.setItem("simmy_appointments", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    setInquiries(prev => {
+      const next = prev.map(inq => inq.id === item.id ? { ...inq, ...updatedFields } : inq);
+      try { localStorage.setItem("simmy_inquiries", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+
+    setPopupNotification({
+      type: 'success',
+      title: 'Payment Cleared & Receipt Released',
+      message: `Official Receipt ${receiptId} issued and approved by ${verifierStamp}. Available to client for immediate download.`
+    });
   };
 
   const renderPaymentStatusBadge = (item, type = 'appointment', role = 'patient') => {
     const status = item.paymentStatus || '';
     const isPaid = status === 'Paid & Verified' || status === 'Paid via NHIS Co-pay';
-    const isPending = status === 'Payment Pending Approval' || status === 'Pending Verification' || status === 'Paid via NHIS Co-pay (Pending)';
-    const isUnpaid = !isPaid && !isPending;
+    const isDoctorApproved = status === 'Doctor Approved - Pending Admin Verification' || status === 'Specialist Approved - Pending Admin Verification';
+    const isPendingApproval = status === 'Payment Pending Doctor Approval' ||
+      status === 'Payment Pending Approval' ||
+      status === 'Pending Verification' ||
+      status === 'Paid via NHIS Co-pay (Pending)' ||
+      status === 'Payment Pending Lab Officer Approval' ||
+      status === 'Payment Pending Pharmacist Approval';
+    const isUnpaid = !isPaid && !isDoctorApproved && !isPendingApproval;
 
     if (isPaid) {
       return (
@@ -1774,7 +1886,6 @@ export default function App() {
             <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
               <i className="fa-solid fa-circle-check"></i> Paid & Verified
             </span>
-            {/* Receipt button — only shown after staff approval */}
             <button
               type="button"
               className="btn btn-outline btn-xs"
@@ -1784,47 +1895,104 @@ export default function App() {
               <i className="fa-solid fa-receipt"></i> Receipt
             </button>
           </div>
+          {item.doctorApprovedBy && (
+            <span style={{ fontSize: '0.66rem', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <i className="fa-solid fa-user-doctor"></i> Endorsed by {item.doctorApprovedBy}
+            </span>
+          )}
           {item.paidApprovedBy && (
-            <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <i className="fa-solid fa-user-shield" style={{ color: '#0284c7', fontSize: '0.65rem' }}></i>
-              by {item.paidApprovedBy}
+            <span style={{ fontSize: '0.66rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <i className="fa-solid fa-user-shield"></i> Cleared by {item.paidApprovedBy}
               {item.verifiedAt && <span style={{ color: '#94a3b8' }}> · {item.verifiedAt}</span>}
             </span>
           )}
         </div>
       );
 
-    } else if (isPending) {
+    } else if (isDoctorApproved) {
+      // Stage 2: Doctor approved, waiting for Admin clearance
+      return (
+        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.35rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <span style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#0369a1', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <i className="fa-solid fa-user-doctor"></i> Doctor Approved · Pending Admin Final Clearance
+            </span>
+            {role === 'admin' ? (
+              <button
+                type="button"
+                className="btn btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, 'admin'); }}
+                style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.22rem 0.6rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                title="Final Admin Clearance and Release Official Receipt"
+              >
+                <i className="fa-solid fa-stamp"></i> Final Admin Approval & Release Receipt
+              </button>
+            ) : role === 'doctor' ? (
+              <span style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: '600' }}>
+                <i className="fa-solid fa-check"></i> Endorsed by you ➔ Sent to Admin
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.72rem', color: '#0369a1', background: 'rgba(2,132,199,0.08)', padding: '0.2rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fa-solid fa-hourglass-half"></i> Doctor Verified ✓ · Awaiting Admin Final Clearance
+              </span>
+            )}
+          </div>
+          {item.doctorApprovedBy && (
+            <span style={{ fontSize: '0.68rem', color: '#475569' }}>
+              Doctor stamp: <strong>{item.doctorApprovedBy}</strong> {item.doctorApprovedAt && `(${item.doctorApprovedAt})`}
+            </span>
+          )}
+        </div>
+      );
+
+    } else if (isPendingApproval) {
+      // Stage 1: Client marked paid, awaiting Doctor approval
       return (
         <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.35rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
             <span style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#a16207', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-              <i className="fa-solid fa-clock"></i> Payment Pending Staff Approval
+              <i className="fa-solid fa-clock"></i> Payment Pending Doctor Approval
             </span>
-            {role !== 'patient' ? (
+            {role === 'doctor' ? (
               <button
                 type="button"
                 className="btn btn-xs"
-                onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
-                style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                onClick={(e) => { e.stopPropagation(); handleDoctorApprovePayment(item, type); }}
+                style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '0.22rem 0.6rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                title="Doctor reviews clinical booking and forwards payment to Admin"
               >
-                <i className="fa-solid fa-check-circle"></i> Approve & Release Receipt
+                <i className="fa-solid fa-user-doctor"></i> Doctor Approve & Forward to Admin
               </button>
+            ) : role === 'admin' ? (
+              <div style={{ display: 'inline-flex', gap: '0.3rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.7rem', color: '#b45309', background: 'rgba(234,179,8,0.1)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                  Awaiting Doctor Review
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-xs"
+                  onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, 'admin'); }}
+                  style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.7rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                  title="Direct Admin Fast-Track Clearance"
+                >
+                  <i className="fa-solid fa-check-double"></i> Fast-Track Admin Approval
+                </button>
+              </div>
             ) : (
-              // Patient sees waiting notice — no receipt until approved
               <span style={{ fontSize: '0.72rem', color: '#92400e', background: 'rgba(234,179,8,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <i className="fa-solid fa-hourglass-half"></i> Awaiting staff verification
+                <i className="fa-solid fa-hourglass-half"></i> Payment Submitted · Awaiting Doctor Approval
               </span>
             )}
           </div>
           {role === 'patient' && (
             <span style={{ fontSize: '0.7rem', color: '#78716c' }}>
-              <i className="fa-solid fa-circle-info" style={{ marginRight: '4px', color: '#0284c7' }}></i>
-              Your receipt will be released once our team confirms your payment.
+              <i className="fa-solid fa-route" style={{ marginRight: '4px', color: '#0284c7' }}></i>
+              Route: <strong>Assigned Doctor Review</strong> ➔ <strong>Admin Clearance & Receipt Release</strong>.
             </span>
           )}
         </div>
       );
+
     } else {
       // Unpaid
       return (
@@ -1833,30 +2001,53 @@ export default function App() {
             <i className="fa-solid fa-circle-exclamation"></i> Unpaid
           </span>
           {role === 'patient' ? (
-            <button
-              type="button"
-              className="btn btn-accent btn-xs"
-              onClick={(e) => { e.stopPropagation(); handleOpenPayment(item, type); }}
-              style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 'bold' }}
-            >
-              <i className="fa-solid fa-building-columns"></i> Pay via Transfer
-            </button>
-          ) : (
-            <>
+            <div style={{ display: 'inline-flex', gap: '0.35rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-accent btn-xs"
+                onClick={(e) => { e.stopPropagation(); handleOpenPayment(item, type); }}
+                style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 'bold' }}
+                title="Scan QR Code or view bank transfer details"
+              >
+                <i className="fa-solid fa-qrcode"></i> Pay via QR / Transfer
+              </button>
               <button
                 type="button"
                 className="btn btn-xs"
-                onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
-                style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                onClick={(e) => { e.stopPropagation(); handleClientMarkPaid(item, type); }}
+                style={{ background: '#0284c7', color: '#ffffff', border: 'none', padding: '0.2rem 0.55rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                title="Click here if you have sent bank transfer to submit for Doctor & Admin approval"
               >
-                <i className="fa-solid fa-check-circle"></i> Approve & Release Receipt
+                <i className="fa-solid fa-check"></i> I Have Paid
               </button>
+            </div>
+          ) : (
+            <>
+              {role === 'doctor' ? (
+                <button
+                  type="button"
+                  className="btn btn-xs"
+                  onClick={(e) => { e.stopPropagation(); handleDoctorApprovePayment(item, type); }}
+                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  <i className="fa-solid fa-user-doctor"></i> Doctor Endorse
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-xs"
+                  onClick={(e) => { e.stopPropagation(); handleStaffApprovePayment(item, type, role); }}
+                  style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.2rem 0.5rem', fontSize: '0.72rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  <i className="fa-solid fa-check-circle"></i> Approve & Release Receipt
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-outline btn-xs"
                 onClick={(e) => { e.stopPropagation(); handleViewReceipt(item, type); }}
                 style={{ padding: '0.15rem 0.45rem', fontSize: '0.72rem', borderColor: '#cbd5e1', color: 'var(--color-indigo)', fontWeight: '600' }}
-                title="View Official Invoice / Receipt"
+                title="View Official Invoice"
               >
                 <i className="fa-solid fa-receipt"></i> Invoice
               </button>
@@ -1924,28 +2115,26 @@ export default function App() {
             </div>
           )}
 
+          {/* Scan to Pay QR Code Card */}
+          <div style={{ textAlign: 'center', background: '#ffffff', color: '#0f172a', padding: '1.1rem', borderRadius: '12px', marginBottom: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '800', color: '#0284c7', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <i className="fa-solid fa-qrcode"></i> Scan QR Code for Full Bank Details
+            </div>
+            <div style={{ display: 'inline-block', padding: '8px', background: '#fff', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+              <QRCodeSVG
+                value={`SIMMYCLINIC HEALTHCARE BILLING\nBeneficiary: SimmyClinic Digital Health Ltd\nPrimary Bank: Zenith Bank PLC (Account: 1029384756)\nSecondary Bank: Stanbic IBTC Bank (Account: 0049218392)\nReference ID: ${item.id}\nTotal Payable: ${amount}\nService: ${title}`}
+                size={140}
+                level="M"
+                includeMargin={false}
+              />
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.5rem', lineHeight: '1.4' }}>
+              Scan with your phone camera or banking app to view complete clinic corporate bank details instantly.
+            </div>
+          </div>
+
           {/* Verified Clinic Bank Accounts with 1-Click Copy */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <div className="bank-account-box" style={{ padding: '0.85rem', border: '1px solid #10b981' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#047857', fontWeight: 'bold' }}>Mobile Transfer</span>
-                <span style={{ fontSize: '0.65rem', background: '#dcfce7', color: '#15803d', padding: '0.1rem 0.4rem', borderRadius: '8px', fontWeight: '700' }}>Active</span>
-              </div>
-              <div style={{ fontWeight: '800', color: 'var(--color-indigo)', fontSize: '0.95rem', marginTop: '0.2rem' }}>Kuda Bank</div>
-              <div style={{ margin: '0.35rem 0' }}>
-                <span className="bank-account-number" style={{ fontSize: '1.05rem', letterSpacing: '1px' }}>2085817667</span>
-              </div>
-              <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>Sa'ima Mohammed Jibril</div>
-              <button
-                type="button"
-                className={`copy-badge-btn ${copiedAccount === 'kuda' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard('2085817667', 'kuda')}
-              >
-                <i className={`fa-solid ${copiedAccount === 'kuda' ? 'fa-check' : 'fa-copy'}`}></i>
-                {copiedAccount === 'kuda' ? 'Copied!' : 'Copy Kuda Account'}
-              </button>
-            </div>
-
             <div className="bank-account-box" style={{ padding: '0.85rem' }}>
               <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Primary Bank</div>
               <div style={{ fontWeight: '800', color: 'var(--color-indigo)', fontSize: '0.95rem', marginTop: '0.2rem' }}>Zenith Bank PLC</div>
@@ -2022,46 +2211,17 @@ export default function App() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', gap: '0.75rem' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-              Staff reconciles credits within 15–30 mins.
+              Follows route: Doctor ➔ Admin Dashboard.
             </span>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button className="btn btn-outline" onClick={() => setShowPaymentModal(false)}>Cancel</button>
               <button
                 className="btn btn-accent"
                 onClick={() => {
-                  const updatedStatus = 'Payment Pending Approval';
-                  const methodLabel = 'Direct Bank Transfer';
-                  const receiptId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
-
-                  setInquiries(prev => prev.map(inq => inq.id === item.id ? {
-                    ...inq,
-                    paymentStatus: updatedStatus,
-                    paymentMethod: methodLabel,
-                    receiptNo: receiptId,
-                    transferSender: paymentTransferDetails.senderName,
-                    transferBank: paymentTransferDetails.senderBank,
-                    transferRef: paymentTransferDetails.refNumber
-                  } : inq));
-
-                  setAppointments(prev => prev.map(apt => apt.id === item.id ? {
-                    ...apt,
-                    paymentStatus: updatedStatus,
-                    paymentMethod: methodLabel,
-                    receiptNo: receiptId,
-                    transferSender: paymentTransferDetails.senderName,
-                    transferBank: paymentTransferDetails.senderBank,
-                    transferRef: paymentTransferDetails.refNumber
-                  } : apt));
-
-                  setShowPaymentModal(false);
-                  setPopupNotification({
-                    type: 'success',
-                    title: 'Transfer Details Submitted',
-                    message: `Payment confirmation queued under reference ${receiptId}. Our finance desk is verifying credit with Kuda Bank / Zenith / Stanbic IBTC.`
-                  });
+                  handleClientMarkPaid(item, type, paymentTransferDetails);
                 }}
               >
-                <i className="fa-solid fa-paper-plane"></i> Confirm Bank Transfer Sent
+                <i className="fa-solid fa-check"></i> I Have Paid (Submit for Approval)
               </button>
             </div>
           </div>
@@ -4369,8 +4529,47 @@ export default function App() {
           clinicDrugsApi.getAll(),
           profilesApi.getAllProfiles()
         ]);
-        if (apts && apts.length > 0) setAppointments(apts);
-        if (orders && orders.length > 0) setInquiries(orders);
+        if (apts && apts.length > 0) {
+          setAppointments(prev => {
+            const map = new Map();
+            apts.forEach(a => map.set(a.id, a));
+            (labReqs || []).forEach(lr => {
+              const labId = (lr.id && String(lr.id).startsWith('LAB-')) ? lr.id : `LAB-${String(lr.id).substring(0, 4).toUpperCase()}`;
+              if (!map.has(labId)) {
+                map.set(labId, {
+                  id: labId,
+                  rawId: lr.id,
+                  patientName: lr.patientName,
+                  phone: lr.phone,
+                  email: (lr.email || '').toLowerCase(),
+                  doctor: "Mobile Lab Unit",
+                  date: lr.date,
+                  time: lr.time || "08:00 AM",
+                  symptoms: `Mobile Lab Booking: ${lr.testDetails || 'Diagnostic Test Panel'}. Home collection address: ${lr.address || 'Abuja'}. Patient Instructions: ${lr.specialInstructions || 'None'}`,
+                  status: lr.status || 'Pending',
+                  paymentStatus: lr.paymentStatus || 'Payment Pending Approval',
+                  cost: '₦7,500',
+                  consultationRate: '₦7,500',
+                  serviceType: "Mobile Laboratory"
+                });
+              }
+            });
+            prev.forEach(p => {
+              if (!map.has(p.id)) map.set(p.id, p);
+            });
+            return Array.from(map.values());
+          });
+        }
+        if (orders && orders.length > 0) {
+          setInquiries(prev => {
+            const map = new Map();
+            orders.forEach(o => map.set(o.id, o));
+            prev.forEach(p => {
+              if (!map.has(p.id)) map.set(p.id, p);
+            });
+            return Array.from(map.values());
+          });
+        }
 
         if (profilesData && profilesData.length > 0) {
           const sDoctors = profilesData.filter(p => p.role === 'doctor');
@@ -5368,8 +5567,12 @@ export default function App() {
   // --- Booking & Contact Handlers ---
   const handleBookingSubmit = (e) => {
     e.preventDefault();
-    if (!bookingConsent) {
-      alert("Please agree to the Terms & Conditions & Privacy Policy to submit your booking.");
+    if (!loggedInPatient && !bookingConsent) {
+      setPopupNotification({
+        type: 'warning',
+        title: 'Consent Required',
+        message: 'Please review and agree to the Terms & Conditions & Privacy Policy to submit your booking.'
+      });
       return;
     }
     let selectedDoc = doctors.find(d => 
@@ -5395,7 +5598,11 @@ export default function App() {
     }
 
     if (!selectedDoc) {
-      alert("Please select a doctor.");
+      setPopupNotification({
+        type: 'warning',
+        title: 'Specialist Required',
+        message: 'Please select a medical specialist for your consultation.'
+      });
       return;
     }
 
@@ -5433,7 +5640,11 @@ export default function App() {
           selectedDoc = candidateWorkloads[0].doc;
           routed = true;
         } else {
-          alert("We are sorry, but all specialists in this department are currently offline or pending verification. Please try again later.");
+          setPopupNotification({
+            type: 'warning',
+            title: 'Specialists Offline',
+            message: 'We are sorry, but all specialists in this department are currently offline or pending verification. Please try again later.'
+          });
           return;
         }
       }
@@ -5579,7 +5790,11 @@ export default function App() {
       : doctors.filter(d => d.active !== false);
 
     if (finalCandidates.length === 0) {
-      alert("No active doctors are currently available in the directory.");
+      setPopupNotification({
+        type: 'warning',
+        title: 'No Doctors Available',
+        message: 'No active doctors are currently available in the directory.'
+      });
       return;
     }
 
@@ -5604,7 +5819,11 @@ export default function App() {
         : a
     ));
 
-    alert(`Patient successfully routed to ${mostAvailable.doc.name} (${mostAvailable.doc.specialty}) who has the lowest active workload (${mostAvailable.activeCount} active bookings).`);
+    setPopupNotification({
+      type: 'success',
+      title: 'Patient Routed',
+      message: `Patient successfully routed to ${mostAvailable.doc.name} (${mostAvailable.doc.specialty}) who has the lowest active workload (${mostAvailable.activeCount} active bookings).`
+    });
   };
 
   const handleToggleDoctorActive = (docId) => {
@@ -5640,7 +5859,11 @@ export default function App() {
   const handleSaveAdminSelf = (e) => {
     e.preventDefault();
     if (!adminSelfData.username.trim() || !adminSelfData.password.trim()) {
-      alert("Username and password cannot be empty!");
+      setPopupNotification({
+        type: 'warning',
+        title: 'Credentials Required',
+        message: 'Username and password cannot be empty!'
+      });
       return;
     }
     const updated = {
@@ -5653,7 +5876,11 @@ export default function App() {
     setAdminCredentials(updated);
     profilesApi.upsertProfile(updated);
     setIsEditingAdminSelf(false);
-    alert("Admin login credentials updated successfully!");
+    setPopupNotification({
+      type: 'success',
+      title: 'Credentials Updated',
+      message: 'Admin login credentials updated successfully!'
+    });
   };
 
   const handleAddDoctor = (e) => {
@@ -5999,7 +6226,11 @@ export default function App() {
 
     setLoggedInDoctor(updatedDoc);
     setIsEditingDocSelf(false);
-    alert("Your profile has been updated successfully!");
+    setPopupNotification({
+      type: 'success',
+      title: 'Profile Updated',
+      message: 'Your profile has been updated successfully!'
+    });
   };
 
   const handleSavePatSelf = (e) => {
@@ -6011,7 +6242,11 @@ export default function App() {
 
     const emailExists = patients.some(p => p.email.toLowerCase() === newEmail && p.email.toLowerCase() !== oldEmail.toLowerCase());
     if (emailExists) {
-      alert("This email address is already registered by another patient.");
+      setPopupNotification({
+        type: 'error',
+        title: 'Email In Use',
+        message: 'This email address is already registered by another patient.'
+      });
       return;
     }
 
@@ -6041,7 +6276,11 @@ export default function App() {
 
     setLoggedInPatient(updatedPat);
     setIsEditingPatSelf(false);
-    alert("Your profile has been updated successfully!");
+    setPopupNotification({
+      type: 'success',
+      title: 'Profile Updated',
+      message: 'Your profile has been updated successfully!'
+    });
   };
 
   const handleAddPatient = (e) => {
@@ -6083,10 +6322,18 @@ export default function App() {
 
       setEditingPatientId(null);
       setNewPatientData({ name: '', email: '', phone: '', password: '' });
-      alert("Patient profile updated successfully!");
+      setPopupNotification({
+        type: 'success',
+        title: 'Patient Updated',
+        message: 'Patient profile updated successfully!'
+      });
     } else {
       if (patients.some(p => p.email === newPatientData.email)) {
-        alert("A patient with this email already exists!");
+        setPopupNotification({
+          type: 'error',
+          title: 'Duplicate Email',
+          message: 'A patient with this email already exists!'
+        });
         return;
       }
       const newPatient = {
@@ -6099,7 +6346,11 @@ export default function App() {
       setPatients([...patients, newPatient]);
       profilesApi.upsertProfile(newPatient);
       setNewPatientData({ name: '', email: '', phone: '', password: '' });
-      alert("Patient profile added successfully!");
+      setPopupNotification({
+        type: 'success',
+        title: 'Patient Added',
+        message: 'Patient profile added successfully!'
+      });
     }
   };
 
@@ -6141,7 +6392,11 @@ export default function App() {
         : apt
     ));
     setActiveConsultationApt(null);
-    alert("Consultation record and prescriptions saved successfully!");
+    setPopupNotification({
+      type: 'success',
+      title: 'Consultation Saved',
+      message: 'Consultation record and prescriptions saved successfully!'
+    });
   };
 
   const handleDocNoteChange = (aptId, field, value) => {
@@ -6178,7 +6433,11 @@ export default function App() {
         }
         : apt
     ));
-    alert("Consultation record and status updated successfully!");
+    setPopupNotification({
+      type: 'success',
+      title: 'Record Updated',
+      message: 'Consultation record and status updated successfully!'
+    });
   };
 
   const handleModalFieldEdit = (field, value) => {
@@ -6223,7 +6482,11 @@ export default function App() {
 
     setAppointments([newApt, ...appointments]);
     setFollowUpApt(null);
-    alert(`Follow-up appointment successfully scheduled for ${newApt.patientName} on ${newApt.date} at ${newApt.time}.`);
+    setPopupNotification({
+      type: 'success',
+      title: 'Follow-up Scheduled',
+      message: `Follow-up appointment successfully scheduled for ${newApt.patientName} on ${newApt.date} at ${newApt.time}.`
+    });
   };
 
   // --- Filtering ---
@@ -6241,17 +6504,44 @@ export default function App() {
     return matchesSearch && matchesFilter && doc.active !== false;
   });
 
+  // Helper to reliably match patient records by email, phone, or patient name
+  const isPatientMatch = (itemEmail, itemName, itemPhone, patient) => {
+    if (!patient) return false;
+    const pEmail = (patient.email || '').trim().toLowerCase();
+    const iEmail = (itemEmail || '').trim().toLowerCase();
+    if (pEmail && iEmail && pEmail === iEmail) return true;
+
+    const pPhone = (patient.phone || '').replace(/[^0-9]/g, '');
+    const iPhone = (itemPhone || '').replace(/[^0-9]/g, '');
+    if (pPhone && iPhone && pPhone.length >= 7 && (pPhone === iPhone || pPhone.endsWith(iPhone) || iPhone.endsWith(pPhone))) return true;
+
+    const pName = (patient.name || '').trim().toLowerCase();
+    const iName = (itemName || '').trim().toLowerCase();
+    if (pName && iName && (pName === iName || (pName.length > 3 && iName.includes(pName)) || (iName.length > 3 && pName.includes(iName)))) return true;
+
+    return false;
+  };
+
+  const isLabItem = (item) => {
+    if (!item) return false;
+    const id = String(item.id || '');
+    const doctor = String(item.doctor || item.doctorName || '');
+    const symptoms = String(item.symptoms || item.message || '');
+    return id.startsWith('LAB-') || doctor === 'Mobile Lab Unit' || symptoms.includes('Mobile Lab Booking:') || symptoms.includes('Home collection address:');
+  };
+
   // Filter Appointments for the currently logged in patient/doctor
   const myPatientAppointments = appointments.filter(apt =>
-    loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase() && !apt.id.startsWith('LAB-')
+    !isLabItem(apt) && isPatientMatch(apt.email, apt.patientName || apt.name, apt.phone, loggedInPatient)
   );
 
   const myPatientLabRequests = appointments.filter(apt =>
-    loggedInPatient && apt.email.toLowerCase() === loggedInPatient.email.toLowerCase() && apt.id.startsWith('LAB-')
+    isLabItem(apt) && isPatientMatch(apt.email, apt.patientName || apt.name, apt.phone, loggedInPatient)
   );
 
   const myPatientPharmacyOrders = inquiries.filter(inq =>
-    loggedInPatient && inq.email && inq.email.toLowerCase() === loggedInPatient.email.toLowerCase() && inq.id.startsWith('ORD-')
+    (String(inq.id || '').startsWith('ORD-') || (inq.message && inq.message.includes('Pharmacy Purchase Order:'))) &&
+    isPatientMatch(inq.email, inq.name || inq.patientName, inq.phone, loggedInPatient)
   );
 
   const parseOrderMessage = (msg) => {
@@ -7051,19 +7341,49 @@ const LeafletDispatchMap = ({
             <span className="logo-text">Simmy<span>Clinic</span></span>
           </a>
 
-          {/* Desktop Navigation */}
-          <nav className="desktop-nav" aria-label="Main Navigation">
-            <ul className="nav-links">
-              <li><a href="#home" className={currentView === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>Home</a></li>
-              <li><a href="#about" className={currentView === 'about' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('about'); }}>About Us</a></li>
-              <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); }}>Staff & Specialists</a></li>
-              <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); }}>Pricing</a></li>
-              <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); }}>Booking</a></li>
-              <li><a href="#payment" className={currentView === 'payment' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('payment'); }}>Payments</a></li>
-              <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); }}>Compliance</a></li>
-              <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}>Contact</a></li>
-            </ul>
-          </nav>
+          {/* Streamlined Desktop Navigation Bar */}
+          <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm nav-menu-toggle-btn"
+              onClick={() => setMobileMenuOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0.45rem 1rem',
+                borderRadius: '8px',
+                borderColor: 'rgba(2, 132, 199, 0.3)',
+                color: 'var(--color-heading)',
+                fontWeight: '600',
+                fontSize: '0.88rem',
+                background: 'rgba(255, 255, 255, 0.05)',
+                cursor: 'pointer'
+              }}
+              title="Open Navigation Menu"
+            >
+              <i className="fa-solid fa-bars-staggered" style={{ color: 'var(--color-accent)' }}></i>
+              <span>Navigation Menu</span>
+              <span style={{ fontSize: '0.72rem', background: 'var(--color-primary)', color: '#fff', padding: '0.15rem 0.5rem', borderRadius: '10px', textTransform: 'capitalize' }}>
+                {currentView === 'home' ? 'Home' : currentView === 'legal-compliance' ? 'Compliance' : currentView.replace('-', ' ')}
+              </span>
+            </button>
+
+            {/* Breadcrumb Indicator */}
+            <div className="nav-breadcrumb-trail" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: 'var(--color-text-muted)' }}>
+              <a href="#home" onClick={(e) => { e.preventDefault(); navigateTo('home'); }} style={{ color: currentView === 'home' ? 'var(--color-accent)' : 'inherit', textDecoration: 'none', fontWeight: currentView === 'home' ? 'bold' : 'normal' }}>
+                <i className="fa-solid fa-house" style={{ fontSize: '0.75rem', marginRight: '3px' }}></i> Home
+              </a>
+              {currentView !== 'home' && (
+                <>
+                  <span style={{ opacity: 0.4 }}>/</span>
+                  <span style={{ color: 'var(--color-heading)', fontWeight: 'bold', textTransform: 'capitalize' }}>
+                    {currentView === 'legal-compliance' ? 'Compliance' : currentView.replace('-', ' ')}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
 
           <div className="header-actions">
             {authRole ? (
@@ -7165,7 +7485,6 @@ const LeafletDispatchMap = ({
                 <li><a href="#doctors" className={currentView === 'doctors' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('doctors'); setMobileMenuOpen(false); }}><i className="fa-solid fa-user-doctor"></i> Staff & Specialists</a></li>
                 <li><a href="#pricing" className={currentView === 'pricing' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('pricing'); setMobileMenuOpen(false); }}><i className="fa-solid fa-tag"></i> Pricing</a></li>
                 <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); setMobileMenuOpen(false); }}><i className="fa-solid fa-calendar-plus"></i> Booking</a></li>
-                <li><a href="#payment" className={currentView === 'payment' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('payment'); setMobileMenuOpen(false); }}><i className="fa-solid fa-credit-card"></i> Payments</a></li>
                 <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); setMobileMenuOpen(false); }}><i className="fa-solid fa-shield-halved"></i> Compliance</a></li>
                 <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); setMobileMenuOpen(false); }}><i className="fa-solid fa-envelope"></i> Contact</a></li>
               </ul>
@@ -7557,9 +7876,6 @@ const LeafletDispatchMap = ({
             </button>
 
             <div className="section-header" style={{ textAlign: 'left', marginBottom: '2.5rem' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '6px 16px', borderRadius: '20px', fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem' }}>
-                <i className="fa-solid fa-hospital-user"></i> Certified Telehealth Portal & Healthcare Network
-              </div>
               <h1 style={{ fontSize: '2.5rem', fontWeight: '800', lineHeight: '1.2', margin: '0 0 1rem 0' }}>
                 About SimmyClinic
               </h1>
@@ -7961,23 +8277,56 @@ const LeafletDispatchMap = ({
                     return;
                   }
                   const ticketId = `LAB-${Math.floor(1000 + Math.random() * 9000)}`;
+                  const totalLabCost = labCart.reduce((sum, item) => {
+                    const found = CLINIC_LAB_STOCK.find(l => l.name === item);
+                    return sum + (found ? found.price : 4000);
+                  }, 0) + 3000;
+                  const patientEmail = (labCheckout.email || loggedInPatient?.email || '').toLowerCase();
+                  const patientPhone = labCheckout.phone || loggedInPatient?.phone || '';
+                  const patientName = labCheckout.name || loggedInPatient?.name || 'Patient';
+
                   const newApt = {
                     id: ticketId,
-                    patientName: labCheckout.name,
-                    phone: labCheckout.phone,
-                    email: labCheckout.email.toLowerCase(),
+                    patientName: patientName,
+                    phone: patientPhone,
+                    email: patientEmail,
                     doctor: "Mobile Lab Unit",
                     date: labCheckout.date,
                     time: "08:00 AM",
                     symptoms: `Mobile Lab Booking: ${labCart.join(', ')}. Home collection address: ${labCheckout.address}. Patient Instructions: ${labCheckout.notes || 'None'}`,
-                    status: 'Pending'
+                    status: 'Pending',
+                    paymentStatus: 'Unpaid',
+                    cost: `₦${totalLabCost.toLocaleString()}`,
+                    consultationRate: `₦${totalLabCost.toLocaleString()}`,
+                    serviceType: "Mobile Laboratory"
                   };
-                  setAppointments([newApt, ...appointments]);
+
+                  setAppointments(prev => {
+                    const next = [newApt, ...prev];
+                    try { localStorage.setItem("simmy_appointments", JSON.stringify(next)); } catch (e) {}
+                    return next;
+                  });
+
+                  if (isSupabaseConfigured()) {
+                    appointmentsApi.create(newApt).catch(err => console.info('Supabase lab apt sync:', err));
+                    labRequestsApi.create({
+                      patientName: newApt.patientName,
+                      email: newApt.email,
+                      phone: newApt.phone,
+                      testDetails: labCart.join(', '),
+                      address: labCheckout.address,
+                      specialInstructions: labCheckout.notes || '',
+                      status: 'Pending',
+                      date: newApt.date,
+                      time: newApt.time
+                    }).catch(err => console.info('Supabase lab_request sync:', err));
+                  }
+
                   setLabCart([]);
                   setLabCheckout({ name: '', email: '', phone: '', date: '', address: '', notes: '' });
                   setSuccessModal({
                     title: "Lab Request Submitted Successfully",
-                    message: "A lab technician has been scheduled for your home collection on the specified date. We will contact you shortly to confirm the exact time window.",
+                    message: "A lab technician has been scheduled for your home collection on the specified date. Please proceed to your Payment Progress tab to view your payment particulars and settle via transfer.",
                     ticket: ticketId
                   });
                 }}>
@@ -8934,9 +9283,6 @@ const LeafletDispatchMap = ({
 
             {/* Pricing Hero */}
             <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '20px', display: 'inline-block', marginBottom: '0.75rem' }}>
-                <i className="fa-solid fa-tags" style={{ marginRight: '6px' }}></i> Transparent Healthcare Tariffs
-              </span>
               <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>Simple, Flat-Rate Medical Pricing</h2>
               <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
                 No surprise bills or hidden facility fees. Explore verified rates for online consultations, mobile diagnostic lab tests, prescriptions, and annual family care plans.
@@ -9371,9 +9717,6 @@ const LeafletDispatchMap = ({
 
             {/* Hero Header */}
             <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2rem' }}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '20px', display: 'inline-block', marginBottom: '0.75rem' }}>
-                <i className="fa-solid fa-building-columns" style={{ marginRight: '6px' }}></i> Financial Settlement Desk
-              </span>
               <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>SimmyClinic Billing & Bank Transfer Portal</h2>
               <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
                 Reconcile booking invoices, pay for diagnostic lab tests, medication deliveries, and consultation slots strictly through official direct bank transfer.
@@ -9400,7 +9743,6 @@ const LeafletDispatchMap = ({
                 <div className="bank-account-box glassmorphic" style={{ border: '2px solid #10b981' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#047857', fontWeight: 'bold' }}>Instant Mobile Banking</span>
-                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.5rem', borderRadius: '12px', fontWeight: '700' }}>Active Instant Credit</span>
                   </div>
                   <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-indigo)', marginBottom: '0.35rem' }}>Kuda Bank</div>
                   <div style={{ marginBottom: '0.65rem' }}>
@@ -9423,7 +9765,6 @@ const LeafletDispatchMap = ({
                 <div className="bank-account-box glassmorphic">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Primary Commercial Bank</span>
-                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.5rem', borderRadius: '12px', fontWeight: '700' }}>Active Instant Credit</span>
                   </div>
                   <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-indigo)', marginBottom: '0.35rem' }}>Zenith Bank PLC</div>
                   <div style={{ marginBottom: '0.65rem' }}>
@@ -9446,7 +9787,6 @@ const LeafletDispatchMap = ({
                 <div className="bank-account-box glassmorphic">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>Secondary Corporate Bank</span>
-                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '0.15rem 0.5rem', borderRadius: '12px', fontWeight: '700' }}>Active Instant Credit</span>
                   </div>
                   <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-indigo)', marginBottom: '0.35rem' }}>Stanbic IBTC Bank</div>
                   <div style={{ marginBottom: '0.65rem' }}>
@@ -9749,39 +10089,136 @@ const LeafletDispatchMap = ({
 
             {/* Header Hero */}
             <div className="section-header" style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 2.5rem' }}>
-              <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--color-primary)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '20px', display: 'inline-block', marginBottom: '0.75rem' }}>
-                <i className="fa-solid fa-scale-balanced" style={{ marginRight: '6px' }}></i> Regulatory Transparency & Governance
-              </span>
               <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.75rem 0' }}>Legal Disclosures, Licensure & Clinical Compliance</h2>
               <p style={{ fontSize: '1rem', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
                 SimmyClinic Digital Health Ltd (CAC RC 9198656) operates in strict compliance with Nigerian health legislation, professional council standards, and the Nigeria Data Protection Act (NDPA 2023).
               </p>
             </div>
 
-            {/* Corporate Registration & Accreditation Badges */}
-            <div style={{ maxWidth: '1000px', margin: '0 auto 2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
-              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Corporate Entity</div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>RC 9198656</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Incorporated under CAMA by Corporate Affairs Commission (CAC), Nigeria.</div>
+            {/* Corporate Registration & Official Accreditation Badges */}
+            <div style={{ maxWidth: '1000px', margin: '0 auto 2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1.25rem' }}>
+              <div className="glassmorphic" style={{ padding: '1.5rem 1.25rem', borderRadius: '14px', border: '1px solid rgba(2, 132, 199, 0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '60px', height: '60px', background: 'rgba(2, 132, 199, 0.07)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="fa-solid fa-stamp" style={{ color: 'var(--color-primary)', fontSize: '1.5rem', opacity: 0.4 }}></i>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                    <i className="fa-solid fa-building"></i> Corporate Entity
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '1.25rem', color: 'var(--color-indigo)', margin: '0.4rem 0 0.2rem 0' }}>RC 9198656</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>Incorporated under CAMA by Corporate Affairs Commission (CAC), Federal Republic of Nigeria.</div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setShowCertificateModal({
+                    title: 'CAC Certificate of Incorporation',
+                    body: 'Corporate Affairs Commission (Federal Republic of Nigeria)',
+                    regNo: 'RC 9198656',
+                    issuer: 'Registrar-General of Companies',
+                    issuedTo: 'SimmyClinic Digital Health Ltd',
+                    date: '14th October 2020',
+                    category: 'Incorporated Telehealth & Digital Medical Provider',
+                    status: 'Active & In Good Standing',
+                    sealColor: '#0284c7'
+                  })}
+                  style={{ marginTop: '1rem', width: '100%', fontSize: '0.78rem', padding: '0.4rem 0.5rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '600' }}
+                >
+                  <i className="fa-solid fa-certificate"></i> View CAC Certificate
+                </button>
               </div>
 
-              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Medical Practice Council</div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>MDCN Verified</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Medical & Dental Council of Nigeria telehealth and clinical standards compliant.</div>
+              <div className="glassmorphic" style={{ padding: '1.5rem 1.25rem', borderRadius: '14px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '60px', height: '60px', background: 'rgba(16, 185, 129, 0.07)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="fa-solid fa-stethoscope" style={{ color: '#10b981', fontSize: '1.5rem', opacity: 0.4 }}></i>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', textTransform: 'uppercase', color: '#047857', fontWeight: 'bold' }}>
+                    <i className="fa-solid fa-user-doctor"></i> Medical Council
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '1.25rem', color: 'var(--color-indigo)', margin: '0.4rem 0 0.2rem 0' }}>MDCN Verified</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>Medical & Dental Council of Nigeria clinical practice guidelines & telemedicine standards compliant.</div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setShowCertificateModal({
+                    title: 'MDCN Clinical Practice Accreditation',
+                    body: 'Medical & Dental Council of Nigeria (MDCN)',
+                    regNo: 'MDCN/TLH-CERT/2023/8812',
+                    issuer: 'Registrar, Medical and Dental Council of Nigeria',
+                    issuedTo: 'SimmyClinic Digital Health Network',
+                    date: '10th January 2023',
+                    category: 'Virtual Clinical Consultation & Telemedicine Delivery',
+                    status: 'Certified & Annually Re-Validated',
+                    sealColor: '#10b981'
+                  })}
+                  style={{ marginTop: '1rem', width: '100%', fontSize: '0.78rem', padding: '0.4rem 0.5rem', borderColor: '#10b981', color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '600' }}
+                >
+                  <i className="fa-solid fa-certificate"></i> View MDCN License
+                </button>
               </div>
 
-              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Data Protection</div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>NDPR / NDPA 2023</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Full statutory data privacy, HIPAA-grade cloud encryption, and patient confidentiality.</div>
+              <div className="glassmorphic" style={{ padding: '1.5rem 1.25rem', borderRadius: '14px', border: '1px solid rgba(139, 92, 246, 0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '60px', height: '60px', background: 'rgba(139, 92, 246, 0.07)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="fa-solid fa-shield-halved" style={{ color: '#8b5cf6', fontSize: '1.5rem', opacity: 0.4 }}></i>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', textTransform: 'uppercase', color: '#7c3aed', fontWeight: 'bold' }}>
+                    <i className="fa-solid fa-lock"></i> Data Protection
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '1.25rem', color: 'var(--color-indigo)', margin: '0.4rem 0 0.2rem 0' }}>NDPR / NDPA 2023</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>Statutory health records privacy compliance under Nigeria Data Protection Commission (NDPC).</div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setShowCertificateModal({
+                    title: 'NDPA 2023 Data Privacy Compliance Certification',
+                    body: 'Nigeria Data Protection Commission (NDPC)',
+                    regNo: 'NDPC/COMP/2023/0419',
+                    issuer: 'National Commissioner / CEO, NDPC',
+                    issuedTo: 'SimmyClinic Digital Health Ltd',
+                    date: '1st August 2023',
+                    category: 'Electronic Medical Record (EMR) & Patient Data Security',
+                    status: 'Fully Audited & Certified',
+                    sealColor: '#8b5cf6'
+                  })}
+                  style={{ marginTop: '1rem', width: '100%', fontSize: '0.78rem', padding: '0.4rem 0.5rem', borderColor: '#8b5cf6', color: '#7c3aed', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '600' }}
+                >
+                  <i className="fa-solid fa-certificate"></i> View NDPA Seal
+                </button>
               </div>
 
-              <div className="glassmorphic" style={{ padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Pharmacy & Laboratory</div>
-                <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--color-indigo)', margin: '0.25rem 0' }}>PCN & MLSCN</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Licensed pharmacy dispensing & medical laboratory science diagnostic assays.</div>
+              <div className="glassmorphic" style={{ padding: '1.5rem 1.25rem', borderRadius: '14px', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '60px', height: '60px', background: 'rgba(245, 158, 11, 0.07)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="fa-solid fa-vials" style={{ color: '#f59e0b', fontSize: '1.5rem', opacity: 0.4 }}></i>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', textTransform: 'uppercase', color: '#b45309', fontWeight: 'bold' }}>
+                    <i className="fa-solid fa-flask"></i> Pharmacy & Laboratory
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '1.25rem', color: 'var(--color-indigo)', margin: '0.4rem 0 0.2rem 0' }}>PCN & MLSCN</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>Authorized pharmacy retail dispensing & medical laboratory science diagnostics.</div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setShowCertificateModal({
+                    title: 'PCN & MLSCN Joint Allied Healthcare Permit',
+                    body: 'Pharmacy Council of Nigeria & Medical Lab Science Council',
+                    regNo: 'PCN/RET-LOG/7721 • MLSCN/DX-LAB/5102',
+                    issuer: 'Registrar, PCN & Registrar/CEO, MLSCN',
+                    issuedTo: 'SimmyClinic Integrated Diagnostics & Pharmacy Logistics',
+                    date: '15th November 2023',
+                    category: 'Allied Healthcare, Dispensary & Mobile Specimen Analysis',
+                    status: 'Operational License Active',
+                    sealColor: '#f59e0b'
+                  })}
+                  style={{ marginTop: '1rem', width: '100%', fontSize: '0.78rem', padding: '0.4rem 0.5rem', borderColor: '#f59e0b', color: '#b45309', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: '600' }}
+                >
+                  <i className="fa-solid fa-certificate"></i> View Council Permits
+                </button>
               </div>
             </div>
 
@@ -9806,6 +10243,7 @@ const LeafletDispatchMap = ({
                       <th>Accrediting Council</th>
                       <th>Council Registration ID</th>
                       <th>Status</th>
+                      <th>Update License</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -9832,6 +10270,29 @@ const LeafletDispatchMap = ({
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#15803d', fontWeight: 'bold' }}>
                             <i className="fa-solid fa-circle-check"></i> Verified
                           </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => {
+                              setUpdateLicenseModalDoc(doc);
+                              setUpdateLicenseForm({
+                                council: doc.regNo?.startsWith('MDCN') ? 'Medical & Dental Council (MDCN)' :
+                                         doc.regNo?.startsWith('MLS') ? 'Medical Lab Science Council (MLSCN)' :
+                                         doc.regNo?.startsWith('PCN') ? 'Pharmacy Council of Nigeria (PCN)' :
+                                         doc.regNo?.startsWith('NMCN') ? 'Nursing & Midwifery Council (NMCN)' :
+                                         doc.regNo?.startsWith('CHO') ? 'Community Health Practitioners (CHPRBN)' :
+                                         doc.regNo?.startsWith('MNCP') ? 'Nigerian Psychological Association (MNCP)' : 'Medical & Dental Council (MDCN)',
+                                regNo: doc.regNo || doc.license || '',
+                                status: 'Verified'
+                              });
+                            }}
+                            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}
+                            title="Update Practicing License"
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i> Update
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -9916,7 +10377,7 @@ const LeafletDispatchMap = ({
                     onClick={() => setShowPatientGuideModal(true)}
                     style={{ width: '100%', borderColor: 'var(--color-accent)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600' }}
                   >
-                    <i className="fa-solid fa-circle-play"></i> Watch How-To Book Video Guide
+                    <i className="fa-solid fa-book-open"></i> How-To Booking Guide
                   </button>
                   <button
                     type="button"
@@ -10221,6 +10682,42 @@ const LeafletDispatchMap = ({
                     </div>
                   </div>
 
+                  {/* Consultation Time Slot Selection */}
+                  {bookingFormData.date && (
+                    <div className="form-group animate-fade" style={{ marginBottom: '1.25rem', background: 'rgba(2, 132, 199, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(2, 132, 199, 0.2)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                        <label style={{ margin: 0, fontWeight: 'bold', fontSize: '0.86rem', color: 'var(--color-heading)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <i className="fa-regular fa-clock" style={{ color: 'var(--color-accent)' }}></i> Select Consultation Time Slot:
+                        </label>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                          Chosen: <strong style={{ color: 'var(--color-accent)' }}>{bookingFormData.time || '09:00 AM'}</strong>
+                        </span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))', gap: '0.45rem' }}>
+                        {["09:00 AM", "10:00 AM", "11:30 AM", "01:00 PM", "02:30 PM", "04:00 PM", "05:30 PM", "07:00 PM"].map(slot => (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setBookingFormData({ ...bookingFormData, time: slot })}
+                            style={{
+                              padding: '0.45rem 0.6rem',
+                              borderRadius: '6px',
+                              border: (bookingFormData.time || '09:00 AM') === slot ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                              background: (bookingFormData.time || '09:00 AM') === slot ? 'var(--color-primary)' : 'var(--color-bg)',
+                              color: (bookingFormData.time || '09:00 AM') === slot ? '#fff' : 'var(--color-heading)',
+                              fontSize: '0.82rem',
+                              fontWeight: (bookingFormData.time || '09:00 AM') === slot ? 'bold' : '500',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <i className="fa-regular fa-calendar-check" style={{ marginRight: '4px', fontSize: '0.75rem' }}></i> {slot}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
 
 
                   {/* Home Visit Residential Address Section */}
@@ -10372,18 +10869,20 @@ const LeafletDispatchMap = ({
                     )}
                   </div>
 
-                  <div className="form-group consent-checkbox-group" style={{ marginBottom: '1.25rem' }}>
-                    <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                      <input
-                        type="checkbox"
-                        required
-                        checked={bookingConsent}
-                        onChange={(e) => setBookingConsent(e.target.checked)}
-                        style={{ width: 'auto', marginTop: '0.2rem', cursor: 'pointer' }}
-                      />
-                      <span>I consent to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('booking'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> and agree to share my clinical information.</span>
-                    </label>
-                  </div>
+                  {!loggedInPatient && (
+                    <div className="form-group consent-checkbox-group" style={{ marginBottom: '1.25rem' }}>
+                      <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                        <input
+                          type="checkbox"
+                          required
+                          checked={bookingConsent}
+                          onChange={(e) => setBookingConsent(e.target.checked)}
+                          style={{ width: 'auto', marginTop: '0.2rem', cursor: 'pointer' }}
+                        />
+                        <span>I consent to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal('booking'); }} style={{ color: 'var(--color-accent)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms & Conditions & Privacy Policy</a> and agree to share my clinical information.</span>
+                      </label>
+                    </div>
+                  )}
 
                   <button type="submit" className="btn btn-primary btn-block">Submit Booking Request</button>
                 </form>
@@ -11014,6 +11513,16 @@ const LeafletDispatchMap = ({
                     <h3>{myPatientLabRequests.length}</h3>
                     <p>LAB SAMPLE TRIPS</p>
                   </div>
+                  <div className="stat-divider"></div>
+                  <div
+                    className={`stat-item clickable ${patientNavView === 'payments' ? 'active' : ''}`}
+                    onClick={() => setPatientNavView('payments')}
+                  >
+                    <h3 style={{ color: '#0284c7' }}>
+                      {[...myPatientAppointments, ...myPatientLabRequests, ...myPatientPharmacyOrders].length}
+                    </h3>
+                    <p>PAYMENT PROGRESS</p>
+                  </div>
                 </div>
 
                 <div className="dashboard-layout">
@@ -11024,6 +11533,17 @@ const LeafletDispatchMap = ({
                       onClick={() => setPatientNavView('bookings')}
                     >
                       <i className="fa-solid fa-calendar-check"></i> Consultation Bookings
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${patientNavView === 'payments' ? 'active' : ''}`}
+                      onClick={() => setPatientNavView('payments')}
+                      style={{
+                        background: patientNavView === 'payments' ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(16, 185, 129, 0.2))' : undefined,
+                        borderColor: patientNavView === 'payments' ? 'rgba(2, 132, 199, 0.4)' : undefined,
+                        fontWeight: patientNavView === 'payments' ? 'bold' : undefined
+                      }}
+                    >
+                      <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7' }}></i> Payment Progress
                     </button>
                     <button
                       className={`sidebar-nav-btn ${patientNavView === 'orders' ? 'active' : ''}`}
@@ -11859,6 +12379,246 @@ const LeafletDispatchMap = ({
                       </div>
                     )}
 
+                    {patientNavView === 'payments' && (() => {
+                      const patientTickets = [
+                        ...myPatientAppointments.map(a => ({
+                          ...a,
+                          itemType: 'appointment',
+                          serviceCategory: `Doctor Consultation (${a.doctor || 'Specialist'})`,
+                          costDisplay: a.isNhis ? '₦500 (NHIS 10% Co-Pay)' : (a.consultationRate || a.cost || '₦3,000')
+                        })),
+                        ...myPatientLabRequests.map(l => ({
+                          ...l,
+                          itemType: 'lab',
+                          serviceCategory: 'Mobile Lab Diagnostics & Panel',
+                          costDisplay: l.cost || '₦7,500'
+                        })),
+                        ...myPatientPharmacyOrders.map(o => {
+                          const parsed = parseOrderMessage(o.message || '');
+                          return {
+                            ...o,
+                            itemType: 'order',
+                            serviceCategory: `Pharmacy Medication Order: ${parsed.items.substring(0, 35)}...`,
+                            costDisplay: parsed.total !== 'N/A' ? parsed.total : '₦5,500'
+                          };
+                        })
+                      ];
+
+                      return (
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.5rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            <div>
+                              <h3 style={{ margin: 0, fontSize: '1.3rem' }}><i className="fa-solid fa-route" style={{ color: '#0284c7', marginRight: '8px' }}></i> Clinical Payment Progress & Route Tracker</h3>
+                              <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                Real-time lifecycle tracking: Client Payment ➔ Doctor / Specialist Endorsement ➔ Admin Final Clearance & Receipt.
+                              </p>
+                            </div>
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={() => {
+                                setPopupNotification({
+                                  type: 'info',
+                                  title: 'Payment Route Verification',
+                                  message: 'Payments follow a secure clinical audit trail: Once submitted by the client, the assigned doctor verifies the booking, followed by final credit clearance from Admin.'
+                                });
+                              }}
+                            >
+                              <i className="fa-solid fa-circle-question"></i> How Approvals Work
+                            </button>
+                          </div>
+
+                          {/* Bank Details & Scan to Pay QR Section */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+                            {/* QR Code Card */}
+                            <div style={{ background: '#ffffff', color: '#0f172a', padding: '1.25rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' }}>
+                              <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '800', color: '#0284c7', marginBottom: '0.65rem' }}>
+                                <i className="fa-solid fa-qrcode" style={{ marginRight: '5px' }}></i> Scan to Pay via Banking App
+                              </div>
+                              <div style={{ display: 'inline-block', padding: '10px', background: '#fff', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+                                <QRCodeSVG
+                                  value={`SIMMYCLINIC HEALTHCARE BILLING\nBeneficiary: SimmyClinic Digital Health Ltd\nPrimary: Zenith Bank PLC (1029384756)\nSecondary: Stanbic IBTC Bank (0049218392)\nPatient: ${loggedInPatient.name}\nEmail: ${loggedInPatient.email}`}
+                                  size={140}
+                                  level="M"
+                                  includeMargin={false}
+                                />
+                              </div>
+                              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.65rem', marginBottom: 0 }}>
+                                Point your camera or banking app to view official clinic accounts.
+                              </p>
+                            </div>
+
+                            {/* Bank Particulars Box */}
+                            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                              <div>
+                                <strong style={{ fontSize: '0.85rem', color: 'var(--color-heading)', display: 'block', marginBottom: '0.75rem' }}>
+                                  <i className="fa-solid fa-building-columns" style={{ color: '#10b981', marginRight: '6px' }}></i> Official SimmyClinic Accounts:
+                                </strong>
+
+                                <div style={{ marginBottom: '0.85rem', padding: '0.65rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Zenith Bank PLC (Primary)</div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
+                                    <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1rem', color: 'var(--color-heading)' }}>1029384756</span>
+                                    <button className="copy-badge-btn" onClick={() => copyToClipboard('1029384756', 'zenith')}>
+                                      {copiedAccount === 'zenith' ? 'Copied!' : 'Copy'}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div style={{ padding: '0.65rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Stanbic IBTC Bank (Secondary)</div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem' }}>
+                                    <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1rem', color: 'var(--color-heading)' }}>0049218392</span>
+                                    <button className="copy-badge-btn" onClick={() => copyToClipboard('0049218392', 'stanbic')}>
+                                      {copiedAccount === 'stanbic' ? 'Copied!' : 'Copy'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.75rem' }}>
+                                Account Name: <strong>SimmyClinic Digital Health Ltd</strong>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Tickets & Progress Trackers */}
+                          <h4 style={{ fontSize: '1.05rem', marginBottom: '1rem', color: 'var(--color-heading)' }}>
+                            My Active Bills & Progress Route ({patientTickets.length})
+                          </h4>
+
+                          {patientTickets.length === 0 ? (
+                            <div className="empty-state" style={{ padding: '2.5rem', textAlign: 'center' }}>
+                              <i className="fa-solid fa-receipt" style={{ fontSize: '2.5rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', opacity: 0.4 }}></i>
+                              <p>You have no active bookings, lab requests, or medication orders yet.</p>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                              {patientTickets.map(item => {
+                                const isPaid = item.paymentStatus === 'Paid & Verified' || item.paymentStatus === 'Paid via NHIS Co-pay';
+                                const isDoctorApproved = item.paymentStatus === 'Doctor Approved - Pending Admin Verification';
+                                const isPendingDoctor = item.paymentStatus === 'Payment Pending Doctor Approval' || item.paymentStatus === 'Payment Pending Approval' || item.paymentStatus === 'Pending Verification';
+                                const isUnpaid = !isPaid && !isDoctorApproved && !isPendingDoctor;
+
+                                const stage1Done = !isUnpaid;
+                                const stage2Done = isDoctorApproved || isPaid;
+                                const stage3Done = isPaid;
+
+                                return (
+                                  <div
+                                    key={item.id}
+                                    style={{
+                                      padding: '1.25rem',
+                                      borderRadius: '12px',
+                                      background: 'rgba(255,255,255,0.03)',
+                                      border: '1px solid rgba(255,255,255,0.08)',
+                                      boxShadow: '0 4px 15px rgba(0,0,0,0.04)'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                                      <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.05rem', color: '#0284c7' }}>{item.id}</span>
+                                          <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: 'var(--color-text-muted)' }}>
+                                            {item.date || 'Scheduled'}
+                                          </span>
+                                        </div>
+                                        <div style={{ fontSize: '0.95rem', fontWeight: '600', marginTop: '0.25rem', color: 'var(--color-heading)' }}>
+                                          {item.serviceCategory}
+                                        </div>
+                                      </div>
+                                      <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-accent)' }}>
+                                          {item.costDisplay}
+                                        </div>
+                                        <div style={{ marginTop: '0.25rem' }}>
+                                          {renderPaymentStatusBadge(item, item.itemType, 'patient')}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* 3-Stage Progress Timeline */}
+                                    <div style={{ background: 'rgba(0,0,0,0.12)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', textAlign: 'center' }}>
+                                        {/* Stage 1 */}
+                                        <div style={{ padding: '0.5rem', borderRadius: '6px', background: stage1Done ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.02)', border: `1px solid ${stage1Done ? '#16a34a' : 'rgba(255,255,255,0.05)'}` }}>
+                                          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: stage1Done ? '#16a34a' : 'var(--color-text-muted)', fontWeight: 'bold' }}>
+                                            <i className={`fa-solid ${stage1Done ? 'fa-circle-check' : 'fa-circle-dot'}`}></i> 1. Client Paid
+                                          </div>
+                                          <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', color: stage1Done ? '#22c55e' : 'var(--color-text-muted)' }}>
+                                            {stage1Done ? (item.clientPaidAt || 'Submitted') : 'Awaiting transfer'}
+                                          </div>
+                                        </div>
+
+                                        {/* Stage 2 */}
+                                        <div style={{ padding: '0.5rem', borderRadius: '6px', background: stage2Done ? 'rgba(2,132,199,0.1)' : (isPendingDoctor ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.02)'), border: `1px solid ${stage2Done ? '#0284c7' : (isPendingDoctor ? '#eab308' : 'rgba(255,255,255,0.05)')}` }}>
+                                          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: stage2Done ? '#0284c7' : (isPendingDoctor ? '#ca8a04' : 'var(--color-text-muted)'), fontWeight: 'bold' }}>
+                                            <i className={`fa-solid ${stage2Done ? 'fa-user-doctor' : (isPendingDoctor ? 'fa-hourglass-half' : 'fa-circle-dot')}`}></i> 2. Doctor Endorsed
+                                          </div>
+                                          <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', color: stage2Done ? '#0284c7' : (isPendingDoctor ? '#eab308' : 'var(--color-text-muted)') }}>
+                                            {stage2Done ? (item.doctorApprovedBy ? `Dr. Verified ✓` : 'Endorsed') : (isPendingDoctor ? 'Under review' : 'Pending')}
+                                          </div>
+                                        </div>
+
+                                        {/* Stage 3 */}
+                                        <div style={{ padding: '0.5rem', borderRadius: '6px', background: stage3Done ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.02)', border: `1px solid ${stage3Done ? '#16a34a' : 'rgba(255,255,255,0.05)'}` }}>
+                                          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: stage3Done ? '#16a34a' : 'var(--color-text-muted)', fontWeight: 'bold' }}>
+                                            <i className={`fa-solid ${stage3Done ? 'fa-stamp' : 'fa-lock'}`}></i> 3. Admin Clearance
+                                          </div>
+                                          <div style={{ fontSize: '0.72rem', marginTop: '0.2rem', color: stage3Done ? '#22c55e' : 'var(--color-text-muted)' }}>
+                                            {stage3Done ? 'Receipt Active ✓' : 'Locked'}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Action Footers */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                        {isPaid ? (
+                                          <span style={{ color: '#16a34a', fontWeight: '600' }}><i className="fa-solid fa-shield-check"></i> Officially verified under Receipt {item.receiptNo || 'Active'}.</span>
+                                        ) : isDoctorApproved ? (
+                                          <span style={{ color: '#0284c7' }}><i className="fa-solid fa-user-doctor"></i> {item.doctorApprovedBy || 'Doctor'} has verified clinical booking. Final clearance underway.</span>
+                                        ) : isPendingDoctor ? (
+                                          <span><i className="fa-solid fa-clock"></i> Forwarded to doctor. Click direct support if urgent.</span>
+                                        ) : (
+                                          <span><i className="fa-solid fa-circle-exclamation" style={{ color: '#ef4444' }}></i> Settle payment via transfer to initiate doctor review.</span>
+                                        )}
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        {isUnpaid && (
+                                          <>
+                                            <button
+                                              className="btn btn-accent btn-sm"
+                                              onClick={() => handleOpenPayment(item, item.itemType)}
+                                            >
+                                              <i className="fa-solid fa-qrcode"></i> Pay with QR / Transfer
+                                            </button>
+                                            <button
+                                              className="btn btn-sm"
+                                              style={{ background: '#0284c7', color: '#ffffff', fontWeight: 'bold' }}
+                                              onClick={() => handleClientMarkPaid(item, item.itemType)}
+                                            >
+                                              <i className="fa-solid fa-check"></i> I Have Paid
+                                            </button>
+                                          </>
+                                        )}
+                                        <button
+                                          className="btn btn-outline btn-sm"
+                                          onClick={() => handleViewReceipt(item, item.itemType)}
+                                        >
+                                          <i className="fa-solid fa-file-invoice"></i> {isPaid ? 'View / Print Official Receipt' : 'Inspect Invoice'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     {patientNavView === 'profile' && (
                       <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.5rem' }}>
                         {!isEditingPatSelf ? (
@@ -12056,6 +12816,22 @@ const LeafletDispatchMap = ({
                       onClick={() => setDoctorNavView('backlog')}
                     >
                       <i className="fa-solid fa-list-check"></i> Consultation Backlog
+                    </button>
+                    <button
+                      className={`sidebar-nav-btn ${doctorNavView === 'payments' ? 'active' : ''}`}
+                      onClick={() => setDoctorNavView('payments')}
+                      style={{
+                        background: doctorNavView === 'payments' ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(16, 185, 129, 0.2))' : undefined,
+                        borderColor: doctorNavView === 'payments' ? 'rgba(2, 132, 199, 0.4)' : undefined,
+                        fontWeight: doctorNavView === 'payments' ? 'bold' : undefined
+                      }}
+                    >
+                      <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7' }}></i> Payment Approvals
+                      {myDoctorAppointments.filter(a => a.paymentStatus === 'Payment Pending Doctor Approval' || a.paymentStatus === 'Payment Pending Approval' || a.paymentStatus === 'Pending Verification').length > 0 && (
+                        <span className="badge-count" style={{ marginLeft: 'auto', background: '#f59e0b', color: '#fff', fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: '10px' }}>
+                          {myDoctorAppointments.filter(a => a.paymentStatus === 'Payment Pending Doctor Approval' || a.paymentStatus === 'Payment Pending Approval' || a.paymentStatus === 'Pending Verification').length}
+                        </span>
+                      )}
                     </button>
                     <button
                       className={`sidebar-nav-btn ${doctorNavView === 'profile' ? 'active' : ''}`}
@@ -12526,6 +13302,103 @@ const LeafletDispatchMap = ({
                       </div>
                     );
                   })()}
+
+                    {doctorNavView === 'payments' && (() => {
+                      const pendingDoctorApprovals = myDoctorAppointments.filter(apt =>
+                        apt.paymentStatus === 'Payment Pending Doctor Approval' ||
+                        apt.paymentStatus === 'Payment Pending Approval' ||
+                        apt.paymentStatus === 'Pending Verification'
+                      );
+
+                      return (
+                        <div className="dashboard-workspace glassmorphic" style={{ margin: 0, padding: '1.5rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            <div>
+                              <h3 style={{ margin: 0, fontSize: '1.3rem' }}><i className="fa-solid fa-file-invoice-dollar" style={{ color: '#0284c7', marginRight: '8px' }}></i> Consultation Payment Approvals</h3>
+                              <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                Review and endorse patient consultation payments before final Admin billing clearance. Showing payments pending your endorsement.
+                              </p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.8rem', background: pendingDoctorApprovals.length > 0 ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)', color: pendingDoctorApprovals.length > 0 ? '#b45309' : '#15803d', padding: '0.35rem 0.75rem', borderRadius: '20px', fontWeight: 'bold' }}>
+                                {pendingDoctorApprovals.length} Pending Doctor Action
+                              </span>
+                            </div>
+                          </div>
+
+                          {pendingDoctorApprovals.length === 0 ? (
+                            <div className="empty-state" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+                              <i className="fa-solid fa-clipboard-check" style={{ fontSize: '3rem', color: '#10b981', marginBottom: '1rem', opacity: 0.7 }}></i>
+                              <h4 style={{ margin: 0, color: 'var(--color-heading)' }}>No Pending Consultation Payments</h4>
+                              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', marginTop: '0.5rem' }}>
+                                All patient consultation fees assigned to your desk have been reviewed or are up to date.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Patient</th>
+                                    <th>Consultation Date</th>
+                                    <th>Amount</th>
+                                    <th>Transfer Particulars</th>
+                                    <th>Payment Status</th>
+                                    <th style={{ textAlign: 'right' }}>Doctor Endorsement Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {pendingDoctorApprovals.map(apt => (
+                                    <tr key={apt.id}>
+                                      <td style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#0284c7' }}>{apt.id}</td>
+                                      <td>
+                                        <strong>{apt.patientName}</strong>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone}</div>
+                                      </td>
+                                      <td>
+                                        <div>{apt.date}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>({apt.time})</div>
+                                      </td>
+                                      <td>
+                                        <strong style={{ color: 'var(--color-accent)' }}>
+                                          {apt.isNhis ? '₦500 (NHIS Co-Pay)' : (apt.consultationRate || apt.cost || '₦3,000')}
+                                        </strong>
+                                      </td>
+                                      <td>
+                                        <div style={{ fontSize: '0.8rem' }}>
+                                          <div>Sender: <strong>{apt.transferSender || apt.patientName}</strong></div>
+                                          <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Bank: {apt.transferBank || 'Direct Transfer'}</div>
+                                          {apt.transferRef && <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#64748b' }}>Ref: {apt.transferRef}</div>}
+                                          {apt.clientPaidAt && <div style={{ fontSize: '0.7rem', color: '#16a34a' }}>Paid: {apt.clientPaidAt}</div>}
+                                        </div>
+                                      </td>
+                                      <td>
+                                        <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', borderRadius: '4px', background: 'rgba(234,179,8,0.15)', color: '#a16207', fontWeight: 'bold' }}>
+                                          <i className="fa-solid fa-hourglass-half"></i> Pending Doctor Review
+                                        </span>
+                                      </td>
+                                      <td style={{ textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                          <button
+                                            className="btn btn-sm"
+                                            style={{ background: '#0284c7', color: '#ffffff', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                                            onClick={() => handleDoctorApprovePayment(apt, 'appointment')}
+                                            title="Endorse clinical consultation booking and forward to Admin for final clearance"
+                                          >
+                                            <i className="fa-solid fa-user-doctor"></i> Approve & Forward to Admin
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {doctorNavView === 'profile' && (
                       <div>
@@ -14585,6 +15458,34 @@ const LeafletDispatchMap = ({
                       <i className="fa-solid fa-chart-line" style={{ color: '#10b981' }}></i> Revenue & Finance Hub
                     </button>
                     <button
+                      className={`sidebar-nav-btn ${adminNavView === 'payment_approvals' ? 'active' : ''}`}
+                      onClick={() => setAdminNavView('payment_approvals')}
+                      style={{
+                        background: adminNavView === 'payment_approvals' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(99, 102, 241, 0.2))' : undefined,
+                        borderColor: adminNavView === 'payment_approvals' ? 'rgba(245, 158, 11, 0.4)' : undefined,
+                        fontWeight: adminNavView === 'payment_approvals' ? 'bold' : undefined,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <span>
+                        <i className="fa-solid fa-money-check-dollar" style={{ color: '#f59e0b', marginRight: '6px' }}></i> Payment Approvals
+                      </span>
+                      {(() => {
+                        const count = appointments.filter(a =>
+                          a.paymentStatus === 'Doctor Approved - Pending Admin Verification' ||
+                          a.paymentStatus === 'Payment Pending Doctor Approval' ||
+                          a.paymentStatus === 'Client Marked Paid'
+                        ).length;
+                        return count > 0 ? (
+                          <span style={{ background: '#f59e0b', color: '#000', fontSize: '0.7rem', fontWeight: 'bold', padding: '0.1rem 0.45rem', borderRadius: '10px' }}>
+                            {count}
+                          </span>
+                        ) : null;
+                      })()}
+                    </button>
+                    <button
                       className={`sidebar-nav-btn ${adminNavView === 'appointments' ? 'active' : ''}`}
                       onClick={() => setAdminNavView('appointments')}
                     >
@@ -14667,6 +15568,140 @@ const LeafletDispatchMap = ({
 
                   {/* Console Workspace */}
                   <div className="dashboard-workspace glassmorphic">
+
+                    {/* Workspace: Payment Approvals */}
+                    {adminNavView === 'payment_approvals' && (() => {
+                      const doctorApprovedApts = appointments.filter(a => a.paymentStatus === 'Doctor Approved - Pending Admin Verification');
+                      const pendingClientApts = appointments.filter(a => a.paymentStatus === 'Payment Pending Doctor Approval' || a.paymentStatus === 'Client Marked Paid');
+                      const allPendingPayments = [...doctorApprovedApts, ...pendingClientApts];
+
+                      return (
+                        <div className="animate-fade">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            <div>
+                              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className="fa-solid fa-money-check-dollar" style={{ color: '#f59e0b' }}></i> Clinical Payment Approvals & Clearance Desk
+                              </h3>
+                              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                Two-stage verification workflow: Doctor clinical review ➔ Admin financial clearance & receipt release.
+                              </p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.8rem', background: 'rgba(245, 158, 11, 0.15)', color: '#d97706', padding: '0.3rem 0.75rem', borderRadius: '12px', fontWeight: 'bold' }}>
+                                {doctorApprovedApts.length} Doctor-Endorsed Pending Clearance
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Stat Overview Cards */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                              <div style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 'bold', textTransform: 'uppercase' }}>Awaiting Admin Clearance</div>
+                              <div style={{ fontSize: '1.6rem', fontWeight: '800', color: '#d97706', margin: '0.25rem 0' }}>{doctorApprovedApts.length}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Doctor review complete; ready for receipt</div>
+                            </div>
+                            <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>Client-Paid (In Review)</div>
+                              <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--color-primary)', margin: '0.25rem 0' }}>{pendingClientApts.length}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Submitted by patients; awaiting doctor/admin</div>
+                            </div>
+                            <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                              <div style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 'bold', textTransform: 'uppercase' }}>Cleared & Verified</div>
+                              <div style={{ fontSize: '1.6rem', fontWeight: '800', color: '#10b981', margin: '0.25rem 0' }}>
+                                {appointments.filter(a => a.paymentStatus === 'Paid & Verified').length}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Official receipt issued to patient</div>
+                            </div>
+                          </div>
+
+                          {allPendingPayments.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px dashed var(--color-border)' }}>
+                              <i className="fa-solid fa-circle-check" style={{ fontSize: '2.5rem', color: '#10b981', marginBottom: '0.75rem' }}></i>
+                              <h4 style={{ margin: '0 0 0.35rem 0' }}>All Payment Approvals are Up to Date!</h4>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                No pending client bank transfers or doctor endorsements require admin clearance at this moment.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="table-responsive">
+                              <table className="admin-table">
+                                <thead>
+                                  <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Patient</th>
+                                    <th>Service / Doctor</th>
+                                    <th>Fee Amount</th>
+                                    <th>Stage & Endorsement</th>
+                                    <th>Date Submitted</th>
+                                    <th>Admin Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {allPendingPayments.map(apt => {
+                                    const isDoctorEndorsed = apt.paymentStatus === 'Doctor Approved - Pending Admin Verification';
+                                    return (
+                                      <tr key={apt.id} style={{ background: isDoctorEndorsed ? 'rgba(245, 158, 11, 0.04)' : undefined }}>
+                                        <td>
+                                          <strong style={{ fontFamily: 'monospace', color: 'var(--color-primary)' }}>{apt.id}</strong>
+                                        </td>
+                                        <td>
+                                          <div style={{ fontWeight: 'bold' }}>{apt.patientName}</div>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{apt.phone || apt.email}</div>
+                                        </td>
+                                        <td>
+                                          <div>{apt.serviceType || 'Specialist Consultation'}</div>
+                                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Dr. {apt.doctor}</div>
+                                        </td>
+                                        <td>
+                                          <strong style={{ color: 'var(--color-heading)' }}>
+                                            {formatNaira(apt.consultationFee || apt.price || apt.cost || 3000)}
+                                          </strong>
+                                        </td>
+                                        <td>
+                                          {renderPaymentStatusBadge(apt.paymentStatus)}
+                                          {apt.paymentApprovedBy && (
+                                            <div style={{ fontSize: '0.72rem', color: '#047857', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              <i className="fa-solid fa-check-double"></i> Endorsed by: {apt.paymentApprovedBy}
+                                            </div>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <div style={{ fontSize: '0.82rem' }}>{apt.date || 'Today'}</div>
+                                          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{apt.time || '09:00 AM'}</div>
+                                        </td>
+                                        <td>
+                                          <button
+                                            type="button"
+                                            className="btn btn-sm"
+                                            onClick={() => handleStaffApprovePayment(apt, 'appointment', 'admin')}
+                                            style={{
+                                              background: '#10b981',
+                                              color: '#fff',
+                                              fontWeight: 'bold',
+                                              fontSize: '0.78rem',
+                                              padding: '0.35rem 0.75rem',
+                                              borderRadius: '6px',
+                                              border: 'none',
+                                              cursor: 'pointer',
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '5px'
+                                            }}
+                                            title="Grant final clearance and release official receipt"
+                                          >
+                                            <i className="fa-solid fa-stamp"></i> Clear & Release Receipt
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Workspace: Appointments */}
                     {adminNavView === 'appointments' && (() => {
@@ -18416,6 +19451,161 @@ const LeafletDispatchMap = ({
           }}></span>
         </button>
       </aside>
+
+      {/* Official Certificate Presentation Modal */}
+      {showCertificateModal && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }} onClick={() => setShowCertificateModal(null)}>
+          <div
+            className="modal-content glassmorphic animate-fade"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '580px',
+              padding: '2.25rem',
+              borderRadius: '16px',
+              background: '#FFFFFF',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}
+          >
+            {/* Certificate Header Banner */}
+            <div style={{ textAlign: 'center', borderBottom: '2px solid rgba(2, 132, 199, 0.2)', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(2, 132, 199, 0.1)', color: showCertificateModal.sealColor || '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem auto', fontSize: '1.8rem' }}>
+                <i className="fa-solid fa-certificate"></i>
+              </div>
+              <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>
+                Federal Republic of Nigeria • Statutory Verification
+              </div>
+              <h3 style={{ margin: '0.4rem 0 0.2rem 0', color: 'var(--color-indigo)', fontSize: '1.35rem' }}>
+                {showCertificateModal.title}
+              </h3>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: 'bold' }}>
+                {showCertificateModal.body}
+              </div>
+            </div>
+
+            {/* Certificate Body Attributes */}
+            <div style={{ background: 'rgba(248, 250, 252, 0.8)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Official Reg / Certificate No:</span>
+                <strong style={{ color: 'var(--color-indigo)', fontFamily: 'monospace', fontSize: '0.95rem' }}>{showCertificateModal.regNo}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Registered Legal Entity:</span>
+                <strong style={{ color: 'var(--color-heading)' }}>{showCertificateModal.issuedTo}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Category of Licensure:</span>
+                <span>{showCertificateModal.category}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Issuing Authority:</span>
+                <span>{showCertificateModal.issuer}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.4rem' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Date of Grant / Audit:</span>
+                <span>{showCertificateModal.date}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Regulatory Status:</span>
+                <span style={{ background: '#dcfce7', color: '#15803d', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-solid fa-circle-check"></i> {showCertificateModal.status}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => window.print()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <i className="fa-solid fa-print"></i> Print Verification
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowCertificateModal(null)}
+              >
+                Close Certificate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Council License Modal */}
+      {updateLicenseModalDoc && (
+        <div className="modal-backdrop" style={{ zIndex: 10000 }} onClick={() => setUpdateLicenseModalDoc(null)}>
+          <div
+            className="modal-content glassmorphic animate-fade"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '480px',
+              padding: '2rem',
+              borderRadius: '16px',
+              background: '#FFFFFF',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-indigo)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-id-card" style={{ color: 'var(--color-primary)' }}></i> Update Council License
+              </h3>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setUpdateLicenseModalDoc(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+              Update the official practicing license and registration ID for <strong>{updateLicenseModalDoc.name}</strong>.
+            </p>
+
+            <form onSubmit={handleSaveDoctorLicense}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: '600', fontSize: '0.85rem' }}>Accrediting Healthcare Council</label>
+                <select
+                  value={updateLicenseForm.council}
+                  onChange={(e) => setUpdateLicenseForm({ ...updateLicenseForm, council: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                >
+                  <option value="Medical & Dental Council (MDCN)">Medical & Dental Council of Nigeria (MDCN)</option>
+                  <option value="Medical Lab Science Council (MLSCN)">Medical Laboratory Science Council of Nigeria (MLSCN)</option>
+                  <option value="Pharmacy Council of Nigeria (PCN)">Pharmacy Council of Nigeria (PCN)</option>
+                  <option value="Nursing & Midwifery Council (NMCN)">Nursing & Midwifery Council of Nigeria (NMCN)</option>
+                  <option value="Community Health Practitioners (CHPRBN)">Community Health Practitioners Registration Board (CHPRBN)</option>
+                  <option value="Nigerian Psychological Association (MNCP)">Nigerian Psychological Association (MNCP)</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: '600', fontSize: '0.85rem' }}>Council Registration ID / Folio No</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. MDCN/R/66412 or MLSCN/RA/4021"
+                  value={updateLicenseForm.regNo}
+                  onChange={(e) => setUpdateLicenseForm({ ...updateLicenseForm, regNo: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--color-border)', fontFamily: 'monospace', fontWeight: 'bold' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setUpdateLicenseModalDoc(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">
+                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Save License ID
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Global Page Popup Notification Modal */}
       {popupNotification && (
