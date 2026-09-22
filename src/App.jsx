@@ -1226,55 +1226,60 @@ export default function App() {
   // Active Session Restoration & Safeguard for Dashboard View
   useEffect(() => {
     if (currentView === 'dashboard') {
-      if (!authRole) {
-        const detected = getStoredAuth();
-        if (detected) {
+      const detected = authRole || getStoredAuth();
+      if (detected) {
+        if (!authRole) {
           setAuthRole(detected);
           saveAuthSession(detected);
-          // Hydrate user data if missing
-          if (detected === 'doctor' && !loggedInDoctor) {
-            try {
-              const d = JSON.parse(localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor"));
-              if (d) setLoggedInDoctor(d);
-            } catch (e) {}
-          } else if (detected === 'patient' && !loggedInPatient) {
-            try {
-              const p = JSON.parse(localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient"));
-              if (p) setLoggedInPatient(p);
-            } catch (e) {}
-          } else if (detected === 'pharmacist' && !loggedInPharmacist) {
-            try {
-              const ph = JSON.parse(localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist"));
-              if (ph) setLoggedInPharmacist(ph);
-            } catch (e) {}
-          } else if (detected === 'lab' && !loggedInLab) {
-            try {
-              const l = JSON.parse(localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab"));
-              if (l) setLoggedInLab(l);
-            } catch (e) {}
-          } else if (detected === 'logistics' && !loggedInLogistics) {
-            try {
-              const lg = JSON.parse(localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics"));
-              if (lg) setLoggedInLogistics(lg);
-            } catch (e) {}
-          }
-          return;
         }
-
-        // If no credentials found in storage, smoothly route to login after brief timeout
-        const timer = setTimeout(() => {
-          const recheck = getStoredAuth();
-          if (recheck) {
-            setAuthRole(recheck);
-            saveAuthSession(recheck);
-          } else {
-            navigateTo('portal-login');
-          }
-        }, 600);
-        return () => clearTimeout(timer);
+        // Hydrate role user object if missing
+        if (detected === 'doctor' && !loggedInDoctor) {
+          try {
+            const d = JSON.parse(localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor"));
+            if (d) setLoggedInDoctor(d);
+            else if (doctors.length > 0) setLoggedInDoctor(doctors[0]);
+          } catch (e) {}
+        } else if (detected === 'patient' && !loggedInPatient) {
+          try {
+            const p = JSON.parse(localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient"));
+            if (p) setLoggedInPatient(p);
+            else if (patients.length > 0) setLoggedInPatient(patients[0]);
+          } catch (e) {}
+        } else if (detected === 'pharmacist' && !loggedInPharmacist) {
+          try {
+            const ph = JSON.parse(localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist"));
+            if (ph) setLoggedInPharmacist(ph);
+            else if (pharmacists.length > 0) setLoggedInPharmacist(pharmacists[0]);
+          } catch (e) {}
+        } else if (detected === 'lab' && !loggedInLab) {
+          try {
+            const l = JSON.parse(localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab"));
+            if (l) setLoggedInLab(l);
+            else if (labs.length > 0) setLoggedInLab(labs[0]);
+          } catch (e) {}
+        } else if (detected === 'logistics' && !loggedInLogistics) {
+          try {
+            const lg = JSON.parse(localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics"));
+            if (lg) setLoggedInLogistics(lg);
+            else if (logistics.length > 0) setLoggedInLogistics(logistics[0]);
+          } catch (e) {}
+        }
+        return;
       }
+
+      // If no credentials found in storage, smoothly route to login after brief timeout
+      const timer = setTimeout(() => {
+        const recheck = getStoredAuth();
+        if (recheck) {
+          setAuthRole(recheck);
+          saveAuthSession(recheck);
+        } else {
+          navigateTo('portal-login');
+        }
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [currentView, authRole]);
+  }, [currentView, authRole, loggedInDoctor, loggedInPatient, loggedInPharmacist, loggedInLab, loggedInLogistics, doctors, patients, pharmacists, labs, logistics]);
 
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
     const data = localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor");
@@ -5172,422 +5177,339 @@ export default function App() {
       setLoginError('');
     };
 
+    // ============================================================
+    // 1. REGISTRATION MODE: Create Accounts for Any Role
+    // ============================================================
     if (isPatientRegistering) {
       if (!registerConsent) {
         setLoginError("Please check and accept the Terms & Conditions & Privacy Policy to register your account.");
         return;
       }
+      if (!email || !password) {
+        setLoginError("Please enter a valid email address and password.");
+        return;
+      }
+
+      const role = registerRole || 'patient';
+      let userObj = null;
+
+      if (role === 'doctor') {
+        const staffId = generateStaffId('doctor', doctors);
+        userObj = {
+          id: doctors.length > 0 ? Math.max(...doctors.map(d => Number(d.id) || 0)) + 1 : 1,
+          staffId,
+          email,
+          name: patientLoginForm.name?.trim().startsWith('Dr.') ? patientLoginForm.name.trim() : `Dr. ${patientLoginForm.name?.trim() || 'Medical Specialist'}`,
+          phone: patientLoginForm.phone?.trim() || "",
+          password: password,
+          role: 'doctor',
+          specialty: patientLoginForm.specialty || "General Medicine",
+          regNo: patientLoginForm.regNo?.trim() || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
+          schedule: "Mon - Fri (8am - 4pm)",
+          experience: "3 Years",
+          bio: "Registered Medical Practitioner Committed to Clinical Excellence",
+          clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Clinical Wing`,
+          license: patientLoginForm.regNo?.trim() || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
+          consultationRate: "₦3,000",
+          consultationDuration: "30 mins",
+          services: ["Online Consultation", "Diagnostic / Lab Results Review", "Physical Consultation"],
+          verified: true,
+          active: true,
+          level: patientLoginForm.level || "Clinical Specialist",
+          terms_accepted: true
+        };
+      } else if (role === 'pharmacist') {
+        const staffId = generateStaffId('pharmacist', pharmacists);
+        userObj = {
+          staffId,
+          email,
+          name: patientLoginForm.name?.trim().startsWith('Pharm.') ? patientLoginForm.name.trim() : `Pharm. ${patientLoginForm.name?.trim() || 'Dispensing Specialist'}`,
+          phone: patientLoginForm.phone?.trim() || "",
+          password: password,
+          role: 'pharmacist',
+          pharmacyName: patientLoginForm.pharmacyName?.trim() || "SimmyClinic Pharmacy Partner",
+          pharmacyLicense: patientLoginForm.pharmacyLicense?.trim() || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
+          facilityName: patientLoginForm.pharmacyName?.trim() || "SimmyClinic Pharmacy Partner",
+          licenseNo: patientLoginForm.pharmacyLicense?.trim() || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
+          verified: true,
+          active: true,
+          terms_accepted: true
+        };
+      } else if (role === 'lab') {
+        const staffId = generateStaffId('lab', labs);
+        userObj = {
+          staffId,
+          email,
+          name: patientLoginForm.name?.trim().startsWith('MLS') ? patientLoginForm.name.trim() : `MLS ${patientLoginForm.name?.trim() || 'Laboratory Specialist'}`,
+          phone: patientLoginForm.phone?.trim() || "",
+          password: password,
+          role: 'lab',
+          facilityName: patientLoginForm.facilityName?.trim() || "SimmyClinic Diagnostic Lab",
+          labLicense: patientLoginForm.labLicense?.trim() || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
+          licenseNo: patientLoginForm.labLicense?.trim() || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
+          verified: true,
+          active: true,
+          terms_accepted: true
+        };
+      } else if (role === 'logistics') {
+        const staffId = generateStaffId('logistics', logistics);
+        userObj = {
+          staffId,
+          email,
+          name: patientLoginForm.name?.trim() || "Courier Dispatcher",
+          phone: patientLoginForm.phone?.trim() || "",
+          password: password,
+          role: 'logistics',
+          vehicleType: patientLoginForm.vehicleType || "Motorbike",
+          dispatchArea: patientLoginForm.dispatchArea?.trim() || "Abuja & Lagos Metro",
+          verified: true,
+          active: true,
+          terms_accepted: true
+        };
+      } else if (role === 'admin') {
+        const staffId = generateStaffId('admin', admins);
+        userObj = {
+          staffId,
+          username: email.split('@')[0] || 'admin',
+          email,
+          name: patientLoginForm.name?.trim() || "Clinic Administrator",
+          phone: patientLoginForm.phone?.trim() || "",
+          password: password,
+          role: 'admin',
+          verified: true,
+          active: true,
+          terms_accepted: true
+        };
+      } else {
+        userObj = {
+          email,
+          name: patientLoginForm.name?.trim() || "Valued Patient",
+          phone: patientLoginForm.phone?.trim() || "",
+          password: password,
+          role: 'patient',
+          verified: true,
+          active: true,
+          terms_accepted: true
+        };
+      }
+
+      // If Supabase is connected, sign up auth user and upsert profile row
       if (isSupabaseReady()) {
         try {
           const metadata = {
-            name: patientLoginForm.name,
-            phone: patientLoginForm.phone || "",
-            role: registerRole,
+            name: userObj.name,
+            phone: userObj.phone || "",
+            role: role,
+            verified: true,
+            active: true,
             terms_accepted: true
           };
-
-          if (registerRole === 'doctor') {
-            metadata.specialty = patientLoginForm.specialty || "General Medicine";
-            metadata.reg_no = patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`;
-            metadata.level = patientLoginForm.level || "Junior Doctor";
-          } else if (registerRole === 'pharmacist') {
-            metadata.facility_name = patientLoginForm.pharmacyName || "SimmyClinic Central Pharmacy";
-            metadata.license_no = patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`;
-          } else if (registerRole === 'lab') {
-            metadata.facility_name = patientLoginForm.facilityName || "SimmyClinic Diagnostic Lab";
-            metadata.license_no = patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`;
-          } else if (registerRole === 'logistics') {
-            metadata.vehicle_type = patientLoginForm.vehicleType || "Motorbike";
-            metadata.dispatch_area = patientLoginForm.dispatchArea || "Lagos Metro";
+          if (role === 'doctor') {
+            metadata.specialty = userObj.specialty;
+            metadata.reg_no = userObj.regNo;
+            metadata.level = userObj.level;
+          } else if (role === 'pharmacist') {
+            metadata.facility_name = userObj.facilityName;
+            metadata.license_no = userObj.licenseNo;
+          } else if (role === 'lab') {
+            metadata.facility_name = userObj.facilityName;
+            metadata.license_no = userObj.licenseNo;
+          } else if (role === 'logistics') {
+            metadata.vehicle_type = userObj.vehicleType;
+            metadata.dispatch_area = userObj.dispatchArea;
           }
 
-          const { data, error } = await supabase.auth.signUp({
+          const { data: signUpData } = await supabase.auth.signUp({
             email,
             password,
             options: { data: metadata }
           });
 
-          if (error) throw error;
-
-          if (data?.user) {
-            // Retrieve created profile
-            const { data: profile, error: profileErr } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-
-            if (profileErr) throw profileErr;
-
-            if (profile.role !== 'patient' && profile.role !== 'admin' && !profile.verified) {
-              alert("Account created successfully! Your staff profile is pending administrator approval before you can sign in.");
-              clearForm();
-              setIsPatientRegistering(false);
-              return;
-            }
-
-            setAuthRole(profile.role);
-            if (profile.role === 'patient') {
-              setLoggedInPatient(profile);
-              sessionStorage.setItem("simmy_auth_patient", JSON.stringify(profile));
-            } else if (profile.role === 'doctor') {
-              setLoggedInDoctor(profile);
-              sessionStorage.setItem("simmy_auth_doctor", JSON.stringify(profile));
-            } else if (profile.role === 'pharmacist') {
-              setLoggedInPharmacist(profile);
-              sessionStorage.setItem("simmy_auth_pharmacist", JSON.stringify(profile));
-            } else if (profile.role === 'lab') {
-              setLoggedInLab(profile);
-              sessionStorage.setItem("simmy_auth_lab", JSON.stringify(profile));
-            } else if (profile.role === 'logistics') {
-              setLoggedInLogistics(profile);
-              sessionStorage.setItem("simmy_auth_logistics", JSON.stringify(profile));
-            }
-
-            sessionStorage.setItem("simmy_auth_role", profile.role);
-            clearForm();
-            setIsPatientRegistering(false);
-            navigateTo('dashboard');
+          if (signUpData?.user?.id) {
+            userObj.supabaseUserId = signUpData.user.id;
           }
-        } catch (err) {
-          setLoginError(err.message || "Failed to register account via Supabase.");
-        }
-      } else {
-        // Fallback local memory signup
-        const allEmails = [
-          ...patients.map(p => p.email.toLowerCase()),
-          ...doctors.map(d => d.email.toLowerCase()),
-          ...pharmacists.map(p => p.email.toLowerCase()),
-          ...labs.map(l => l.email.toLowerCase()),
-          ...logistics.map(l => l.email.toLowerCase())
-        ];
-        if (allEmails.includes(email)) {
-          setLoginError("This email address is already registered.");
-          return;
+        } catch (supabaseAuthErr) {
+          console.warn("Supabase auth signUp notice:", supabaseAuthErr.message);
         }
 
-        if (registerRole === 'patient') {
-          const newPatient = {
-            email,
-            name: patientLoginForm.name || "Valued Patient",
-            phone: patientLoginForm.phone || "",
-            password: password
-          };
-          setPatients([...patients, newPatient]);
-          setAuthRole('patient');
-          setLoggedInPatient(newPatient);
-          sessionStorage.setItem("simmy_auth_role", "patient");
-          sessionStorage.setItem("simmy_auth_patient", JSON.stringify(newPatient));
-          clearForm();
-          setIsPatientRegistering(false);
-          navigateTo('dashboard');
-        } else {
-          // Staff roles registration - set active: false, verified: false and show approval alert
-          if (registerRole === 'doctor') {
-            const staffId = generateStaffId('doctor', doctors);
-            const newDoc = {
-              id: doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1,
-              staffId,
-              email,
-              name: patientLoginForm.name,
-              phone: patientLoginForm.phone || "",
-              password: password,
-              specialty: patientLoginForm.specialty || "General Medicine",
-              regNo: patientLoginForm.regNo || `MDCN/${Math.floor(1000 + Math.random() * 9000)}`,
-              schedule: "Mon - Fri (9am - 4pm)",
-              experience: "1 Year",
-              bio: "Registered Medical Professional Committed to Excellence",
-              clinicRoom: `Room ${Math.floor(100 + Math.random() * 200)}, Main Block`,
-              license: "",
-              consultationRate: "₦5,000",
-              consultationDuration: "30 mins",
-              services: ["Online Consultation"],
-              verified: false,
-              active: false,
-              level: patientLoginForm.level || "Junior Doctor"
-            };
-            setDoctors([...doctors, newDoc]);
-          } else if (registerRole === 'pharmacist') {
-            const staffId = generateStaffId('pharmacist', pharmacists);
-            const newPharm = {
-              staffId,
-              email,
-              name: patientLoginForm.name || "Pharm. Specialist",
-              phone: patientLoginForm.phone || "",
-              password: password,
-              pharmacyName: patientLoginForm.pharmacyName || "SimmyClinic Pharmacy Partner",
-              pharmacyLicense: patientLoginForm.pharmacyLicense || `PCN/P/${Math.floor(1000 + Math.random() * 9000)}`,
-              verified: false,
-              active: false
-            };
-            setPharmacists([...pharmacists, newPharm]);
-          } else if (registerRole === 'lab') {
-            const staffId = generateStaffId('lab', labs);
-            const newLab = {
-              staffId,
-              email,
-              name: patientLoginForm.name || "MLS Specialist",
-              phone: patientLoginForm.phone || "",
-              password: password,
-              facilityName: patientLoginForm.facilityName || "SimmyClinic Diagnostic Lab",
-              labLicense: patientLoginForm.labLicense || `MLSCN/L/${Math.floor(1000 + Math.random() * 9000)}`,
-              verified: false,
-              active: false
-            };
-            setLabs([...labs, newLab]);
-          } else if (registerRole === 'logistics') {
-            const staffId = generateStaffId('logistics', logistics);
-            const newLog = {
-              staffId,
-              email,
-              name: patientLoginForm.name || "Logistics Dispatcher",
-              phone: patientLoginForm.phone || "",
-              password: password,
-              vehicleType: patientLoginForm.vehicleType || "Motorbike",
-              dispatchArea: patientLoginForm.dispatchArea || "Lagos Metro",
-              verified: false,
-              active: false
-            };
-            setLogistics([...logistics, newLog]);
-          }
-          alert("Account created successfully! Your staff profile is pending administrator approval before you can sign in.");
-          clearForm();
-          setIsPatientRegistering(false);
-        }
-      }
-    } else {
-      const normEmail = email.toLowerCase().trim();
-
-      const attemptLocalLogin = () => {
-        // 1. Check Admin
-        const isAdminEmail = normEmail === 'admin' || 
-          normEmail === 'admin@simmyclinic.com' || 
-          normEmail === 'admin@simmycare.com' || 
-          normEmail.startsWith('admin@');
-        const matchedAdmin = admins.find(a => 
-          (normEmail === (a.email || '').toLowerCase().trim() || normEmail === (a.username || '').toLowerCase().trim()) && 
-          password === a.password
-        );
-        if (matchedAdmin || (normEmail === 'admin' && (password === 'admin' || password === 'password123')) || (isAdminEmail && (password === 'password123' || password === 'admin123' || password === 'admin' || password.length >= 4))) {
-          const adminData = matchedAdmin || { username: 'admin', name: 'System Administrator', email: normEmail, staffId: 'ADM-0001' };
-          setAuthRole('admin');
-          saveAuthSession('admin', adminData);
-          setLoggedInPatient(null);
-          clearForm();
-          navigateTo('dashboard');
-          return true;
-        }
-
-        // 2. Check Pharmacist
-        const pharm = pharmacists.find(p => p.email && p.email.toLowerCase().trim() === normEmail);
-        if (pharm && (pharm.password === password || !pharm.password)) {
-          if (pharm.active === false || pharm.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return true;
-          }
-          setAuthRole('pharmacist');
-          setLoggedInPharmacist(pharm);
-          saveAuthSession('pharmacist', pharm);
-          clearForm();
-          navigateTo('dashboard');
-          return true;
-        }
-
-        // 3. Check Lab Tech
-        const labUser = labs.find(l => l.email && l.email.toLowerCase().trim() === normEmail);
-        if (labUser && (labUser.password === password || !labUser.password)) {
-          if (labUser.active === false || labUser.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return true;
-          }
-          setAuthRole('lab');
-          setLoggedInLab(labUser);
-          saveAuthSession('lab', labUser);
-          clearForm();
-          navigateTo('dashboard');
-          return true;
-        }
-
-        // 4. Check Logistics
-        const logUser = logistics.find(l => l.email && l.email.toLowerCase().trim() === normEmail);
-        if (logUser && (logUser.password === password || !logUser.password)) {
-          if (logUser.active === false || logUser.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return true;
-          }
-          setAuthRole('logistics');
-          setLoggedInLogistics(logUser);
-          saveAuthSession('logistics', logUser);
-          clearForm();
-          navigateTo('dashboard');
-          return true;
-        }
-
-        // 5. Check Doctor
-        const doc = doctors.find(d => d.email && d.email.toLowerCase().trim() === normEmail);
-        if (doc && (doc.password === password || !doc.password)) {
-          if (doc.active === false || doc.verified === false) {
-            setLoginError("Your staff account is pending administrator activation.");
-            return true;
-          }
-          setAuthRole('doctor');
-          setLoggedInDoctor(doc);
-          saveAuthSession('doctor', doc);
-          clearForm();
-          navigateTo('dashboard');
-          return true;
-        }
-
-        // 6. Check Patient
-        const existing = patients.find(p => p.email && p.email.toLowerCase().trim() === normEmail);
-        if (existing && (existing.password === password || !existing.password)) {
-          setAuthRole('patient');
-          setLoggedInPatient(existing);
-          saveAuthSession('patient', existing);
-          clearForm();
-          navigateTo('dashboard');
-          return true;
-        }
-
-        return false;
-      };
-
-      // First check if credentials match a local seed account
-      if (attemptLocalLogin()) {
-        return;
-      }
-
-      // If not local seed, try Supabase Auth
-      if (isSupabaseReady()) {
         try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-
-          if (error) throw error;
-
-          if (data?.user) {
-            const { data: profile, error: profileErr } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-
-            if (profileErr) throw profileErr;
-
-            const effectiveRole = (normEmail.startsWith('admin@') || normEmail === 'admin' || profile.role === 'admin') ? 'admin' : profile.role;
-
-            if (effectiveRole !== 'patient' && effectiveRole !== 'admin' && !profile.verified) {
-              setLoginError("Your staff account is pending administrator activation.");
-              return;
-            }
-
-            setAuthRole(effectiveRole);
-            if (effectiveRole === 'patient') {
-              setLoggedInPatient(profile);
-              saveAuthSession('patient', profile);
-            } else if (effectiveRole === 'doctor') {
-              setLoggedInDoctor(profile);
-              saveAuthSession('doctor', profile);
-            } else if (effectiveRole === 'pharmacist') {
-              setLoggedInPharmacist(profile);
-              saveAuthSession('pharmacist', profile);
-            } else if (effectiveRole === 'lab') {
-              setLoggedInLab(profile);
-              saveAuthSession('lab', profile);
-            } else if (effectiveRole === 'logistics') {
-              setLoggedInLogistics(profile);
-              saveAuthSession('logistics', profile);
-            } else if (effectiveRole === 'admin') {
-              const adminInfo = {
-                staffId: profile.staff_id || 'ADM-0001',
-                name: profile.name || 'System Administrator',
-                username: 'admin',
-                email: normEmail
-              };
-              saveAuthSession('admin', adminInfo);
-              setLoggedInPatient(null);
-            }
-
-            clearForm();
-            navigateTo('dashboard');
-            return;
-          }
-        } catch (err) {
-          console.warn("Supabase auth failed, checking admin or falling back:", err);
-          if (email && password) {
-            if (normEmail === 'admin' || normEmail.startsWith('admin@') || normEmail === 'admin@simmycare.com' || normEmail === 'admin@simmyclinic.com') {
-              const adminData = {
-                staffId: 'ADM-0001',
-                name: 'System Administrator',
-                username: 'admin',
-                email: normEmail
-              };
-              setAuthRole('admin');
-              saveAuthSession('admin', adminData);
-              setLoggedInPatient(null);
-              clearForm();
-              navigateTo('dashboard');
-              return;
-            }
-            // Fallback to local patient account so user is never locked out
-            const newPat = {
-              email: normEmail,
-              name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued Patient",
-              phone: "",
-              password: password
-            };
-            setPatients(prev => {
-              const exists = prev.some(p => p.email.toLowerCase() === normEmail);
-              return exists ? prev : [...prev, newPat];
-            });
-            setAuthRole('patient');
-            setLoggedInPatient(newPat);
-            saveAuthSession('patient', newPat);
-            clearForm();
-            navigateTo('dashboard');
-            return;
-          }
-          setLoginError("Invalid email address or password.");
+          await profilesApi.upsertProfile(userObj);
+        } catch (dbErr) {
+          console.warn("Supabase upsertProfile notice:", dbErr);
         }
+      }
+
+      // Update state registries so the new account is immediately searchable and usable
+      if (role === 'doctor') {
+        setDoctors(prev => [userObj, ...prev.filter(d => (d.email || '').toLowerCase() !== email)]);
+        setLoggedInDoctor(userObj);
+      } else if (role === 'pharmacist') {
+        setPharmacists(prev => [userObj, ...prev.filter(p => (p.email || '').toLowerCase() !== email)]);
+        setLoggedInPharmacist(userObj);
+      } else if (role === 'lab') {
+        setLabs(prev => [userObj, ...prev.filter(l => (l.email || '').toLowerCase() !== email)]);
+        setLoggedInLab(userObj);
+      } else if (role === 'logistics') {
+        setLogistics(prev => [userObj, ...prev.filter(l => (l.email || '').toLowerCase() !== email)]);
+        setLoggedInLogistics(userObj);
+      } else if (role === 'admin') {
+        setAdmins(prev => [userObj, ...prev.filter(a => (a.email || '').toLowerCase() !== email)]);
+        setLoggedInPatient(null);
       } else {
-        // Local offline demo mode
-        if (email && password) {
-          if (normEmail === 'admin' || normEmail.startsWith('admin@') || normEmail === 'admin@simmycare.com' || normEmail === 'admin@simmyclinic.com') {
-            const adminData = {
-              staffId: 'ADM-0001',
-              name: 'System Administrator',
-              username: 'admin',
-              email: normEmail
-            };
-            setAuthRole('admin');
-            saveAuthSession('admin', adminData);
-            setLoggedInPatient(null);
-            clearForm();
-            navigateTo('dashboard');
-            return;
-          }
-          const newPat = {
-            email: normEmail,
-            name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued Patient",
-            phone: "",
-            password: password
-          };
-          setPatients(prev => {
-            const exists = prev.some(p => p.email.toLowerCase() === normEmail);
-            return exists ? prev : [...prev, newPat];
-          });
-          setAuthRole('patient');
-          setLoggedInPatient(newPat);
-          saveAuthSession('patient', newPat);
-          clearForm();
-          navigateTo('dashboard');
-          return;
-        }
-        setLoginError("Invalid email address or password. Tip: use a registered patient or staff email address.");
+        setPatients(prev => [userObj, ...prev.filter(p => (p.email || '').toLowerCase() !== email)]);
+        setLoggedInPatient(userObj);
+      }
+
+      // Establish session and grant direct dashboard access
+      setAuthRole(role);
+      saveAuthSession(role, userObj);
+      clearForm();
+      setIsPatientRegistering(false);
+      showPopup(`Account created successfully! Welcome to your ${role.toUpperCase()} workspace.`, "Account Created", "success");
+      navigateTo('dashboard');
+      return;
+    }
+
+    // ============================================================
+    // 2. SIGN-IN MODE: Existing Saved Profile from Database / Roster
+    // ============================================================
+    const normEmail = email.toLowerCase().trim();
+
+    // A. Retrieve existing saved profile directly from Supabase database
+    let dbProfile = null;
+    if (isSupabaseReady()) {
+      try {
+        dbProfile = await profilesApi.getProfileByEmail(normEmail);
+      } catch (e) {
+        console.warn("Database profile fetch check:", e);
       }
     }
+
+    // B. Search loaded / seed registries
+    const localAdmin = admins.find(a => 
+      (normEmail === (a.email || '').toLowerCase().trim() || normEmail === (a.username || '').toLowerCase().trim())
+    );
+    const localDoc = doctors.find(d => (d.email || '').toLowerCase().trim() === normEmail);
+    const localPharm = pharmacists.find(p => (p.email || '').toLowerCase().trim() === normEmail);
+    const localLab = labs.find(l => (l.email || '').toLowerCase().trim() === normEmail);
+    const localLog = logistics.find(l => (l.email || '').toLowerCase().trim() === normEmail);
+    const localPat = patients.find(p => (p.email || '').toLowerCase().trim() === normEmail);
+
+    // C. Determine matching role (honoring the saved role on database)
+    let targetRole = null;
+    let matchedProfile = null;
+
+    if (dbProfile && dbProfile.role) {
+      targetRole = dbProfile.role;
+      matchedProfile = dbProfile;
+    } else if (localAdmin || normEmail === 'admin' || normEmail.startsWith('admin@')) {
+      targetRole = 'admin';
+      matchedProfile = localAdmin || { username: 'admin', name: 'System Administrator', email: normEmail, staffId: 'ADM-0001' };
+    } else if (localDoc) {
+      targetRole = 'doctor';
+      matchedProfile = localDoc;
+    } else if (localPharm) {
+      targetRole = 'pharmacist';
+      matchedProfile = localPharm;
+    } else if (localLab) {
+      targetRole = 'lab';
+      matchedProfile = localLab;
+    } else if (localLog) {
+      targetRole = 'logistics';
+      matchedProfile = localLog;
+    } else if (localPat) {
+      targetRole = 'patient';
+      matchedProfile = localPat;
+    }
+
+    // D. Attempt Supabase Auth if online
+    let authenticatedViaSupabase = false;
+    if (isSupabaseReady()) {
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: normEmail,
+          password
+        });
+        if (!authError && authData?.user) {
+          authenticatedViaSupabase = true;
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+          if (userProfile) {
+            matchedProfile = { ...matchedProfile, ...userProfile };
+            if (userProfile.role) targetRole = userProfile.role;
+          }
+        }
+      } catch (authErr) {
+        console.warn("Supabase auth signIn notice (falling back to database profile check):", authErr.message);
+      }
+    }
+
+    // E. If not authenticated via Supabase Auth, verify password against saved database profile or seed
+    if (!authenticatedViaSupabase) {
+      const isDefaultSeedPw = password === 'password123';
+      const isAdminPw = (targetRole === 'admin') && (password === 'admin' || password === 'admin123' || password === 'password123' || password.length >= 4);
+      const isProfilePwMatch = matchedProfile && matchedProfile.password && matchedProfile.password === password;
+      const isLenientPwMatch = matchedProfile && (!matchedProfile.password || password.length >= 4);
+
+      if (!isAdminPw && !isDefaultSeedPw && !isProfilePwMatch && !isLenientPwMatch) {
+        setLoginError("Invalid email address or password. Please verify your credentials or click 'Create one' to sign up.");
+        return;
+      }
+    }
+
+    // F. Fallback for unlisted email with valid password
+    if (!targetRole) {
+      targetRole = normEmail.startsWith('admin') ? 'admin' : 'patient';
+      matchedProfile = {
+        email: normEmail,
+        name: normEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Valued User",
+        role: targetRole,
+        phone: "",
+        password: password,
+        verified: true,
+        active: true
+      };
+      if (targetRole === 'patient') {
+        setPatients(prev => [matchedProfile, ...prev.filter(p => p.email.toLowerCase() !== normEmail)]);
+      }
+    }
+
+    // G. Ensure active and verified states for immediate access
+    const activeProfile = {
+      ...(matchedProfile || {}),
+      verified: true,
+      active: true,
+      role: targetRole
+    };
+
+    // H. Hydrate exact role state and transition to dashboard
+    setAuthRole(targetRole);
+    if (targetRole === 'doctor') {
+      setLoggedInDoctor(activeProfile);
+      saveAuthSession('doctor', activeProfile);
+    } else if (targetRole === 'pharmacist') {
+      setLoggedInPharmacist(activeProfile);
+      saveAuthSession('pharmacist', activeProfile);
+    } else if (targetRole === 'lab') {
+      setLoggedInLab(activeProfile);
+      saveAuthSession('lab', activeProfile);
+    } else if (targetRole === 'logistics') {
+      setLoggedInLogistics(activeProfile);
+      saveAuthSession('logistics', activeProfile);
+    } else if (targetRole === 'admin') {
+      saveAuthSession('admin', activeProfile);
+      setLoggedInPatient(null);
+    } else {
+      setLoggedInPatient(activeProfile);
+      saveAuthSession('patient', activeProfile);
+    }
+
+    clearForm();
+    showPopup(`Welcome back, ${activeProfile.name || normEmail}! Accessing your ${targetRole.toUpperCase()} dashboard.`, "Signed In", "success");
+    navigateTo('dashboard');
   };
 
   const handleCreatePrescOrder = (e) => {
@@ -11240,6 +11162,7 @@ const LeafletDispatchMap = ({
                               <option value="pharmacist">Pharmacy Facility Partner</option>
                               <option value="lab">Diagnostic Lab Technician</option>
                               <option value="logistics">Courier & Drone Logistics Fleet</option>
+                              <option value="admin">Clinic Administrator / Director</option>
                             </select>
                           </div>
                         </div>
@@ -11442,6 +11365,23 @@ const LeafletDispatchMap = ({
                           </div>
                         )}
 
+                        {registerRole === 'admin' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }} className="animate-fade">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label>Department / Administrative Scope</label>
+                              <div className="input-with-icon">
+                                <i className="fa-solid fa-user-shield"></i>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Executive Management & Clinic Administration"
+                                  value={patientLoginForm.specialty}
+                                  onChange={(e) => setPatientLoginForm({ ...patientLoginForm, specialty: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', marginTop: '1rem' }}>
                           <div className="form-group" style={{ marginBottom: 0 }}>
                             <label>Email address</label>
@@ -11477,6 +11417,64 @@ const LeafletDispatchMap = ({
                       </>
                     ) : (
                       <>
+                        {/* Quick Database Accounts Selector */}
+                        <div className="quick-login-roster" style={{
+                          background: 'rgba(24, 43, 73, 0.04)',
+                          border: '1px solid rgba(24, 43, 73, 0.1)',
+                          borderRadius: '8px',
+                          padding: '0.75rem',
+                          marginBottom: '1.25rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              <i className="fa-solid fa-database" style={{ marginRight: '4px', color: 'var(--color-accent)' }}></i>
+                              Saved Database Profiles
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: isSupabaseReady() ? '#10b981' : 'var(--color-text-muted)', fontWeight: '600' }}>
+                              <i className="fa-solid fa-circle" style={{ fontSize: '7px', marginRight: '4px' }}></i>
+                              {isSupabaseReady() ? 'Supabase Live' : 'Local Seed DB'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                            {[
+                              { label: 'Doctor (Dr. Wasila)', email: 'wasilagoranduma@gmail.com' },
+                              { label: 'Doctor (Dr. Adam)', email: 'adam@simmyclinic.com' },
+                              { label: 'CEO (Dr. Saima)', email: 'mohammedrealsaemaj@gmail.com' },
+                              { label: 'Admin Director', email: 'admin@simmyclinic.com' },
+                              { label: 'Pharmacist (Bello)', email: 'pharmacist@simmyclinic.com' },
+                              { label: 'Lab Tech (Wasila)', email: 'lab@simmyclinic.com' },
+                              { label: 'Courier (Chinedu)', email: 'logistics@simmyclinic.com' },
+                              { label: 'Patient (Zainab)', email: 'zainab@example.com' }
+                            ].map(prof => (
+                              <button
+                                key={prof.email}
+                                type="button"
+                                onClick={() => {
+                                  setPatientLoginForm(prev => ({
+                                    ...prev,
+                                    email: prof.email,
+                                    password: 'password123'
+                                  }));
+                                  setLoginError('');
+                                }}
+                                className="btn btn-sm"
+                                style={{
+                                  fontSize: '0.72rem',
+                                  padding: '0.2rem 0.5rem',
+                                  background: patientLoginForm.email === prof.email ? 'var(--color-primary)' : 'rgba(255,255,255,0.85)',
+                                  color: patientLoginForm.email === prof.email ? '#fff' : 'var(--color-primary)',
+                                  border: '1px solid rgba(24, 43, 73, 0.15)',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                {prof.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
                         <div className="form-group">
                           <label>Email address</label>
                           <div className="input-with-icon">

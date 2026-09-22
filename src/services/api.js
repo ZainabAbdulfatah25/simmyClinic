@@ -388,6 +388,27 @@ export const profilesApi = {
     }
   },
 
+  async getProfileByEmail(email) {
+    if (!isSupabaseConfigured() || !email) return null;
+    try {
+      const normalizedEmail = email.toLowerCase().trim();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .ilike('email', normalizedEmail)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Supabase getProfileByEmail error:', error.message);
+        return null;
+      }
+      return data ? formatProfile(data) : null;
+    } catch (err) {
+      console.warn('Profiles API getProfileByEmail exception:', err);
+      return null;
+    }
+  },
+
   async upsertProfile(profile) {
     if (!isSupabaseConfigured()) return null;
     try {

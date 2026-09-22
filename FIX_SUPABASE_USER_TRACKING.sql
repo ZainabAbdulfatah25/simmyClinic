@@ -103,3 +103,56 @@ BEGIN
     EXECUTE 'CREATE POLICY "orders_public_all_policy" ON public.orders FOR ALL USING (true) WITH CHECK (true);';
   END IF;
 END $$;
+
+-- 9. AUTO-ACTIVATE AND AUTO-VERIFY ALL ROLES (DOCTORS, STAFF, ADMINS, PATIENTS)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id, 
+    email, 
+    name, 
+    phone, 
+    role,
+    specialty,
+    reg_no,
+    facility_name,
+    license_no,
+    vehicle_type,
+    dispatch_area,
+    level,
+    bio,
+    active,
+    verified,
+    terms_accepted,
+    terms_accepted_at
+  )
+  VALUES (
+    new.id,
+    new.email,
+    COALESCE(new.raw_user_meta_data->>'name', 'Valued Member'),
+    new.raw_user_meta_data->>'phone',
+    COALESCE((new.raw_user_meta_data->>'role')::user_role, 'patient'::user_role),
+    new.raw_user_meta_data->>'specialty',
+    new.raw_user_meta_data->>'reg_no',
+    new.raw_user_meta_data->>'facility_name',
+    new.raw_user_meta_data->>'license_no',
+    new.raw_user_meta_data->>'vehicle_type',
+    new.raw_user_meta_data->>'dispatch_area',
+    new.raw_user_meta_data->>'level',
+    new.raw_user_meta_data->>'bio',
+    true, -- Auto-active
+    true, -- Auto-verified for instant dashboard access
+    COALESCE((new.raw_user_meta_data->>'terms_accepted')::boolean, false),
+    CASE 
+      WHEN (new.raw_user_meta_data->>'terms_accepted')::boolean = true THEN NOW() 
+      ELSE NULL 
+    END
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    verified = true,
+    active = true;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+

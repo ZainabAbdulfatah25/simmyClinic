@@ -256,16 +256,9 @@ BEGIN
     new.raw_user_meta_data->>'dispatch_area',
     new.raw_user_meta_data->>'level',
     new.raw_user_meta_data->>'bio',
-    -- Patients and Admins are auto-activated; staff accounts need admin activation
-    CASE 
-      WHEN COALESCE(new.raw_user_meta_data->>'role', 'patient') IN ('patient', 'admin') THEN true 
-      ELSE false 
-    END,
-    -- Patients and Admins are auto-verified; staff needs admin verification
-    CASE 
-      WHEN COALESCE(new.raw_user_meta_data->>'role', 'patient') IN ('patient', 'admin') THEN true 
-      ELSE false 
-    END,
+    -- Auto-activate and auto-verify all roles upon creation for instant dashboard access
+    true,
+    true,
     COALESCE((new.raw_user_meta_data->>'terms_accepted')::boolean, false),
     CASE 
       WHEN (new.raw_user_meta_data->>'terms_accepted')::boolean = true THEN NOW() 
