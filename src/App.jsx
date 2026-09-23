@@ -1223,64 +1223,6 @@ export default function App() {
     }
   }, [loggedInPatient]);
 
-  // Active Session Restoration & Safeguard for Dashboard View
-  useEffect(() => {
-    if (currentView === 'dashboard') {
-      const detected = authRole || getStoredAuth();
-      if (detected) {
-        if (!authRole) {
-          setAuthRole(detected);
-          saveAuthSession(detected);
-        }
-        // Hydrate role user object if missing
-        if (detected === 'doctor' && !loggedInDoctor) {
-          try {
-            const d = JSON.parse(localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor"));
-            if (d) setLoggedInDoctor(d);
-            else if (doctors.length > 0) setLoggedInDoctor(doctors[0]);
-          } catch (e) {}
-        } else if (detected === 'patient' && !loggedInPatient) {
-          try {
-            const p = JSON.parse(localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient"));
-            if (p) setLoggedInPatient(p);
-            else if (patients.length > 0) setLoggedInPatient(patients[0]);
-          } catch (e) {}
-        } else if (detected === 'pharmacist' && !loggedInPharmacist) {
-          try {
-            const ph = JSON.parse(localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist"));
-            if (ph) setLoggedInPharmacist(ph);
-            else if (pharmacists.length > 0) setLoggedInPharmacist(pharmacists[0]);
-          } catch (e) {}
-        } else if (detected === 'lab' && !loggedInLab) {
-          try {
-            const l = JSON.parse(localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab"));
-            if (l) setLoggedInLab(l);
-            else if (labs.length > 0) setLoggedInLab(labs[0]);
-          } catch (e) {}
-        } else if (detected === 'logistics' && !loggedInLogistics) {
-          try {
-            const lg = JSON.parse(localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics"));
-            if (lg) setLoggedInLogistics(lg);
-            else if (logistics.length > 0) setLoggedInLogistics(logistics[0]);
-          } catch (e) {}
-        }
-        return;
-      }
-
-      // If no credentials found in storage, smoothly route to login after brief timeout
-      const timer = setTimeout(() => {
-        const recheck = getStoredAuth();
-        if (recheck) {
-          setAuthRole(recheck);
-          saveAuthSession(recheck);
-        } else {
-          navigateTo('portal-login');
-        }
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [currentView, authRole, loggedInDoctor, loggedInPatient, loggedInPharmacist, loggedInLab, loggedInLogistics, doctors, patients, pharmacists, labs, logistics]);
-
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
     const data = localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor");
     return data ? JSON.parse(data) : null;
@@ -1289,6 +1231,21 @@ export default function App() {
   const myDoctorAppointments = loggedInDoctor
     ? appointments.filter(apt => apt.doctorId === loggedInDoctor.id || apt.doctor === loggedInDoctor.name)
     : [];
+
+  const [loggedInPharmacist, setLoggedInPharmacist] = useState(() => {
+    const data = localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist");
+    return data ? JSON.parse(data) : null;
+  });
+
+  const [loggedInLab, setLoggedInLab] = useState(() => {
+    const data = localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab");
+    return data ? JSON.parse(data) : null;
+  });
+
+  const [loggedInLogistics, setLoggedInLogistics] = useState(() => {
+    const data = localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics");
+    return data ? JSON.parse(data) : null;
+  });
 
   // --- UI state ---
   const [loginTab, setLoginTab] = useState('patient'); // 'patient' | 'doctor' | 'admin'
@@ -1575,20 +1532,7 @@ export default function App() {
     };
   }, []);
 
-  // New role authentication & UI states
-  const [loggedInPharmacist, setLoggedInPharmacist] = useState(() => {
-    const data = localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist");
-    return data ? JSON.parse(data) : null;
-  });
-  const [loggedInLab, setLoggedInLab] = useState(() => {
-    const data = localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab");
-    return data ? JSON.parse(data) : null;
-  });
-  const [loggedInLogistics, setLoggedInLogistics] = useState(() => {
-    const data = localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics");
-    return data ? JSON.parse(data) : null;
-  });
-
+  // Role Navigation views
   const [pharmacistNavView, setPharmacistNavView] = useState(() => {
     return localStorage.getItem("simmy_pharm_nav_view") || 'orders';
   });
@@ -5036,6 +4980,64 @@ export default function App() {
       return newHist;
     });
   };
+
+  // Active Session Restoration & Safeguard for Dashboard View
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      const detected = authRole || getStoredAuth();
+      if (detected) {
+        if (!authRole) {
+          setAuthRole(detected);
+          saveAuthSession(detected);
+        }
+        // Hydrate role user object if missing
+        if (detected === 'doctor' && !loggedInDoctor) {
+          try {
+            const d = JSON.parse(localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor"));
+            if (d) setLoggedInDoctor(d);
+            else if (doctors.length > 0) setLoggedInDoctor(doctors[0]);
+          } catch (e) {}
+        } else if (detected === 'patient' && !loggedInPatient) {
+          try {
+            const p = JSON.parse(localStorage.getItem("simmy_auth_patient") || sessionStorage.getItem("simmy_auth_patient"));
+            if (p) setLoggedInPatient(p);
+            else if (patients.length > 0) setLoggedInPatient(patients[0]);
+          } catch (e) {}
+        } else if (detected === 'pharmacist' && !loggedInPharmacist) {
+          try {
+            const ph = JSON.parse(localStorage.getItem("simmy_auth_pharmacist") || sessionStorage.getItem("simmy_auth_pharmacist"));
+            if (ph) setLoggedInPharmacist(ph);
+            else if (pharmacists.length > 0) setLoggedInPharmacist(pharmacists[0]);
+          } catch (e) {}
+        } else if (detected === 'lab' && !loggedInLab) {
+          try {
+            const l = JSON.parse(localStorage.getItem("simmy_auth_lab") || sessionStorage.getItem("simmy_auth_lab"));
+            if (l) setLoggedInLab(l);
+            else if (labs.length > 0) setLoggedInLab(labs[0]);
+          } catch (e) {}
+        } else if (detected === 'logistics' && !loggedInLogistics) {
+          try {
+            const lg = JSON.parse(localStorage.getItem("simmy_auth_logistics") || sessionStorage.getItem("simmy_auth_logistics"));
+            if (lg) setLoggedInLogistics(lg);
+            else if (logistics.length > 0) setLoggedInLogistics(logistics[0]);
+          } catch (e) {}
+        }
+        return;
+      }
+
+      // If no credentials found in storage, smoothly route to login after brief timeout
+      const timer = setTimeout(() => {
+        const recheck = getStoredAuth();
+        if (recheck) {
+          setAuthRole(recheck);
+          saveAuthSession(recheck);
+        } else {
+          navigateTo('portal-login');
+        }
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [currentView, authRole, loggedInDoctor, loggedInPatient, loggedInPharmacist, loggedInLab, loggedInLogistics, doctors, patients, pharmacists, labs, logistics]);
 
   const startBooking = (context = {}) => {
     setBookingFormData((prev) => {
