@@ -153,9 +153,12 @@ const getSpecialtyTitle = (specialty) => {
 const getDoctorCardSubheading = (doc) => {
   if (!doc) return { mainText: '', unitText: '', isCeo: false };
   const isCeo = doc.isCeo || (doc.name && (doc.name.toLowerCase().includes('sa\'ima') || doc.name.toLowerCase().includes('saima'))) || ((doc.level || doc.title) && String(doc.level || doc.title).toUpperCase().includes('CEO'));
-  const cleanLevel = (doc.level || doc.title || 'Specialist').replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
+  let cleanLevel = (doc.level || doc.title || (isCeo ? 'Chief Executive Officer (CEO)' : 'Specialist')).replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
+  if (cleanLevel.includes('Chief Executive Officer (CEO) / Medical Director') || (isCeo && cleanLevel.includes('Medical Director'))) {
+    cleanLevel = 'Chief Executive Officer (CEO)';
+  }
   const cleanSpecialty = doc.specialty ? getSpecialtyTitle(doc.specialty).replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '') : '';
-  const mainText = cleanSpecialty ? (isCeo ? `CEO • ${cleanSpecialty}` : `${cleanLevel} • ${cleanSpecialty}`) : (doc.level || doc.title || (isCeo ? 'CEO' : cleanLevel));
+  const mainText = cleanSpecialty ? (isCeo ? `CEO • ${cleanSpecialty}` : `${cleanLevel} • ${cleanSpecialty}`) : cleanLevel;
   const unitText = doc.unit || (doc.specialty && doc.specialty.includes('Family Planning') ? 'Family Planning / ANC Unit' : null);
   return {
     mainText,
@@ -168,7 +171,8 @@ export const CLINIC_PROFESSIONAL_ROLES = [
   {
     category: "Executive & Clinical Leadership",
     roles: [
-      "Chief Executive Officer (CEO) / Medical Director",
+      "Chief Executive Officer (CEO)",
+      "Medical Director",
       "CEO & ENT Specialist / MPH",
       "Clinical Director / Head of Clinical Services",
       "Chief Medical Officer (CMO)"
@@ -271,15 +275,16 @@ const INITIAL_DOCTORS = [
     email: "mohammedrealsaemaj@gmail.com",
     password: "password123",
     phone: "+234 901 432 4442",
-    bio: "Chief Executive Officer (CEO) & ENT Specialist / Public Health Practitioner with 15 years of executive leadership and clinical expertise in ENT care, health administration, and preventive medicine.",
-    clinicRoom: "Executive Office & Room 201, ENT Wing",
+    bio: "Chief Executive Officer (CEO) with 15 years of executive leadership and clinical expertise in health administration and preventive medicine.",
+    clinicRoom: "Executive Office & Room 201, Executive Wing",
     license: "MDCN/4521",
     consultationRate: "₦3,000",
     consultationDuration: "30 mins",
     services: ["Online Consultation", "Diagnostic / Lab Results Review", "Physical Consultation", "Home Services"],
     verified: true,
     active: true,
-    level: "CEO & ENT Specialist / MPH",
+    level: "Chief Executive Officer (CEO)",
+    title: "Chief Executive Officer (CEO)",
     patientCapacity: "Flexible / Unlimited",
     remunerationNotes: "Executive consultations & home services fees are negotiable."
   },
@@ -768,9 +773,21 @@ function DoctorAvatar({ image, name, size = 36, border = '2px solid var(--color-
 
   const fallbackPath = getFallbackForName(name);
 
-  // Determine current image src, prioritizing bundled ESM image assets if string path is standard static
+  // Check if image is an explicit custom upload (Base64 data:, blob:, or remote http/https URL)
+  const isCustomUpload = typeof image === 'string' && (
+    image.startsWith('data:') ||
+    image.startsWith('blob:') ||
+    image.startsWith('http://') ||
+    image.startsWith('https://')
+  );
+
+  // Determine current image src
   let currentSrc = image;
-  if (!currentSrc || useFallbackSrc || (typeof currentSrc === 'string' && (currentSrc.startsWith('/doctor_') || currentSrc.includes('doctor_')))) {
+  if (!isCustomUpload) {
+    if (!currentSrc || useFallbackSrc || (typeof currentSrc === 'string' && (currentSrc.startsWith('/doctor_') || currentSrc === '/doctor_saima.jpg'))) {
+      currentSrc = fallbackPath || image;
+    }
+  } else if (useFallbackSrc) {
     currentSrc = fallbackPath || image;
   }
   if (!currentSrc && fallbackPath) {
@@ -1095,10 +1112,14 @@ export default function App() {
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
         };
-        if (BUNDLED_IMAGES[doc.id] || BUNDLED_IMAGES[Number(doc.id)]) {
-          if (!doc.image || !doc.image.startsWith('data:')) {
-            updatedDoc.image = BUNDLED_IMAGES[doc.id] || BUNDLED_IMAGES[Number(doc.id)];
-          }
+        // Normalize any stale combined CEO / Medical Director title
+        if (updatedDoc.level && updatedDoc.level.includes('Chief Executive Officer (CEO) / Medical Director')) {
+          updatedDoc.level = 'Chief Executive Officer (CEO)';
+          updatedDoc.title = 'Chief Executive Officer (CEO)';
+        }
+        // Only inject bundled image if doctor has no image saved
+        if (!doc.image && (BUNDLED_IMAGES[doc.id] || BUNDLED_IMAGES[Number(doc.id)])) {
+          updatedDoc.image = BUNDLED_IMAGES[doc.id] || BUNDLED_IMAGES[Number(doc.id)];
         }
         return updatedDoc;
       });
@@ -1226,7 +1247,17 @@ export default function App() {
 
   const [loggedInDoctor, setLoggedInDoctor] = useState(() => {
     const data = localStorage.getItem("simmy_auth_doctor") || sessionStorage.getItem("simmy_auth_doctor");
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed && parsed.level && parsed.level.includes('Chief Executive Officer (CEO) / Medical Director')) {
+        parsed.level = 'Chief Executive Officer (CEO)';
+        parsed.title = 'Chief Executive Officer (CEO)';
+      }
+      return parsed;
+    } catch (e) {
+      return null;
+    }
   });
 
   const myDoctorAppointments = loggedInDoctor
@@ -6281,7 +6312,10 @@ export default function App() {
     const newName = docSelfData.name;
 
     const newSpecialty = docSelfData.specialty !== undefined ? docSelfData.specialty.trim() : '';
-    const newLevel = docSelfData.level !== undefined ? docSelfData.level.trim() : (loggedInDoctor.level || loggedInDoctor.title || '');
+    let newLevel = docSelfData.level !== undefined ? docSelfData.level.trim() : (loggedInDoctor.level || loggedInDoctor.title || '');
+    if (newLevel.includes('Chief Executive Officer (CEO) / Medical Director')) {
+      newLevel = 'Chief Executive Officer (CEO)';
+    }
 
     const updatedDoc = {
       ...loggedInDoctor,
@@ -6296,7 +6330,7 @@ export default function App() {
       active: docSelfData.active !== undefined ? docSelfData.active : (loggedInDoctor.active !== false),
       email: docSelfData.email,
       password: docSelfData.password,
-      image: docSelfData.image,
+      image: docSelfData.image || loggedInDoctor.image,
       phone: docSelfData.phone,
       bio: docSelfData.bio,
       clinicRoom: docSelfData.clinicRoom,
@@ -6332,6 +6366,49 @@ export default function App() {
       title: 'Profile Updated',
       message: 'Your profile, title, and department settings have been saved successfully!'
     });
+  };
+
+  const handleQuickDoctorAvatarUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file || !loggedInDoctor) return;
+    try {
+      setPopupNotification({
+        title: 'Uploading Photo',
+        message: 'Uploading and updating profile picture...',
+        type: 'info'
+      });
+      const uploadedUrl = await uploadAvatarToSupabase(file, 'doc_profile');
+      const compressed = await compressImageFile(file, 400, 0.7);
+      const finalImg = uploadedUrl || compressed;
+      if (!finalImg) {
+        setPopupNotification({
+          title: 'Upload Failed',
+          message: 'Unable to process image. Please try another image file.',
+          type: 'error'
+        });
+        return;
+      }
+      const updatedDoc = {
+        ...loggedInDoctor,
+        image: finalImg
+      };
+      setLoggedInDoctor(updatedDoc);
+      saveAuthSession('doctor', updatedDoc);
+      setDocSelfData(prev => ({ ...prev, image: finalImg }));
+      const nextDoctors = doctors.map(d => (d.id === loggedInDoctor.id || (d.email && d.email.toLowerCase() === loggedInDoctor.email.toLowerCase())) ? updatedDoc : d);
+      setDoctors(nextDoctors);
+      try {
+        localStorage.setItem("simmy_doctors", JSON.stringify(nextDoctors));
+      } catch (err) {}
+      profilesApi.upsertProfile(updatedDoc);
+      setPopupNotification({
+        title: 'Photo Updated',
+        message: 'Your profile picture has been updated successfully and saved!',
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('Quick avatar upload failed:', err);
+    }
   };
 
   const handleSavePatSelf = (e) => {
@@ -8025,7 +8102,7 @@ const LeafletDispatchMap = ({
                 <i className="fa-solid fa-hospital" style={{ color: '#818cf8', marginRight: '10px' }}></i> Healthcare Leadership & Medical Board
               </h2>
               <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '2rem' }}>
-                Led by <strong>Mohammed Sa'ima Jibril (CEO & ENT Specialist / MPH)</strong> alongside a multidisciplinary medical board of general practitioners, gynecologists, public health specialists, and clinical care officers, SimmyClinic provides modern tele-health solutions to bridge the geographical gap in healthcare access across Nigeria.
+                Led by <strong>Mohammed Sa'ima Jibril (Chief Executive Officer (CEO))</strong> alongside a multidisciplinary medical board of general practitioners, gynecologists, public health specialists, and clinical care officers, SimmyClinic provides modern tele-health solutions to bridge the geographical gap in healthcare access across Nigeria.
               </p>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
@@ -8033,7 +8110,7 @@ const LeafletDispatchMap = ({
                   <DoctorAvatar name="Mohammed Sa'ima Jibril" size={54} />
                   <div>
                     <h4 style={{ margin: '0 0 4px 0', color: '#f8fafc', fontSize: '1.05rem' }}>Mohammed Sa'ima Jibril</h4>
-                    <span style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: '600' }}>CEO • ENT / MPH Specialist</span>
+                    <span style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: '600' }}>Chief Executive Officer (CEO)</span>
                     <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>MDCN/4521</p>
                   </div>
                 </div>
@@ -9105,12 +9182,14 @@ const LeafletDispatchMap = ({
                               </span>
                             </h3>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '0.35rem 0' }}>
-                              <span className="badge-council-reg" title="Official Regulatory Council Registration Number">
-                                <i className="fa-solid fa-id-card"></i> {doc.regNo || doc.license || 'Council Reg'}
-                              </span>
-                              {doc.level && (
+                              {(doc.regNo || doc.license) && (
+                                <span className="badge-council-reg" title="Official Regulatory Council Registration Number">
+                                  <i className="fa-solid fa-id-card"></i> {doc.regNo || doc.license}
+                                </span>
+                              )}
+                              {doc.level && doc.specialty && doc.specialty.trim() && (
                                 <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>
-                                  • {doc.level}
+                                  • {doc.level.replace('Chief Executive Officer (CEO) / Medical Director', 'Chief Executive Officer (CEO)')}
                                 </span>
                               )}
                             </div>
@@ -9129,10 +9208,12 @@ const LeafletDispatchMap = ({
                                 );
                               })()}
                             </div>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>{doc.bio}</p>
-                            <div className="doctor-details" style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-                              <span style={{ fontSize: '0.75rem' }}><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
-                            </div>
+                            {doc.bio && <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0' }}>{doc.bio}</p>}
+                            {doc.schedule && (
+                              <div className="doctor-details" style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+                                <span style={{ fontSize: '0.75rem' }}><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
+                              </div>
+                            )}
                             <button className="btn btn-primary btn-sm" style={{ marginTop: '0.75rem' }} onClick={() => {
                               setPreviewBookingDoc(doc);
                             }}>
@@ -9281,12 +9362,14 @@ const LeafletDispatchMap = ({
                             </span>
                           </h3>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '0.35rem 0' }}>
-                            <span className="badge-council-reg" title="Official Regulatory Council Registration Number">
-                              <i className="fa-solid fa-id-card"></i> {doc.regNo || doc.license || 'Council Reg'}
-                            </span>
-                            {doc.level && (
+                            {(doc.regNo || doc.license) && (
+                              <span className="badge-council-reg" title="Official Regulatory Council Registration Number">
+                                <i className="fa-solid fa-id-card"></i> {doc.regNo || doc.license}
+                              </span>
+                            )}
+                            {doc.level && doc.specialty && doc.specialty.trim() && (
                               <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>
-                                • {doc.level}
+                                • {doc.level.replace('Chief Executive Officer (CEO) / Medical Director', 'Chief Executive Officer (CEO)')}
                               </span>
                             )}
                           </div>
@@ -9306,7 +9389,7 @@ const LeafletDispatchMap = ({
                             })()}
                           </div>
                           <div className="doctor-details">
-                            <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>
+                            {doc.schedule && <span><i className="fa-regular fa-clock"></i> {doc.schedule}</span>}
                             {doc.consultationRate && (
                               <div style={{ marginTop: '0.2rem' }}>
                                 <span><i className="fa-solid fa-money-bill-wave"></i> Consultation Rate: <strong>{doc.consultationRate}</strong></span>
@@ -12831,18 +12914,24 @@ const LeafletDispatchMap = ({
                             </div>
 
                             <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Full Name</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInPatient.name || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInPatient.phone || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Registered Email</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInPatient.email || 'N/A'}</span>
-                              </div>
+                              {loggedInPatient.name && (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Full Name</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInPatient.name}</span>
+                                </div>
+                              )}
+                              {loggedInPatient.phone && (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInPatient.phone}</span>
+                                </div>
+                              )}
+                              {loggedInPatient.email && (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Registered Email</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInPatient.email}</span>
+                                </div>
+                              )}
                               <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Account Password</strong>
                                 <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -12940,7 +13029,28 @@ const LeafletDispatchMap = ({
                     <DoctorAvatar image={loggedInDoctor.image} name={loggedInDoctor.name} size={48} />
                     <div>
                       <h2>{loggedInDoctor.name}</h2>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>Clinical Focus: {loggedInDoctor.specialty} | MDCN ID: {loggedInDoctor.regNo}</p>
+                      {(() => {
+                        const parts = [];
+                        if (loggedInDoctor.level || loggedInDoctor.title) {
+                          let roleTitle = loggedInDoctor.level || loggedInDoctor.title;
+                          if (roleTitle.includes('Chief Executive Officer (CEO) / Medical Director')) {
+                            roleTitle = 'Chief Executive Officer (CEO)';
+                          }
+                          parts.push(roleTitle);
+                        }
+                        if (loggedInDoctor.specialty && loggedInDoctor.specialty.trim()) {
+                          parts.push(`Clinical Focus: ${loggedInDoctor.specialty}`);
+                        }
+                        if (loggedInDoctor.regNo && loggedInDoctor.regNo.trim()) {
+                          parts.push(`MDCN ID: ${loggedInDoctor.regNo}`);
+                        }
+                        if (parts.length === 0) return null;
+                        return (
+                          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                            {parts.join(' • ')}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div>
@@ -12977,6 +13087,10 @@ const LeafletDispatchMap = ({
                     onClick={() => {
                       setDoctorNavView('profile');
                       const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
+                      let currentLevel = loggedInDoctor.level || loggedInDoctor.title || '';
+                      if (currentLevel.includes('Chief Executive Officer (CEO) / Medical Director')) {
+                        currentLevel = 'Chief Executive Officer (CEO)';
+                      }
                       setDocSelfData({
                         name: cleanName,
                         specialty: loggedInDoctor.specialty || '',
@@ -12992,15 +13106,15 @@ const LeafletDispatchMap = ({
                         license: loggedInDoctor.license || '',
                         consultationRate: loggedInDoctor.consultationRate || '',
                         services: loggedInDoctor.services || [],
-                        level: loggedInDoctor.level || loggedInDoctor.title || '',
-                        title: loggedInDoctor.title || loggedInDoctor.level || '',
+                        level: currentLevel,
+                        title: currentLevel,
                         active: loggedInDoctor.active !== false,
                         verified: loggedInDoctor.verified || false
                       });
                       setIsEditingDocSelf(false);
                     }}
                   >
-                    <h3>{loggedInDoctor.schedule}</h3>
+                    <h3>{loggedInDoctor.schedule || 'Flexible'}</h3>
                     <p>WEEKLY DUTY HOURS</p>
                   </div>
                 </div>
@@ -13597,58 +13711,106 @@ const LeafletDispatchMap = ({
                       <div>
                         {!isEditingDocSelf ? (
                           <div className="doctor-profile-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px' }}>
-                              <DoctorAvatar image={loggedInDoctor.image} name={loggedInDoctor.name} size={96} border="3px solid var(--color-accent)" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'rgba(28,43,73,0.05)', borderRadius: '12px', position: 'relative' }}>
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <DoctorAvatar image={loggedInDoctor.image} name={loggedInDoctor.name} size={96} border="3px solid var(--color-accent)" />
+                                <label
+                                  htmlFor="quick-doc-avatar-upload"
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '2px',
+                                    right: '2px',
+                                    background: 'var(--color-primary, #0099D6)',
+                                    color: '#fff',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                                    fontSize: '0.85rem',
+                                    border: '2px solid #fff'
+                                  }}
+                                  title="Change profile picture"
+                                >
+                                  <i className="fa-solid fa-camera"></i>
+                                </label>
+                                <input
+                                  id="quick-doc-avatar-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: 'none' }}
+                                  onChange={handleQuickDoctorAvatarUpload}
+                                />
+                              </div>
                               <div>
                                 <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{loggedInDoctor.name}</h3>
                                 {(loggedInDoctor.level || loggedInDoctor.title) && (
-                                  <div style={{ color: 'var(--color-indigo)', fontWeight: '700', fontSize: '1.05rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <div style={{ color: 'var(--color-indigo)', fontWeight: '700', fontSize: '1.05rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                     <i className="fa-solid fa-award" style={{ color: 'var(--color-accent)', fontSize: '0.9rem' }}></i>
-                                    <span>{loggedInDoctor.level || loggedInDoctor.title}</span>
+                                    <span>{(loggedInDoctor.level || loggedInDoctor.title).replace('Chief Executive Officer (CEO) / Medical Director', 'Chief Executive Officer (CEO)')}</span>
                                   </div>
                                 )}
-                                {loggedInDoctor.specialty ? (
+                                {loggedInDoctor.specialty && loggedInDoctor.specialty.trim() ? (
                                   <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '0.95rem', marginTop: '0.2rem' }}>
                                     {loggedInDoctor.specialty} Department
                                   </div>
-                                ) : (
-                                  <div style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', fontStyle: 'italic', marginTop: '0.2rem' }}>
-                                    No Department Assigned (General Specialist)
+                                ) : null}
+                                {loggedInDoctor.experience && loggedInDoctor.experience.trim() ? (
+                                  <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                                    {loggedInDoctor.experience} of Clinical Experience
                                   </div>
-                                )}
-                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>{loggedInDoctor.experience || 'Experienced'} of Clinical Experience</div>
+                                ) : null}
                               </div>
                             </div>
 
                             <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Professional Title / Role</strong>
-                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.level || loggedInDoctor.title || 'Clinical Specialist'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Specialty Department</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.specialty || 'None (Unassigned)'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>MDCN Registration Number</strong>
-                                <span style={{ fontSize: '1rem', fontWeight: 'bold', fontFamily: 'monospace' }}>{loggedInDoctor.regNo || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Weekly Schedule</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.schedule || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Clinic Room / Office</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.clinicRoom || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.phone || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Portal Login Email</strong>
-                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.email || 'N/A'}</span>
-                              </div>
+                              {(loggedInDoctor.level || loggedInDoctor.title) && (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Professional Title / Role</strong>
+                                  <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>
+                                    {(loggedInDoctor.level || loggedInDoctor.title).replace('Chief Executive Officer (CEO) / Medical Director', 'Chief Executive Officer (CEO)')}
+                                  </span>
+                                </div>
+                              )}
+                              {loggedInDoctor.specialty && loggedInDoctor.specialty.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Specialty Department</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInDoctor.specialty}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.regNo && loggedInDoctor.regNo.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Council Registration Code</strong>
+                                  <span style={{ fontSize: '1rem', fontWeight: 'bold', fontFamily: 'monospace' }}>{loggedInDoctor.regNo}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.schedule && loggedInDoctor.schedule.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Weekly Schedule</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInDoctor.schedule}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.clinicRoom && loggedInDoctor.clinicRoom.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Clinic Room / Office</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInDoctor.clinicRoom}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.phone && loggedInDoctor.phone.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Contact Phone</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInDoctor.phone}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.email && loggedInDoctor.email.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Portal Login Email</strong>
+                                  <span style={{ fontSize: '1rem' }}>{loggedInDoctor.email}</span>
+                                </div>
+                              ) : null}
                               <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Account Password</strong>
                                 <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -13658,38 +13820,40 @@ const LeafletDispatchMap = ({
                                   </button>
                                 </span>
                               </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Consultation Rate</strong>
-                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.consultationRate || 'N/A'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Consultation Duration</strong>
-                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.consultationDuration || '30 mins'}</span>
-                              </div>
-                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', gridColumn: 'span 2' }}>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services / Features</strong>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.25rem' }}>
-                                  {loggedInDoctor.services && loggedInDoctor.services.length > 0 ? (
-                                    loggedInDoctor.services.map(srv => (
+                              {loggedInDoctor.consultationRate && loggedInDoctor.consultationRate.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Consultation Rate</strong>
+                                  <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.consultationRate}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.consultationDuration && loggedInDoctor.consultationDuration.trim() ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Consultation Duration</strong>
+                                  <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.consultationDuration}</span>
+                                </div>
+                              ) : null}
+                              {loggedInDoctor.services && loggedInDoctor.services.length > 0 ? (
+                                <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', gridColumn: 'span 2' }}>
+                                  <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Offered Services / Features</strong>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.25rem' }}>
+                                    {loggedInDoctor.services.map(srv => (
                                       <span key={srv} style={{ fontSize: '0.85rem', color: 'var(--color-indigo)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                                         <i className="fa-solid fa-check" style={{ fontSize: '0.75rem', color: 'var(--color-accent)' }}></i> {srv}
                                       </span>
-                                    ))
-                                  ) : (
-                                    <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>No services specified.</span>
-                                  )}
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
+                              ) : null}
                             </div>
 
-                            {loggedInDoctor.bio && (
+                            {loggedInDoctor.bio && loggedInDoctor.bio.trim() ? (
                               <div style={{ marginTop: '1.25rem', padding: '1.25rem', background: 'rgba(28,43,73,0.04)', borderRadius: '8px' }}>
                                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Professional Biography Summary</strong>
                                 <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', fontStyle: 'italic' }}>"{loggedInDoctor.bio}"</p>
                               </div>
-                            )}
+                            ) : null}
 
-                            {loggedInDoctor.license && (
+                            {loggedInDoctor.license && loggedInDoctor.license.trim() ? (
                               <div style={{ marginTop: '1.25rem', padding: '1.25rem', background: 'rgba(28,43,73,0.04)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
                                 <div>
                                   <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Medical License / Professional Credentials</strong>
@@ -13699,11 +13863,15 @@ const LeafletDispatchMap = ({
                                   <i className="fa-solid fa-download"></i> Download License File
                                 </a>
                               </div>
-                            )}
+                            ) : null}
 
                             <div style={{ marginTop: '1.5rem' }}>
                               <button className="btn btn-primary" onClick={() => {
                                 const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
+                                let currentLevel = loggedInDoctor.level || loggedInDoctor.title || '';
+                                if (currentLevel.includes('Chief Executive Officer (CEO) / Medical Director')) {
+                                  currentLevel = 'Chief Executive Officer (CEO)';
+                                }
                                 setDocSelfData({
                                   name: cleanName,
                                   specialty: loggedInDoctor.specialty || '',
@@ -13719,8 +13887,8 @@ const LeafletDispatchMap = ({
                                   license: loggedInDoctor.license || '',
                                   consultationRate: loggedInDoctor.consultationRate || '',
                                   services: loggedInDoctor.services || [],
-                                  level: loggedInDoctor.level || loggedInDoctor.title || '',
-                                  title: loggedInDoctor.title || loggedInDoctor.level || '',
+                                  level: currentLevel,
+                                  title: currentLevel,
                                   active: loggedInDoctor.active !== false
                                 });
                                 setIsEditingDocSelf(true);
@@ -13976,13 +14144,23 @@ const LeafletDispatchMap = ({
                                     type="file"
                                     accept="image/*"
                                     onChange={async (e) => {
-                                      const file = e.target.files[0];
+                                      const file = e.target.files && e.target.files[0];
                                       if (file) {
                                         const uploadedUrl = await uploadAvatarToSupabase(file, 'doc_profile');
                                         const compressed = await compressImageFile(file, 400, 0.7);
                                         const finalImg = uploadedUrl || compressed;
                                         if (finalImg) {
-                                          setDocSelfData({ ...docSelfData, image: finalImg });
+                                          setDocSelfData(prev => ({ ...prev, image: finalImg }));
+                                          setLoggedInDoctor(prev => prev ? ({ ...prev, image: finalImg }) : prev);
+                                          const nextDoctors = doctors.map(d => (d.id === loggedInDoctor.id || (d.email && d.email.toLowerCase() === loggedInDoctor.email.toLowerCase())) ? { ...d, image: finalImg } : d);
+                                          setDoctors(nextDoctors);
+                                          try {
+                                            localStorage.setItem("simmy_doctors", JSON.stringify(nextDoctors));
+                                          } catch (err) {}
+                                          if (loggedInDoctor) {
+                                            saveAuthSession('doctor', { ...loggedInDoctor, image: finalImg });
+                                            profilesApi.upsertProfile({ ...loggedInDoctor, image: finalImg });
+                                          }
                                         }
                                       }
                                     }}
@@ -18861,7 +19039,9 @@ const LeafletDispatchMap = ({
                     );
                   })()}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{previewBookingDoc.experience} Experience</div>
+                {previewBookingDoc.experience && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{previewBookingDoc.experience} Experience</div>
+                )}
               </div>
             </div>
 
@@ -18895,20 +19075,18 @@ const LeafletDispatchMap = ({
                 </div>
               </div>
 
-              <div>
-                <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Offered Clinical Services:</strong>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {previewBookingDoc.services && previewBookingDoc.services.length > 0 ? (
-                    previewBookingDoc.services.map(srv => (
+              {previewBookingDoc.services && previewBookingDoc.services.length > 0 && (
+                <div>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Offered Clinical Services:</strong>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {previewBookingDoc.services.map(srv => (
                       <div key={srv} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-indigo)', fontSize: '0.85rem', fontWeight: '500' }}>
                         <i className="fa-solid fa-check" style={{ fontSize: '0.8rem', color: 'var(--color-accent)' }}></i> {srv}
                       </div>
-                    ))
-                  ) : (
-                    <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No specific services assigned.</span>
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {previewBookingDoc.bio && (
                 <div>
