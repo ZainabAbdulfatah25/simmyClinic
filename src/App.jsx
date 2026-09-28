@@ -13811,8 +13811,8 @@ const LeafletDispatchMap = ({
                                 <label>Weekly Schedule Hours</label>
                                 <input
                                   type="text"
-                                  required
-                                  value={docSelfData.schedule}
+                                  placeholder="e.g. Mon - Fri (9am - 5pm)"
+                                  value={docSelfData.schedule || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, schedule: e.target.value })}
                                 />
                               </div>
@@ -13820,8 +13820,8 @@ const LeafletDispatchMap = ({
                                 <label>Clinical Experience (Years)</label>
                                 <input
                                   type="text"
-                                  required
-                                  value={docSelfData.experience}
+                                  placeholder="e.g. 5 Years"
+                                  value={docSelfData.experience || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, experience: e.target.value })}
                                 />
                               </div>
@@ -13829,8 +13829,8 @@ const LeafletDispatchMap = ({
                                 <label>Council Registration Code (MDCN / PCN / MLSCN / NMCN / CHO / MNCP)</label>
                                 <input
                                   type="text"
-                                  required
-                                  value={docSelfData.regNo}
+                                  placeholder="e.g. MDCN/4521 (Optional)"
+                                  value={docSelfData.regNo || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, regNo: e.target.value })}
                                 />
                               </div>
