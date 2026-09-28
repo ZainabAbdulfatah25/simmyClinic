@@ -152,10 +152,10 @@ const getSpecialtyTitle = (specialty) => {
 
 const getDoctorCardSubheading = (doc) => {
   if (!doc) return { mainText: '', unitText: '', isCeo: false };
-  const isCeo = doc.isCeo || (doc.name && (doc.name.toLowerCase().includes('sa\'ima') || doc.name.toLowerCase().includes('saima'))) || (doc.level && doc.level.toUpperCase().includes('CEO'));
-  const cleanLevel = (doc.level || 'Specialist').replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
-  const cleanSpecialty = getSpecialtyTitle(doc.specialty).replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
-  const mainText = isCeo ? `CEO • ${cleanSpecialty}` : `${cleanLevel} • ${cleanSpecialty}`;
+  const isCeo = doc.isCeo || (doc.name && (doc.name.toLowerCase().includes('sa\'ima') || doc.name.toLowerCase().includes('saima'))) || ((doc.level || doc.title) && String(doc.level || doc.title).toUpperCase().includes('CEO'));
+  const cleanLevel = (doc.level || doc.title || 'Specialist').replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '');
+  const cleanSpecialty = doc.specialty ? getSpecialtyTitle(doc.specialty).replace(/\s*\(Family Planning \/ ANC Unit\)/gi, '') : '';
+  const mainText = cleanSpecialty ? (isCeo ? `CEO • ${cleanSpecialty}` : `${cleanLevel} • ${cleanSpecialty}`) : (doc.level || doc.title || (isCeo ? 'CEO' : cleanLevel));
   const unitText = doc.unit || (doc.specialty && doc.specialty.includes('Family Planning') ? 'Family Planning / ANC Unit' : null);
   return {
     mainText,
@@ -1084,12 +1084,13 @@ export default function App() {
         const updatedDoc = {
           ...doc,
           staffId: seedDoc ? (seedDoc.staffId || `SMC-DOC-${String(doc.id).padStart(3, '0')}`) : (doc.staffId || `SMC-DOC-${String(doc.id).padStart(3, '0')}`),
-          specialty: seedDoc ? seedDoc.specialty : doc.specialty,
-          unit: seedDoc ? seedDoc.unit : doc.unit,
-          department: seedDoc ? seedDoc.department : doc.department,
-          clinicRoom: seedDoc ? seedDoc.clinicRoom : doc.clinicRoom,
-          level: seedDoc ? seedDoc.level : doc.level,
-          bio: seedDoc ? seedDoc.bio : doc.bio,
+          specialty: doc.specialty !== undefined ? doc.specialty : (seedDoc ? seedDoc.specialty : ''),
+          unit: doc.unit !== undefined ? doc.unit : (seedDoc ? seedDoc.unit : ''),
+          department: doc.department !== undefined ? doc.department : (doc.specialty !== undefined ? doc.specialty : (seedDoc ? (seedDoc.department || seedDoc.specialty) : '')),
+          clinicRoom: doc.clinicRoom !== undefined ? doc.clinicRoom : (seedDoc ? seedDoc.clinicRoom : ''),
+          level: (doc.level !== undefined && doc.level !== '') ? doc.level : (doc.title || (seedDoc ? seedDoc.level : '')),
+          title: doc.title || doc.level || (seedDoc ? seedDoc.level : ''),
+          bio: doc.bio !== undefined ? doc.bio : (seedDoc ? seedDoc.bio : ''),
           consultationRate: doc.consultationRate !== undefined ? doc.consultationRate : (seedDoc ? seedDoc.consultationRate : ''),
           consultationDuration: doc.consultationDuration !== undefined ? doc.consultationDuration : (seedDoc ? seedDoc.consultationDuration : '30 mins'),
           services: doc.services !== undefined ? doc.services : (seedDoc ? seedDoc.services : [])
@@ -5975,8 +5976,10 @@ export default function App() {
           updatedDoctorObj = {
             ...d,
             name: newName,
-            specialty: newDoctorData.specialty,
-            level: newDoctorData.level || d.level || 'Junior Doctor',
+            specialty: newDoctorData.specialty !== undefined ? newDoctorData.specialty : '',
+            department: newDoctorData.specialty !== undefined ? newDoctorData.specialty : '',
+            level: newDoctorData.level !== undefined ? newDoctorData.level : (d.level || d.title || ''),
+            title: newDoctorData.level !== undefined ? newDoctorData.level : (d.title || d.level || ''),
             schedule: newDoctorData.schedule,
             experience: newDoctorData.experience,
             regNo: newDoctorData.regNo,
@@ -5998,7 +6001,13 @@ export default function App() {
         return d;
       }));
 
-      if (updatedDoctorObj) profilesApi.upsertProfile(updatedDoctorObj);
+      if (updatedDoctorObj) {
+        profilesApi.upsertProfile(updatedDoctorObj);
+        if (loggedInDoctor && (loggedInDoctor.id === editingDoctorId || loggedInDoctor.email?.toLowerCase() === updatedDoctorObj.email?.toLowerCase())) {
+          setLoggedInDoctor(updatedDoctorObj);
+          saveAuthSession('doctor', updatedDoctorObj);
+        }
+      }
 
       if (oldName && oldName.toLowerCase() !== newName.toLowerCase()) {
         setAppointments(appointments.map(apt => {
@@ -6010,15 +6019,17 @@ export default function App() {
       }
 
       setEditingDoctorId(null);
-      setNewDoctorData({ name: '', specialty: 'Obstetrics & Gynaecology', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [], level: 'Junior Doctor', verified: false });
-      showPopup("Doctor profile updated successfully!", "Profile Saved", "success");
+      setNewDoctorData({ name: '', specialty: '', schedule: '', experience: '', regNo: '', email: '', password: '', image: '', phone: '', bio: '', clinicRoom: '', license: '', consultationRate: '', consultationDuration: '', services: [], level: '', verified: false });
+      showPopup("Specialist profile updated successfully!", "Profile Saved", "success");
     } else {
       const newId = doctors.length > 0 ? Math.max(...doctors.map(d => d.id)) + 1 : 1;
       const newDoc = {
         id: newId,
         name: newDoctorData.name,
-        specialty: newDoctorData.specialty,
-        level: newDoctorData.level || "Junior Doctor",
+        specialty: newDoctorData.specialty || '',
+        department: newDoctorData.specialty || '',
+        level: newDoctorData.level || "Clinical Specialist",
+        title: newDoctorData.level || "Clinical Specialist",
         schedule: newDoctorData.schedule || "Mon - Fri (9am - 5pm)",
         experience: newDoctorData.experience || "5 Years",
         regNo: newDoctorData.regNo || "MDCN/" + Math.floor(1000 + Math.random() * 9000),
@@ -6229,8 +6240,8 @@ export default function App() {
     const cleanName = doc.name.startsWith("Dr. ") ? doc.name.substring(4) : doc.name;
     setNewDoctorData({
       name: cleanName,
-      specialty: doc.specialty,
-      level: doc.level || 'Junior Doctor',
+      specialty: doc.specialty || '',
+      level: doc.level || doc.title || '',
       schedule: doc.schedule,
       experience: doc.experience,
       regNo: doc.regNo,
@@ -6269,14 +6280,19 @@ export default function App() {
     const oldName = loggedInDoctor.name;
     const newName = docSelfData.name;
 
+    const newSpecialty = docSelfData.specialty !== undefined ? docSelfData.specialty.trim() : '';
+    const newLevel = docSelfData.level !== undefined ? docSelfData.level.trim() : (loggedInDoctor.level || loggedInDoctor.title || '');
+
     const updatedDoc = {
       ...loggedInDoctor,
       name: newName,
-      specialty: docSelfData.specialty,
+      specialty: newSpecialty,
+      department: newSpecialty,
       schedule: docSelfData.schedule,
       experience: docSelfData.experience,
       regNo: docSelfData.regNo,
-      level: docSelfData.level !== undefined ? docSelfData.level : (loggedInDoctor.level || 'Specialist'),
+      level: newLevel,
+      title: newLevel,
       active: docSelfData.active !== undefined ? docSelfData.active : (loggedInDoctor.active !== false),
       email: docSelfData.email,
       password: docSelfData.password,
@@ -6291,7 +6307,12 @@ export default function App() {
       role: 'doctor'
     };
 
-    setDoctors(doctors.map(d => d.id === loggedInDoctor.id ? updatedDoc : d));
+    const nextDoctors = doctors.map(d => (d.id === loggedInDoctor.id || (d.email && d.email.toLowerCase() === loggedInDoctor.email.toLowerCase())) ? updatedDoc : d);
+    setDoctors(nextDoctors);
+    try {
+      localStorage.setItem("simmy_doctors", JSON.stringify(nextDoctors));
+    } catch (err) {}
+
     profilesApi.upsertProfile(updatedDoc);
 
     if (oldName.toLowerCase() !== newName.toLowerCase()) {
@@ -6304,11 +6325,12 @@ export default function App() {
     }
 
     setLoggedInDoctor(updatedDoc);
+    saveAuthSession('doctor', updatedDoc);
     setIsEditingDocSelf(false);
     setPopupNotification({
       type: 'success',
       title: 'Profile Updated',
-      message: 'Your profile has been updated successfully!'
+      message: 'Your profile, title, and department settings have been saved successfully!'
     });
   };
 
@@ -6570,16 +6592,19 @@ export default function App() {
 
   // --- Filtering ---
   const filteredDoctors = doctors.filter(doc => {
+    const docSpec = (doc.specialty || '').toLowerCase();
+    const docLevel = (doc.level || doc.title || '').toLowerCase();
     const matchesSearch = doc.name.toLowerCase().includes(doctorSearch.toLowerCase()) ||
-      doc.specialty.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+      docSpec.includes(doctorSearch.toLowerCase()) ||
+      docLevel.includes(doctorSearch.toLowerCase()) ||
       (doc.services && doc.services.some(srv => srv.toLowerCase().includes(doctorSearch.toLowerCase())));
     const matchesFilter = doctorFilter === 'all' ||
-      doc.specialty.toLowerCase() === doctorFilter.toLowerCase() ||
-      (doctorFilter.toLowerCase() === 'obstetrics & gynaecology' && doc.specialty.toLowerCase().includes('gynaec')) ||
-      (doctorFilter.toLowerCase() === 'gynaecology' && doc.specialty.toLowerCase().includes('gynaec')) ||
-      (doctorFilter.toLowerCase() === 'ent' && (doc.specialty.toLowerCase() === 'ent' || doc.specialty.toLowerCase().includes('ear'))) ||
-      (doctorFilter.toLowerCase() === 'laboratory' && doc.specialty.toLowerCase().includes('lab')) ||
-      (doctorFilter.toLowerCase() === 'pharmacy' && doc.specialty.toLowerCase().includes('pharm'));
+      (docSpec && docSpec === doctorFilter.toLowerCase()) ||
+      (doctorFilter.toLowerCase() === 'obstetrics & gynaecology' && docSpec.includes('gynaec')) ||
+      (doctorFilter.toLowerCase() === 'gynaecology' && docSpec.includes('gynaec')) ||
+      (doctorFilter.toLowerCase() === 'ent' && (docSpec === 'ent' || docSpec.includes('ear'))) ||
+      (doctorFilter.toLowerCase() === 'laboratory' && docSpec.includes('lab')) ||
+      (doctorFilter.toLowerCase() === 'pharmacy' && docSpec.includes('pharm'));
     return matchesSearch && matchesFilter && doc.active !== false;
   });
 
@@ -12954,7 +12979,7 @@ const LeafletDispatchMap = ({
                       const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
                       setDocSelfData({
                         name: cleanName,
-                        specialty: loggedInDoctor.specialty,
+                        specialty: loggedInDoctor.specialty || '',
                         schedule: loggedInDoctor.schedule || '',
                         experience: loggedInDoctor.experience || '',
                         regNo: loggedInDoctor.regNo || '',
@@ -12967,7 +12992,8 @@ const LeafletDispatchMap = ({
                         license: loggedInDoctor.license || '',
                         consultationRate: loggedInDoctor.consultationRate || '',
                         services: loggedInDoctor.services || [],
-                        level: loggedInDoctor.level || 'Specialist',
+                        level: loggedInDoctor.level || loggedInDoctor.title || '',
+                        title: loggedInDoctor.title || loggedInDoctor.level || '',
                         active: loggedInDoctor.active !== false,
                         verified: loggedInDoctor.verified || false
                       });
@@ -13006,7 +13032,7 @@ const LeafletDispatchMap = ({
                         const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
                         setDocSelfData({
                           name: cleanName,
-                          specialty: loggedInDoctor.specialty,
+                          specialty: loggedInDoctor.specialty || '',
                           schedule: loggedInDoctor.schedule || '',
                           experience: loggedInDoctor.experience || '',
                           regNo: loggedInDoctor.regNo || '',
@@ -13019,7 +13045,8 @@ const LeafletDispatchMap = ({
                           license: loggedInDoctor.license || '',
                           consultationRate: loggedInDoctor.consultationRate || '',
                           services: loggedInDoctor.services || [],
-                          level: loggedInDoctor.level || 'Specialist',
+                          level: loggedInDoctor.level || loggedInDoctor.title || '',
+                          title: loggedInDoctor.title || loggedInDoctor.level || '',
                           active: loggedInDoctor.active !== false,
                           verified: loggedInDoctor.verified || false
                         });
@@ -13574,12 +13601,34 @@ const LeafletDispatchMap = ({
                               <DoctorAvatar image={loggedInDoctor.image} name={loggedInDoctor.name} size={96} border="3px solid var(--color-accent)" />
                               <div>
                                 <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{loggedInDoctor.name}</h3>
-                                <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '1rem', marginTop: '0.25rem' }}>{loggedInDoctor.specialty} Department</div>
-                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>{loggedInDoctor.experience} of Clinical Experience</div>
+                                {(loggedInDoctor.level || loggedInDoctor.title) && (
+                                  <div style={{ color: 'var(--color-indigo)', fontWeight: '700', fontSize: '1.05rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <i className="fa-solid fa-award" style={{ color: 'var(--color-accent)', fontSize: '0.9rem' }}></i>
+                                    <span>{loggedInDoctor.level || loggedInDoctor.title}</span>
+                                  </div>
+                                )}
+                                {loggedInDoctor.specialty ? (
+                                  <div style={{ color: 'var(--color-accent)', fontWeight: '600', fontSize: '0.95rem', marginTop: '0.2rem' }}>
+                                    {loggedInDoctor.specialty} Department
+                                  </div>
+                                ) : (
+                                  <div style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', fontStyle: 'italic', marginTop: '0.2rem' }}>
+                                    No Department Assigned (General Specialist)
+                                  </div>
+                                )}
+                                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>{loggedInDoctor.experience || 'Experienced'} of Clinical Experience</div>
                               </div>
                             </div>
 
                             <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginTop: '0.5rem' }}>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Professional Title / Role</strong>
+                                <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>{loggedInDoctor.level || loggedInDoctor.title || 'Clinical Specialist'}</span>
+                              </div>
+                              <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Specialty Department</strong>
+                                <span style={{ fontSize: '1rem' }}>{loggedInDoctor.specialty || 'None (Unassigned)'}</span>
+                              </div>
                               <div className="profile-detail-card" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <strong style={{ fontSize: '0.8rem', color: 'var(--color-accent)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>MDCN Registration Number</strong>
                                 <span style={{ fontSize: '1rem', fontWeight: 'bold', fontFamily: 'monospace' }}>{loggedInDoctor.regNo || 'N/A'}</span>
@@ -13657,7 +13706,7 @@ const LeafletDispatchMap = ({
                                 const cleanName = loggedInDoctor.name.startsWith("Dr. ") ? loggedInDoctor.name.substring(4) : loggedInDoctor.name;
                                 setDocSelfData({
                                   name: cleanName,
-                                  specialty: loggedInDoctor.specialty,
+                                  specialty: loggedInDoctor.specialty || '',
                                   schedule: loggedInDoctor.schedule || '',
                                   experience: loggedInDoctor.experience || '',
                                   regNo: loggedInDoctor.regNo || '',
@@ -13670,7 +13719,8 @@ const LeafletDispatchMap = ({
                                   license: loggedInDoctor.license || '',
                                   consultationRate: loggedInDoctor.consultationRate || '',
                                   services: loggedInDoctor.services || [],
-                                  level: loggedInDoctor.level || 'Specialist',
+                                  level: loggedInDoctor.level || loggedInDoctor.title || '',
+                                  title: loggedInDoctor.title || loggedInDoctor.level || '',
                                   active: loggedInDoctor.active !== false
                                 });
                                 setIsEditingDocSelf(true);
@@ -13694,18 +13744,65 @@ const LeafletDispatchMap = ({
                                 />
                               </div>
                               <div className="form-group">
-                                <label>Specialty Department</label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <label style={{ marginBottom: 0 }}>Specialty Department</label>
+                                  {docSelfData.specialty && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setDocSelfData({ ...docSelfData, specialty: '' })}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#ef4444',
+                                        fontSize: '0.78rem',
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        fontWeight: '600',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}
+                                      title="Remove department and leave it blank"
+                                    >
+                                      <i className="fa-solid fa-circle-xmark"></i> Remove (Leave Blank)
+                                    </button>
+                                  )}
+                                </div>
                                 <select
-                                  value={docSelfData.specialty}
+                                  value={docSelfData.specialty || ''}
                                   onChange={(e) => setDocSelfData({ ...docSelfData, specialty: e.target.value })}
+                                  style={{ marginTop: '0.35rem' }}
                                 >
+                                  <option value="">-- None / Blank (Unassigned) --</option>
+                                  <option value="Obstetrics & Gynaecology">Obstetrics & Gynaecology</option>
+                                  <option value="Gynaecology">Gynaecology</option>
                                   <option value="Pediatrics">Pediatrics</option>
                                   <option value="General Medicine">General Medicine</option>
-                                  <option value="Gynaecology">Gynaecology</option>
                                   <option value="Public Health">Public Health</option>
+                                  <option value="ENT">ENT</option>
+                                  <option value="ENT / MPH">ENT / MPH</option>
+                                  <option value="Psychology">Psychology</option>
                                   <option value="Laboratory">Laboratory</option>
+                                  <option value="Laboratory / MPH">Laboratory / MPH</option>
                                   <option value="Pharmacy">Pharmacy</option>
+                                  <option value="Nursing & Midwifery">Nursing & Midwifery</option>
+                                  <option value="Community Health">Community Health</option>
+                                  <option value="Cardiology">Cardiology</option>
+                                  <option value="Dermatology">Dermatology</option>
+                                  <option value="Dentistry">Dentistry</option>
+                                  <option value="Operations & Logistics">Operations & Logistics</option>
+                                  {docSelfData.specialty && ![
+                                    "Obstetrics & Gynaecology", "Gynaecology", "Pediatrics", "General Medicine",
+                                    "Public Health", "ENT", "ENT / MPH", "Psychology", "Laboratory", "Laboratory / MPH",
+                                    "Pharmacy", "Nursing & Midwifery", "Community Health", "Cardiology", "Dermatology",
+                                    "Dentistry", "Operations & Logistics"
+                                  ].includes(docSelfData.specialty) && (
+                                    <option value={docSelfData.specialty}>{docSelfData.specialty} (Custom)</option>
+                                  )}
                                 </select>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                                  Optional. Select "-- None / Blank --" or click Remove to leave blank.
+                                </span>
                               </div>
                             </div>
 
@@ -13743,7 +13840,7 @@ const LeafletDispatchMap = ({
                                   type="text"
                                   list="clinic-roles-datalist"
                                   value={docSelfData.level || ''}
-                                  onChange={(e) => setDocSelfData({ ...docSelfData, level: e.target.value })}
+                                  onChange={(e) => setDocSelfData({ ...docSelfData, level: e.target.value, title: e.target.value })}
                                   placeholder="e.g. CEO & ENT Specialist / MPH, Senior Consultant"
                                 />
                                 <datalist id="clinic-roles-datalist">
@@ -13751,6 +13848,9 @@ const LeafletDispatchMap = ({
                                     <option key={role} value={role} />
                                   ))}
                                 </datalist>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                                  Choose from standard roles or type any custom professional clinical title.
+                                </span>
                               </div>
                               <div className="form-group">
                                 <label>Clinical Availability (Online / Offline Status)</label>
@@ -16172,9 +16272,10 @@ const LeafletDispatchMap = ({
                             <div className="form-group">
                               <label>Specialty Department</label>
                               <select
-                                value={newDoctorData.specialty}
+                                value={newDoctorData.specialty || ''}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, specialty: e.target.value })}
                               >
+                                <option value="">-- None / Blank (Unassigned) --</option>
                                 <option value="Obstetrics & Gynaecology">Obstetrics & Gynaecology</option>
                                 <option value="Gynaecology">Gynaecology</option>
                                 <option value="Pediatrics">Pediatrics</option>
@@ -16192,27 +16293,36 @@ const LeafletDispatchMap = ({
                                 <option value="Dermatology">Dermatology</option>
                                 <option value="Dentistry">Dentistry</option>
                                 <option value="Operations & Logistics">Operations & Logistics</option>
+                                {newDoctorData.specialty && ![
+                                  "Obstetrics & Gynaecology", "Gynaecology", "Pediatrics", "General Medicine",
+                                  "Public Health", "ENT", "ENT / MPH", "Psychology", "Laboratory", "Laboratory / MPH",
+                                  "Pharmacy", "Nursing & Midwifery", "Community Health", "Cardiology", "Dermatology",
+                                  "Dentistry", "Operations & Logistics"
+                                ].includes(newDoctorData.specialty) && (
+                                  <option value={newDoctorData.specialty}>{newDoctorData.specialty} (Custom)</option>
+                                )}
                               </select>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                                Select "-- None / Blank --" to leave department unassigned.
+                              </span>
                             </div>
                             <div className="form-group">
-                              <label>Professional Level</label>
-                              <select
-                                value={newDoctorData.level || 'Junior Doctor'}
+                              <label>Professional Title & Clinical Designation</label>
+                              <input
+                                type="text"
+                                list="admin-clinic-roles-datalist"
+                                value={newDoctorData.level || ''}
                                 onChange={(e) => setNewDoctorData({ ...newDoctorData, level: e.target.value })}
-                              >
-                                {newDoctorData.level && !ALL_CLINIC_ROLE_VALUES.includes(newDoctorData.level) && (
-                                  <option value={newDoctorData.level}>{newDoctorData.level} (Current)</option>
-                                )}
-                                {CLINIC_PROFESSIONAL_ROLES.map((group) => (
-                                  <optgroup key={group.category} label={`── ${group.category} ──`}>
-                                    {group.roles.map((role) => (
-                                      <option key={role} value={role}>
-                                        {role}
-                                      </option>
-                                    ))}
-                                  </optgroup>
+                                placeholder="e.g. Senior Consultant, Clinical Specialist"
+                              />
+                              <datalist id="admin-clinic-roles-datalist">
+                                {ALL_CLINIC_ROLE_VALUES.map((role) => (
+                                  <option key={role} value={role} />
                                 ))}
-                              </select>
+                              </datalist>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                                Choose from standard roles or type any custom designation.
+                              </span>
                             </div>
                           </div>
 

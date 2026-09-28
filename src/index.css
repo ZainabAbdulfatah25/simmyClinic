@@ -203,7 +203,7 @@ html, body {
 }
 
 .logo {
-  font-family: var(--font-serif);
+  font-family: var(--font-display), 'Outfit', sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
   color: var(--color-indigo);
@@ -229,6 +229,11 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.logo:hover .logo-img-wrapper {
+  transform: scale(1.05);
 }
 
 .logo-img {
@@ -238,20 +243,22 @@ html, body {
 }
 
 .logo-text {
-  font-family: var(--font-serif);
+  font-family: var(--font-display), 'Outfit', var(--font-sans), sans-serif;
   font-size: 1.45rem;
   font-weight: 800;
-  color: #ffffff !important;
-  letter-spacing: -0.01em;
+  color: var(--color-indigo, #182B49);
+  letter-spacing: -0.02em;
   display: inline-flex;
   align-items: center;
+  line-height: 1;
+  transition: var(--transition-smooth);
 }
 
 .logo-text span {
-  font-family: var(--font-display);
-  color: #38bdf8 !important;
+  font-family: var(--font-display), 'Outfit', var(--font-sans), sans-serif;
+  color: var(--color-accent, #0099D6);
   font-weight: 800;
-  margin-left: 1px;
+  margin-left: 1.5px;
 }
 
 .desktop-nav {
@@ -2093,6 +2100,14 @@ table td .action-btn,
 
 .app-footer .logo {
   color: #FFFFFF;
+}
+
+.app-footer .logo-text {
+  color: #FFFFFF !important;
+}
+
+.app-footer .logo-text span {
+  color: #38bdf8 !important;
 }
 
 .footer-brand p {
