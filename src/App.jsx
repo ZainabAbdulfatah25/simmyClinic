@@ -7817,7 +7817,6 @@ const LeafletDispatchMap = ({
                     <div className="notif-header">
                       <div className="notif-title">
                         <i className="fa-solid fa-bell" style={{ color: 'var(--color-primary)' }}></i>
-                        <span>In-App Notifications</span>
                         {inAppNotifications.filter(n => !n.read).length > 0 && (
                           <span style={{ fontSize: '0.72rem', background: '#0284c7', color: '#fff', padding: '1px 7px', borderRadius: '10px' }}>
                             {inAppNotifications.filter(n => !n.read).length} new
