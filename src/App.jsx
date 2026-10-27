@@ -7790,6 +7790,139 @@ const LeafletDispatchMap = ({
               </>
             )}
 
+            {/* In-App Notification Bell & Dropdown */}
+            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="notif-bell-btn"
+                onClick={() => setShowNotificationCenter(!showNotificationCenter)}
+                aria-label="In-App Notifications"
+                title="In-App Notifications"
+              >
+                <i className="fa-solid fa-bell"></i>
+                {inAppNotifications.filter(n => !n.read).length > 0 && (
+                  <span className="notif-unread-badge">
+                    {inAppNotifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+
+              {showNotificationCenter && (
+                <>
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 1040 }}
+                    onClick={() => setShowNotificationCenter(false)}
+                  />
+                  <div className="notif-dropdown-drawer animate-fade" style={{ zIndex: 1050 }}>
+                    <div className="notif-header">
+                      <div className="notif-title">
+                        <i className="fa-solid fa-bell" style={{ color: 'var(--color-primary)' }}></i>
+                        <span>In-App Notifications</span>
+                        {inAppNotifications.filter(n => !n.read).length > 0 && (
+                          <span style={{ fontSize: '0.72rem', background: '#0284c7', color: '#fff', padding: '1px 7px', borderRadius: '10px' }}>
+                            {inAppNotifications.filter(n => !n.read).length} new
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {inAppNotifications.some(n => !n.read) && (
+                          <button
+                            type="button"
+                            className="notif-mark-read-btn"
+                            onClick={markAllNotificationsAsRead}
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowNotificationCenter(false)}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
+                          title="Close"
+                        >
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Email Hospital Services Quick Action Banner */}
+                    <div className="notif-promo-card">
+                      <div className="notif-promo-text">
+                        <strong>Official Hospital Services Guide</strong>
+                        <div style={{ fontSize: '0.74rem', opacity: 0.85 }}>Complete clinical fee schedule & specialist services.</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '5px 10px', fontSize: '0.75rem', borderRadius: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                        onClick={() => {
+                          setShowNotificationCenter(false);
+                          setEmailServiceRecipient(loggedInPatient?.email || '');
+                          setEmailServiceModalOpen(true);
+                        }}
+                      >
+                        <i className="fa-solid fa-paper-plane" style={{ marginRight: '4px' }}></i> Email Catalog
+                      </button>
+                    </div>
+
+                    {/* Notification Items List */}
+                    <div className="notif-list-scroll">
+                      {inAppNotifications.length === 0 ? (
+                        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                          <i className="fa-regular fa-bell-slash" style={{ fontSize: '1.8rem', display: 'block', marginBottom: '0.5rem', opacity: 0.4 }}></i>
+                          No active notifications
+                        </div>
+                      ) : (
+                        inAppNotifications.map(notif => (
+                          <div
+                            key={notif.id}
+                            className={`notif-item ${!notif.read ? 'unread' : ''}`}
+                            onClick={() => {
+                              if (!notif.read) {
+                                setInAppNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                              }
+                              if (notif.action === 'send_services_email') {
+                                setShowNotificationCenter(false);
+                                setEmailServiceRecipient(loggedInPatient?.email || '');
+                                setEmailServiceModalOpen(true);
+                              }
+                            }}
+                            style={{ cursor: notif.action ? 'pointer' : 'default' }}
+                          >
+                            <div className="notif-icon-circle">
+                              <i className={`fa-solid ${notif.icon || 'fa-bell'}`}></i>
+                            </div>
+                            <div className="notif-content">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
+                                <div className="notif-item-title">{notif.title}</div>
+                                <span className="notif-item-time">{notif.time}</span>
+                              </div>
+                              <div className="notif-item-msg">{notif.message}</div>
+                              {notif.action === 'send_services_email' && (
+                                <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '0.74rem', color: '#0284c7', fontWeight: '700' }}>
+                                  Click to send to your email →
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              className="notif-delete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notif.id);
+                              }}
+                              title="Delete notification"
+                            >
+                              <i className="fa-solid fa-xmark"></i>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Mobile Hamburger Toggle Button */}
             <button
