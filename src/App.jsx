@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase, uploadAvatarToSupabase, isSupabaseConfigured } from './supabaseClient';
 import { appointmentsApi, pharmacyOrdersApi, labRequestsApi, clinicDrugsApi, profilesApi } from './services/api';
+import { sendEmailNotification, generateHospitalServicesEmailHtml, HOSPITAL_SERVICES_CATALOG } from './services/emailService';
 import doctorFatimaImg from './assets/doctor_fatima.jpg';
 import doctorAdamImg from './assets/doctor_adam.jpg';
 import doctorTijjaniImg from './assets/doctor_saddiqa.jpg';
@@ -1332,6 +1333,109 @@ export default function App() {
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [bookingConsent, setBookingConsent] = useState(false);
   const [registerConsent, setRegisterConsent] = useState(false);
+
+  // --- In-App Notifications Center & Email Hospital Services States ---
+  const [showNotificationCenter, setShowNotificationCenter] = useState(false);
+  const [emailServiceModalOpen, setEmailServiceModalOpen] = useState(false);
+  const [emailServiceRecipient, setEmailServiceRecipient] = useState('');
+  const [emailServiceStatus, setEmailServiceStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const [inAppNotifications, setInAppNotifications] = useState(() => {
+    try {
+      const stored = localStorage.getItem("simmy_inapp_notifications");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      {
+        id: 'notif-welcome',
+        title: 'Welcome to SimmyClinic',
+        message: 'Certified telemedicine specialist care, home sample diagnostics & express pharmacy delivery 24/7.',
+        time: 'Just now',
+        type: 'info',
+        read: false,
+        icon: 'fa-hospital'
+      },
+      {
+        id: 'notif-services',
+        title: 'Hospital Services Catalog Available',
+        message: 'Want our official clinical fee schedule & services guide? Click below to send it directly to your email.',
+        time: '1m ago',
+        type: 'services',
+        read: false,
+        icon: 'fa-envelope-open-text',
+        action: 'send_services_email'
+      },
+      {
+        id: 'notif-emergency',
+        title: 'Emergency Medical Desk',
+        message: 'For urgent clinical assistance or ambulance triage, call: +234 901 432 4442.',
+        time: '1h ago',
+        type: 'emergency',
+        read: false,
+        icon: 'fa-phone-volume'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("simmy_inapp_notifications", JSON.stringify(inAppNotifications));
+    } catch (e) {}
+  }, [inAppNotifications]);
+
+  const addInAppNotification = useCallback(({ title, message, type = 'info', icon = 'fa-bell', action = null }) => {
+    const newNotif = {
+      id: 'notif-' + Date.now(),
+      title,
+      message,
+      time: 'Just now',
+      type,
+      read: false,
+      icon,
+      action
+    };
+    setInAppNotifications(prev => [newNotif, ...prev]);
+  }, []);
+
+  const markAllNotificationsAsRead = useCallback(() => {
+    setInAppNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
+
+  const deleteNotification = useCallback((id) => {
+    setInAppNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const handleSendHospitalServicesEmail = async (targetEmail) => {
+    const dest = (targetEmail || emailServiceRecipient || loggedInPatient?.email || '').trim();
+    if (!dest || !dest.includes('@')) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+    setEmailServiceStatus('sending');
+    try {
+      await sendEmailNotification({
+        toEmail: dest,
+        patientName: loggedInPatient?.name || "Valued Patient",
+        subject: "SimmyClinic - Official Hospital Services & Clinical Fee Guide",
+        htmlContent: generateHospitalServicesEmailHtml(loggedInPatient?.name || "Valued Patient"),
+        type: "services"
+      });
+      setEmailServiceStatus('success');
+      addInAppNotification({
+        title: 'Hospital Services Email Dispatched',
+        message: `Our complete clinical services brochure & fee schedule was sent to ${dest}.`,
+        type: 'success',
+        icon: 'fa-circle-check'
+      });
+      setTimeout(() => {
+        setEmailServiceStatus(null);
+        setEmailServiceModalOpen(false);
+      }, 2500);
+    } catch (err) {
+      console.warn("Failed to dispatch services email:", err);
+      setEmailServiceStatus('error');
+    }
+  };
 
   // Navigation Drawer & Modals
   const [publicNavDrawerOpen, setPublicNavDrawerOpen] = useState(false);
@@ -4780,6 +4884,12 @@ export default function App() {
           if (hash.includes('access_token')) {
             try { window.history.replaceState(null, '', '#dashboard'); } catch (e) {}
           }
+          addInAppNotification({
+            title: 'Signed In Successfully',
+            message: `Welcome back, ${activeProfile.name || activeProfile.email || 'User'}. Active role: ${role}.`,
+            type: 'info',
+            icon: 'fa-circle-user'
+          });
           navigateTo('dashboard');
         }
       } catch (err) {
@@ -5604,6 +5714,12 @@ export default function App() {
       read: false
     };
     setInquiries([newOrder, ...inquiries]);
+    addInAppNotification({
+      title: 'Prescription Order Dispatched',
+      message: `Medication order for ${newOrder.name} (${orderId}) created and queued for courier dispatch.`,
+      type: 'pharmacy',
+      icon: 'fa-prescription-bottle-medical'
+    });
     setPharmacistSelectedPrescription(null);
     setSelectedDrugs([]);
   };
@@ -5623,6 +5739,12 @@ export default function App() {
       return apt;
     });
     setAppointments(updated);
+    addInAppNotification({
+      title: 'Diagnostic Lab Results Ready',
+      message: `Laboratory report uploaded for consultation ticket ${labSelectedRequest.id}.`,
+      type: 'lab',
+      icon: 'fa-square-poll-vertical'
+    });
     setLabSelectedRequest(null);
   };
 
@@ -5850,6 +5972,45 @@ export default function App() {
     setAppointments(prev => [newAppointment, ...prev]);
     if (isSupabaseConfigured()) {
       appointmentsApi.create(newAppointment).catch(err => console.info('Supabase appointment creation sync:', err));
+    }
+
+    // Trigger in-app notification
+    addInAppNotification({
+      title: 'Appointment Registered',
+      message: `Consultation with ${newAppointment.doctor} (${newAppointment.consultationMode}) booked for ${newAppointment.date} at ${newAppointment.time}. Ticket: ${ticketNumber}`,
+      type: 'appointment',
+      icon: 'fa-calendar-check'
+    });
+
+    // Send confirmation email if email is provided
+    if (newAppointment.email && newAppointment.email.includes('@')) {
+      sendEmailNotification({
+        toEmail: newAppointment.email,
+        patientName: newAppointment.patientName,
+        subject: `Appointment Booking Confirmed [${ticketNumber}] - SimmyClinic`,
+        htmlContent: `
+          <div style="font-family: sans-serif; padding: 24px; color: #1e293b; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="background: #1e3a8a; padding: 16px; border-radius: 6px; text-align: center; color: #ffffff; margin-bottom: 20px;">
+              <h2 style="margin: 0;">SimmyClinic Healthcare</h2>
+              <p style="margin: 4px 0 0; font-size: 13px;">Official Appointment Confirmation</p>
+            </div>
+            <p>Dear <strong>${newAppointment.patientName}</strong>,</p>
+            <p>Your medical consultation has been successfully scheduled:</p>
+            <div style="background: #f8fafc; border-left: 4px solid #0284c7; padding: 14px; border-radius: 4px; margin: 16px 0;">
+              <p style="margin: 4px 0;"><strong>Ticket Number:</strong> ${ticketNumber}</p>
+              <p style="margin: 4px 0;"><strong>Specialist:</strong> ${newAppointment.doctor} (${newAppointment.specialty})</p>
+              <p style="margin: 4px 0;"><strong>Consultation Mode:</strong> ${newAppointment.consultationMode}</p>
+              <p style="margin: 4px 0;"><strong>Scheduled Date & Time:</strong> ${newAppointment.date} at ${newAppointment.time}</p>
+              <p style="margin: 4px 0;"><strong>Consultation Fee:</strong> ₦${feeAmount.toLocaleString()}</p>
+            </div>
+            <p style="font-size: 13px; color: #64748b;">You can monitor doctor assignment, video room status, and prescription fulfillment directly in your patient dashboard.</p>
+            <p style="text-align: center; margin-top: 24px;">
+              <a href="https://simmyclinic.com/#dashboard" style="background: #0284c7; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px;">Open Patient Dashboard</a>
+            </p>
+          </div>
+        `,
+        type: 'appointment'
+      }).catch(err => console.warn('Appointment email dispatch:', err));
     }
     setBookingFormData({
       patientName: '',
@@ -7629,6 +7790,140 @@ const LeafletDispatchMap = ({
               </>
             )}
 
+            {/* In-App Notification Bell & Dropdown */}
+            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="notif-bell-btn"
+                onClick={() => setShowNotificationCenter(!showNotificationCenter)}
+                aria-label="In-App Notifications"
+                title="In-App Notifications"
+              >
+                <i className="fa-solid fa-bell"></i>
+                {inAppNotifications.filter(n => !n.read).length > 0 && (
+                  <span className="notif-unread-badge">
+                    {inAppNotifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+
+              {showNotificationCenter && (
+                <>
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 1040 }}
+                    onClick={() => setShowNotificationCenter(false)}
+                  />
+                  <div className="notif-dropdown-drawer animate-fade" style={{ zIndex: 1050 }}>
+                    <div className="notif-header">
+                      <div className="notif-title">
+                        <i className="fa-solid fa-bell" style={{ color: 'var(--color-primary)' }}></i>
+                        <span>In-App Notifications</span>
+                        {inAppNotifications.filter(n => !n.read).length > 0 && (
+                          <span style={{ fontSize: '0.72rem', background: '#0284c7', color: '#fff', padding: '1px 7px', borderRadius: '10px' }}>
+                            {inAppNotifications.filter(n => !n.read).length} new
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {inAppNotifications.some(n => !n.read) && (
+                          <button
+                            type="button"
+                            className="notif-mark-read-btn"
+                            onClick={markAllNotificationsAsRead}
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowNotificationCenter(false)}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
+                          title="Close"
+                        >
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Email Hospital Services Quick Action Banner */}
+                    <div className="notif-promo-card">
+                      <div className="notif-promo-text">
+                        <strong>Official Hospital Services Guide</strong>
+                        <div style={{ fontSize: '0.74rem', opacity: 0.85 }}>Complete clinical fee schedule & specialist services.</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '5px 10px', fontSize: '0.75rem', borderRadius: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                        onClick={() => {
+                          setShowNotificationCenter(false);
+                          setEmailServiceRecipient(loggedInPatient?.email || '');
+                          setEmailServiceModalOpen(true);
+                        }}
+                      >
+                        <i className="fa-solid fa-paper-plane" style={{ marginRight: '4px' }}></i> Email Catalog
+                      </button>
+                    </div>
+
+                    {/* Notification Items List */}
+                    <div className="notif-list-scroll">
+                      {inAppNotifications.length === 0 ? (
+                        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                          <i className="fa-regular fa-bell-slash" style={{ fontSize: '1.8rem', display: 'block', marginBottom: '0.5rem', opacity: 0.4 }}></i>
+                          No active notifications
+                        </div>
+                      ) : (
+                        inAppNotifications.map(notif => (
+                          <div
+                            key={notif.id}
+                            className={`notif-item ${!notif.read ? 'unread' : ''}`}
+                            onClick={() => {
+                              if (!notif.read) {
+                                setInAppNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                              }
+                              if (notif.action === 'send_services_email') {
+                                setShowNotificationCenter(false);
+                                setEmailServiceRecipient(loggedInPatient?.email || '');
+                                setEmailServiceModalOpen(true);
+                              }
+                            }}
+                            style={{ cursor: notif.action ? 'pointer' : 'default' }}
+                          >
+                            <div className="notif-icon-circle">
+                              <i className={`fa-solid ${notif.icon || 'fa-bell'}`}></i>
+                            </div>
+                            <div className="notif-content">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
+                                <div className="notif-item-title">{notif.title}</div>
+                                <span className="notif-item-time">{notif.time}</span>
+                              </div>
+                              <div className="notif-item-msg">{notif.message}</div>
+                              {notif.action === 'send_services_email' && (
+                                <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '0.74rem', color: '#0284c7', fontWeight: '700' }}>
+                                  Click to send to your email →
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              className="notif-delete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notif.id);
+                              }}
+                              title="Delete notification"
+                            >
+                              <i className="fa-solid fa-xmark"></i>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* Mobile Hamburger Toggle Button */}
             <button
               type="button"
@@ -7706,6 +8001,11 @@ const LeafletDispatchMap = ({
                 <li><a href="#booking" className={currentView === 'booking' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('booking'); setMobileMenuOpen(false); }}><i className="fa-solid fa-calendar-plus"></i> Booking</a></li>
                 <li><a href="#legal-compliance" className={currentView === 'legal-compliance' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('legal-compliance'); setMobileMenuOpen(false); }}><i className="fa-solid fa-shield-halved"></i> Compliance</a></li>
                 <li><a href="#contact" className={currentView === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigateTo('contact'); setMobileMenuOpen(false); }}><i className="fa-solid fa-envelope"></i> Contact</a></li>
+                <li>
+                  <a href="#services-guide" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); setEmailServiceRecipient(loggedInPatient?.email || ''); setEmailServiceModalOpen(true); }}>
+                    <i className="fa-solid fa-file-invoice-dollar" style={{ color: 'var(--color-accent)' }}></i> Email Services Guide
+                  </a>
+                </li>
               </ul>
 
               {/* Drawer Action CTAs */}
@@ -7951,6 +8251,31 @@ const LeafletDispatchMap = ({
               <div className="section-header">
                 <h2>Our Premium Health Services</h2>
                 <p>High-end, digital-first healthcare consulting right from your home</p>
+                <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => {
+                      setEmailServiceRecipient(loggedInPatient?.email || '');
+                      setEmailServiceModalOpen(true);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'rgba(2, 132, 199, 0.08)',
+                      borderColor: 'rgba(2, 132, 199, 0.3)',
+                      color: 'var(--color-heading)',
+                      fontWeight: '700',
+                      padding: '0.55rem 1.25rem',
+                      borderRadius: '30px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <i className="fa-solid fa-envelope-open-text" style={{ color: 'var(--color-accent)' }}></i>
+                    <span>Email Me Official Services & Fee Guide</span>
+                  </button>
+                </div>
               </div>
               <div className="services-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                 <div className="service-card glassmorphic">
@@ -8540,6 +8865,13 @@ const LeafletDispatchMap = ({
                       time: newApt.time
                     }).catch(err => console.info('Supabase lab_request sync:', err));
                   }
+
+                  addInAppNotification({
+                    title: 'Diagnostic Lab Sample Scheduled',
+                    message: `Home sample collection for ${newApt.patientName} (${labCart.join(', ')}) registered. Ticket: ${ticketId}`,
+                    type: 'lab',
+                    icon: 'fa-vial-virus'
+                  });
 
                   setLabCart([]);
                   setLabCheckout({ name: '', email: '', phone: '', date: '', address: '', notes: '' });
@@ -20113,6 +20445,145 @@ const LeafletDispatchMap = ({
             >
               Okay, Got It
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hospital Services Email Modal */}
+      {emailServiceModalOpen && (
+        <div className="modal-backdrop" style={{ zIndex: 9999 }} onClick={() => { if (emailServiceStatus !== 'sending') setEmailServiceModalOpen(false); }}>
+          <div
+            className="modal-content glassmorphic animate-fade"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '560px',
+              padding: '2rem',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
+              background: '#FFFFFF',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(2, 132, 199, 0.1)', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                  <i className="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: '800' }}>Hospital Services & Fee Schedule</h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>Dispatched directly to your personal email inbox</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailServiceModalOpen(false)}
+                disabled={emailServiceStatus === 'sending'}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                aria-label="Close"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            {emailServiceStatus === 'success' ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 1rem' }}>
+                  <i className="fa-solid fa-circle-check"></i>
+                </div>
+                <h4 style={{ margin: '0 0 0.5rem', color: '#0f172a', fontSize: '1.2rem' }}>Brochure Dispatched Successfully!</h4>
+                <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>
+                  We've sent the complete SimmyClinic medical catalog and tariff breakdown to <strong>{emailServiceRecipient}</strong>. Please check your inbox and spam folder.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+                  Enter your email address below to receive the official SimmyClinic healthcare catalog, covering specialist consultations, laboratory packages, express medication delivery, and home nursing rates.
+                </p>
+
+                {/* Services Highlights Preview */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    What's Included in Your Email:
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+                    {HOSPITAL_SERVICES_CATALOG.slice(0, 4).map(svc => (
+                      <div key={svc.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#1e293b' }}>
+                        <i className={`fa-solid ${svc.icon}`} style={{ color: '#0284c7', fontSize: '0.85rem' }}></i>
+                        <span>{svc.name} <strong style={{ color: '#059669', fontSize: '0.75rem' }}>({svc.fee})</strong></span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: '8px', fontStyle: 'italic' }}>
+                    + Full diagnostic test index, surgical booking rules, emergency triage contacts & corporate HMO billing guidelines.
+                  </div>
+                </div>
+
+                <form onSubmit={(e) => { e.preventDefault(); handleSendHospitalServicesEmail(emailServiceRecipient); }}>
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' }}>
+                      Recipient Email Address
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="email"
+                        required
+                        placeholder="youremail@example.com"
+                        value={emailServiceRecipient}
+                        onChange={(e) => setEmailServiceRecipient(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px 10px 38px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <i className="fa-solid fa-envelope" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></i>
+                    </div>
+                  </div>
+
+                  {emailServiceStatus === 'error' && (
+                    <div style={{ padding: '8px 12px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px', color: '#991b1b', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                      <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '6px' }}></i>
+                      Could not dispatch email automatically. An in-app copy has been generated in your notifications.
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => setEmailServiceModalOpen(false)}
+                      disabled={emailServiceStatus === 'sending'}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={emailServiceStatus === 'sending'}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      {emailServiceStatus === 'sending' ? (
+                        <>
+                          <i className="fa-solid fa-spinner fa-spin"></i>
+                          <span>Sending Catalog...</span>
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-solid fa-paper-plane"></i>
+                          <span>Send Services Catalog</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
