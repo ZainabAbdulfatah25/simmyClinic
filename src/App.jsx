@@ -5143,7 +5143,7 @@ export default function App() {
   const handleGoogleAuth = async () => {
     setLoginError('');
     try {
-      if (supabase && supabase.auth) {
+      if (supabase && supabase.auth && isSupabaseReady()) {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: { redirectTo: window.location.origin }
