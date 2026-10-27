@@ -1336,6 +1336,7 @@ export default function App() {
 
   // --- In-App Notifications Center & Email Hospital Services States ---
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
+  const [expandedNotifId, setExpandedNotifId] = useState(null);
   const [emailServiceModalOpen, setEmailServiceModalOpen] = useState(false);
   const [emailServiceRecipient, setEmailServiceRecipient] = useState('');
   const [emailServiceStatus, setEmailServiceStatus] = useState(null); // null | 'sending' | 'success' | 'error'
@@ -7875,32 +7876,48 @@ const LeafletDispatchMap = ({
                         inAppNotifications.map(notif => (
                           <div
                             key={notif.id}
-                            className={`notif-item ${!notif.read ? 'unread' : ''}`}
+                            className={`notif-item ${!notif.read ? 'unread' : ''} ${expandedNotifId === notif.id ? 'expanded' : ''}`}
                             onClick={() => {
+                              // Toggle expanded
+                              setExpandedNotifId(prev => prev === notif.id ? null : notif.id);
+                              // Mark as read on tap
                               if (!notif.read) {
                                 setInAppNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
                               }
-                              if (notif.action === 'send_services_email') {
+                              // Handle action
+                              if (notif.action === 'send_services_email' && expandedNotifId !== notif.id) {
                                 setShowNotificationCenter(false);
                                 setEmailServiceRecipient(loggedInPatient?.email || '');
                                 setEmailServiceModalOpen(true);
                               }
                             }}
-                            style={{ cursor: notif.action ? 'pointer' : 'default' }}
+                            style={{ cursor: 'pointer' }}
                           >
                             <div className="notif-icon-circle">
                               <i className={`fa-solid ${notif.icon || 'fa-bell'}`}></i>
                             </div>
                             <div className="notif-content">
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                                <div className="notif-item-title">{notif.title}</div>
-                                <span className="notif-item-time">{notif.time}</span>
+                              <div className="notif-item-title">{notif.title}</div>
+                              <span className="notif-item-time">{notif.time}</span>
+                              <div className={`notif-item-msg ${expandedNotifId === notif.id ? 'notif-msg-expanded' : 'notif-msg-clamped'}`}>
+                                {notif.message}
                               </div>
-                              <div className="notif-item-msg">{notif.message}</div>
                               {notif.action === 'send_services_email' && (
                                 <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '0.74rem', color: '#0284c7', fontWeight: '700' }}>
                                   Click to send to your email →
                                 </span>
+                              )}
+                              {expandedNotifId === notif.id && notif.read && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setInAppNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: false } : n));
+                                  }}
+                                  style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.72rem', color: '#0284c7', fontWeight: '600', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+                                >
+                                  Mark as unread
+                                </button>
                               )}
                             </div>
                             <button
