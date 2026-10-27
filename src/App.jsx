@@ -4732,29 +4732,52 @@ export default function App() {
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
+    const syncUserSession = async (session) => {
+      if (!session?.user) return;
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        let activeProfile = profile;
+        if (!activeProfile) {
+          // If no profile exists yet (e.g. freshly signed in via Google OAuth)
+          const meta = session.user.user_metadata || {};
+          activeProfile = {
+            id: session.user.id,
+            email: session.user.email,
+            name: meta.full_name || meta.name || session.user.email?.split('@')[0] || 'Valued User',
+            phone: meta.phone || '',
+            role: meta.role || 'patient',
+            verified: true,
+            active: true,
+            terms_accepted: true,
+            terms_accepted_at: new Date().toISOString()
+          };
+          await supabase.from('profiles').upsert([activeProfile]).catch(console.warn);
+        }
+
+        const role = activeProfile.role || 'patient';
+        setAuthRole(role);
+        saveAuthSession(role, activeProfile);
+        if (role === 'patient') { setLoggedInPatient(activeProfile); }
+        else if (role === 'doctor') { setLoggedInDoctor(activeProfile); }
+        else if (role === 'pharmacist') { setLoggedInPharmacist(activeProfile); }
+        else if (role === 'lab') { setLoggedInLab(activeProfile); }
+        else if (role === 'logistics') { setLoggedInLogistics(activeProfile); }
+      } catch (err) {
+        console.warn("Supabase session sync error:", err);
+      }
+    };
+
     // Restore existing session on page reload if cloud session exists
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-      supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
-        .then(({ data: profile }) => {
-          if (!profile) return;
-          const role = profile.role || 'patient';
-          setAuthRole(role);
-          saveAuthSession(role, profile);
-          if (role === 'patient') { setLoggedInPatient(profile); }
-          else if (role === 'doctor') { setLoggedInDoctor(profile); }
-          else if (role === 'pharmacist') { setLoggedInPharmacist(profile); }
-          else if (role === 'lab') { setLoggedInLab(profile); }
-          else if (role === 'logistics') { setLoggedInLogistics(profile); }
-        })
-        .catch(err => console.warn("Supabase profile fetch error:", err));
+      if (session) syncUserSession(session);
     }).catch(err => console.warn("Supabase session get error:", err));
 
-    // Listen only for explicit SIGNED_OUT events — never wipe session on INITIAL_SESSION
+    // Listen for auth events — handle SIGNED_IN and SIGNED_OUT
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setAuthRole(null);
@@ -4766,6 +4789,8 @@ export default function App() {
         ['simmy_auth_role','simmy_auth_admin','simmy_auth_patient','simmy_auth_doctor','simmy_auth_pharmacist','simmy_auth_lab','simmy_auth_logistics'].forEach(k => {
           try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {}
         });
+      } else if (event === 'SIGNED_IN' && session) {
+        syncUserSession(session);
       }
     });
 
@@ -11527,64 +11552,6 @@ const LeafletDispatchMap = ({
                       </>
                     ) : (
                       <>
-                        {/* Quick Database Accounts Selector */}
-                        <div className="quick-login-roster" style={{
-                          background: 'rgba(24, 43, 73, 0.04)',
-                          border: '1px solid rgba(24, 43, 73, 0.1)',
-                          borderRadius: '8px',
-                          padding: '0.75rem',
-                          marginBottom: '1.25rem'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ fontSize: '0.76rem', fontWeight: '700', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              <i className="fa-solid fa-database" style={{ marginRight: '4px', color: 'var(--color-accent)' }}></i>
-                              Saved Database Profiles
-                            </span>
-                            <span style={{ fontSize: '0.72rem', color: isSupabaseReady() ? '#10b981' : 'var(--color-text-muted)', fontWeight: '600' }}>
-                              <i className="fa-solid fa-circle" style={{ fontSize: '7px', marginRight: '4px' }}></i>
-                              {isSupabaseReady() ? 'Supabase Live' : 'Local Seed DB'}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            {[
-                              { label: 'Doctor (Dr. Wasila)', email: 'wasilagoranduma@gmail.com' },
-                              { label: 'Doctor (Dr. Adam)', email: 'adam@simmyclinic.com' },
-                              { label: 'CEO (Dr. Saima)', email: 'mohammedrealsaemaj@gmail.com' },
-                              { label: 'Admin Director', email: 'admin@simmyclinic.com' },
-                              { label: 'Pharmacist (Bello)', email: 'pharmacist@simmyclinic.com' },
-                              { label: 'Lab Tech (Wasila)', email: 'lab@simmyclinic.com' },
-                              { label: 'Courier (Chinedu)', email: 'logistics@simmyclinic.com' },
-                              { label: 'Patient (Zainab)', email: 'zainab@example.com' }
-                            ].map(prof => (
-                              <button
-                                key={prof.email}
-                                type="button"
-                                onClick={() => {
-                                  setPatientLoginForm(prev => ({
-                                    ...prev,
-                                    email: prof.email,
-                                    password: 'password123'
-                                  }));
-                                  setLoginError('');
-                                }}
-                                className="btn btn-sm"
-                                style={{
-                                  fontSize: '0.72rem',
-                                  padding: '0.2rem 0.5rem',
-                                  background: patientLoginForm.email === prof.email ? 'var(--color-primary)' : 'rgba(255,255,255,0.85)',
-                                  color: patientLoginForm.email === prof.email ? '#fff' : 'var(--color-primary)',
-                                  border: '1px solid rgba(24, 43, 73, 0.15)',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontWeight: '600'
-                                }}
-                              >
-                                {prof.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
                         <div className="form-group">
                           <label>Email address</label>
                           <div className="input-with-icon">
