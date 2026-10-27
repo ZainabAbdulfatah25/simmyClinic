@@ -4357,11 +4357,11 @@ html, body, #root, .app-layout {
 }
 
 .notif-dropdown-drawer {
-  position: absolute;
-  top: 50px;
-  right: 0;
+  position: fixed;
+  top: 70px;
+  right: 16px;
   width: 380px;
-  max-width: 90vw;
+  max-width: calc(100vw - 32px);
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
@@ -4369,6 +4369,14 @@ html, body, #root, .app-layout {
   z-index: 1050;
   overflow: hidden;
   animation: notifSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 480px) {
+  .notif-dropdown-drawer {
+    right: 8px;
+    width: calc(100vw - 16px);
+    top: 64px;
+  }
 }
 
 @keyframes notifSlideDown {
@@ -4427,6 +4435,9 @@ html, body, #root, .app-layout {
   font-size: 0.82rem;
   color: #1e3a8a;
   line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .notif-list-scroll {
@@ -4486,6 +4497,8 @@ html, body, #root, .app-layout {
 
 .notif-content {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .notif-item-title {
@@ -4493,6 +4506,8 @@ html, body, #root, .app-layout {
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 2px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .notif-item-msg {
@@ -4500,6 +4515,8 @@ html, body, #root, .app-layout {
   color: #475569;
   line-height: 1.4;
   margin-bottom: 4px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .notif-item-time {
