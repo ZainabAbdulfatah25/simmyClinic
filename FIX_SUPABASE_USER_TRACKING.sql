@@ -129,8 +129,13 @@ BEGIN
   )
   VALUES (
     new.id,
-    new.email,
-    COALESCE(new.raw_user_meta_data->>'name', 'Valued Member'),
+    COALESCE(new.email, 'user@simmyclinic.com'),
+    COALESCE(
+      new.raw_user_meta_data->>'name',
+      new.raw_user_meta_data->>'full_name',
+      split_part(COALESCE(new.email, 'user'), '@', 1),
+      'Valued Member'
+    ),
     new.raw_user_meta_data->>'phone',
     COALESCE((new.raw_user_meta_data->>'role')::user_role, 'patient'::user_role),
     new.raw_user_meta_data->>'specialty',
@@ -143,16 +148,24 @@ BEGIN
     new.raw_user_meta_data->>'bio',
     true, -- Auto-active
     true, -- Auto-verified for instant dashboard access
-    COALESCE((new.raw_user_meta_data->>'terms_accepted')::boolean, false),
-    CASE 
-      WHEN (new.raw_user_meta_data->>'terms_accepted')::boolean = true THEN NOW() 
-      ELSE NULL 
-    END
+    true, -- Auto-accept terms for oauth
+    NOW()
   )
   ON CONFLICT (id) DO UPDATE SET
     verified = true,
     active = true;
   RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Prevent any failure in profile creation from aborting auth.users signup
+  RAISE WARNING 'handle_new_user non-blocking exception: %', SQLERRM;
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 10. Re-bind trigger to auth.users
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 
