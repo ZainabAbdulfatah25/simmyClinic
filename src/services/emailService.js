@@ -122,8 +122,7 @@ export function generateHospitalServicesEmailHtml(recipientName = "Valued Patien
 
 /**
  * Dispatches an email notification.
- * Integrates seamlessly with live email service (Resend / EmailJS / Supabase)
- * with reliable client-side dispatch and in-app confirmation fallback.
+ * Priority: Resend API → mailto fallback (opens user's mail client)
  */
 export async function sendEmailNotification({
   toEmail,
@@ -136,7 +135,7 @@ export async function sendEmailNotification({
     throw new Error("A valid email address is required to dispatch the notification.");
   }
 
-  // 1. Check for live Resend API Key in environment
+  // 1. Try Resend API if key is present
   const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
   if (resendApiKey) {
     try {
@@ -156,18 +155,52 @@ export async function sendEmailNotification({
       if (response.ok) {
         return { success: true, provider: "resend", email: toEmail };
       }
+      const errData = await response.json().catch(() => ({}));
+      console.warn("Resend API error:", errData);
     } catch (err) {
       console.warn("Resend email dispatch error:", err);
     }
   }
 
-  // 2. Client-side mail client fallback / simulation log
-  console.info(`[Email Dispatcher] Dispatched "${subject}" to ${toEmail}`);
+  // 2. mailto: fallback — opens the user's mail client pre-filled
+  const plainTextBody = buildPlainTextCatalog(patientName);
+  const mailtoUrl =
+    `mailto:${encodeURIComponent(toEmail)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(plainTextBody)}`;
+
+  window.open(mailtoUrl, '_blank');
 
   return {
     success: true,
-    provider: "simmy_cloud",
+    provider: "mailto",
     email: toEmail,
     timestamp: new Date().toISOString()
   };
 }
+
+/**
+ * Builds a plain-text version of the catalog for the mailto body.
+ */
+function buildPlainTextCatalog(recipientName = "Valued Patient") {
+  let body = `Dear ${recipientName},\n\nThank you for trusting SimmyClinic. Below is our official clinical services portfolio:\n\n`;
+  body += `${'='.repeat(60)}\nSimmyClinic — Official Hospital Services & Clinical Fee Guide\n${'='.repeat(60)}\n\n`;
+
+  HOSPITAL_SERVICES_CATALOG.forEach(cat => {
+    body += `\n▶ ${cat.category.toUpperCase()}\n${'-'.repeat(50)}\n`;
+    cat.items.forEach(item => {
+      body += `  • ${item.name}  —  ${item.fee}\n    ${item.desc}\n`;
+    });
+  });
+
+  body += `\n${'='.repeat(60)}\n`;
+  body += `24/7 Clinical Triage & Emergency Support\n`;
+  body += `Direct Medical Desk: +234 901 432 4442\n`;
+  body += `Website: https://simmyclinic.com\n`;
+  body += `Book online: https://simmyclinic.com/#booking\n`;
+  body += `${'='.repeat(60)}\n`;
+  body += `SimmyClinic Healthcare Operations | Federal Ministry of Health & CAC Certified\n`;
+
+  return body;
+}
+

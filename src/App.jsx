@@ -20508,9 +20508,9 @@ const LeafletDispatchMap = ({
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
                     {HOSPITAL_SERVICES_CATALOG.slice(0, 4).map(svc => (
-                      <div key={svc.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#1e293b' }}>
-                        <i className={`fa-solid ${svc.icon}`} style={{ color: '#0284c7', fontSize: '0.85rem' }}></i>
-                        <span>{svc.name} <strong style={{ color: '#059669', fontSize: '0.75rem' }}>({svc.fee})</strong></span>
+                      <div key={svc.category} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#1e293b' }}>
+                        <i className={`fa-solid ${svc.icon}`} style={{ color: '#0284c7', fontSize: '0.85rem', flexShrink: 0 }}></i>
+                        <span>{svc.category}</span>
                       </div>
                     ))}
                   </div>

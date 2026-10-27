@@ -4429,15 +4429,21 @@ html, body, #root, .app-layout {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  overflow: hidden;
 }
 
 .notif-promo-text {
+  flex: 1;
+  min-width: 0;
   font-size: 0.82rem;
   color: #1e3a8a;
   line-height: 1.35;
   overflow-wrap: break-word;
   word-break: break-word;
-  min-width: 0;
+}
+
+.notif-promo-btn {
+  flex-shrink: 0;
 }
 
 .notif-list-scroll {
