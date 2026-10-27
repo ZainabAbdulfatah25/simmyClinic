@@ -4732,7 +4732,7 @@ export default function App() {
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
-    const syncUserSession = async (session) => {
+    const syncUserSession = async (session, isExplicitLogin = false) => {
       if (!session?.user) return;
       try {
         const { data: profile } = await supabase
@@ -4756,7 +4756,11 @@ export default function App() {
             terms_accepted: true,
             terms_accepted_at: new Date().toISOString()
           };
-          await supabase.from('profiles').upsert([activeProfile]).catch(console.warn);
+          try {
+            await supabase.from('profiles').upsert([activeProfile]);
+          } catch (upsertErr) {
+            console.warn("Could not upsert profile:", upsertErr);
+          }
         }
 
         const role = activeProfile.role || 'patient';
@@ -4767,6 +4771,17 @@ export default function App() {
         else if (role === 'pharmacist') { setLoggedInPharmacist(activeProfile); }
         else if (role === 'lab') { setLoggedInLab(activeProfile); }
         else if (role === 'logistics') { setLoggedInLogistics(activeProfile); }
+
+        const hash = window.location.hash || '';
+        const isOAuthReturn = hash.includes('access_token') || window.location.search.includes('code');
+        const isLoginView = hash === '#portal-login' || hash === '' || hash === '#';
+
+        if (isOAuthReturn || (isExplicitLogin && isLoginView)) {
+          if (hash.includes('access_token')) {
+            try { window.history.replaceState(null, '', '#dashboard'); } catch (e) {}
+          }
+          navigateTo('dashboard');
+        }
       } catch (err) {
         console.warn("Supabase session sync error:", err);
       }
@@ -4774,7 +4789,7 @@ export default function App() {
 
     // Restore existing session on page reload if cloud session exists
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) syncUserSession(session);
+      if (session) syncUserSession(session, false);
     }).catch(err => console.warn("Supabase session get error:", err));
 
     // Listen for auth events — handle SIGNED_IN and SIGNED_OUT
@@ -4790,7 +4805,7 @@ export default function App() {
           try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {}
         });
       } else if (event === 'SIGNED_IN' && session) {
-        syncUserSession(session);
+        syncUserSession(session, true);
       }
     });
 
